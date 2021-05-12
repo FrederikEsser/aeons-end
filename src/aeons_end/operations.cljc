@@ -478,6 +478,28 @@
 
 (effects/register {:buy buy-card})
 
+(defn buy-charge [{:keys [effect-stack] :as game} {:keys [player-no]}]
+  (let [{:keys [ability aether charges phase]
+         :or   {charges 0}} (get-in game [:players player-no])
+        cost        2
+        max-charges (:cost ability)]
+    (assert (empty? effect-stack) "Buy-charge error: You have a choice to make.")
+    (assert (and aether cost (>= aether cost)) (str "Buy-charge error: You only have " aether " aether."))
+    (assert (and max-charges (< charges max-charges)) (str "Buy-charge error: You already have " charges " charges."))
+    (when phase
+      (assert (#{:casting :main} phase) (str "Buy-charge error: You're in the " (ut/format-name phase) " phase.")))
+    (if (and phase (not= :main phase))
+      (-> game
+          (push-effect-stack {:player-no player-no
+                              :effects   [[:set-phase {:phase :main}]
+                                          [:buy-charge]]})
+          check-stack)
+      (-> game
+          (update-in [:players player-no :aether] - cost)
+          (update-in [:players player-no :charges] ut/plus 1)))))
+
+(effects/register {:buy-charge buy-charge})
+
 (defn do-shuffle
   ([{:keys [discard] :as player}]
    (-> player
@@ -760,8 +782,7 @@
      (assert (#{:gem} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
      (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
      (when phase
-       (assert (#{:casting :main} phase) (str "Play error: You can't play " (ut/format-name type) " cards"
-                                              " when you're in the " (ut/format-name phase) " phase.")))
+       (assert (#{:casting :main} phase) (str "Play error: You're in the " (ut/format-name phase) " phase.")))
      (if (and phase (not= phase :main))
        (-> game
            (push-effect-stack {:player-no player-no
