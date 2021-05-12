@@ -1,7 +1,12 @@
 (ns aeons-end.core-test
   (:require [clojure.test :refer :all]
-            [aeons-end.core :refer :all]))
+            [aeons-end.operations :refer :all]
+            [aeons-end.cards.common :refer []]
+            [aeons-end.setup :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(deftest gem-test
+  (testing "Gems"
+    (is (= (-> {:players [{:hand [crystal]}]}
+               (play 0 :crystal))
+           {:players [{:play-area [crystal]
+                       :current   {:aether 1}}]}))))
