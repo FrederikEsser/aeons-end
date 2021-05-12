@@ -279,10 +279,17 @@
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
             (empty? from-cards) (update-in [:players player-no] dissoc from)
+            (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
+                                                                         (->> breaches
+                                                                              (map (fn [{:keys [prepped-spells] :as breach}]
+                                                                                     (cond-> breach
+                                                                                             (empty? prepped-spells) (dissoc :prepped-spells)))))))
             (empty? (:trash game)) (dissoc :trash))))
 
-(defn- get-card [game {:keys [player-no card-name move-card-id from from-position] :as args}]
+(defn- get-card [game {:keys [player-no card-name move-card-id from from-position breach-no] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
+  (when (= :breach from)
+    (assert breach-no (str "Can't move card from breach without breach-no: " args)))
   (if (#{:supply :extra-cards} from)
     (let [{:keys [card idx pile-size]} (ut/get-pile-idx game from card-name)]
       (when (and pile-size (pos? pile-size))
@@ -292,6 +299,7 @@
     (let [player    (get-in game [:players player-no])
           from-path (case from
                       :trash [:trash]
+                      :breach [:players player-no :breaches breach-no :prepped-spells]
                       [:players player-no from])]
       (merge {:from-path from-path}
              (case from-position
@@ -509,8 +517,9 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn do-move-card [game {:keys [player-no card from-path idx card-name from to to-position to-player]}]
+(defn do-move-card [game {:keys [player-no card from-path idx card-name from to to-position to-player breach-no]}]
   (let [to-path (case to
+                  :breach [:players (or to-player player-no) :breaches breach-no :prepped-spells]
                   :trash [:trash]
                   :supply :supply
                   :extra-cards :extra-cards
@@ -753,8 +762,7 @@
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [phase]
-          :or   {phase :main}} (get-in game [:players player-no])
+   (let [{:keys [phase]} (get-in game [:players player-no])
          {{:keys [effects trigger type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
          next-phase (case type
                       :gem :main
@@ -765,8 +773,9 @@
      (case type
        :gem (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
        (assert false (str "Play error: You can't play " (ut/format-name type) " cards"
-                          " when you're in the " (ut/format-name phase) " phase.")))
+                          (when phase (str " when you're in the " (ut/format-name phase) " phase.")))))
      (-> game
+         (cond-> phase (assoc-in [:players player-no :phase] :main))
          (push-effect-stack {:player-no player-no
                              :effects   [[:move-card {:card-name card-name
                                                       :from      :hand
@@ -788,6 +797,36 @@
              check-stack)))))
 
 (effects/register {:play play})
+
+(defn prep-spell [game {:keys [player-no breach-no spell-name]}]
+  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name spell-name})
+        {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
+        {:keys [phase]} (get-in game [:players player-no])]
+    (assert card (str "Prep error: There is no " (ut/format-name spell-name) " in your Hand."))
+    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name type) " cards."))
+    (assert (#{:opened} status) (str "Prep error: You can't prep " (ut/format-name spell-name) " to breach " breach-no " with status " (ut/format-name status) "."))
+    (assert (empty? prepped-spells) (str "Prep error: You can't prep " (ut/format-name spell-name) " to breach " breach-no " which already has prepped spells [" (ut/format-types (map :name prepped-spells)) "]."))
+    (-> game
+        (cond-> phase (assoc-in [:players player-no :phase] :main))
+        (move-card {:player-no player-no
+                    :card-name spell-name
+                    :from      :hand
+                    :to        :breach
+                    :breach-no breach-no}))))
+
+(defn cast-spell [game {:keys [player-no breach-no spell-name]}]
+  (let [{{:keys [effects] :as spell} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name spell-name})
+        {:keys [phase]} (get-in game [:players player-no])]
+    (when phase
+      (assert (= :casting phase) (str "Cast error: You can't cast " (ut/format-name spell-name) " when you're in the " (ut/format-name phase) " phase.")))
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:move-card {:card-name spell-name
+                                                             :from      :breach
+                                                             :breach-no breach-no
+                                                             :to        :discard}]]
+                                               effects)})
+        check-stack)))
 
 (defn do-clean-up [game {:keys [player-no extra-turn?]}]
   (let [clean-up-player (fn [{:keys [play-area hand coins debt number-of-turns] :as player}]

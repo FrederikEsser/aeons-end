@@ -8,3 +8,9 @@
           (pos? arg) (update-in [:players player-no :current :aether] ut/plus arg)))
 
 (effects/register {:gain-aether gain-aether})
+
+(defn deal-damage [game {:keys [arg]}]
+  (-> game
+      (update-in [:nemesis :life] - arg)))
+
+(effects/register {:deal-damage deal-damage})
