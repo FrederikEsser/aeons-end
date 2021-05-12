@@ -2,20 +2,30 @@
   (:require [clojure.test :refer :all]
             [aeons-end.operations :refer :all]
             [aeons-end.cards.common :refer []]
-            [aeons-end.setup :refer :all]))
+            [aeons-end.setup :refer :all]
+            [aeons-end.cards.gems :refer [jade]]))
 
 (deftest gem-test
   (testing "Gems"
-    (is (= (-> {:players [{:hand [crystal]}]}
+    (is (= (-> {:players [{:hand  [crystal]
+                           :phase :main}]}
                (play 0 :crystal))
            {:players [{:play-area [crystal]
-                       :current   {:aether 1}}]}))
+                       :aether    1
+                       :phase     :main}]}))
     (is (= (-> {:players [{:hand  [crystal]
                            :phase :casting}]}
                (play 0 :crystal))
            {:players [{:play-area [crystal]
-                       :current   {:aether 1}
+                       :aether    1
                        :phase     :main}]}))
+    (is (thrown-with-msg? AssertionError #"Play error:"
+                          (-> {:players [{:hand  [crystal]
+                                          :phase :draw}]}
+                              (play 0 :crystal))
+                          {:players [{:play-area [crystal]
+                                      :aether    1
+                                      :phase     :main}]}))
     (is (thrown-with-msg? AssertionError #"Play error: You can't play Spell cards"
                           (-> {:players [{:hand [spark]}]}
                               (play 0 :spark))))))
@@ -41,6 +51,13 @@
              {:players [{:breaches [{:status         :opened
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
+      (is (thrown-with-msg? AssertionError #"Prep error:"
+                            (-> {:players [{:hand     [spark]
+                                            :breaches [{:status :opened}]
+                                            :phase    :draw}]}
+                                (prep-spell {:player-no  0
+                                             :breach-no  0
+                                             :spell-name :spark}))))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Gem cards"
                             (-> {:players [{:hand     [crystal]
                                             :breaches [{:status :opened}]
@@ -79,3 +96,52 @@
                                 (cast-spell {:player-no  0
                                              :breach-no  0
                                              :spell-name :spark})))))))
+
+(deftest buy-card-test
+  (testing "Buy card"
+    (let [jade (assoc jade :id 1)]
+      (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                  :players [{:aether 2
+                             :phase  :main}]}
+                 (buy-card 0 :jade))
+             {:supply  [{:card jade :pile-size 6}]
+              :players [{:discard [jade]
+                         :aether  0
+                         :phase   :main}]}))
+      (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                  :players [{:aether 2
+                             :phase  :casting}]}
+                 (buy-card 0 :jade))
+             {:supply  [{:card jade :pile-size 6}]
+              :players [{:discard [jade]
+                         :aether  0
+                         :phase   :main}]}))
+      (is (thrown-with-msg? AssertionError #"Buy error:"
+                            (-> {:supply  [{:card jade :pile-size 7}]
+                                 :players [{:aether 2
+                                            :phase  :draw}]}
+                                (buy-card 0 :jade))))
+      (is (thrown-with-msg? AssertionError #"Buy error:"
+                            (-> {:supply  [{:card jade :pile-size 7}]
+                                 :players [{:aether 1
+                                            :phase  :main}]}
+                                (buy-card 0 :jade))))
+      (is (thrown-with-msg? AssertionError #"Buy error:"
+                            (-> {:supply  [{:card jade :pile-size 0}]
+                                 :players [{:aether 2
+                                            :phase  :main}]}
+                                (buy-card 0 :jade)))))))
+
+(deftest buried-light-test
+  (testing "Buried Light"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [buried-light]}]
+                           :phase    :casting}]
+                :nemesis {:life 50}}
+               (cast-spell {:player-no  0
+                            :breach-no  0
+                            :spell-name :buried-light}))
+           {:players [{:breaches [{}]
+                       :discard  [buried-light]
+                       :aether   1
+                       :phase    :casting}]
+            :nemesis {:life 49}}))))

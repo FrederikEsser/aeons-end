@@ -5,7 +5,7 @@
 
 (defn gain-aether [game {:keys [player-no arg]}]
   (cond-> game
-          (pos? arg) (update-in [:players player-no :current :aether] ut/plus arg)))
+          (pos? arg) (update-in [:players player-no :aether] ut/plus arg)))
 
 (effects/register {:gain-aether gain-aether})
 

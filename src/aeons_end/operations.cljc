@@ -170,11 +170,9 @@
       [[:sync-repeated-play]])))
 
 (def phase-order [:out-of-turn
-                  :action
-                  :pay
-                  :buy
-                  :night
-                  :clean-up
+                  :casting
+                  :main
+                  :draw
                   :out-of-turn])
 
 (defn next-phase [phase]
@@ -189,11 +187,9 @@
   (let [current-phase (get-in game [:players player-no :phase])]
     (if (and current-phase (not= current-phase phase))
       (let [next-phase   (next-phase current-phase)
-            phase-change (cond (#{:action} next-phase) :at-start-turn
-                               (#{:pay} next-phase) :at-start-buy
-                               (#{:buy} current-phase) :at-end-buy
-                               (#{:clean-up} next-phase) :at-clean-up
-                               (#{:clean-up} current-phase) :at-draw-hand)]
+            phase-change (cond (#{:casting} next-phase) :at-start-casting
+                               (#{:main} next-phase) :at-start-main
+                               (#{:draw} current-phase) :at-end-draw)]
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
@@ -463,28 +459,22 @@
      (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
      (assert (and aether cost (>= aether cost)) (str "Buy error: " (ut/format-name card-name) " costs " (ut/format-cost cost) " and you only have " aether " aether."))
      (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
-     (assert (ut/card-buyable? game player-no card) (str (ut/format-name card-name) " can't be bought."))
      (when phase
-       (assert (#{:main} phase) (str "You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
-     (-> game
-         (update-in [:players player-no :aether] - cost)
-         (push-effect-stack {:player-no player-no
-                             :effects   [[:gain {:card-name card-name}]]})
-         check-stack)
-     #_(if (and phase (not= :buy phase))
-         (-> game
-             (push-effect-stack {:player-no player-no
-                                 :effects   [[:set-phase {:phase :main}]
-                                             [:buy {:card-name card-name}]]})
-             check-stack)
-         (-> game
-             (update-in [:players player-no :aether] - cost)
-             (push-effect-stack {:player-no player-no
-                                 :effects   (concat reaction-effects
-                                                    on-buy-effects
-                                                    [[:gain {:card-name card-name
-                                                             :bought    true}]])})
-             check-stack)))))
+       (assert (#{:casting :main} phase) (str "Buy error: You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
+     (if (and phase (not= :main phase))
+       (-> game
+           (push-effect-stack {:player-no player-no
+                               :effects   [[:set-phase {:phase :main}]
+                                           [:buy {:card-name card-name}]]})
+           check-stack)
+       (-> game
+           (update-in [:players player-no :aether] - cost)
+           (push-effect-stack {:player-no player-no
+                               :effects   (concat reaction-effects
+                                                  on-buy-effects
+                                                  [[:gain {:card-name card-name
+                                                           :bought    true}]])})
+           check-stack)))))
 
 (effects/register {:buy buy-card})
 
@@ -763,38 +753,28 @@
    (play game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
    (let [{:keys [phase]} (get-in game [:players player-no])
-         {{:keys [effects trigger type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-         next-phase (case type
-                      :gem :main
-                      phase)]
+         {{:keys [effects trigger type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
      (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
-     (case type
-       :gem (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
-       (assert false (str "Play error: You can't play " (ut/format-name type) " cards"
-                          (when phase (str " when you're in the " (ut/format-name phase) " phase.")))))
-     (-> game
-         (cond-> phase (assoc-in [:players player-no :phase] :main))
-         (push-effect-stack {:player-no player-no
-                             :effects   [[:move-card {:card-name card-name
-                                                      :from      :hand
-                                                      :to        :play-area}]
-                                         [:card-effect {:card card}]]})
-         check-stack)
-     #_(if (and (get-in game [:players player-no :phase]) (not= phase next-phase))
-         (-> game
-             (push-effect-stack {:player-no player-no
-                                 :effects   [[:set-phase {:phase next-phase}]
-                                             [:play {:card-name card-name}]]})
-             check-stack)
-         (-> game
-             (push-effect-stack {:player-no player-no
-                                 :effects   [[:move-card {:card-name card-name
-                                                          :from      :hand
-                                                          :to        :play-area}]
-                                             [:card-effect {:card card}]]})
-             check-stack)))))
+     (assert (#{:gem} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
+     (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
+     (when phase
+       (assert (#{:casting :main} phase) (str "Play error: You can't play " (ut/format-name type) " cards"
+                                              " when you're in the " (ut/format-name phase) " phase.")))
+     (if (and phase (not= phase :main))
+       (-> game
+           (push-effect-stack {:player-no player-no
+                               :effects   [[:set-phase {:phase :main}]
+                                           [:play {:card-name card-name}]]})
+           check-stack)
+       (-> game
+           (push-effect-stack {:player-no player-no
+                               :effects   [[:move-card {:card-name card-name
+                                                        :from      :hand
+                                                        :to        :play-area}]
+                                           [:card-effect {:card card}]]})
+           check-stack)))))
 
 (effects/register {:play play})
 
@@ -804,6 +784,9 @@
         {:keys [phase]} (get-in game [:players player-no])]
     (assert card (str "Prep error: There is no " (ut/format-name spell-name) " in your Hand."))
     (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name type) " cards."))
+    (when phase
+      (assert (#{:casting :main} phase) (str "Prep error: You can't prep " (ut/format-name spell-name)
+                                             " when you're in the " (ut/format-name phase) " phase.")))
     (assert (#{:opened} status) (str "Prep error: You can't prep " (ut/format-name spell-name) " to breach " breach-no " with status " (ut/format-name status) "."))
     (assert (empty? prepped-spells) (str "Prep error: You can't prep " (ut/format-name spell-name) " to breach " breach-no " which already has prepped spells [" (ut/format-types (map :name prepped-spells)) "]."))
     (-> game
