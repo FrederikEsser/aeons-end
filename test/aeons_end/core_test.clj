@@ -19,7 +19,7 @@
            {:players [{:play-area [crystal]
                        :aether    1
                        :phase     :main}]}))
-    (is (thrown-with-msg? AssertionError #"Play error: You're in the Draw phase"
+    (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
                           (-> {:players [{:hand  [crystal]
                                           :phase :draw}]}
                               (play 0 :crystal))
@@ -36,65 +36,49 @@
       (is (= (-> {:players [{:hand     [spark]
                              :breaches [{:status :opened}]
                              :phase    :main}]}
-                 (prep-spell {:player-no  0
-                              :breach-no  0
-                              :spell-name :spark}))
+                 (prep-spell 0 :spark 0))
              {:players [{:breaches [{:status         :opened
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
       (is (= (-> {:players [{:hand     [spark]
                              :breaches [{:status :opened}]
                              :phase    :casting}]}
-                 (prep-spell {:player-no  0
-                              :breach-no  0
-                              :spell-name :spark}))
+                 (prep-spell 0 :spark 0))
              {:players [{:breaches [{:status         :opened
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
-      (is (thrown-with-msg? AssertionError #"Prep error:"
+      (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status :opened}]
                                             :phase    :draw}]}
-                                (prep-spell {:player-no  0
-                                             :breach-no  0
-                                             :spell-name :spark}))))
-      (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Gem cards"
+                                (prep-spell 0 :spark 0))))
+      (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Crystal, which has type Gem"
                             (-> {:players [{:hand     [crystal]
                                             :breaches [{:status :opened}]}]}
-                                (prep-spell {:player-no  0
-                                             :breach-no  0
-                                             :spell-name :crystal}))))
+                                (prep-spell 0 :crystal 0))))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 with status Closed"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status :closed}]}]}
-                                (prep-spell {:player-no  0
-                                             :breach-no  0
-                                             :spell-name :spark}))))
+                                (prep-spell 0 :spark 0))))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 which already has prepped spells"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status         :opened
                                                         :prepped-spells [spark]}]}]}
-                                (prep-spell {:player-no  0
-                                             :breach-no  0
-                                             :spell-name :spark})))))
+                                (prep-spell 0 :spark 0)))))
     (testing "Casting"
       (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
                              :phase    :casting}]
                   :nemesis {:life 50}}
-                 (cast-spell {:player-no  0
-                              :breach-no  0
-                              :spell-name :spark}))
+                 (cast-spell 0 :spark 0))
              {:players [{:breaches [{}]
                          :discard  [spark]
                          :phase    :casting}]
               :nemesis {:life 49}}))
-      (is (thrown-with-msg? AssertionError #"Cast error: You can't cast Spark when you're in the Main phase"
+      (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Main phase to the Casting phase"
                             (-> {:players [{:breaches [{:prepped-spells [spark]}]
                                             :phase    :main}]
                                  :nemesis {:life 50}}
-                                (cast-spell {:player-no  0
-                                             :breach-no  0
-                                             :spell-name :spark})))))))
+                                (cast-spell 0 :spark 0)))))))
 
 (deftest buy-card-test
   (testing "Buy card"
@@ -115,17 +99,17 @@
               :players [{:discard [jade]
                          :aether  0
                          :phase   :main}]}))
-      (is (thrown-with-msg? AssertionError #"Buy error:"
+      (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
                             (-> {:supply  [{:card jade :pile-size 7}]
                                  :players [{:aether 2
                                             :phase  :draw}]}
                                 (buy-card 0 :jade))))
-      (is (thrown-with-msg? AssertionError #"Buy error:"
+      (is (thrown-with-msg? AssertionError #"Pay error: You can't pay 2 aether, when you only have 1"
                             (-> {:supply  [{:card jade :pile-size 7}]
                                  :players [{:aether 1
                                             :phase  :main}]}
                                 (buy-card 0 :jade))))
-      (is (thrown-with-msg? AssertionError #"Buy error:"
+      (is (thrown-with-msg? AssertionError #"Buy error: Jade supply is empty"
                             (-> {:supply  [{:card jade :pile-size 0}]
                                  :players [{:aether 2
                                             :phase  :main}]}
@@ -137,7 +121,7 @@
                            :aether  2
                            :charges 0
                            :phase   :main}]}
-               (buy-charge {:player-no 0}))
+               (buy-charge 0))
            {:players [{:ability {:cost 4}
                        :aether  0
                        :charges 1
@@ -146,43 +130,41 @@
                            :aether  2
                            :charges 0
                            :phase   :casting}]}
-               (buy-charge {:player-no 0}))
+               (buy-charge 0))
            {:players [{:ability {:cost 4}
                        :aether  0
                        :charges 1
                        :phase   :main}]}))
-    (is (thrown-with-msg? AssertionError #"Buy-charge error: You're in the Draw phase"
+    (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
                           (-> {:players [{:ability {:cost 4}
                                           :aether  2
                                           :charges 0
                                           :phase   :draw}]}
-                              (buy-charge {:player-no 0}))))
+                              (buy-charge 0))))
     (is (= (-> {:players [{:ability {:cost 4}
                            :aether  2
                            :charges 3}]}
-               (buy-charge {:player-no 0}))
+               (buy-charge 0))
            {:players [{:ability {:cost 4}
                        :aether  0
                        :charges 4}]}))
-    (is (thrown-with-msg? AssertionError #"Buy-charge error: You only have 1 aether."
+    (is (thrown-with-msg? AssertionError #"Pay error: You can't pay 2 aether, when you only have 1"
                           (-> {:players [{:ability {:cost 4}
                                           :aether  1
                                           :charges 0}]}
-                              (buy-charge {:player-no 0}))))
-    (is (thrown-with-msg? AssertionError #"Buy-charge error: You already have 4 charges."
+                              (buy-charge 0))))
+    (is (thrown-with-msg? AssertionError #"Charge error: You already have 4 charges"
                           (-> {:players [{:ability {:cost 4}
                                           :aether  2
                                           :charges 4}]}
-                              (buy-charge {:player-no 0}))))))
+                              (buy-charge 0))))))
 
 (deftest buried-light-test
   (testing "Buried Light"
     (is (= (-> {:players [{:breaches [{:prepped-spells [buried-light]}]
                            :phase    :casting}]
                 :nemesis {:life 50}}
-               (cast-spell {:player-no  0
-                            :breach-no  0
-                            :spell-name :buried-light}))
+               (cast-spell 0 :buried-light 0))
            {:players [{:breaches [{}]
                        :discard  [buried-light]
                        :aether   1

@@ -123,43 +123,31 @@
 
 (effects/register {:sync-repeated-play sync-repeated-play})
 
-(defn get-call-trigger [{:keys [id name call]}]
-  (merge call
-         {:name      name
-          :card-id   id
-          :optional? true
-          :effects   (concat [[:call-reserve {:card-id id}]]
-                             (:effects call))}))
-
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
-  (let [card-triggers    (->> (get-in game [:players player-no :play-area])
-                              (keep (fn [{:keys [id name trigger-condition trigger-mode] :as card}]
-                                      (let [condition-fn         (if trigger-condition
-                                                                   (effects/get-effect trigger-condition)
-                                                                   (constantly true))
-                                            phase-change-effects (get card phase-change)]
-                                        (when (and phase-change-effects
-                                                   (condition-fn game player-no))
-                                          (merge {:event   phase-change
-                                                  :name    name
-                                                  :card-id id
-                                                  :effects phase-change-effects}
-                                                 (if trigger-mode
-                                                   {:mode trigger-mode}
-                                                   {:mode      :manual
-                                                    :optional? true})))))))
-        reserve-triggers (->> (get-in game [:players player-no :tavern-mat])
-                              (filter (comp #{phase-change} :event :call))
-                              (map get-call-trigger))
-        triggers         (->> (get-in game [:players player-no :triggers])
-                              (filter (comp #{phase-change} :event))
-                              (filter (fn [{:keys [condition]}]
-                                        (if condition
-                                          (let [condition-fn (effects/get-effect condition)]
-                                            (condition-fn game player-no))
-                                          true)))
-                              (concat card-triggers
-                                      reserve-triggers))]
+  (let [card-triggers (->> (get-in game [:players player-no :play-area])
+                           (keep (fn [{:keys [id name trigger-condition trigger-mode] :as card}]
+                                   (let [condition-fn         (if trigger-condition
+                                                                (effects/get-effect trigger-condition)
+                                                                (constantly true))
+                                         phase-change-effects (get card phase-change)]
+                                     (when (and phase-change-effects
+                                                (condition-fn game player-no))
+                                       (merge {:event   phase-change
+                                               :name    name
+                                               :card-id id
+                                               :effects phase-change-effects}
+                                              (if trigger-mode
+                                                {:mode trigger-mode}
+                                                {:mode      :manual
+                                                 :optional? true})))))))
+        triggers      (->> (get-in game [:players player-no :triggers])
+                           (filter (comp #{phase-change} :event))
+                           (filter (fn [{:keys [condition]}]
+                                     (if condition
+                                       (let [condition-fn (effects/get-effect condition)]
+                                         (condition-fn game player-no))
+                                       true)))
+                           (concat card-triggers))]
     (assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
                                                                                             (remove :name)
                                                                                             (#?(:clj  clojure.pprint/pprint
@@ -188,8 +176,12 @@
     (if (and current-phase (not= current-phase phase))
       (let [next-phase   (next-phase current-phase)
             phase-change (cond (#{:casting} next-phase) :at-start-casting
-                               (#{:main} next-phase) :at-start-main
+                               (#{:casting} current-phase) :at-end-casting
                                (#{:draw} current-phase) :at-end-draw)]
+        (assert (-> (drop-while (comp not #(= current-phase %)) phase-order)
+                    set
+                    (contains? phase)) (str "Phase error: You can't go from the " (ut/format-name current-phase)
+                                            " phase to the " (ut/format-name phase) " phase."))
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
@@ -422,83 +414,46 @@
                    :gain           gain
                    :overpay-choice overpay-choice})
 
-(defn get-on-buy-effects [game player-no card-name]
-  (let [{:keys [card tokens]} (ut/get-pile-idx game card-name)
-        {:keys [on-buy]} card
-        token-effects         (->> tokens
-                                   vals
-                                   (mapcat (fn [{:keys [number-of-tokens on-buy]}]
-                                             (when on-buy
-                                               (apply concat (repeat number-of-tokens on-buy)))))
-                                   (map (partial ut/add-effect-args {:card-name card-name})))
-        while-in-play-effects (->> (get-in game [:players player-no :play-area])
-                                   (mapcat (comp :on-buy :while-in-play))
-                                   (map (partial ut/add-effect-args {:card-name card-name})))
-        trigger-effects       (->> (get-in game [:players player-no :triggers])
-                                   (filter (comp #{:on-buy} :event))
-                                   (mapcat (fn [{:keys [id card-id effects]}]
-                                             (->> effects
-                                                  (map (partial ut/add-effect-args (merge {:trigger-id id
-                                                                                           :card-name  card-name}
-                                                                                          (when card-id
-                                                                                            {:card-id card-id}))))))))]
-    (concat on-buy token-effects while-in-play-effects trigger-effects)))
+(defn pay [game {:keys [player-no arg]}]
+  (let [{:keys [aether]} (get-in game [:players player-no])]
+    (assert (and aether arg (>= aether arg)) (str "Pay error: You can't pay " arg " aether, when you only have " aether "."))
+    (update-in game [:players player-no :aether] - arg)))
+
+(effects/register {:pay pay})
 
 (defn buy-card
-  ([game {:keys [player-no card-name]}]
-   (buy-card game player-no card-name))
-  ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [hand aether phase]} (get-in game [:players player-no])
-         {:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-         {:keys [cost]} card
-         reaction-effects (->> hand
-                               (mapcat (comp :on-buy :reaction))
-                               (map (partial ut/add-effect-args {:card card})))
-         on-buy-effects   (get-on-buy-effects game player-no card-name)]
-     (assert (empty? effect-stack) "You can't buy cards when you have a choice to make.")
-     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-     (assert (and aether cost (>= aether cost)) (str "Buy error: " (ut/format-name card-name) " costs " (ut/format-cost cost) " and you only have " aether " aether."))
-     (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
-     (when phase
-       (assert (#{:casting :main} phase) (str "Buy error: You can't buy cards when you're in the " (ut/format-name phase) " phase.")))
-     (if (and phase (not= :main phase))
-       (-> game
-           (push-effect-stack {:player-no player-no
-                               :effects   [[:set-phase {:phase :main}]
-                                           [:buy {:card-name card-name}]]})
-           check-stack)
-       (-> game
-           (update-in [:players player-no :aether] - cost)
-           (push-effect-stack {:player-no player-no
-                               :effects   (concat reaction-effects
-                                                  on-buy-effects
-                                                  [[:gain {:card-name card-name
-                                                           :bought    true}]])})
-           check-stack)))))
+  [{:keys [effect-stack] :as game} player-no card-name]
+  (let [{:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
+        {:keys [cost]} card]
+    (assert (empty? effect-stack) "Buy error: You have a choice to make.")
+    (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
+    (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:set-phase {:phase :main}]
+                                        [:pay cost]
+                                        [:gain {:card-name card-name
+                                                :bought    true}]]})
+        check-stack)))
 
-(effects/register {:buy buy-card})
-
-(defn buy-charge [{:keys [effect-stack] :as game} {:keys [player-no]}]
-  (let [{:keys [ability aether charges phase]
+(defn gain-charge [game {:keys [player-no]}]
+  (let [{:keys [ability charges phase]
          :or   {charges 0}} (get-in game [:players player-no])
-        cost        2
         max-charges (:cost ability)]
-    (assert (empty? effect-stack) "Buy-charge error: You have a choice to make.")
-    (assert (and aether cost (>= aether cost)) (str "Buy-charge error: You only have " aether " aether."))
-    (assert (and max-charges (< charges max-charges)) (str "Buy-charge error: You already have " charges " charges."))
-    (when phase
-      (assert (#{:casting :main} phase) (str "Buy-charge error: You're in the " (ut/format-name phase) " phase.")))
-    (if (and phase (not= :main phase))
-      (-> game
-          (push-effect-stack {:player-no player-no
-                              :effects   [[:set-phase {:phase :main}]
-                                          [:buy-charge]]})
-          check-stack)
-      (-> game
-          (update-in [:players player-no :aether] - cost)
-          (update-in [:players player-no :charges] ut/plus 1)))))
+    (assert (and max-charges (< charges max-charges)) (str "Charge error: You already have " charges " charges."))
+    (-> game
+        (update-in [:players player-no :charges] ut/plus 1))))
 
-(effects/register {:buy-charge buy-charge})
+(effects/register {:gain-charge gain-charge})
+
+(defn buy-charge [{:keys [effect-stack] :as game} player-no]
+  (assert (empty? effect-stack) "Charge error: You have a choice to make.")
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:set-phase {:phase :main}]
+                                      [:pay 2]
+                                      [:gain-charge]]})
+      check-stack))
 
 (defn do-shuffle
   ([{:keys [discard] :as player}]
@@ -774,58 +729,44 @@
   ([game {:keys [player-no card-name]}]
    (play game player-no card-name))
   ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{:keys [phase]} (get-in game [:players player-no])
-         {{:keys [effects trigger type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-     (assert (-> effect-stack first :choice not) "You can't play cards when you have a choice to make.")
+   (let [{{:keys [effects type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+     (assert (-> effect-stack first :choice not) "Play error: You have a choice to make.")
      (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
      (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
-     (assert (#{:gem} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
+     (assert (#{:gem :relic} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
      (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
-     (when phase
-       (assert (#{:casting :main} phase) (str "Play error: You're in the " (ut/format-name phase) " phase.")))
-     (if (and phase (not= phase :main))
-       (-> game
-           (push-effect-stack {:player-no player-no
-                               :effects   [[:set-phase {:phase :main}]
-                                           [:play {:card-name card-name}]]})
-           check-stack)
-       (-> game
-           (push-effect-stack {:player-no player-no
-                               :effects   [[:move-card {:card-name card-name
-                                                        :from      :hand
-                                                        :to        :play-area}]
-                                           [:card-effect {:card card}]]})
-           check-stack)))))
+     (-> game
+         (push-effect-stack {:player-no player-no
+                             :effects   [[:set-phase {:phase :main}]
+                                         [:move-card {:card-name card-name
+                                                      :from      :hand
+                                                      :to        :play-area}]
+                                         [:card-effect {:card card}]]})
+         check-stack))))
 
-(effects/register {:play play})
-
-(defn prep-spell [game {:keys [player-no breach-no spell-name]}]
-  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name spell-name})
-        {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
-        {:keys [phase]} (get-in game [:players player-no])]
-    (assert card (str "Prep error: There is no " (ut/format-name spell-name) " in your Hand."))
-    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name type) " cards."))
-    (when phase
-      (assert (#{:casting :main} phase) (str "Prep error: You can't prep " (ut/format-name spell-name)
-                                             " when you're in the " (ut/format-name phase) " phase.")))
-    (assert (#{:opened} status) (str "Prep error: You can't prep " (ut/format-name spell-name) " to breach " breach-no " with status " (ut/format-name status) "."))
-    (assert (empty? prepped-spells) (str "Prep error: You can't prep " (ut/format-name spell-name) " to breach " breach-no " which already has prepped spells [" (ut/format-types (map :name prepped-spells)) "]."))
-    (-> game
-        (cond-> phase (assoc-in [:players player-no :phase] :main))
-        (move-card {:player-no player-no
-                    :card-name spell-name
-                    :from      :hand
-                    :to        :breach
-                    :breach-no breach-no}))))
-
-(defn cast-spell [game {:keys [player-no breach-no spell-name]}]
-  (let [{{:keys [effects] :as spell} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name spell-name})
-        {:keys [phase]} (get-in game [:players player-no])]
-    (when phase
-      (assert (= :casting phase) (str "Cast error: You can't cast " (ut/format-name spell-name) " when you're in the " (ut/format-name phase) " phase.")))
+(defn prep-spell [game player-no card-name breach-no]
+  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
+    (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
+    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
+    (assert (#{:opened} status) (str "Prep error: You can't prep " (ut/format-name card-name) " to breach " breach-no " with status " (ut/format-name status) "."))
+    (assert (empty? prepped-spells) (str "Prep error: You can't prep " (ut/format-name card-name) " to breach " breach-no " which already has prepped spells [" (ut/format-types (map :name prepped-spells)) "]."))
     (-> game
         (push-effect-stack {:player-no player-no
-                            :effects   (concat [[:move-card {:card-name spell-name
+                            :effects   [[:set-phase {:phase :main}]
+                                        [:move-card {:player-no player-no
+                                                     :card-name card-name
+                                                     :from      :hand
+                                                     :to        :breach
+                                                     :breach-no breach-no}]]})
+        check-stack)))
+
+(defn cast-spell [game player-no card-name breach-no]
+  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:set-phase {:phase :casting}]
+                                                [:move-card {:card-name card-name
                                                              :from      :breach
                                                              :breach-no breach-no
                                                              :to        :discard}]]
