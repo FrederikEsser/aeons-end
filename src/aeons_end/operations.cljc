@@ -1,7 +1,6 @@
 (ns aeons-end.operations
   (:require [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [clojure.set]
             [clojure.string :as string]))
 
 (defn get-game-status [{:keys [players game-ending?] :as game}]
@@ -421,21 +420,6 @@
 
 (effects/register {:pay pay})
 
-(defn buy-card
-  [{:keys [effect-stack] :as game} player-no card-name]
-  (let [{:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-        {:keys [cost]} card]
-    (assert (empty? effect-stack) "Buy error: You have a choice to make.")
-    (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
-    (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:set-phase {:phase :main}]
-                                        [:pay cost]
-                                        [:gain {:card-name card-name
-                                                :bought    true}]]})
-        check-stack)))
-
 (defn gain-charge [game {:keys [player-no]}]
   (let [{:keys [ability charges]
          :or   {charges 0}} (get-in game [:players player-no])
@@ -446,23 +430,14 @@
 
 (effects/register {:gain-charge gain-charge})
 
-(defn buy-charge [{:keys [effect-stack] :as game} player-no]
-  (assert (empty? effect-stack) "Charge error: You have a choice to make.")
-  (-> game
-      (push-effect-stack {:player-no player-no
-                          :effects   [[:set-phase {:phase :main}]
-                                      [:pay 2]
-                                      [:gain-charge]]})
-      check-stack))
-
-(defn do-open-breach [game {:keys [player-no breach-no]}]
+(defn open-breach [game {:keys [player-no breach-no]}]
   (let [{:keys [status]} (get-in game [:players player-no :breaches breach-no])]
     (assert (not (= :opened status)) (str "Open error: Breach " breach-no " is already opened."))
     (-> game
         (assoc-in [:players player-no :breaches breach-no :status] :opened)
         (update-in [:players player-no :breaches breach-no] dissoc :focus-cost :open-costs :stage))))
 
-(defn do-focus-breach [game {:keys [player-no breach-no]}]
+(defn focus-breach [game {:keys [player-no breach-no]}]
   (let [{:keys [status stage]} (get-in game [:players player-no :breaches breach-no])]
     (assert (not (= :opened status)) (str "Focus error: Breach " breach-no " is already opened."))
     (if (< stage 3)
@@ -470,32 +445,11 @@
           (update-in [:players player-no :breaches breach-no :stage] ut/plus 1)
           (assoc-in [:players player-no :breaches breach-no :status] :focused))
       (-> game
-          (do-open-breach {:player-no player-no
-                           :breach-no breach-no})))))
+          (open-breach {:player-no player-no
+                        :breach-no breach-no})))))
 
-(effects/register {:focus-breach do-focus-breach
-                   :open-breach  do-open-breach})
-
-(defn focus-breach [{:keys [effect-stack] :as game} player-no breach-no]
-  (assert (empty? effect-stack) "Breach error: You have a choice to make.")
-  (let [{:keys [focus-cost]} (get-in game [:players player-no :breaches breach-no])]
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:set-phase {:phase :main}]
-                                        [:pay focus-cost]
-                                        [:focus-breach {:breach-no breach-no}]]})
-        check-stack)))
-
-(defn open-breach [{:keys [effect-stack] :as game} player-no breach-no]
-  (assert (empty? effect-stack) "Breach error: You have a choice to make.")
-  (let [{:keys [open-costs stage]} (get-in game [:players player-no :breaches breach-no])
-        open-cost (get open-costs stage)]
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:set-phase {:phase :main}]
-                                        [:pay open-cost]
-                                        [:open-breach {:breach-no breach-no}]]})
-        check-stack)))
+(effects/register {:focus-breach focus-breach
+                   :open-breach  open-breach})
 
 (defn do-shuffle
   ([{:keys [discard] :as player}]
@@ -766,54 +720,6 @@
                             :effects   effects}))))
 
 (effects/register {:card-effect card-effect})
-
-(defn play
-  ([game {:keys [player-no card-name]}]
-   (play game player-no card-name))
-  ([{:keys [effect-stack] :as game} player-no card-name]
-   (let [{{:keys [effects type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-     (assert (-> effect-stack first :choice not) "Play error: You have a choice to make.")
-     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
-     (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
-     (assert (#{:gem :relic} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
-     (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
-     (-> game
-         (push-effect-stack {:player-no player-no
-                             :effects   [[:set-phase {:phase :main}]
-                                         [:move-card {:card-name card-name
-                                                      :from      :hand
-                                                      :to        :play-area}]
-                                         [:card-effect {:card card}]]})
-         check-stack))))
-
-(defn prep-spell [game player-no card-name breach-no]
-  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
-    (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
-    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
-    (assert (#{:opened :focused} status) (str "Prep error: You can't prep " (ut/format-name card-name) " to breach " breach-no " with status " (ut/format-name status) "."))
-    (assert (empty? prepped-spells) (str "Prep error: You can't prep " (ut/format-name card-name) " to breach " breach-no " which already has prepped spells [" (ut/format-types (map :name prepped-spells)) "]."))
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:set-phase {:phase :main}]
-                                        [:move-card {:player-no player-no
-                                                     :card-name card-name
-                                                     :from      :hand
-                                                     :to        :breach
-                                                     :breach-no breach-no}]]})
-        check-stack)))
-
-(defn cast-spell [game player-no card-name breach-no]
-  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   (concat [[:set-phase {:phase :casting}]
-                                                [:move-card {:card-name card-name
-                                                             :from      :breach
-                                                             :breach-no breach-no
-                                                             :to        :discard}]]
-                                               effects)})
-        check-stack)))
 
 (defn do-clean-up [game {:keys [player-no extra-turn?]}]
   (let [clean-up-player (fn [{:keys [play-area hand coins debt number-of-turns] :as player}]

@@ -1,9 +1,10 @@
 (ns aeons-end.core-test
   (:require [clojure.test :refer :all]
-            [aeons-end.operations :refer :all]
-            [aeons-end.cards.common :refer []]
-            [aeons-end.setup :refer :all]
-            [aeons-end.cards.gems :refer [jade]]))
+            [aeons-end.commands :refer :all]
+            [aeons-end.cards.common]
+            [aeons-end.setup :refer [crystal spark]]
+            [aeons-end.cards.gems :refer [jade]]
+            [aeons-end.mages :refer [buried-light]]))
 
 (deftest gem-test
   (testing "Gems"
@@ -266,14 +267,43 @@
                                     {:status :opened}]
                          :aether   0}]})))))
 
-(deftest buried-light-test
-  (testing "Buried Light"
-    (is (= (-> {:players [{:breaches [{:prepped-spells [buried-light]}]
-                           :phase    :casting}]
-                :nemesis {:life 50}}
-               (cast-spell 0 :buried-light 0))
-           {:players [{:breaches [{}]
-                       :discard  [buried-light]
-                       :aether   1
-                       :phase    :casting}]
-            :nemesis {:life 49}}))))
+(deftest discard-test
+  (testing "Discard"
+    (is (= (-> {:players [{:play-area [crystal jade]
+                           :phase     :main}]}
+               (discard 0 :jade))
+           {:players [{:play-area [crystal]
+                       :discard   [jade]
+                       :phase     :draw}]}))
+    (is (= (-> {:players [{:play-area [crystal]
+                           :discard   [jade]
+                           :phase     :draw}]}
+               (discard 0 :crystal))
+           {:players [{:discard [jade crystal]
+                       :phase   :draw}]}))
+    (is (thrown-with-msg? AssertionError #"Move error: There is no Jade in \[:players 0 :play-area\]"
+                          (-> {:players [{:play-area [crystal]
+                                          :phase     :main}]}
+                              (discard 0 :jade)))))
+  (testing "Discard all"
+    (is (= (-> {:players [{:play-area [crystal jade]
+                           :phase     :main}]}
+               (discard-all 0))
+           {:players [{:discard [jade crystal]
+                       :phase   :draw}]}))
+    (is (= (-> {:players [{:play-area [crystal buried-light jade]
+                           :phase     :main}]}
+               (discard-all 0))
+           {:players [{:discard [jade buried-light crystal]
+                       :phase   :draw}]}))
+    (is (= (-> {:players [{:play-area [jade]
+                           :discard   [crystal]
+                           :phase     :draw}]}
+               (discard-all 0))
+           {:players [{:discard [crystal jade]
+                       :phase   :draw}]}))
+    (is (= (-> {:players [{:hand  [crystal]
+                           :phase :casting}]}
+               (discard-all 0))
+           {:players [{:hand  [crystal]
+                       :phase :draw}]}))))
