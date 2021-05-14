@@ -21,6 +21,24 @@
                                             [:card-effect {:card card}]]})
          op/check-stack))))
 
+(defn play-all-gems [game player-no]
+  (let [{:keys [hand]} (get-in game [:players player-no])
+        effects (->> hand
+                     (filter (comp #{:gem} :type))
+                     (sort-by (fn [{:keys [auto-play-index]}] (or auto-play-index 0)))
+                     (mapcat (fn [{:keys [name] :as card}]
+                               [[:move-card {:card-name name
+                                             :from      :hand
+                                             :to        :play-area}]
+                                [:card-effect {:card card}]])))]
+    (if (not-empty effects)
+      (-> game
+          (op/push-effect-stack {:player-no player-no
+                                 :effects   (concat [[:set-phase {:phase :main}]]
+                                                    effects)})
+          op/check-stack)
+      game)))
+
 (defn prep-spell [game player-no card-name breach-no]
   (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
         {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])]

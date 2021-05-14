@@ -23,13 +23,27 @@
     (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
                           (-> {:players [{:hand  [crystal]
                                           :phase :draw}]}
-                              (play 0 :crystal))
-                          {:players [{:play-area [crystal]
-                                      :aether    1
-                                      :phase     :main}]}))
+                              (play 0 :crystal))))
     (is (thrown-with-msg? AssertionError #"Play error: You can't play Spell cards"
                           (-> {:players [{:hand [spark]}]}
-                              (play 0 :spark))))))
+                              (play 0 :spark)))))
+  (testing "Play all gems"
+    (is (= (-> {:players [{:hand  [crystal]
+                           :phase :main}]}
+               (play-all-gems 0))
+           {:players [{:play-area [crystal]
+                       :aether    1
+                       :phase     :main}]}))
+    (is (= (-> {:players [{:hand  [crystal crystal]
+                           :phase :casting}]}
+               (play-all-gems 0))
+           {:players [{:play-area [crystal crystal]
+                       :aether    2
+                       :phase     :main}]}))
+    (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
+                          (-> {:players [{:hand  [crystal]
+                                          :phase :draw}]}
+                              (play-all-gems 0))))))
 
 (deftest spell-test
   (testing "Spell"
