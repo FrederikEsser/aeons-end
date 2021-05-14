@@ -55,19 +55,19 @@
 
 (defn create-player [{:keys [breaches] :as mage}]
   (merge mage
-         {:breaches (map merge
-                         [{:status :opened}
-                          {:status     :closed
-                           :focus-cost 2
-                           :open-costs [5 4 3 2]}
-                          {:status       :closed
-                           :focus-cost   3
-                           :open-costs   [9 7 5 3]
-                           :bonus-damage 1}
-                          {:status       :closed
-                           :focus-cost   4
-                           :open-costs   [13 10 7 4]
-                           :bonus-damage 1}]
-                         breaches)
+         {:breaches (mapv merge
+                          [{:status :opened}
+                           {:status     :closed
+                            :focus-cost 2
+                            :open-costs [5 4 3 2]}
+                           {:status       :closed
+                            :focus-cost   3
+                            :open-costs   [9 7 5 3]
+                            :bonus-damage 1}
+                           {:status       :closed
+                            :focus-cost   4
+                            :open-costs   [13 10 7 4]
+                            :bonus-damage 1}]
+                          breaches)
           :life     10
           :charges  0}))

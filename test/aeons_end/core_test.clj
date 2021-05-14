@@ -56,6 +56,13 @@
                             (-> {:players [{:hand     [crystal]
                                             :breaches [{:status :opened}]}]}
                                 (prep-spell 0 :crystal 0))))
+      (is (= (-> {:players [{:hand     [spark]
+                             :breaches [{:status :focused}]
+                             :phase    :main}]}
+                 (prep-spell 0 :spark 0))
+             {:players [{:breaches [{:status         :focused
+                                     :prepped-spells [spark]}]
+                         :phase    :main}]}))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 with status Closed"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status :closed}]}]}
@@ -158,6 +165,106 @@
                                           :aether  2
                                           :charges 4}]}
                               (buy-charge 0))))))
+
+(deftest breach-test
+  (testing "Breaches"
+    (testing "Focus"
+      (is (= (-> {:players [{:breaches [{:status     :closed
+                                         :focus-cost 2
+                                         :open-costs [5 4 3 2]
+                                         :stage      0}]
+                             :aether   2}]}
+                 (focus-breach 0 0))
+             {:players [{:breaches [{:status     :focused
+                                     :focus-cost 2
+                                     :open-costs [5 4 3 2]
+                                     :stage      1}]
+                         :aether   0}]}))
+      (is (= (-> {:players [{:breaches [{:status     :closed
+                                         :focus-cost 2
+                                         :open-costs [5 4 3 2]
+                                         :stage      0}]
+                             :aether   4}]}
+                 (focus-breach 0 0)
+                 (focus-breach 0 0))
+             {:players [{:breaches [{:status     :focused
+                                     :focus-cost 2
+                                     :open-costs [5 4 3 2]
+                                     :stage      2}]
+                         :aether   0}]}))
+      (is (= (-> {:players [{:breaches [{:status     :closed
+                                         :focus-cost 2
+                                         :open-costs [5 4 3 2]
+                                         :stage      2}]
+                             :aether   2}]}
+                 (focus-breach 0 0))
+             {:players [{:breaches [{:status     :focused
+                                     :focus-cost 2
+                                     :open-costs [5 4 3 2]
+                                     :stage      3}]
+                         :aether   0}]}))
+      (is (= (-> {:players [{:breaches [{:status     :closed
+                                         :focus-cost 2
+                                         :open-costs [5 4 3 2]
+                                         :stage      3}]
+                             :aether   2}]}
+                 (focus-breach 0 0))
+             {:players [{:breaches [{:status :opened}]
+                         :aether   0}]}))
+      (is (thrown-with-msg? AssertionError #"Pay error: You can't pay 2 aether, when you only have 1"
+                            (-> {:players [{:breaches [{:status     :closed
+                                                        :focus-cost 2
+                                                        :open-costs [5 4 3 2]
+                                                        :stage      0}]
+                                            :aether   1}]}
+                                (focus-breach 0 0))))
+      (is (= (-> {:players [{:breaches [{:status :opened}
+                                        {:status     :closed
+                                         :focus-cost 3
+                                         :open-costs [9 7 5 3]
+                                         :stage      0}]
+                             :aether   3}]}
+                 (focus-breach 0 1))
+             {:players [{:breaches [{:status :opened}
+                                    {:status     :focused
+                                     :focus-cost 3
+                                     :open-costs [9 7 5 3]
+                                     :stage      1}]
+                         :aether   0}]})))
+    (testing "Open"
+      (is (= (-> {:players [{:breaches [{:status     :closed
+                                         :focus-cost 2
+                                         :open-costs [5 4 3 2]
+                                         :stage      0}]
+                             :aether   5}]}
+                 (open-breach 0 0))
+             {:players [{:breaches [{:status :opened}]
+                         :aether   0}]}))
+      (is (= (-> {:players [{:breaches [{:status     :closed
+                                         :focus-cost 2
+                                         :open-costs [5 4 3 2]
+                                         :stage      1}]
+                             :aether   5}]}
+                 (open-breach 0 0))
+             {:players [{:breaches [{:status :opened}]
+                         :aether   1}]}))
+      (is (thrown-with-msg? AssertionError #"Pay error: You can't pay 3 aether, when you only have 2"
+                            (-> {:players [{:breaches [{:status     :closed
+                                                        :focus-cost 2
+                                                        :open-costs [5 4 3 2]
+                                                        :stage      2}]
+                                            :aether   2}]}
+                                (open-breach 0 0))))
+      (is (= (-> {:players [{:breaches [{:status :opened}
+                                        {:status     :closed
+                                         :focus-cost 3
+                                         :open-costs [9 7 5 3]
+                                         :stage      2}]
+                             :aether   5}]}
+                 (open-breach 0 1))
+             {:players [{:breaches [{:status :opened}
+                                    {:status :opened}]
+                         :aether   0}]})))))
 
 (deftest buried-light-test
   (testing "Buried Light"
