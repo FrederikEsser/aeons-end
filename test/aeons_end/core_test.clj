@@ -100,7 +100,23 @@
                             (-> {:players [{:breaches [{:prepped-spells [spark]}]
                                             :phase    :main}]
                                  :nemesis {:life 50}}
-                                (cast-spell 0 :spark 0)))))))
+                                (cast-spell 0 :spark 0))))
+      (is (= (-> {:players [{:hand     [crystal]
+                             :breaches [{:status         :opened
+                                         :prepped-spells [spark]}]
+                             :phase    :casting}]}
+                 (play 0 :crystal))
+             {:players [{:play-area [crystal]
+                         :breaches  [{:status         :opened
+                                      :prepped-spells [spark]}]
+                         :aether    1
+                         :phase     :main}]}))
+      (is (thrown-with-msg? AssertionError #"Phase error: You can't go to the Main phase while you have prepped spells in closed breaches: Spark"
+                            (-> {:players [{:hand     [crystal]
+                                            :breaches [{:status         :closed
+                                                        :prepped-spells [spark]}]
+                                            :phase    :casting}]}
+                                (play 0 :crystal)))))))
 
 (deftest buy-card-test
   (testing "Buy card"

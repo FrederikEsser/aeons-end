@@ -173,14 +173,23 @@
 (defn set-phase [game {:keys [player-no phase]}]
   (let [current-phase (get-in game [:players player-no :phase])]
     (if (and current-phase (not= current-phase phase))
-      (let [next-phase   (next-phase current-phase)
-            phase-change (cond (#{:casting} next-phase) :at-start-casting
-                               (#{:casting} current-phase) :at-end-casting
-                               (#{:draw} current-phase) :at-end-draw)]
+      (let [next-phase                (next-phase current-phase)
+            phase-change              (cond (#{:casting} next-phase) :at-start-casting
+                                            (#{:casting} current-phase) :at-end-casting
+                                            (#{:draw} current-phase) :at-end-draw)
+            spells-in-closed-breaches (->> (get-in game [:players player-no :breaches])
+                                           (remove (comp #{:opened} :status))
+                                           (mapcat :prepped-spells))]
         (assert (-> (drop-while (comp not #(= current-phase %)) phase-order)
                     set
                     (contains? phase)) (str "Phase error: You can't go from the " (ut/format-name current-phase)
                                             " phase to the " (ut/format-name phase) " phase."))
+        (when (= :casting current-phase)
+          (assert (empty? spells-in-closed-breaches) (str "Phase error: You can't go to the " (ut/format-name phase)
+                                                          " phase while you have prepped spells in closed breaches: "
+                                                          (->> spells-in-closed-breaches
+                                                               (map :name)
+                                                               ut/format-types))))
         (-> game
             (assoc-in [:players player-no :phase] next-phase)
             (push-effect-stack {:player-no player-no
