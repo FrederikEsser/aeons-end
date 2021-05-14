@@ -451,32 +451,24 @@
 (effects/register {:focus-breach focus-breach
                    :open-breach  open-breach})
 
-(defn do-shuffle
-  ([{:keys [discard] :as player}]
-   (-> player
-       (cond-> (not-empty discard) (update :deck concat discard))
-       (dissoc :discard)))
-  ([game {:keys [player-no]}]
-   (-> game
-       (update-in [:players player-no] do-shuffle))))
-
-(defn shuffle-discard [game {:keys [player-no]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:do-shuffle]]}))
+(defn flip-discard [game {:keys [player-no]}]
+  (let [{:keys [discard]} (get-in game [:players player-no])]
+    (-> game
+        (cond-> (not-empty discard) (update-in [:players player-no :deck] concat discard))
+        (update-in [:players player-no] dissoc :discard))))
 
 (defn shuffle-deck [game {:keys [player-no]}]
   (let [deck (get-in game [:players player-no :deck])]
     (cond-> game
             deck (update-in [:players player-no :deck] shuffle))))
 
-(effects/register {:do-shuffle   do-shuffle
-                   :shuffle      shuffle-discard
+(effects/register {:flip-discard flip-discard
                    :shuffle-deck shuffle-deck})
 
 (defn peek-deck [game {:keys [player-no arg]}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])]
     (cond-> game
-            (and (< (count deck) arg) (not-empty discard)) (shuffle-discard {:player-no player-no}))))
+            (and (< (count deck) arg) (not-empty discard)) (flip-discard {:player-no player-no}))))
 
 (effects/register {:peek-deck peek-deck})
 
@@ -507,34 +499,19 @@
     (cond-> game
             (not-empty on-trash-effects) (push-effect-stack (merge args {:effects on-trash-effects})))))
 
-(defn handle-on-reveal [game {:keys [player-no card-name] :as args}]
-  (let [{{:keys [on-reveal]} :card} (ut/get-card-idx game [:players player-no :revealed] {:name card-name})]
-    (cond-> game
-            on-reveal (push-effect-stack (merge args {:effects on-reveal})))))
-
-(defn handle-on-discard [game {:keys [player-no card-name] :as args}]
-  (let [{{:keys [on-discard]} :card} (ut/get-card-idx game [:players player-no :discard] {:name card-name})]
-    (cond-> game
-            on-discard (push-effect-stack (merge args {:effects on-discard})))))
-
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])
         {:keys [card] :as card-info} (get-card game args)]
     (if (and (= :deck from) (empty? deck) (not-empty discard))
       (push-effect-stack game {:player-no player-no
-                               :effects   [[:shuffle]
+                               :effects   [[:flip-discard]
                                            [:move-card args]]})
       (-> game
           (push-effect-stack {:player-no player-no
                               :effects   [[:do-move-card (merge args card-info)]
                                           (when (= to :trash)
                                             [:on-trash (merge args {:card-name (:name card)
-                                                                    :card-id   (:id card)})])
-                                          (when (= to :revealed)
-                                            [:on-reveal {:card-name (:name card)}])
-                                          (when (and (= to :discard)
-                                                     (not= from :gaining))
-                                            [:on-discard {:card-name (:name card)}])]})
+                                                                    :card-id   (:id card)})])]})
           check-stack))))
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]
@@ -558,8 +535,6 @@
 
 (effects/register {:do-move-card do-move-card
                    :on-trash     handle-on-trash
-                   :on-reveal    handle-on-reveal
-                   :on-discard   handle-on-discard
                    :move-card    move-card
                    :move-cards   move-cards})
 
@@ -721,75 +696,12 @@
 
 (effects/register {:card-effect card-effect})
 
-(defn do-clean-up [game {:keys [player-no extra-turn?]}]
-  (let [clean-up-player (fn [{:keys [play-area hand coins debt number-of-turns] :as player}]
-                          (let [used-cards (concat hand (remove (partial ut/stay-in-play game player-no) play-area))]
-                            (-> player
-                                (cond->
-                                  (and debt (< 0 coins debt)) (update :debt - coins)
-                                  (and debt (<= debt coins)) (dissoc :debt)
-                                  (not-empty used-cards) (update :discard concat used-cards))
-                                (dissoc :hand
-                                        :actions-played
-                                        :bought-events
-                                        :fortune-doubled?
-                                        :ignore-actions?)
-                                (update :play-area (partial filter (partial ut/stay-in-play game player-no)))
-                                (ut/dissoc-if-empty :play-area)
-                                (assoc :actions 0
-                                       :coins 0
-                                       :buys 0)
-                                (update :triggers (partial remove (comp #{:once-turn :turn} :duration)))
-                                (ut/dissoc-if-empty :triggers)
-                                (cond-> (and number-of-turns
-                                             (not extra-turn?)) (update :number-of-turns inc))
-                                (cond-> (not extra-turn?) (dissoc :previous-turn-was-yours?)))))]
-    (-> game
-        (update-in [:players player-no] clean-up-player)
-        (update :players (partial mapv (fn [player] (dissoc player :revealed-cards))))
-        (dissoc :cost-reductions :unbuyable-cards :unbuyable-type)
-        (ut/update-if-present :trash (partial map #(dissoc % :face))))))
-
-(defn at-clean-up-choice [game {:keys [player-no card-name]}]
-  (let [{{:keys [at-clean-up id]} :card} (ut/get-card-idx game [:players player-no :play-area] {:name card-name})]
-    (cond-> game
-            card-name (push-effect-stack {:player-no player-no
-                                          :card-id   id
-                                          :effects   (concat at-clean-up
-                                                             [[:at-clean-up]])}))))
-
-(effects/register {:at-clean-up-choice at-clean-up-choice})
-
-(defn clean-up [game {:keys [player-no number-of-cards]
-                      :or   {number-of-cards 5}
-                      :as   args}]
+(defn clean-up [game {:keys [player-no]}]
   (-> game
-      (push-effect-stack (merge args
-                                {:effects [[:set-phase {:phase :clean-up}]
-                                           [:do-clean-up args]
-                                           [:draw number-of-cards]
-                                           [:set-phase {:phase :out-of-turn}]
-                                           [:check-game-ended]]}))
-      check-stack))
+      (update-in [:players player-no] dissoc :aether)
+      (ut/update-in-if-present [:players player-no :breaches]
+                               (partial mapv (fn [{:keys [status] :as breach}]
+                                               (cond-> breach
+                                                       (= :focused status) (assoc :status :closed)))))))
 
-(effects/register {:do-clean-up do-clean-up
-                   :clean-up    clean-up})
-
-(defn end-turn [{:keys [effect-stack players] :as game} player-no]
-  (assert (empty? effect-stack) "You can't end your turn when you have a choice to make.")
-  (let [at-end-turn-effects (->> (get-in game [:players player-no :triggers])
-                                 (filter (comp #{:at-end-turn} :event))
-                                 (mapcat :effects))]
-    (if (not-empty at-end-turn-effects)
-      (-> game
-          (push-effect-stack {:player-no player-no
-                              :effects   (concat at-end-turn-effects
-                                                 [[:remove-triggers {:event :at-end-turn}]])})
-          check-stack)
-      (let [next-player (mod (inc player-no) (count players))]
-        (-> game
-            (push-effect-stack {:player-no next-player
-                                :effects   [[:start-turn]]})
-            (push-effect-stack {:player-no player-no
-                                :effects   [[:clean-up]]})
-            check-stack)))))
+(effects/register {:clean-up clean-up})

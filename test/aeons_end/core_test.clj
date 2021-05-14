@@ -307,3 +307,54 @@
                (discard-all 0))
            {:players [{:hand  [crystal]
                        :phase :draw}]}))))
+
+(deftest end-turn-test
+  (testing "End turn"
+    (is (= (-> {:players [{:deck     [crystal crystal crystal spark spark]
+                           :discard  [crystal crystal crystal crystal]
+                           :breaches [{:status         :opened
+                                       :prepped-spells [spark]}]
+                           :life     8
+                           :charges  2
+                           :aether   1
+                           :phase    :draw}]}
+               (end-turn 0))
+           {:players [{:hand     [crystal crystal crystal spark spark]
+                       :discard  [crystal crystal crystal crystal]
+                       :breaches [{:status         :opened
+                                   :prepped-spells [spark]}]
+                       :life     8
+                       :charges  2
+                       :phase    :out-of-turn}]}))
+    (is (= (-> {:players [{:hand    [spark]
+                           :deck    [crystal crystal crystal spark spark]
+                           :discard [crystal crystal crystal crystal]
+                           :phase   :draw}]}
+               (end-turn 0))
+           {:players [{:hand    [spark crystal crystal crystal spark]
+                       :deck    [spark]
+                       :discard [crystal crystal crystal crystal]
+                       :phase   :out-of-turn}]}))
+    (is (= (-> {:players [{:deck    [spark]
+                           :discard [crystal crystal crystal spark crystal]
+                           :phase   :draw}]}
+               (end-turn 0))
+           {:players [{:hand  [spark crystal crystal crystal spark]
+                       :deck  [crystal]
+                       :phase :out-of-turn}]}))
+    (is (= (-> {:players [{:hand  [crystal crystal crystal spark crystal spark]
+                           :deck  [spark]
+                           :phase :draw}]}
+               (end-turn 0))
+           {:players [{:hand  [crystal crystal crystal spark crystal spark]
+                       :deck  [spark]
+                       :phase :out-of-turn}]}))
+    (is (= (-> {:players [{:breaches [{:status         :focused
+                                       :prepped-spells [spark]
+                                       :stage          2}]
+                           :phase    :draw}]}
+               (end-turn 0))
+           {:players [{:breaches [{:status         :closed
+                                   :prepped-spells [spark]
+                                   :stage          2}]
+                       :phase    :out-of-turn}]}))))

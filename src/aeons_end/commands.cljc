@@ -118,3 +118,17 @@
                                                          :from       :play-area
                                                          :to         :discard}]]})
         op/check-stack)))
+
+(defn end-turn [{:keys [effect-stack] :as game} player-no]
+  (assert (empty? effect-stack) "End turn error: You have a choice to make.")
+  (let [{:keys [hand play-area]} (get-in game [:players player-no])]
+    (assert (empty? play-area) (str "End turn error: You must discard all played cards first: "
+                                    (->> play-area
+                                         (map :name)
+                                         (ut/format-types))))
+    (-> game
+        (op/push-effect-stack {:player-no player-no
+                               :effects   [[:draw (max (- 5 (count hand)) 0)]
+                                           [:clean-up]
+                                           [:set-phase {:phase :out-of-turn}]]})
+        op/check-stack)))
