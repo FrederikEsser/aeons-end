@@ -148,10 +148,10 @@
                                        true)))
                            (concat card-triggers))]
     #_(assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
-                                                                                            (remove :name)
-                                                                                            (#?(:clj  clojure.pprint/pprint
-                                                                                                :cljs cljs.pprint/pprint))
-                                                                                            with-out-str)))
+                                                                                              (remove :name)
+                                                                                              (#?(:clj  clojure.pprint/pprint
+                                                                                                  :cljs cljs.pprint/pprint))
+                                                                                              with-out-str)))
     (concat
       (get-trigger-effects triggers)
       [[:sync-repeated-play]])))
@@ -200,34 +200,6 @@
       game)))
 
 (effects/register {:set-phase set-phase})
-
-(declare end-turn)
-
-(defn start-turn
-  ([player]
-   (-> player
-       (assoc :actions 1
-              :coins 0
-              :buys 1)
-       (dissoc :gained-cards)))
-  ([game {:keys [player-no]}]
-   (let [game-status (get-game-status game)
-         extra-turn? (->> (get-in game [:players player-no :triggers])
-                          (some (comp #{:at-end-game} :event)))]
-     (cond (= :finished game-status) game
-           (and (= :ending game-status)
-                (not extra-turn?)) (end-turn game player-no)
-           :else (-> game
-                     (assoc :current-player player-no)
-                     (update-in [:players player-no] start-turn)
-                     (push-effect-stack {:player-no player-no
-                                         :effects   (concat
-                                                      (when (= :ending game-status)
-                                                        [[:remove-triggers {:event :at-end-game}]])
-                                                      [[:set-phase {:phase :action}]])})
-                     check-stack)))))
-
-(effects/register {:start-turn start-turn})
 
 (defn remove-trigger [game {:keys [player-no trigger-id card-id]}]
   (-> game
@@ -705,12 +677,40 @@
 
 (effects/register {:card-effect card-effect})
 
-(defn clean-up [game {:keys [player-no]}]
+(defn clear-player [game {:keys [player-no]}]
   (-> game
+      (dissoc :current-player)
       (update-in [:players player-no] dissoc :aether)
       (ut/update-in-if-present [:players player-no :breaches]
                                (partial mapv (fn [{:keys [status] :as breach}]
                                                (cond-> breach
                                                        (= :focused status) (assoc :status :closed)))))))
 
-(effects/register {:clean-up clean-up})
+(defn set-current-player [game {:keys [player-no]}]
+  (assoc game :current-player player-no))
+
+(effects/register {:clear-player       clear-player
+                   :set-current-player set-current-player})
+
+(defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
+  (if (empty? deck)
+    (let [[card & new-deck] (shuffle discard)]
+      (assoc game :turn-order {:deck    (vec new-deck)
+                               :discard [card]}))
+    (let [[card & new-deck] deck]
+      (assoc game :turn-order {:deck    (vec new-deck)
+                               :discard (conj discard card)}))))
+
+(defn start-turn [{{:keys [discard]} :turn-order :as game} _]
+  (let [{:keys [effects]} (last discard)]
+    (push-effect-stack game {:effects effects})))
+
+(defn next-turn [{:keys [turn-order] :as game} _]
+  (if turn-order
+    (push-effect-stack game {:effects [[:draw-turn-order]
+                                       [:start-turn]]})
+    game))
+
+(effects/register {:draw-turn-order draw-turn-order
+                   :start-turn      start-turn
+                   :next-turn       next-turn})

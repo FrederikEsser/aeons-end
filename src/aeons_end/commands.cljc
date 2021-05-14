@@ -83,8 +83,7 @@
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
                                            [:pay cost]
-                                           [:gain {:card-name card-name
-                                                   :bought    true}]]})
+                                           [:gain {:card-name card-name}]]})
         op/check-stack)))
 
 (defn buy-charge [game player-no]
@@ -151,6 +150,7 @@
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:draw (max (- 5 (count hand)) 0)]
-                                           [:clean-up]
-                                           [:set-phase {:phase :out-of-turn}]]})
+                                           [:clear-player]
+                                           [:set-phase {:phase :out-of-turn}]
+                                           [:next-turn]]})
         op/check-stack)))
