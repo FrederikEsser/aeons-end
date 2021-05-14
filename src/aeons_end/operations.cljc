@@ -147,7 +147,7 @@
                                          (condition-fn game player-no))
                                        true)))
                            (concat card-triggers))]
-    (assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
+    #_(assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
                                                                                             (remove :name)
                                                                                             (#?(:clj  clojure.pprint/pprint
                                                                                                 :cljs cljs.pprint/pprint))

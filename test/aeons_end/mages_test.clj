@@ -1,6 +1,7 @@
 (ns aeons-end.mages-test
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
+            [aeons-end.cards.common]
             [aeons-end.mages :refer :all]))
 
 (deftest buried-light-test
