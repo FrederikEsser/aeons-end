@@ -1,16 +1,7 @@
-(ns aeons-end.setup)
-
-(def spark {:name    :spark
-            :type    :spell
-            :cost    0
-            :text    "Cast: Deal 1 damage."
-            :effects [[:deal-damage 1]]})
-
-(def crystal {:name    :crystal
-              :type    :gem
-              :cost    0
-              :text    "Gain 1 Aether."
-              :effects [[:gain-aether 1]]})
+(ns aeons-end.setup
+  (:require [aeons-end.cards.gems :as gems]
+            [aeons-end.mages :as mages]
+            [aeons-end.turn-order :as turn-order]))
 
 (defn create-player [{:keys [breaches] :as mage}]
   (merge mage
@@ -31,3 +22,14 @@
           :life     10
           :charges  0
           :phase    :out-of-turn}))
+
+(defn create-game []
+  {:nemesis    {:life 50}
+   :supply     [{:card gems/jade :pile-size 7}]
+   :players    [(create-player mages/brama)
+                (create-player mages/mist)]
+   :turn-order {:deck (->> [turn-order/player-0
+                            turn-order/player-0
+                            turn-order/player-1
+                            turn-order/player-1]
+                           shuffle)}})

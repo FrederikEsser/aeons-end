@@ -1,4 +1,5 @@
-(ns aeons-end.cards.gems)
+(ns aeons-end.cards.gems
+  (:require [aeons-end.cards.common]))
 
 (def jade {:name    :jade
            :type    :gem

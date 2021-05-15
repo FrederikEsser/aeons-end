@@ -3,7 +3,7 @@
             [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.cards.common]
-            [aeons-end.setup :refer [crystal spark]]
+            [aeons-end.cards.base :refer [crystal spark]]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.mages :refer [buried-light]]
             [aeons-end.turn-order :refer :all]))

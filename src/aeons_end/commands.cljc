@@ -7,6 +7,11 @@
     (assert (= player-no current-player) (str command " error: " player-no " is not the current player " current-player ".")))
   (assert (empty? effect-stack) "End turn error: You have a choice to make."))
 
+(defn start-game [game]
+  (-> game
+      (op/push-effect-stack {:effects [[:next-turn]]})
+      op/check-stack))
+
 (defn play [game player-no card-name]
   (check-command "Play" game player-no)
   (let [{{:keys [effects type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]

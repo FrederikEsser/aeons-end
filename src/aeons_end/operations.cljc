@@ -699,7 +699,7 @@
                                :discard [card]}))
     (let [[card & new-deck] deck]
       (assoc game :turn-order {:deck    (vec new-deck)
-                               :discard (conj discard card)}))))
+                               :discard (concat discard [card])}))))
 
 (defn start-turn [{{:keys [discard]} :turn-order :as game} _]
   (let [{:keys [effects]} (last discard)]
