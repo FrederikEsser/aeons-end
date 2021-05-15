@@ -154,3 +154,8 @@
                                            [:set-phase {:phase :out-of-turn}]
                                            [:next-turn]]})
         op/check-stack)))
+
+(defn -main
+  "I don't do a whole lot ... yet."
+  [& args]
+  (println "Hello World!"))

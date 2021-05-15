@@ -13,5 +13,7 @@ pom.xml.asc
 .nrepl-port
 .cpcache/
 .idea/
+public/js
+figwheel_server.log
 aeons-end.iml
-/src/dombot/
+/dombot/
