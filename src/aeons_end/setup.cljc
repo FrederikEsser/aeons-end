@@ -21,6 +21,7 @@
                           breaches)
           :life     10
           :charges  0
+          :aether   0
           :phase    :out-of-turn}))
 
 (defn create-game []

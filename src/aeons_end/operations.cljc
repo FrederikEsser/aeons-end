@@ -687,7 +687,10 @@
                                                        (= :focused status) (assoc :status :closed)))))))
 
 (defn set-current-player [game {:keys [player-no]}]
-  (assoc game :current-player player-no))
+  (-> game
+      (assoc :current-player player-no)
+      (set-phase {:player-no player-no
+                  :phase     :casting})))
 
 (effects/register {:clear-player       clear-player
                    :set-current-player set-current-player})

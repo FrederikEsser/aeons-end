@@ -1,7 +1,7 @@
 (ns aeons-end.game-state
   (:require [aeons-end.setup :as setup]
-            [aeons-end.commands :as commands]))
-
+            [aeons-end.commands :as commands]
+            [aeons-end.front-end-view :as front-end]))
 
 (defonce game-state (atom {}))
 
@@ -12,7 +12,7 @@
       (assoc :can-undo? true)))
 
 (defn view []
-  (-> @game-state :game first #_dombot.front-end-view/view-game))
+  (-> @game-state :game first front-end/view-game))
 
 (defn undo []
   (let [{:keys [can-undo?]} (-> @game-state :game first)]

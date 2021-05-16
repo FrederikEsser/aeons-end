@@ -1,5 +1,5 @@
 (ns aeons-end.mages
-  (:require [aeons-end.cards.base :refer :all]))
+  (:require [aeons-end.cards.base :refer [crystal spark]]))
 
 (def buried-light {:name    :buried-light
                    :type    :spell
