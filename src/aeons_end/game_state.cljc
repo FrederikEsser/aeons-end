@@ -24,7 +24,7 @@
   (swap! game-state update :game (partial take-last 1))
   (view))
 
-(defn start-game [player-names & {:keys [mode sets]}]
+(defn start-game []
   (let [game (setup/create-game)]
     (swap! game-state assoc :game (-> game
                                       (commands/start-game)
@@ -43,11 +43,11 @@
                                             (commands/play-all-gems current-player)))
     (view)))
 
-#_(defn choose [option]
-    (let [game (get-game)]
-      (swap! game-state update :game conj (-> game
-                                              (op/choose option)))
-      (view)))
+(defn choose [option]
+  (let [game (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            #_(op/choose option)))
+    (view)))
 
 (defn buy [card-name]
   (let [{:keys [current-player] :as game} (get-game)]

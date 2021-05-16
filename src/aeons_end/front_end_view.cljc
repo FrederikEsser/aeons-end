@@ -189,13 +189,13 @@
 (defn view-commands [{:keys [players effect-stack current-player can-undo?] :as game}]
   (let [{:keys [hand play-area aether phase]
          :or   {aether 0}} (get players current-player)
-        [choice] effect-stack
-        can-play-all-gems? (boolean (and (not choice)
-                                         (#{:casting :main} phase)
-                                         (some (comp #{:gem} :type) hand)))]
+        [choice] effect-stack]
     {:can-undo?          (boolean can-undo?)
-     :can-discard-all?   (boolean (not-empty play-area))
-     :can-play-all-gems? can-play-all-gems?
+     :can-discard-all?   (boolean (and (not choice)
+                                       (not-empty play-area)))
+     :can-play-all-gems? (boolean (and (not choice)
+                                       (#{:casting :main} phase)
+                                       (some (comp #{:gem} :type) hand)))
      :can-end-turn?      (and (not choice)
                               (empty? play-area)
                               (not= phase :end-of-game))
@@ -203,11 +203,12 @@
                                (and (#{:casting :main} phase)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
-(defn view-game [{:keys [players effect-stack current-player] :as game}]
+(defn view-game [{:keys [nemesis players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
-           {:supply   (view-supply (merge game {:player (assoc player :player-no current-player)
+           {:nemesis  nemesis
+            :supply   (view-supply (merge game {:player (assoc player :player-no current-player)
                                                 :choice choice}))
             :players  (->> players
                            (map-indexed (fn [idx player]
