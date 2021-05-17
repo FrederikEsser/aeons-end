@@ -26,7 +26,7 @@
                    :type    :gem
                    :cost    0
                    :text    "Gain 1 Aether. OR Cast any player's prepped spell."
-                   :effects []})
+                   :effects [[:gain-aether 1]]})
 
 (def mist {:name     :mist
            :title    "Dagger Captain"

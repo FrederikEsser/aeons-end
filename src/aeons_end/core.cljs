@@ -24,29 +24,31 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
-(defn button-style [& [disabled types number-of-cards]]
-  {:color            (cond disabled :grey
-                           :else :black)
-   :font-weight      :bold
-   :background-color (cond
-                       (:gem types) "#cfbede"
-                       (:relic types) "#c7dff5"
-                       (:spell types) "#f7e2b5"
-                       (:minion types) "#aadfef"
-                       (:closed types) "#506f9a"
-                       (:focused types) "#506f9a"
-                       (:opened types) "#f8e238")
-   :border-color     (cond
-                       (zero? number-of-cards) :red
-                       (:gem types) "#9d77af"
-                       (:relic types) "#6bb6dc"
-                       (:spell types) "#f8c44e"
-                       (:minion types) "#49c4e9"
-                       (:closed types) "#434f64"
-                       (:focused types) "#f9cf23"
-                       (:opened types) "#f9cf23"
-                       :else :grey)
-   :border-width     2})
+(defn button-style [& [disabled style number-of-cards]]
+  (let [inverse? (#{:closed :focused} style)]
+    {:color            (if inverse?
+                         (if disabled "#cccccc" :white)
+                         (if disabled :grey :black))
+     :font-weight      :bold
+     :background-color (cond
+                         (= :gem style) "#cfbede"
+                         (= :relic style) "#c7dff5"
+                         (= :spell style) "#f7e2b5"
+                         (= :minion style) "#aadfef"
+                         (= :closed style) "#506f9a"
+                         (= :focused style) "#506f9a"
+                         (= :opened style) "#f8e238")
+     :border-color     (cond
+                         (zero? number-of-cards) :red
+                         (= :gem style) "#9d77af"
+                         (= :relic style) "#6bb6dc"
+                         (= :spell style) "#f8c44e"
+                         (= :minion style) "#49c4e9"
+                         (= :closed style) "#434f64"
+                         (= :focused style) "#f9cf23"
+                         (= :opened style) "#f9cf23"
+                         :else :grey)
+     :border-width     2}))
 
 (defn mapk [f coll]
   (->> coll
@@ -85,7 +87,7 @@
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))
          [:div
-          [:button {:style    (button-style disabled #{type} number-of-cards)
+          [:button {:style    (button-style disabled type number-of-cards)
                     :title    text
                     :disabled disabled
                     :on-click (when interaction
@@ -93,11 +95,32 @@
                                          :playable (swap! state assoc :game (cmd/play name))
                                          :choosable (select! (or choice-value name))
                                          :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
-                                         :buyable (swap! state assoc :game (cmd/buy name)))))}
+                                         :buyable (swap! state assoc :game (cmd/buy name))
+                                         :discardable (swap! state assoc :game (cmd/discard name))
+                                         :prepable (swap! state assoc :game (cmd/prep-spell name 0))
+                                         :castable (swap! state assoc :game (cmd/cast-spell name 0)))))}
            (str name-ui
                 (when cost (str " (" (ut/format-cost cost) ")"))
                 (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
+
+(defn view-breach [{:keys [breach-no name-ui status focus-cost open-cost prepped-spells choice-value choice-opts interactions]}]
+  (let [disabled (empty? interactions)]
+    [:tr {:style {:border :none}}
+     [:td {:style {:border :none}}
+      [:button {:style    (button-style disabled status 1)
+                ; :title    text
+                :disabled disabled
+                :on-click (when (not-empty interactions)
+                            (fn [] (cond
+                                     (:openable interactions) (swap! state assoc :game (cmd/open-breach breach-no))
+                                     (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no)))))}
+       (str name-ui
+            (when (= :opened status) " (open)")
+            (when (or focus-cost open-cost) (str " (" (ut/format-cost focus-cost) "/" (ut/format-cost open-cost) ")")))]]
+     [:td {:style {:border         :none
+                   :vertical-align :top}}
+      (mapk view-card prepped-spells)]]))
 
 (defn view-player-pile [pile max]
   [:div
@@ -171,9 +194,9 @@
        [:div "Players"
         [:table
          [:tbody
-          [:tr (map-tag :th ["Name" "Hand" "Play area" "Deck" "Discard"])]
+          [:tr (map-tag :th ["Name" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
-               (mapk (fn [{:keys               [name-ui title hand play-area deck discard aether active?]
+               (mapk (fn [{:keys               [name-ui title breaches hand play-area deck discard aether active?]
                            {:keys [text
                                    options
                                    interval
@@ -186,6 +209,7 @@
                          [:div name-ui]
                          (when title
                            [:div title])]
+                        [:td (mapk view-breach breaches)]
                         [:td (mapk (partial view-card max) hand)]
                         [:td (mapk (partial view-card max) play-area)]
                         [:td (view-player-pile deck max)]

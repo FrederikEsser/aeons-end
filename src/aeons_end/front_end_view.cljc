@@ -17,13 +17,13 @@
                             (merge interaction
                                    {:choice-value {:area area :card-name name}}))))))
 
-(defn view-card [{{:keys [aether phase]
-                   :or   {aether 0}} :player
-                  choice             :choice
-                  :as                game}
-                 {{:keys [name text type cost] :as card} :card
-                  :keys                                  [pile-size total-pile-size]
-                  :or                                    {pile-size 0}}]
+(defn view-supply-card [{{:keys [aether phase]
+                          :or   {aether 0}} :player
+                         choice             :choice
+                         :as                game}
+                        {{:keys [name text type cost] :as card} :card
+                         :keys                                  [pile-size total-pile-size]
+                         :or                                    {pile-size 0}}]
   (merge {:name            name
           :name-ui         (ut/format-name name)
           :text            text
@@ -43,7 +43,7 @@
 (defn view-supply [{:keys [supply choice] :as game}]
   (->> supply
        (map (fn [pile]
-              (let [top-card (view-card game (ut/access-top-card pile))]
+              (let [top-card (view-supply-card game (ut/access-top-card pile))]
                 {:card top-card})))))
 
 (defn- type-sort-order [type]
@@ -51,14 +51,17 @@
         (= :relic type) 2
         (= :spell type) 3))
 
-(defn view-area [area {{:keys [phase player-no] :as player} :player
-                       choice                               :choice
-                       active?                              :active-player?
-                       :as                                  game}
+(defn view-area [area {{:keys [phase player-no breaches] :as player} :player
+                       choice                                        :choice
+                       active?                                       :active-player?
+                       :as                                           game}
                  & [position number-of-cards]]
-  (let [take-fn (if (= :bottom position) take-last take)
-        cards   (cond->> (get player area)
-                         number-of-cards (take-fn number-of-cards))]
+  (let [take-fn      (if (= :bottom position) take-last take)
+        cards        (cond->> (get player area)
+                              number-of-cards (take-fn number-of-cards))
+        open-breach? (->> breaches
+                          (remove (comp #{:closed} :status))
+                          (some (comp empty? :prepped-spells)))]
     (-> cards
         (->>
           (map (fn [{:keys [id name text type] :as card}]
@@ -71,9 +74,15 @@
                         (when (and active?
                                    (= :hand area)
                                    (not choice)
-                                   (#{:casting :main} phase)
-                                   (#{:gem :relic} type))
-                          {:interaction :playable})
+                                   (#{:casting :main} phase))
+                          (if (#{:gem :relic} type)
+                            {:interaction :playable}
+                            (when open-breach?
+                              {:interaction :prepable})))
+                        (when (and active?
+                                   (= :play-area area)
+                                   (not choice))
+                          {:interaction :discardable})
                         (choice-interaction name area choice))))
           frequencies
           (map (fn [[card number-of-cards]]
@@ -128,17 +137,67 @@
               (when-not (nil? optional?)
                 {:optional? optional?}))))
 
-(defn view-player [{{:keys [name aether]
+
+
+(defn view-breaches [{{:keys [breaches
+                              phase
+                              aether] :as player} :player
+                      choice                      :choice
+                      active?                     :active-player?
+                      :as                         game}]
+
+  (->> breaches
+       (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage]}]
+                      (let [open-cost (when (and open-costs stage) (get open-costs stage))]
+                        (merge {:name-ui   (case idx
+                                             0 "I"
+                                             1 "II"
+                                             2 "III"
+                                             3 "IV")
+                                :breach-no idx
+                                :status    status}
+                               (when (not-empty prepped-spells)
+                                 {:prepped-spells (->> prepped-spells
+                                                       (map (fn [{:keys [id name text type] :as card}]
+                                                              (merge {:name    name
+                                                                      :name-ui (ut/format-name name)
+                                                                      :text    text
+                                                                      :type    type}
+                                                                     (when (and active?
+                                                                                (not choice)
+                                                                                (#{:casting} phase)
+                                                                                (#{:spell} type))
+                                                                       {:interaction :castable})
+                                                                     (choice-interaction name :breach choice)))))})
+                               (when focus-cost
+                                 {:focus-cost focus-cost})
+                               (when (and open-costs stage)
+                                 {:open-cost open-cost})
+                               (when (and active?
+                                          (not choice)
+                                          (#{:casting :main} phase)
+                                          aether
+                                          focus-cost
+                                          open-cost)
+                                 {:interactions (cond-> #{}
+                                                        (>= aether focus-cost) (conj :focusable)
+                                                        (>= aether open-cost) (conj :openable))})))))))
+
+(defn view-player [{{:keys [name title life charges aether]
                      :or   {aether 0}} :player
                     :keys              [choice
                                         active-player?]
                     :as                data}]
-  (merge {:name-ui   (ut/format-name name)
+  (merge {:active?   active-player?
+          :name-ui   (ut/format-name name)
+          :title     title
+          :breaches  (view-breaches data)
           :hand      (view-area :hand data)
           :play-area (view-area :play-area data)
           :deck      (view-deck data)
           :discard   (view-discard data)
-          :active?   active-player?
+          :life      life
+          :charges   charges
           :aether    aether}
          (when choice
            {:choice (view-choice choice)})))
