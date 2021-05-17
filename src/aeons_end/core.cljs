@@ -29,14 +29,22 @@
                            :else :black)
    :font-weight      :bold
    :background-color (cond
-                       (:gem types) "#B890D7"
-                       (:relic types) "#A8BFD3"
-                       (:spell types) "#F6E359")
+                       (:gem types) "#cfbede"
+                       (:relic types) "#c7dff5"
+                       (:spell types) "#f7e2b5"
+                       (:minion types) "#aadfef"
+                       (:closed types) "#506f9a"
+                       (:focused types) "#506f9a"
+                       (:opened types) "#f8e238")
    :border-color     (cond
                        (zero? number-of-cards) :red
-                       (:gem types) "#9F76B8"
-                       (:relic types) "#6295CE"
-                       (:spell types) "#AD9727"
+                       (:gem types) "#9d77af"
+                       (:relic types) "#6bb6dc"
+                       (:spell types) "#f8c44e"
+                       (:minion types) "#49c4e9"
+                       (:closed types) "#434f64"
+                       (:focused types) "#f9cf23"
+                       (:opened types) "#f9cf23"
                        :else :grey)
    :border-width     2})
 
@@ -58,7 +66,7 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui choice-value choice-opts type cost number-of-cards interaction] :as card}]
+  ([max {:keys [name name-ui text choice-value choice-opts type cost number-of-cards interaction] :as card}]
    (if (map? card)
      (let [selection       (:selection @state)
            num-selected    (->> selection (filter #{name choice-value}) count)
@@ -78,6 +86,7 @@
                       (= 0 number-of-cards))
          [:div
           [:button {:style    (button-style disabled #{type} number-of-cards)
+                    :title    text
                     :disabled disabled
                     :on-click (when interaction
                                 (fn [] (case interaction
@@ -260,7 +269,7 @@
             (view-row row2)
             (view-row row3)]])]
        #_[:div (str "Trash (" (get-in @state [:game :trash :number-of-cards]) " cards)")
-        [view-expandable-pile :trash (get-in @state [:game :trash])]]])))
+          [view-expandable-pile :trash (get-in @state [:game :trash])]]])))
 
 ;; -------------------------
 ;; Initialize app

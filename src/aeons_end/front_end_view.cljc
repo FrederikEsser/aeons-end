@@ -21,11 +21,12 @@
                    :or   {aether 0}} :player
                   choice             :choice
                   :as                game}
-                 {{:keys [name type cost] :as card} :card
-                  :keys                             [pile-size total-pile-size]
-                  :or                               {pile-size 0}}]
+                 {{:keys [name text type cost] :as card} :card
+                  :keys                                  [pile-size total-pile-size]
+                  :or                                    {pile-size 0}}]
   (merge {:name            name
           :name-ui         (ut/format-name name)
+          :text            text
           :type            type
           :cost            cost
           :number-of-cards pile-size}
@@ -41,33 +42,9 @@
 
 (defn view-supply [{:keys [supply choice] :as game}]
   (->> supply
-       (map (fn [{:keys [split-pile hidden?] :as pile}]
-              (let [top-card  (view-card game (ut/access-top-card pile))
-                    all-cards (some->> split-pile
-                                       (filter :pile-size)
-                                       (map (fn [{:keys [card pile-size]
-                                                  :or   {pile-size 0}}]
-                                              (let [{:keys [name bane?]} card
-                                                    types (ut/get-types game card)
-                                                    cost  (ut/get-cost game card)]
-                                                (if (= name (:name top-card))
-                                                  (dissoc top-card
-                                                          :total-number-of-cards
-                                                          (when hidden? :number-of-cards))
-                                                  (merge {:name       name
-                                                          :name-ui    (ut/format-name name)
-                                                          :types      types
-                                                          :mixed-cost cost}
-                                                         (when-not hidden?
-                                                           {:number-of-cards pile-size})
-                                                         (choice-interaction name :supply choice)
-                                                         (when bane?
-                                                           {:bane? true})))))))]
-                (merge {:card top-card}
-                       (when split-pile
-                         {:cards (cond-> all-cards
-                                         hidden? (->> distinct
-                                                      (sort-by :name-ui)))})))))))
+       (map (fn [pile]
+              (let [top-card (view-card game (ut/access-top-card pile))]
+                {:card top-card})))))
 
 (defn- type-sort-order [type]
   (cond (= :gem type) 1
@@ -84,9 +61,10 @@
                          number-of-cards (take-fn number-of-cards))]
     (-> cards
         (->>
-          (map (fn [{:keys [id name type] :as card}]
+          (map (fn [{:keys [id name text type] :as card}]
                  (merge {:name    name
                          :name-ui (ut/format-name name)
+                         :text    text
                          :type    type}
                         (when (ut/stay-in-play game player-no card)
                           {:stay-in-play true})
