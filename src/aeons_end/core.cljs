@@ -199,9 +199,9 @@
        [:div "Players"
         [:table
          [:tbody
-          [:tr (map-tag :th ["Name" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
+          [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
-               (mapk (fn [{:keys               [name-ui title breaches hand play-area deck discard aether active?]
+               (mapk (fn [{:keys               [name-ui title life ability aether breaches hand play-area deck discard active?]
                            {:keys [text
                                    options
                                    interval
@@ -220,16 +220,43 @@
                                                      (= :spell type) (assoc :breach-no breach-no)))]
                          [:tr
                           [:td
-                           [:div name-ui]
-                           (when title
-                             [:div title])]
-                          [:td (mapk view-breach breaches)]
-                          [:td (mapk (partial view-card max) (map add-breach-no hand))]
-                          [:td (mapk (partial view-card max) play-area)]
-                          [:td (view-player-pile deck max)]
-                          [:td (view-player-pile discard max)]
+                           [:div [:button {:title title
+                                           :style    (button-style (not active?))
+                                           :disabled true}
+                                  name-ui]]
+                           [:div "Life: " life]
+                           [:div "Aether: " aether]]
+                          [:td [:table
+                                [:tbody {:style {:border :none}}
+                                 (mapk view-breach breaches)]]]
                           [:td [:div
-                                [:div "Aether: " aether]]]
+                                (when (and active? (-> @state :game :commands :can-play-all-gems?))
+                                  [:div [:button {:style    (button-style)
+                                                  :on-click (fn [] (swap! state assoc :game (cmd/play-all-gems)))}
+                                         "Play all Gems"]
+                                   [:hr]])
+                                (mapk (partial view-card max) (map add-breach-no hand))]]
+                          [:td [:div
+                                (when (and active? (get-in @state [:game :commands :can-discard-all?]))
+                                  [:div
+                                   [:button {:style    (button-style false)
+                                             :on-click (fn [] (swap! state assoc :game (cmd/discard-all)))}
+                                    "Discard all"]
+                                   [:hr]])
+                                (mapk (partial view-card max) play-area)]]
+                          [:td [:div
+                                (when (and active? (get-in @state [:game :commands :can-end-turn?]))
+                                  [:div
+                                   (let [confirm-text (-> @state :game :commands :confirm-end-turn)]
+                                     [:button {:style    (button-style)
+                                               :on-click (fn [] (if (or (not confirm-text)
+                                                                        (js/confirm (str confirm-text
+                                                                                         "\nAre you sure you want to end your turn?")))
+                                                                  (swap! state assoc :game (cmd/end-turn))))}
+                                      "End Turn"])
+                                   [:hr]])
+                                (view-player-pile deck max)]]
+                          [:td (view-player-pile discard max)]
                           (if text
                             [:td text
                              [:div (mapk (fn [{:keys [option text]}]
@@ -273,29 +300,7 @@
                                             :on-click (fn [] (swap! state assoc
                                                                     :game (cmd/choose selection)
                                                                     :selection []))}
-                                   "Done"])])]
-                            [:td
-                             (when active?
-                               [:div
-                                [:div (let [disabled (-> @state :game :commands :can-play-all-gems? not)]
-                                        [:button {:style    (button-style disabled)
-                                                  :disabled disabled
-                                                  :on-click (fn [] (swap! state assoc :game (cmd/play-all-gems)))}
-                                         "Play all Gems"])]
-                                (when (get-in @state [:game :commands :can-discard-all?])
-                                  [:div
-                                   [:button {:style    (button-style false)
-                                             :on-click (fn [] (swap! state assoc :game (cmd/discard-all)))}
-                                    "Discard all"]])
-                                [:div (let [disabled     (-> @state :game :commands :can-end-turn? not)
-                                            confirm-text (-> @state :game :commands :confirm-end-turn)]
-                                        [:button {:style    (button-style disabled)
-                                                  :disabled disabled
-                                                  :on-click (fn [] (if (or (not confirm-text)
-                                                                           (js/confirm (str confirm-text
-                                                                                            "\nAre you sure you want to end your turn?")))
-                                                                     (swap! state assoc :game (cmd/end-turn))))}
-                                         "End Turn"])]])])]))))]]]
+                                   "Done"])])])]))))]]]
 
        [:div "Supply"
         (let [supply (-> (:game @state) :supply)
