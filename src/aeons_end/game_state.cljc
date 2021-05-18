@@ -55,10 +55,10 @@
                                             (commands/buy-card current-player card-name)))
     (view)))
 
-(defn buy-charge []
+(defn charge-ability []
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (commands/buy-charge current-player)))
+                                            (commands/charge-ability current-player)))
     (view)))
 
 (defn focus-breach [breach-no]

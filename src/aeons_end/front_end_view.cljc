@@ -186,7 +186,7 @@
                                                         (>= aether focus-cost) (conj :focusable)
                                                         (>= aether open-cost) (conj :openable))})))))))
 
-(defn view-player [{{:keys [name title life charges aether]
+(defn view-player [{{:keys [name title life aether]
                      :or   {aether 0}} :player
                     :keys              [choice
                                         active-player?]
@@ -200,7 +200,6 @@
           :deck      (view-deck data)
           :discard   (view-discard data)
           :life      life
-          :charges   charges
           :aether    aether}
          (when choice
            {:choice (view-choice choice)})))

@@ -183,49 +183,50 @@
                                             :phase  :main}]}
                                 (buy-card 0 :jade)))))))
 
-(deftest buy-charge-test
-  (testing "Buy charge"
-    (is (= (-> {:players [{:ability {:cost 4}
-                           :aether  2
-                           :charges 0
-                           :phase   :main}]}
-               (buy-charge 0))
-           {:players [{:ability {:cost 4}
-                       :aether  0
-                       :charges 1
-                       :phase   :main}]}))
-    (is (= (-> {:players [{:ability {:cost 4}
-                           :aether  2
-                           :charges 0
-                           :phase   :casting}]}
-               (buy-charge 0))
-           {:players [{:ability {:cost 4}
-                       :aether  0
-                       :charges 1
-                       :phase   :main}]}))
-    (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
-                          (-> {:players [{:ability {:cost 4}
-                                          :aether  2
-                                          :charges 0
-                                          :phase   :draw}]}
-                              (buy-charge 0))))
-    (is (= (-> {:players [{:ability {:cost 4}
-                           :aether  2
-                           :charges 3}]}
-               (buy-charge 0))
-           {:players [{:ability {:cost 4}
-                       :aether  0
-                       :charges 4}]}))
-    (is (thrown-with-msg? AssertionError #"Pay error: You can't pay 2 aether, when you only have 1"
-                          (-> {:players [{:ability {:cost 4}
-                                          :aether  1
-                                          :charges 0}]}
-                              (buy-charge 0))))
-    (is (thrown-with-msg? AssertionError #"Charge error: You already have 4 charges"
-                          (-> {:players [{:ability {:cost 4}
-                                          :aether  2
-                                          :charges 4}]}
-                              (buy-charge 0))))))
+(deftest ability-test
+  (testing "Ability"
+    (testing "Charge"
+      (is (= (-> {:players [{:ability {:charges     0
+                                       :charge-cost 4}
+                             :aether  2
+                             :phase   :main}]}
+                 (charge-ability 0))
+             {:players [{:ability {:charges     1
+                                   :charge-cost 4}
+                         :aether  0
+                         :phase   :main}]}))
+      (is (= (-> {:players [{:ability {:charges     0
+                                       :charge-cost 4}
+                             :aether  2
+                             :phase   :casting}]}
+                 (charge-ability 0))
+             {:players [{:ability {:charges     1
+                                   :charge-cost 4}
+                         :aether  0
+                         :phase   :main}]}))
+      (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
+                            (-> {:players [{:ability {:charges     0
+                                                      :charge-cost 4}
+                                            :aether  2
+                                            :phase   :draw}]}
+                                (charge-ability 0))))
+      (is (= (-> {:players [{:ability {:charges     3
+                                       :charge-cost 4}
+                             :aether  2}]}
+                 (charge-ability 0))
+             {:players [{:ability {:charges     4
+                                   :charge-cost 4}
+                         :aether  0}]}))
+      (is (thrown-with-msg? AssertionError #"Pay error: You can't pay 2 aether, when you only have 1"
+                            (-> {:players [{:ability {:charges     0
+                                                      :charge-cost 4}
+                                            :aether  1}]}
+                                (charge-ability 0))))
+      (is (thrown-with-msg? AssertionError #"Charge error: You already have 4 charges"
+                            (-> {:players [{:ability {:charges     4
+                                                      :charge-cost 4}
+                                            :aether  2}]}
+                                (charge-ability 0)))))))
 
 (deftest breach-test
   (testing "Breaches"
@@ -374,8 +375,8 @@
                            :discard  [crystal crystal crystal crystal]
                            :breaches [{:status         :opened
                                        :prepped-spells [spark]}]
+                           :ability  {:charges 2}
                            :life     8
-                           :charges  2
                            :aether   1
                            :phase    :draw}]}
                (end-turn 0))
@@ -383,8 +384,8 @@
                        :discard  [crystal crystal crystal crystal]
                        :breaches [{:status         :opened
                                    :prepped-spells [spark]}]
+                       :ability  {:charges 2}
                        :life     8
-                       :charges  2
                        :phase    :out-of-turn}]}))
     (is (= (-> {:players [{:hand    [spark]
                            :deck    [crystal crystal crystal spark spark]

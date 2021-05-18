@@ -402,12 +402,11 @@
 (effects/register {:pay pay})
 
 (defn gain-charge [game {:keys [player-no]}]
-  (let [{:keys [ability charges]
-         :or   {charges 0}} (get-in game [:players player-no])
-        max-charges (:cost ability)]
-    (assert (and max-charges (< charges max-charges)) (str "Charge error: You already have " charges " charges."))
+  (let [{:keys [charges charge-cost]
+         :or   {charges 0}} (get-in game [:players player-no :ability])]
+    (assert (and charge-cost (< charges charge-cost)) (str "Charge error: You already have " charges " charges."))
     (-> game
-        (update-in [:players player-no :charges] ut/plus 1))))
+        (update-in [:players player-no :ability :charges] ut/plus 1))))
 
 (effects/register {:gain-charge gain-charge})
 

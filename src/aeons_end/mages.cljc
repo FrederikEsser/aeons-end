@@ -16,11 +16,11 @@
                        {:stage 2}]
             :hand     [buried-light crystal crystal crystal crystal]
             :deck     [crystal crystal crystal spark spark]
-            :ability  {:name       :brink-siphon
-                       :activation :your-main-phase
-                       :cost       5
-                       :text       "Any player gains 4 life."
-                       :effects    []}})
+            :ability  {:name        :brink-siphon
+                       :activation  :your-main-phase
+                       :charge-cost 5
+                       :text        "Any player gains 4 life."
+                       :effects     []}})
 
 (def garnet-shard {:name    :garnet-shard
                    :type    :gem
@@ -36,8 +36,8 @@
                       {:stage 1}]
            :hand     [garnet-shard crystal crystal crystal spark]
            :deck     [crystal crystal crystal spark spark]
-           :ability  {:name       :divine-augury
-                      :activation :your-main-phase
-                      :cost       5
-                      :text       "Any ally draws four cards."
-                      :effects    []}})
+           :ability  {:name        :divine-augury
+                      :activation  :your-main-phase
+                      :charge-cost 5
+                      :text        "Any ally draws four cards."
+                      :effects     []}})

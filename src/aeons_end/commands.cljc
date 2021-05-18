@@ -95,7 +95,7 @@
                                            [:gain {:card-name card-name}]]})
         op/check-stack)))
 
-(defn buy-charge [game player-no]
+(defn charge-ability [game player-no]
   (check-command "Charge" game player-no)
   (-> game
       (op/push-effect-stack {:player-no player-no
