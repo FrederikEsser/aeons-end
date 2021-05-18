@@ -41,7 +41,7 @@
                          (= :breach type) (if (= :opened status)
                                             "#f8e238"
                                             "#506f9a")
-                         (= :ability type) (if (= :activatable status)
+                         (= :ability type) (if (= :charged status)
                                              "#f5bb11" #_"#f9e395"
                                              "#f9e395" #_"#b4afa2"))
      :border-color     (cond
@@ -143,7 +143,7 @@
     [:div
      [:button {:style    (button-style :disabled disabled
                                        :type :ability
-                                       :status interaction)
+                                       :status (when (>= charges charge-cost) :charged))
                :title    text
                :disabled disabled
                :on-click (when interaction

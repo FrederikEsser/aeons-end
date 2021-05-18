@@ -26,7 +26,8 @@
           :phase    :out-of-turn}))
 
 (defn create-game []
-  {:nemesis    {:life 50}
+  {:mode       :swift
+   :nemesis    {:life 50}
    :supply     [{:card gems/jade :pile-size 7}]
    :players    [(create-player mages/brama)
                 (create-player mages/mist)]

@@ -1,21 +1,39 @@
 (ns aeons-end.front-end-view
   (:require [aeons-end.utils :as ut]))
 
-(defn- choice-interaction [name area {:keys [source options max choice-opts]}]
+(defn- choice-interaction [{:keys [area card-name]}
+                           {:keys [source options max choice-opts]}]
   (let [interaction (if (= 1 (or max (count options)))
                       {:interaction :quick-choosable}
                       (merge {:interaction :choosable}
                              (when choice-opts
                                {:choice-opts choice-opts})))]
     (cond
-      (and (= area source) ((set options) name)) interaction
+      (and (= area source)
+           (contains? (set options) card-name)) interaction
       (= :mixed source) (let [card-names (->> options
                                               (filter (comp #{area} :area))
                                               (map :card-name)
                                               set)]
-                          (when (card-names name)
+                          (when (contains? card-names card-name)
                             (merge interaction
-                                   {:choice-value {:area area :card-name name}}))))))
+                                   {:choice-value {:area area :card-name card-name}}))))))
+
+(defn- choice-interaction-player [{:keys [area player-no breach-no card-name]}
+                                  {:keys [options max choice-opts]}]
+  (let [interaction  (if (= 1 (or max (count options)))
+                       {:interaction :quick-choosable}
+                       (merge {:interaction :choosable}
+                              (when choice-opts
+                                {:choice-opts choice-opts})))
+        choice-value (cond->> (filter (comp #{area} :area) options)
+                              player-no (filter (comp #{player-no} :player-no))
+                              breach-no (filter (comp #{breach-no} :breach-no))
+                              card-name (filter (comp #{card-name} :card-name))
+                              :always first)]
+    (when choice-value
+      (merge interaction
+             {:choice-value choice-value}))))
 
 (defn view-supply-card [{{:keys [aether phase]
                           :or   {aether 0}} :player
@@ -38,7 +56,8 @@
                     (pos? pile-size)
                     aether (>= aether cost))
            {:interaction :buyable})
-         (choice-interaction name :supply choice)))
+         (choice-interaction {:area      :supply
+                              :card-name name} choice)))
 
 (defn view-supply [{:keys [supply choice] :as game}]
   (->> supply
@@ -83,7 +102,8 @@
                                    (= :play-area area)
                                    (not choice))
                           {:interaction :discardable})
-                        (choice-interaction name area choice))))
+                        (choice-interaction {:area      area
+                                             :card-name name} choice))))
           frequencies
           (map (fn [[card number-of-cards]]
                  (cond-> card
@@ -139,13 +159,13 @@
 
 
 
-(defn view-breaches [{{:keys [breaches
+(defn view-breaches [{{:keys [player-no
+                              breaches
                               phase
                               aether] :as player} :player
                       choice                      :choice
                       active?                     :active-player?
                       :as                         game}]
-
   (->> breaches
        (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage]}]
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
@@ -168,7 +188,10 @@
                                                                                 (#{:casting} phase)
                                                                                 (#{:spell} type))
                                                                        {:interaction :castable})
-                                                                     (choice-interaction name :breach choice)))))})
+                                                                     (choice-interaction-player {:area      :prepped-spells
+                                                                                                 :player-no player-no
+                                                                                                 :breach-no idx
+                                                                                                 :card-name name} choice)))))})
                                (when (and (= :opened status)
                                           bonus-damage)
                                  {:bonus-damage bonus-damage})
@@ -228,7 +251,9 @@
           :discard   (view-discard data)
           :life      life
           :aether    aether}
-         (when choice
+         (when (and choice
+                    (or (not= :players (:source choice))
+                        active-player?))
            {:choice (view-choice choice)})))
 
 (defn view-trash [{:keys [trash choice] :as game}]
@@ -245,7 +270,8 @@
                                     (merge {:name    name
                                             :name-ui (ut/format-name name)
                                             :type    type}
-                                           (choice-interaction name :trash choice))))
+                                           (choice-interaction {:area      :trash
+                                                                :card-name name} choice))))
                              frequencies
                              (map (fn [[card number-of-cards]]
                                     (cond-> card
@@ -270,7 +296,7 @@
                                       (not-empty hand)) "You still have cards in your hand.")}))
 
 (defn view-game [{:keys [nemesis players effect-stack current-player] :as game}]
-  (let [[{:keys [player-no] :as choice}] effect-stack
+  (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
            {:nemesis  nemesis
@@ -284,7 +310,8 @@
                                                                     (not= phase :end-of-game))]
                                             (view-player (merge game {:active-player? active-player?
                                                                       :player         (assoc player :player-no idx)}
-                                                                (when (= idx player-no)
+                                                                (when (or (= idx player-no)
+                                                                          (= :players source))
                                                                   {:choice choice})))))))
             :trash    (view-trash (merge game {:choice choice}))
             :commands (view-commands game)}))))

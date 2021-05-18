@@ -3,9 +3,12 @@
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]))
 
-(defn gain-aether [game {:keys [player-no arg]}]
-  (cond-> game
-          (pos? arg) (update-in [:players player-no :aether] ut/plus arg)))
+(defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg]}]
+  (let [current-player? (or (nil? current-player)
+                            (= current-player player-no))]
+    (cond-> game
+            (and (pos? arg)
+                 current-player?) (update-in [:players player-no :aether] ut/plus arg))))
 
 (effects/register {:gain-aether gain-aether})
 

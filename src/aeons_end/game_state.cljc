@@ -1,6 +1,7 @@
 (ns aeons-end.game-state
   (:require [aeons-end.setup :as setup]
             [aeons-end.commands :as commands]
+            [aeons-end.operations :as op]
             [aeons-end.front-end-view :as front-end]))
 
 (defonce game-state (atom {}))
@@ -43,10 +44,10 @@
                                             (commands/play-all-gems current-player)))
     (view)))
 
-(defn choose [option]
+(defn choose [selection]
   (let [game (get-game)]
     (swap! game-state update :game conj (-> game
-                                            #_(op/choose option)))
+                                            (op/choose selection)))
     (view)))
 
 (defn buy [card-name]

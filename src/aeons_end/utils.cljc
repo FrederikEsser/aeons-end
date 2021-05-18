@@ -361,6 +361,26 @@
 
 (effects/register-options {:player options-from-player})
 
+(defn options-from-players
+  ([{:keys [players] :as game} _ _ area & args]
+   (let [options (case area
+                   :prepped-spells (->> players
+                                        (map-indexed (fn [player-no player]
+                                                       (->> (:breaches player)
+                                                            (map-indexed (fn [breach-no breach]
+                                                                           (->> (:prepped-spells breach)
+                                                                                (map (fn [{:keys [name]}]
+                                                                                       {:area      :prepped-spells
+                                                                                        :player-no player-no
+                                                                                        :breach-no breach-no
+                                                                                        :card-name name})))))
+                                                            (apply concat))))
+                                        (apply concat)))]
+     options)))
+
+(effects/register-options {:players options-from-players})
+
+
 (defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost costs-less-than cost type types not-type names not-names all]}]]
   (let [supply-piles (if all
                        (mapcat access-pile supply)
@@ -394,54 +414,11 @@
 
 (effects/register-options {:non-pile-cards options-from-non-pile-cards})
 
-(defn options-from-projects [{:keys [projects] :as game} player-no card-id & [{:keys [names]}]]
-  (cond->> (vals projects)
-           names (filter (comp names :name))
-           :always (map (comp :name))))
-
-(effects/register-options {:projects options-from-projects})
-
-(defn options-from-events [{:keys [events] :as game} player-no card-id & [{:keys [names]}]]
-  (cond->> (vals events)
-           names (filter (comp names :name))
-           :always (map (comp :name))))
-
-(effects/register-options {:events options-from-events})
-
-(defn options-from-artifacts [{:keys [artifacts] :as game} player-no card-id & [{:keys [names]}]]
-  (cond->> (vals artifacts)
-           names (filter (comp names :name))
-           :always (map (comp :name))))
-
-(effects/register-options {:artifacts options-from-artifacts})
-
 (defn options-from-deck-position [game player-no & args]
   (let [deck (get-in game [:players player-no :deck])]
     (-> deck count inc range)))
 
 (effects/register-options {:deck-position options-from-deck-position})
-
-(defn options-from-overbuy [game player-no & args]
-  (let [coins (get-in game [:players player-no :coins])]
-    (-> coins inc range)))
-
-(effects/register-options {:overpay options-from-overbuy})
-
-(defn options-from-trash [{:keys [trash] :as game} player-no card-id {:keys [type not-type face min-cost max-cost]}]
-  (cond->> trash
-           type (filter (comp type (partial get-types game)))
-           not-type (remove (comp not-type (partial get-types game)))
-           (= :up face) (remove (comp #{:down} :face))
-           min-cost (filter (comp (partial costs-at-least min-cost) (partial get-cost game)))
-           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
-           :always (map :name)))
-
-(effects/register-options {:trash options-from-trash})
-
-(defn options-from-druid [{:keys [druid-boons] :as game} player-no card-id]
-  (map :name druid-boons))
-
-(effects/register-options {:druid-boons options-from-druid})
 
 (defn special-options [game player-no card-id & options]
   options)

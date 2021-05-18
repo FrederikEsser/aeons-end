@@ -426,13 +426,15 @@
         (assoc-in [:players player-no :breaches breach-no :status] :opened)
         (update-in [:players player-no :breaches breach-no] dissoc :focus-cost :open-costs :stage))))
 
-(defn focus-breach [game {:keys [player-no breach-no]}]
-  (let [{:keys [status stage]} (get-in game [:players player-no :breaches breach-no])]
+(defn focus-breach [{:keys [current-player] :as game} {:keys [player-no breach-no]}]
+  (let [{:keys [status stage]} (get-in game [:players player-no :breaches breach-no])
+        current-player? (or (nil? current-player)
+                            (= current-player player-no))]
     (assert (not (= :opened status)) (str "Focus error: Breach " breach-no " is already opened."))
     (if (< stage 3)
       (-> game
           (update-in [:players player-no :breaches breach-no :stage] ut/plus 1)
-          (assoc-in [:players player-no :breaches breach-no :status] :focused))
+          (cond-> current-player? (assoc-in [:players player-no :breaches breach-no :status] :focused)))
       (-> game
           (open-breach {:player-no player-no
                         :breach-no breach-no})))))
@@ -555,6 +557,22 @@
 (effects/register {:other-players affect-other-players
                    :all-players   affect-all-players})
 
+(defn cast-spell [game {:keys [player-no card-name breach-no]}]
+  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
+        {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:move-card {:card-name card-name
+                                                             :from      :breach
+                                                             :breach-no breach-no
+                                                             :to        :discard}]]
+                                               (concat effects
+                                                       (when (and (= :opened status)
+                                                                  bonus-damage)
+                                                         [[:deal-damage bonus-damage]])))}))))
+
+(effects/register {:cast-spell cast-spell})
+
 (defn- get-choice-fn [data]
   (let [{:keys [choice] :as result} (if (vector? data)
                                       {:choice (first data)
@@ -565,7 +583,7 @@
 (defn- choose-single [game valid-choices selection]
   (when (sequential? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no attacker card-id choice source min optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice source min optional?]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name         (case source
                            :deck-position :position
@@ -584,14 +602,14 @@
     (-> game
         pop-effect-stack
         (choice-fn (merge args
-                          {:player-no player-no
-                           :card-id   card-id
-                           arg-name   single-selection}
-                          (when attacker
-                            {:attacker attacker}))))))
+                          (if (= :players source)
+                            single-selection
+                            {:player-no player-no
+                             :card-id   card-id
+                             arg-name   single-selection}))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no attacker card-id choice source min max optional? choice-opts]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice source min max optional? choice-opts]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name        (case source
                           :deck-position :position
@@ -628,9 +646,7 @@
         (choice-fn (merge args
                           {:player-no player-no
                            :card-id   card-id
-                           arg-name   multi-selection}
-                          (when attacker
-                            {:attacker attacker}))))))
+                           arg-name   multi-selection})))))
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)
@@ -643,7 +659,6 @@
     (assert choice "Choose error: You don't have a choice to make.")
     (assert (not-empty options) "Choose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
-
     (-> game
         (choose-fn valid-choices selection)
         check-stack)))
