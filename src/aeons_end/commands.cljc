@@ -104,6 +104,16 @@
                                          [:gain-charge]]})
       op/check-stack))
 
+(defn activate-ability [game player-no]
+  (check-command "Activate" game player-no)
+  (let [{:keys [effects]} (get-in game [:players player-no :ability])]
+    (-> game
+        (op/push-effect-stack {:player-no player-no
+                               :effects   (concat [[:set-phase {:phase :main}]
+                                                   [:spend-charges]]
+                                                  effects)})
+        op/check-stack)))
+
 (defn focus-breach [game player-no breach-no]
   (check-command "Focus" game player-no)
   (let [{:keys [focus-cost]} (get-in game [:players player-no :breaches breach-no])]

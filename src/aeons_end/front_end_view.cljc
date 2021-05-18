@@ -186,6 +186,33 @@
                                                         (>= aether focus-cost) (conj :focusable)
                                                         (>= aether open-cost) (conj :openable))})))))))
 
+(defn view-ability [{{:keys [ability
+                             phase
+                             aether]
+                      :or   {aether 0} :as player} :player
+                     choice                        :choice
+                     active?                       :active-player?
+                     :as                           game}]
+  (let [{:keys [name
+                text
+                charges
+                charge-cost]} ability]
+    (merge {:name-ui     (ut/format-name name)
+            :text        text
+            :type        :ability
+            :charges     charges
+            :charge-cost charge-cost}
+           (cond
+             (and active?
+                  (not choice)
+                  (#{:casting :main} phase)
+                  (>= aether 2)
+                  (not (>= charges charge-cost))) {:interaction :chargeable}
+             (and active?
+                  (not choice)
+                  (#{:casting :main} phase)
+                  (>= charges charge-cost)) {:interaction :activatable}))))
+
 (defn view-player [{{:keys [name title life aether]
                      :or   {aether 0}} :player
                     :keys              [choice
@@ -194,6 +221,7 @@
   (merge {:active?   active-player?
           :name-ui   (ut/format-name name)
           :title     title
+          :ability   (view-ability data)
           :breaches  (view-breaches data)
           :hand      (view-area :hand data)
           :play-area (view-area :play-area data)
@@ -238,9 +266,9 @@
      :can-end-turn?      (and (not choice)
                               (empty? play-area)
                               (not= phase :end-of-game))
-     #_#_:confirm-end-turn   (cond (<= 2 aether) "You can spend aether."
-                               (and (#{:casting :main} phase)
-                                    (not-empty hand)) "You still have cards in your hand.")}))
+     #_#_:confirm-end-turn (cond (<= 2 aether) "You can spend aether."
+                                 (and (#{:casting :main} phase)
+                                      (not-empty hand)) "You still have cards in your hand.")}))
 
 (defn view-game [{:keys [nemesis players effect-stack current-player] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack

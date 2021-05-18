@@ -410,6 +410,15 @@
 
 (effects/register {:gain-charge gain-charge})
 
+(defn spend-charges [game {:keys [player-no]}]
+  (let [{:keys [name charges charge-cost]
+         :or   {charges 0}} (get-in game [:players player-no :ability])]
+    (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
+    (-> game
+        (assoc-in [:players player-no :ability :charges] 0))))
+
+(effects/register {:spend-charges spend-charges})
+
 (defn open-breach [game {:keys [player-no breach-no]}]
   (let [{:keys [status]} (get-in game [:players player-no :breaches breach-no])]
     (assert (not (= :opened status)) (str "Open error: Breach " breach-no " is already opened."))
