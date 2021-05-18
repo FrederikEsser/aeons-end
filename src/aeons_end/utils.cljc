@@ -362,10 +362,9 @@
 (effects/register-options {:player options-from-player})
 
 (defn options-from-players
-  ([{:keys [players] :as game} _ _]
-   (let [options (->> players
-                      (map-indexed (fn [player-no player]
-                                     {:player-no player-no})))]
+  ([{:keys [players] :as game} player-no _ & [{:keys [ally]}]]
+   (let [options (cond->> (keep-indexed (fn [idx _] {:player-no idx}) players)
+                          ally (remove (comp #{player-no} :player-no)))]
      options)))
 
 (effects/register-options {:players options-from-players})

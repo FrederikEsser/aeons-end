@@ -54,6 +54,16 @@
                                             :min     1
                                             :max     1}]]})
 
+(def divine-augury {:name        :divine-augury
+                    :activation  :your-main-phase
+                    :charge-cost 5
+                    :text        "Any ally draws four cards."
+                    :effects     [[:give-choice {:text    "Any ally draws four cards"
+                                                 :choice  [:draw {:arg 4}]
+                                                 :options [:players {:ally true}]
+                                                 :min     1
+                                                 :max     1}]]})
+
 (def mist {:name     :mist
            :title    "Dagger Captain"
            :breaches [{}
@@ -62,8 +72,4 @@
                       {:stage 1}]
            :hand     [garnet-shard crystal crystal crystal spark]
            :deck     [crystal crystal crystal spark spark]
-           :ability  {:name        :divine-augury
-                      :activation  :your-main-phase
-                      :charge-cost 5
-                      :text        "Any ally draws four cards."
-                      :effects     []}})
+           :ability  divine-augury})
