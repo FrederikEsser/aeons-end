@@ -362,24 +362,30 @@
 (effects/register-options {:player options-from-player})
 
 (defn options-from-players
-  ([{:keys [players] :as game} _ _ area & args]
-   (let [options (case area
-                   :prepped-spells (->> players
-                                        (map-indexed (fn [player-no player]
-                                                       (->> (:breaches player)
-                                                            (map-indexed (fn [breach-no breach]
-                                                                           (->> (:prepped-spells breach)
-                                                                                (map (fn [{:keys [name]}]
-                                                                                       {:area      :prepped-spells
-                                                                                        :player-no player-no
-                                                                                        :breach-no breach-no
-                                                                                        :card-name name})))))
-                                                            (apply concat))))
-                                        (apply concat)))]
+  ([{:keys [players] :as game} _ _]
+   (let [options (->> players
+                      (map-indexed (fn [player-no player]
+                                     {:player-no player-no})))]
      options)))
 
 (effects/register-options {:players options-from-players})
 
+(defn options-from-prepped-spells
+  ([{:keys [players] :as game} _ _ & [area]]
+   (let [options (->> players
+                      (map-indexed (fn [player-no player]
+                                     (->> (:breaches player)
+                                          (map-indexed (fn [breach-no breach]
+                                                         (->> (:prepped-spells breach)
+                                                              (map (fn [{:keys [name]}]
+                                                                     {:player-no player-no
+                                                                      :breach-no breach-no
+                                                                      :card-name name})))))
+                                          (apply concat))))
+                      (apply concat))]
+     options)))
+
+(effects/register-options {:prepped-spells options-from-prepped-spells})
 
 (defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost costs-less-than cost type types not-type names not-names all]}]]
   (let [supply-piles (if all

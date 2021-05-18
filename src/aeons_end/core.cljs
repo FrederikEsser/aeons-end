@@ -227,7 +227,7 @@
          [:tbody
           [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
-               (mapk (fn [{:keys               [name-ui title life ability aether breaches hand play-area deck discard active?]
+               (mapk (fn [{:keys               [name-ui title life ability aether breaches hand play-area deck discard active? choice-value interaction]
                            {:keys [text
                                    options
                                    interval
@@ -246,10 +246,16 @@
                                                      (= :spell type) (assoc :breach-no breach-no)))]
                          [:tr
                           [:td
-                           [:div [:button {:title    title
-                                           :style    (button-style :disabled true)
-                                           :disabled true}
-                                  name-ui]]
+                           [:div
+                            (let [disabled (nil? interaction)]
+                              [:button {:title    title
+                                        :style    (button-style :disabled disabled)
+                                        :disabled disabled
+                                        :on-click (when interaction
+                                                    (fn [] (case interaction
+                                                             :choosable (select! (or choice-value name))
+                                                             :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
+                               name-ui])]
                            (view-ability ability)
                            [:div "Life: " life]
                            [:div "Aether: " aether]]

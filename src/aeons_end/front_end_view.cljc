@@ -20,17 +20,18 @@
                                    {:choice-value {:area area :card-name card-name}}))))))
 
 (defn- choice-interaction-player [{:keys [area player-no breach-no card-name]}
-                                  {:keys [options max choice-opts]}]
+                                  {:keys [source options max choice-opts]}]
   (let [interaction  (if (= 1 (or max (count options)))
                        {:interaction :quick-choosable}
                        (merge {:interaction :choosable}
                               (when choice-opts
                                 {:choice-opts choice-opts})))
-        choice-value (cond->> (filter (comp #{area} :area) options)
-                              player-no (filter (comp #{player-no} :player-no))
-                              breach-no (filter (comp #{breach-no} :breach-no))
-                              card-name (filter (comp #{card-name} :card-name))
-                              :always first)]
+        choice-value (when (= area source)
+                       (cond->> options
+                                player-no (filter (comp #{player-no} :player-no))
+                                breach-no (filter (comp #{breach-no} :breach-no))
+                                card-name (filter (comp #{card-name} :card-name))
+                                :always first))]
     (when choice-value
       (merge interaction
              {:choice-value choice-value}))))
@@ -235,7 +236,7 @@
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable}))))
 
-(defn view-player [{{:keys [name title life aether]
+(defn view-player [{{:keys [player-no name title life aether]
                      :or   {aether 0}} :player
                     :keys              [choice
                                         active-player?]
@@ -252,9 +253,11 @@
           :life      life
           :aether    aether}
          (when (and choice
-                    (or (not= :players (:source choice))
+                    (or (not (#{:players :prepped-spells} (:source choice)))
                         active-player?))
-           {:choice (view-choice choice)})))
+           {:choice (view-choice choice)})
+         (choice-interaction-player {:area      :players
+                                     :player-no player-no} choice)))
 
 (defn view-trash [{:keys [trash choice] :as game}]
   (merge
@@ -311,7 +314,7 @@
                                             (view-player (merge game {:active-player? active-player?
                                                                       :player         (assoc player :player-no idx)}
                                                                 (when (or (= idx player-no)
-                                                                          (= :players source))
+                                                                          (#{:players :prepped-spells} source))
                                                                   {:choice choice})))))))
             :trash    (view-trash (merge game {:choice choice}))
             :commands (view-commands game)}))))

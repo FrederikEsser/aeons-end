@@ -17,3 +17,11 @@
       (update-in [:nemesis :life] - arg)))
 
 (effects/register {:deal-damage deal-damage})
+
+(defn heal [game {:keys [player-no life]}]
+  (let [amount (min life
+                    (- 10 (get-in game [:players player-no :life])))]
+    (-> game
+       (update-in [:players player-no :life] ut/plus amount))))
+
+(effects/register {:heal heal})

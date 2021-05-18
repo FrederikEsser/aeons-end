@@ -10,6 +10,16 @@
                    :effects [[:deal-damage 1]
                              [:gain-aether 1]]})
 
+(def brink-siphon {:name        :brink-siphon
+                   :activation  :your-main-phase
+                   :charge-cost 5
+                   :text        "Any player gains 4 life."
+                   :effects     [[:give-choice {:text    "Any player gains 4 life"
+                                                :choice  [:heal {:life 4}]
+                                                :options [:players]
+                                                :min     1
+                                                :max     1}]]})
+
 (def brama {:name     :brama
             :title    "Breach Mage Elder"
             :breaches [{}
@@ -18,11 +28,7 @@
                        {:stage 2}]
             :hand     [buried-light crystal crystal crystal crystal]
             :deck     [crystal crystal crystal spark spark]
-            :ability  {:name        :brink-siphon
-                       :activation  :your-main-phase
-                       :charge-cost 5
-                       :text        "Any player gains 4 life."
-                       :effects     []}})
+            :ability  brink-siphon})
 
 (defn garnet-shard-choices [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
@@ -30,7 +36,7 @@
                                         :aether [[:gain-aether 1]]
                                         :cast [[:give-choice {:text    "Cast any player's prepped spell"
                                                               :choice  :cast-spell
-                                                              :options [:players :prepped-spells]
+                                                              :options [:prepped-spells]
                                                               :min     1
                                                               :max     1}]])}))
 

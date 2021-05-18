@@ -597,12 +597,11 @@
     (if (= min 1)
       (assert (or single-selection optional?) "Choose error: You must pick an option"))
     (when single-selection
-      (assert (valid-choices single-selection) (str "Choose error: " (ut/format-name single-selection) " is not a valid option.")))
-
+      (assert (valid-choices single-selection) (str "Choose error: " single-selection " is not a valid option.")))
     (-> game
         pop-effect-stack
         (choice-fn (merge args
-                          (if (= :players source)
+                          (if (#{:players :prepped-spells} source)
                             single-selection
                             {:player-no player-no
                              :card-id   card-id
