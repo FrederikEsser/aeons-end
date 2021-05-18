@@ -199,7 +199,6 @@
                 charge-cost]} ability]
     (merge {:name-ui     (ut/format-name name)
             :text        text
-            :type        :ability
             :charges     charges
             :charge-cost charge-cost}
            (cond

@@ -24,29 +24,36 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
-(defn button-style [& [disabled style number-of-cards]]
-  (let [inverse? (#{:closed :focused} style)]
+(defn button-style [& {:keys [disabled type status number-of-cards]}]
+  (let [inverse? (#{:closed :focused :openable} status)]
     {:color            (if inverse?
-                         (if disabled "#cccccc" :white)
-                         (if disabled :grey :black))
+                         (cond disabled "#cccccc"
+                               (= :openable status) "#f8e238"
+                               :else :white)
+                         (cond disabled :grey
+                               :else :black))
      :font-weight      :bold
      :background-color (cond
-                         (= :gem style) "#cfbede"
-                         (= :relic style) "#c7dff5"
-                         (= :spell style) "#f7e2b5"
-                         (= :minion style) "#aadfef"
-                         (= :closed style) "#506f9a"
-                         (= :focused style) "#506f9a"
-                         (= :opened style) "#f8e238")
+                         (= :gem type) "#cfbede"
+                         (= :relic type) "#c7dff5"
+                         (= :spell type) "#f7e2b5"
+                         (= :minion type) "#aadfef"
+                         (= :breach type) (if (= :opened status)
+                                            "#f8e238"
+                                            "#506f9a")
+                         (= :ability type) (if (= :activatable status)
+                                             "#f5bb11" #_"#f9e395"
+                                             "#f9e395" #_"#b4afa2"))
      :border-color     (cond
                          (zero? number-of-cards) :red
-                         (= :gem style) "#9d77af"
-                         (= :relic style) "#6bb6dc"
-                         (= :spell style) "#f8c44e"
-                         (= :minion style) "#49c4e9"
-                         (= :closed style) "#434f64"
-                         (= :focused style) "#f9cf23"
-                         (= :opened style) "#f9cf23"
+                         (= :gem type) "#9d77af"
+                         (= :relic type) "#6bb6dc"
+                         (= :spell type) "#f8c44e"
+                         (= :minion type) "#49c4e9"
+                         (= :breach type) (if (#{:closed :openable} status)
+                                            "#434f64"
+                                            "#f9cf23")
+                         (= :ability type) "#c0895e"
                          :else :grey)
      :border-width     2}))
 
@@ -87,7 +94,9 @@
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))
          [:div
-          [:button {:style    (button-style disabled type number-of-cards)
+          [:button {:style    (button-style :disabled disabled
+                                            :type type
+                                            :number-of-cards number-of-cards)
                     :title    text
                     :disabled disabled
                     :on-click (when interaction
@@ -108,8 +117,10 @@
   (let [disabled (empty? interactions)]
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
-      [:button {:style    (button-style disabled status 1)
-                ; :title    text
+      [:button {:style    (button-style :disabled disabled
+                                        :type :breach
+                                        :status (or (get interactions :openable)
+                                                    status))
                 :disabled disabled
                 :on-click (when (not-empty interactions)
                             (fn [] (cond
@@ -130,7 +141,9 @@
 (defn view-ability [{:keys [name-ui text type charges charge-cost interaction]}]
   (let [disabled (nil? interaction)]
     [:div
-     [:button {:style    (button-style disabled type)
+     [:button {:style    (button-style :disabled disabled
+                                       :type :ability
+                                       :status interaction)
                :title    text
                :disabled disabled
                :on-click (when interaction
@@ -198,12 +211,12 @@
        [:div [:button {:style    (button-style)
                        :on-click (fn [] (swap! state update :setup-game? not))}
               "Game setup"]
-        [:button {:style    (button-style false)
+        [:button {:style    (button-style)
                   :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
                                      (swap! state assoc :game (cmd/restart) :selection [])))}
          "Restart"]
         (let [disabled (-> @state :game :commands :can-undo? not)]
-          [:button {:style    (button-style disabled)
+          [:button {:style    (button-style :disabled disabled)
                     :disabled disabled
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
            "Undo"])]
@@ -234,7 +247,7 @@
                          [:tr
                           [:td
                            [:div [:button {:title    title
-                                           :style    (button-style (not active?))
+                                           :style    (button-style :disabled true)
                                            :disabled true}
                                   name-ui]]
                            (view-ability ability)
@@ -253,7 +266,7 @@
                           [:td [:div
                                 (when (and active? (get-in @state [:game :commands :can-discard-all?]))
                                   [:div
-                                   [:button {:style    (button-style false)
+                                   [:button {:style    (button-style)
                                              :on-click (fn [] (swap! state assoc :game (cmd/discard-all)))}
                                     "Discard all"]
                                    [:hr]])
@@ -277,7 +290,7 @@
                                            (let [disabled (and (not quick-choice?)
                                                                (or (= max (count selection))
                                                                    (-> selection set option)))]
-                                             [:button {:style    (button-style disabled)
+                                             [:button {:style    (button-style :disabled disabled)
                                                        :disabled disabled
                                                        :on-click (fn [] (if quick-choice?
                                                                           (swap! state assoc :game (cmd/choose option))
@@ -309,7 +322,7 @@
                                                                       (ut/format-name selected)]) selection)])
                                 (let [disabled (and min (< (count selection) min)
                                                     (not (and optional? (empty? selection))))]
-                                  [:button {:style    (button-style disabled)
+                                  [:button {:style    (button-style :disabled disabled)
                                             :disabled disabled
                                             :on-click (fn [] (swap! state assoc
                                                                     :game (cmd/choose selection)
