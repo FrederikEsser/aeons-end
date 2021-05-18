@@ -67,7 +67,8 @@
 
 (defn cast-spell [game player-no card-name breach-no]
   (check-command "Cast" game player-no)
-  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
+        {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])]
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   (concat [[:set-phase {:phase :casting}]
@@ -75,7 +76,10 @@
                                                                 :from      :breach
                                                                 :breach-no breach-no
                                                                 :to        :discard}]]
-                                                  effects)})
+                                                  (concat effects
+                                                          (when (and (= :opened status)
+                                                                     bonus-damage)
+                                                            [[:deal-damage bonus-damage]])))})
         op/check-stack)))
 
 (defn buy-card [game player-no card-name]

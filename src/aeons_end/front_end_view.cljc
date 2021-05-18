@@ -147,7 +147,7 @@
                       :as                         game}]
 
   (->> breaches
-       (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage]}]
+       (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage]}]
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
                         (merge {:name-ui   (case idx
                                              0 "I"
@@ -169,6 +169,9 @@
                                                                                 (#{:spell} type))
                                                                        {:interaction :castable})
                                                                      (choice-interaction name :breach choice)))))})
+                               (when (and (= :opened status)
+                                          bonus-damage)
+                                 {:bonus-damage bonus-damage})
                                (when focus-cost
                                  {:focus-cost focus-cost})
                                (when (and open-costs stage)
@@ -236,7 +239,7 @@
      :can-end-turn?      (and (not choice)
                               (empty? play-area)
                               (not= phase :end-of-game))
-     :confirm-end-turn   (cond (<= 2 aether) "You can spend aether."
+     #_#_:confirm-end-turn   (cond (<= 2 aether) "You can spend aether."
                                (and (#{:casting :main} phase)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 

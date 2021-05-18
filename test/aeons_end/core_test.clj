@@ -104,6 +104,28 @@
                          :discard  [spark]
                          :phase    :casting}]
               :nemesis {:life 49}}))
+      (is (= (-> {:players [{:breaches [{:status         :opened
+                                         :bonus-damage   1
+                                         :prepped-spells [spark]}]
+                             :phase    :casting}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 :spark 0))
+             {:players [{:breaches [{:status       :opened
+                                     :bonus-damage 1}]
+                         :discard  [spark]
+                         :phase    :casting}]
+              :nemesis {:life 48}}))
+      (is (= (-> {:players [{:breaches [{:status         :closed
+                                         :bonus-damage   1
+                                         :prepped-spells [spark]}]
+                             :phase    :casting}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 :spark 0))
+             {:players [{:breaches [{:status       :closed
+                                     :bonus-damage 1}]
+                         :discard  [spark]
+                         :phase    :casting}]
+              :nemesis {:life 49}}))
       (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Main phase to the Casting phase"
                             (-> {:players [{:breaches [{:prepped-spells [spark]}]
                                             :phase    :main}]
