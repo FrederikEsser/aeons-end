@@ -30,6 +30,7 @@
   {:mode       :swift
    :nemesis    {:life 50}
    :supply     [{:card gems/jade :pile-size 7}
+                {:card gems/pain-stone :pile-size 7}
                 {:card spells/ignite :pile-size 5}]
    :players    [(create-player mages/brama)
                 (create-player mages/mist)]
