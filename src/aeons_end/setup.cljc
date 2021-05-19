@@ -1,5 +1,6 @@
 (ns aeons-end.setup
   (:require [aeons-end.cards.gems :as gems]
+            [aeons-end.cards.spells :as spells]
             [aeons-end.mages :as mages]
             [aeons-end.turn-order :as turn-order]))
 
@@ -28,7 +29,8 @@
 (defn create-game []
   {:mode       :swift
    :nemesis    {:life 50}
-   :supply     [{:card gems/jade :pile-size 7}]
+   :supply     [{:card gems/jade :pile-size 7}
+                {:card spells/ignite :pile-size 5}]
    :players    [(create-player mages/brama)
                 (create-player mages/mist)]
    :turn-order {:deck (->> [turn-order/player-0

@@ -35,7 +35,7 @@
                            :effects   (case choice
                                         :aether [[:gain-aether 1]]
                                         :cast [[:give-choice {:text    "Cast any player's prepped spell"
-                                                              :choice  :cast-spell
+                                                              :choice  [:cast-spell {:caster player-no}]
                                                               :options [:prepped-spells]
                                                               :min     1
                                                               :max     1}]])}))

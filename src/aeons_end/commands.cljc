@@ -89,6 +89,9 @@
 
 (defn charge-ability [game player-no]
   (check-command "Charge" game player-no)
+  (let [{:keys [charges charge-cost]
+         :or   {charges 0}} (get-in game [:players player-no :ability])]
+    (assert (and charge-cost (< charges charge-cost)) (str "Charge error: You already have " charges " charges.")))
   (-> game
       (op/push-effect-stack {:player-no player-no
                              :effects   [[:set-phase {:phase :main}]

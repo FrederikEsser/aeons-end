@@ -69,16 +69,18 @@
       (is (= (-> {:current-player 0
                   :nemesis        {:life 50}
                   :players        [{:hand [garnet-shard]}
-                                   {:breaches [{:prepped-spells [buried-light]}]
-                                    :aether   0}]}
+                                   {:breaches [{:status         :opened
+                                                :bonus-damage   1
+                                                :prepped-spells [buried-light]}]}]}
                  (play 0 :garnet-shard)
                  (choose :cast)
                  (choose {:player-no 1
                           :breach-no 0
                           :card-name :buried-light}))
              {:current-player 0
-              :nemesis        {:life 49}
-              :players        [{:play-area [garnet-shard]}
-                               {:breaches [{}]
-                                :discard  [buried-light]
-                                :aether   0}]})))))
+              :nemesis        {:life 48}
+              :players        [{:play-area [garnet-shard]
+                                :aether    1}
+                               {:breaches [{:status       :opened
+                                            :bonus-damage 1}]
+                                :discard  [buried-light]}]})))))

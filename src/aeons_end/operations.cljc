@@ -404,9 +404,8 @@
 (defn gain-charge [game {:keys [player-no]}]
   (let [{:keys [charges charge-cost]
          :or   {charges 0}} (get-in game [:players player-no :ability])]
-    (assert (and charge-cost (< charges charge-cost)) (str "Charge error: You already have " charges " charges."))
-    (-> game
-        (update-in [:players player-no :ability :charges] ut/plus 1))))
+    (cond-> game
+            (< charges charge-cost) (update-in [:players player-no :ability :charges] ut/plus 1))))
 
 (effects/register {:gain-charge gain-charge})
 
@@ -557,19 +556,20 @@
 (effects/register {:other-players affect-other-players
                    :all-players   affect-all-players})
 
-(defn cast-spell [game {:keys [player-no card-name breach-no]}]
+(defn cast-spell [game {:keys [player-no breach-no card-name caster]}]
   (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
         {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])]
     (-> game
+        (push-effect-stack {:player-no (or caster player-no)
+                            :effects   (concat effects
+                                               (when (and (= :opened status)
+                                                          bonus-damage)
+                                                 [[:deal-damage bonus-damage]]))})
         (push-effect-stack {:player-no player-no
-                            :effects   (concat [[:move-card {:card-name card-name
-                                                             :from      :breach
-                                                             :breach-no breach-no
-                                                             :to        :discard}]]
-                                               (concat effects
-                                                       (when (and (= :opened status)
-                                                                  bonus-damage)
-                                                         [[:deal-damage bonus-damage]])))}))))
+                            :effects   [[:move-card {:card-name card-name
+                                                     :from      :breach
+                                                     :breach-no breach-no
+                                                     :to        :discard}]]}))))
 
 (effects/register {:cast-spell cast-spell})
 
