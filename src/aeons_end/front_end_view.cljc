@@ -294,9 +294,9 @@
      :can-end-turn?      (and (not choice)
                               (empty? play-area)
                               (not= phase :end-of-game))
-     #_#_:confirm-end-turn (cond (<= 2 aether) "You can spend aether."
-                                 (and (#{:casting :main} phase)
-                                      (not-empty hand)) "You still have cards in your hand.")}))
+     :confirm-end-turn   (cond (<= 2 aether) "You can spend aether."
+                               (and (#{:casting :main} phase)
+                                    (not-empty hand)) "You still have cards in your hand.")}))
 
 (defn view-game [{:keys [nemesis players effect-stack current-player] :as game}]
   (let [[{:keys [player-no source] :as choice}] effect-stack

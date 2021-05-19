@@ -22,7 +22,7 @@
                  :type    :gem
                  :cost    6
                  :text    "Gain 3 Aether. OR Gain 2 Aether and deal 1 damage."
-                 :effects [[:give-choice {:text    "Choose one:"
+                 :effects [[:give-choice {:text    "Pain Stone - Choose one:"
                                           :choice  ::pain-stone-choices
                                           :options [:special
                                                     {:option :aether :text "Gain 3 Aether"}

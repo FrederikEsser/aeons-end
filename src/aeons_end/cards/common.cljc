@@ -1,5 +1,5 @@
 (ns aeons-end.cards.common
-  (:require [aeons-end.operations :refer []]
+  (:require [aeons-end.operations :refer [move-cards]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]))
 
@@ -25,3 +25,11 @@
        (update-in [:players player-no :life] ut/plus amount))))
 
 (effects/register {:heal heal})
+
+(defn discard-from-hand [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :hand
+                                                             :to   :discard}))))
+
+(effects/register {:discard-from-hand discard-from-hand})
+

@@ -23,7 +23,7 @@
                                ))
           :ability  (merge ability
                            {:charges 0})
-          :life     10
+          :life     1
           :phase    :out-of-turn}))
 
 (defn create-game []
@@ -31,7 +31,8 @@
    :nemesis    {:life 50}
    :supply     [{:card gems/jade :pile-size 7}
                 {:card gems/pain-stone :pile-size 7}
-                {:card spells/ignite :pile-size 5}]
+                {:card spells/ignite :pile-size 5}
+                {:card spells/dark-fire :pile-size 5}]
    :players    [(create-player mages/brama)
                 (create-player mages/mist)]
    :turn-order {:deck (->> [turn-order/player-0

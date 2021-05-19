@@ -14,7 +14,7 @@
                    :activation  :your-main-phase
                    :charge-cost 5
                    :text        "Any player gains 4 life."
-                   :effects     [[:give-choice {:text    "Any player gains 4 life"
+                   :effects     [[:give-choice {:text    "Brink Siphon - Any player gains 4 life"
                                                 :choice  [:heal {:life 4}]
                                                 :options [:players]
                                                 :min     1
@@ -34,7 +34,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   (case choice
                                         :aether [[:gain-aether 1]]
-                                        :cast [[:give-choice {:text    "Cast any player's prepped spell"
+                                        :cast [[:give-choice {:text    "Garnet Shard - Cast any player's prepped spell"
                                                               :choice  [:cast-spell {:caster player-no}]
                                                               :options [:prepped-spells]
                                                               :min     1
@@ -46,7 +46,7 @@
                    :type    :gem
                    :cost    0
                    :text    "Gain 1 Aether. OR Cast any player's prepped spell."
-                   :effects [[:give-choice {:text    "Choose one:"
+                   :effects [[:give-choice {:text    "Garnet Shard - Choose one:"
                                             :choice  ::garnet-shard-choices
                                             :options [:special
                                                       {:option :aether :text "Gain 1 Aether"}
@@ -58,7 +58,7 @@
                     :activation  :your-main-phase
                     :charge-cost 5
                     :text        "Any ally draws four cards."
-                    :effects     [[:give-choice {:text    "Any ally draws four cards"
+                    :effects     [[:give-choice {:text    "Divine Augury - Any ally draws four cards"
                                                  :choice  [:draw {:arg 4}]
                                                  :options [:players {:ally true}]
                                                  :min     1
