@@ -1,7 +1,36 @@
 (ns aeons-end.cards.spells
-  (:require [aeons-end.cards.common]
-            [aeons-end.operations :refer [push-effect-stack]]
+  (:require [aeons-end.cards.common :refer [deal-damage]]
+            [aeons-end.operations :refer [push-effect-stack focus-breach]]
             [aeons-end.effects :as effects]))
+
+(defn amplify-vision-focus [game {:keys [player-no]}]
+  (let [breach-no (->> (get-in game [:players player-no :breaches])
+                       (keep-indexed (fn [idx {:keys [status focus-cost]}]
+                                       (when (not= :opened status)
+                                         {:breach-no  idx
+                                          :focus-cost focus-cost})))
+                       (sort-by :focus-cost)
+                       (map :breach-no)
+                       first)]
+    (cond-> game
+            breach-no (focus-breach {:player-no player-no
+                                     :breach-no breach-no}))))
+
+(defn amplify-vision-damage [game {:keys [player-no]}]
+  (let [all-breaches-opened? (->> (get-in game [:players player-no :breaches])
+                                  (every? (comp #{:opened} :status)))]
+    (deal-damage game {:player-no player-no
+                       :arg       (if all-breaches-opened? 3 2)})))
+
+(effects/register {::amplify-vision-focus  amplify-vision-focus
+                   ::amplify-vision-damage amplify-vision-damage})
+
+(def amplify-vision {:name    :amplify-vision
+                     :type    :spell
+                     :cost    4
+                     :text    "Cast: Focus your closed breach with the lowest focus cost. Deal 2 damage. If all of your breaches are opened, deal 1 additional damage."
+                     :effects [[::amplify-vision-focus]
+                               [::amplify-vision-damage]]})
 
 (def ignite {:name    :ignite
              :type    :spell

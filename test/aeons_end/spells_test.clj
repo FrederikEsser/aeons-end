@@ -6,6 +6,67 @@
             [aeons-end.cards.spells :refer :all]
             [aeons-end.mages :refer [garnet-shard]]))
 
+(deftest amplify-vision-test
+  (testing "Amplify Vision"
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [amplify-vision]}
+                                      {:status     :closed
+                                       :focus-cost 2
+                                       :stage      0}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :amplify-vision 0))
+           {:players [{:breaches [{:status :opened}
+                                  {:status     :focused
+                                   :focus-cost 2
+                                   :stage      1}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 48}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [amplify-vision]}
+                                      {:status     :focused
+                                       :focus-cost 2
+                                       :stage      3}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :amplify-vision 0))
+           {:players [{:breaches [{:status :opened}
+                                  {:status :opened}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [amplify-vision]}
+                                      {:status     :closed
+                                       :focus-cost 2
+                                       :stage      3}
+                                      {:status :opened}
+                                      {:status     :closed
+                                       :focus-cost 4
+                                       :stage      3}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :amplify-vision 0))
+           {:players [{:breaches [{:status :opened}
+                                  {:status :opened}
+                                  {:status :opened}
+                                  {:status     :closed
+                                   :focus-cost 4
+                                   :stage      3}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 48}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [amplify-vision]}
+                                      {:status :opened}
+                                      {:status :opened}
+                                      {:status     :closed
+                                       :focus-cost 4
+                                       :stage      3}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :amplify-vision 0))
+           {:players [{:breaches [{:status :opened}
+                                  {:status :opened}
+                                  {:status :opened}
+                                  {:status :opened}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 47}}))))
+
 (deftest dark-fire-test
   (testing "Dark Fire"
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
