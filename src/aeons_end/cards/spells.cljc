@@ -34,3 +34,10 @@
                                          :choice  ::dark-fire-discard
                                          :options [:player :hand]
                                          :max     2}]]})
+
+(def radiance {:name    :radiance
+               :type    :spell
+               :cost    8
+               :text    "Cast: Deal 5 damage. Each ally draws a card."
+               :effects [[:deal-damage 5]
+                         [:other-players {:effects [[:draw 1]]}]]})

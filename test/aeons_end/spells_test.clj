@@ -92,3 +92,21 @@
                                   :charge-cost 4}
                        :discard  [ignite]}]
             :nemesis {:life 48}}))))
+
+(deftest radiance-test
+  (testing "Radiance"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [radiance]}]
+                           :deck     [crystal]}
+                          {:deck [crystal crystal]}
+                          {:deck [crystal]}
+                          {}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :radiance 0))
+           {:players [{:breaches [{}]
+                       :deck     [crystal]
+                       :discard  [radiance]}
+                      {:deck [crystal]
+                       :hand [crystal]}
+                      {:hand [crystal]}
+                      {}]
+            :nemesis {:life 45}}))))
