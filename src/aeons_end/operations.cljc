@@ -583,7 +583,7 @@
 (defn- choose-single [game valid-choices selection]
   (when (sequential? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no card-id choice source min optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice or-choice source min optional?]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name         (case source
                            :deck-position :position
@@ -600,12 +600,17 @@
       (assert (valid-choices single-selection) (str "Choose error: " single-selection " is not a valid option.")))
     (-> game
         pop-effect-stack
-        (choice-fn (merge args
-                          (if (#{:players :prepped-spells} source)
-                            single-selection
-                            {:player-no player-no
-                             :card-id   card-id
-                             arg-name   single-selection}))))))
+        (as-> game
+              (if (and (nil? single-selection)
+                       or-choice)
+                (push-effect-stack game {:player-no player-no
+                                         :effects   (:effects or-choice)})
+                (choice-fn game (merge args
+                                       (if (#{:players :prepped-spells} source)
+                                         single-selection
+                                         {:player-no player-no
+                                          :card-id   card-id
+                                          arg-name   single-selection}))))))))
 
 (defn- choose-multi [game valid-choices selection]
   (let [[{:keys [player-no card-id choice source min max optional? choice-opts]}] (get game :effect-stack)
@@ -664,6 +669,7 @@
 
 (defn give-choice [{:keys [mode] :as game} {:keys                            [player-no card-id min max optional? choice-opts]
                                             [opt-name & opt-args :as option] :options
+                                            {:keys [effects]}                :or-choice
                                             :as                              choice}]
   (let [opt-fn    (effects/get-option opt-name)
         options   (cond->> (apply opt-fn game player-no card-id opt-args)
@@ -685,7 +691,10 @@
                                                         :choice    choice})
                 swiftable (choose (->> options
                                        (take min)
-                                       (map (fn [o] (or (:option o) o))))))
+                                       (map (fn [o] (or (:option o) o)))))
+                (and (empty? options)
+                     effects) (push-effect-stack {:player-no player-no
+                                                  :effects   effects}))
         check-stack)))
 
 (effects/register {:give-choice give-choice})

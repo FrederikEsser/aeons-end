@@ -144,12 +144,16 @@
   (->> options
        (map (fn [option] (select-keys option [:option :text])))))
 
-(defn view-choice [{:keys [text source options min max optional?] :as choice}]
-  (->> (merge {:text          text
+(defn view-choice [{:keys [title text or-choice source options min max optional?] :as choice}]
+  (->> (merge (when title
+                {:choice-title (ut/format-name title)})
+              {:text          text
                :min           (or min 0)
                :max           (or max (count options))
                :quick-choice? (and (= 1 min (or max (count options)))
                                    (not optional?))}
+              (when or-choice
+                {:or-text (:text or-choice)})
               (case source
                 :special {:options (view-options options)}
                 :deck-position {:interval {:from (first options)

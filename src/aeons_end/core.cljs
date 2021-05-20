@@ -227,14 +227,16 @@
          [:tbody
           [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
-               (mapk (fn [{:keys               [name-ui title life ability aether breaches hand play-area deck discard active? choice-value interaction]
-                           {:keys [text
+               (mapk (fn [{:keys                          [name-ui title life ability aether breaches hand play-area deck discard active? choice-value interaction]
+                           {:keys [choice-title
+                                   text
+                                   or-text
                                    options
                                    interval
                                    min
                                    max
                                    quick-choice?
-                                   optional?]} :choice}]
+                                   optional?] :as choice} :choice}]
                        (let [breach-no     (->> breaches
                                                 (remove (comp #{:closed} :status))
                                                 (filter (comp empty? :prepped-spells))
@@ -290,8 +292,12 @@
                                    [:hr]])
                                 (view-player-pile deck max)]]
                           [:td (view-player-pile discard max)]
-                          (if text
-                            [:td text
+                          (if choice
+                            [:td
+                             (when choice-title
+                               [:div {:style {:font-weight :bold}}
+                                choice-title])
+                             [:div text]
                              [:div (mapk (fn [{:keys [option text]}]
                                            (let [disabled (and (not quick-choice?)
                                                                (or (= max (count selection))
@@ -326,6 +332,9 @@
                                                                      [:button {:style    (button-style)
                                                                                :on-click (fn [] (deselect! idx))}
                                                                       (ut/format-name selected)]) selection)])
+                                (when or-text
+                                  [:div {:style {:font-weight :bold}}
+                                   "OR"])
                                 (let [disabled (and min (< (count selection) min)
                                                     (not (and optional? (empty? selection))))]
                                   [:button {:style    (button-style :disabled disabled)
@@ -333,7 +342,7 @@
                                             :on-click (fn [] (swap! state assoc
                                                                     :game (cmd/choose selection)
                                                                     :selection []))}
-                                   "Done"])])])]))))]]]
+                                   (or or-text "Done")])])])]))))]]]
 
        [:div "Supply"
         (let [supply (-> (:game @state) :supply)

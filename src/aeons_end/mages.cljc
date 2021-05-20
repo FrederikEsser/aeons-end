@@ -14,7 +14,8 @@
                    :activation  :your-main-phase
                    :charge-cost 5
                    :text        "Any player gains 4 life."
-                   :effects     [[:give-choice {:text    "Brink Siphon - Any player gains 4 life"
+                   :effects     [[:give-choice {:title   :brink-siphon
+                                                :text    "Any player gains 4 life"
                                                 :choice  [:heal {:life 4}]
                                                 :options [:players]
                                                 :min     1
@@ -30,35 +31,30 @@
             :deck     [crystal crystal crystal spark spark]
             :ability  brink-siphon})
 
-(defn garnet-shard-choices [game {:keys [player-no choice]}]
+(defn garnet-shard-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
-                           :effects   (case choice
-                                        :aether [[:gain-aether 1]]
-                                        :cast [[:give-choice {:text    "Garnet Shard - Cast any player's prepped spell"
-                                                              :choice  [:cast-spell {:caster player-no}]
-                                                              :options [:prepped-spells]
-                                                              :min     1
-                                                              :max     1}]])}))
+                           :effects   [[:give-choice {:title     :garnet-shard
+                                                      :text      "Cast any player's prepped spell."
+                                                      :choice    [:cast-spell {:caster player-no}]
+                                                      :or-choice {:text    "Gain 1 Aether"
+                                                                  :effects [[:gain-aether 1]]}
+                                                      :options   [:prepped-spells]
+                                                      :max       1}]]}))
 
-(effects/register {::garnet-shard-choices garnet-shard-choices})
+(effects/register {::garnet-shard-choice garnet-shard-choice})
 
 (def garnet-shard {:name    :garnet-shard
                    :type    :gem
                    :cost    0
                    :text    "Gain 1 Aether. OR Cast any player's prepped spell."
-                   :effects [[:give-choice {:text    "Garnet Shard - Choose one:"
-                                            :choice  ::garnet-shard-choices
-                                            :options [:special
-                                                      {:option :aether :text "Gain 1 Aether"}
-                                                      {:option :cast :text "Cast any player's prepped spell"}]
-                                            :min     1
-                                            :max     1}]]})
+                   :effects [[::garnet-shard-choice]]})
 
 (def divine-augury {:name        :divine-augury
                     :activation  :your-main-phase
                     :charge-cost 5
                     :text        "Any ally draws four cards."
-                    :effects     [[:give-choice {:text    "Divine Augury - Any ally draws four cards"
+                    :effects     [[:give-choice {:title   :divine-augury
+                                                 :text    "Any ally draws four cards"
                                                  :choice  [:draw {:arg 4}]
                                                  :options [:players {:ally true}]
                                                  :min     1

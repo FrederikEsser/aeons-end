@@ -82,7 +82,6 @@
                                       :charge-cost 4}}]
                 :nemesis {:life 50}}
                (play 0 :garnet-shard)
-               (choose :cast)
                (choose {:player-no 1
                         :breach-no 0
                         :card-name :ignite})

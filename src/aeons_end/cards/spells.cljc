@@ -8,7 +8,8 @@
              :cost    4
              :text    "Cast: Deal 2 damage. Any ally gains 1 charge."
              :effects [[:deal-damage 2]
-                       [:give-choice {:text    "Ignite - Any ally gains 1 charge"
+                       [:give-choice {:title   :ignite
+                                      :text    "Any ally gains 1 charge"
                                       :choice  :gain-charge
                                       :options [:players {:ally true}]
                                       :min     1
@@ -28,7 +29,8 @@
                 :type    :spell
                 :cost    5
                 :text    "Cast: Discard up to two cards in hand. Deal 3 damage for each card discarded this way."
-                :effects [[:give-choice {:text    "Dark Fire - Discard up to two cards in hand"
+                :effects [[:give-choice {:title   :dark-fire
+                                         :text    "Discard up to two cards in hand"
                                          :choice  ::dark-fire-discard
                                          :options [:player :hand]
                                          :max     2}]]})

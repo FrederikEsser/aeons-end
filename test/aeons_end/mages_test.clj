@@ -46,19 +46,20 @@
   (testing "Mist"
     (testing "Garnet Shard"
       (is (= (-> {:players [{:hand [garnet-shard]}]}
-                 (play 0 :garnet-shard)
-                 (choose :aether))
+                 (play 0 :garnet-shard))
              {:players [{:play-area [garnet-shard]
                          :aether    1}]}))
-      (is (= (-> {:players [{:hand [garnet-shard]}]}
+      (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
+                             :hand     [garnet-shard]}]}
                  (play 0 :garnet-shard)
-                 (choose :cast))
-             {:players [{:play-area [garnet-shard]}]}))
+                 (choose []))
+             {:players [{:breaches  [{:prepped-spells [spark]}]
+                         :play-area [garnet-shard]
+                         :aether    1}]}))
       (is (= (-> {:nemesis {:life 50}
                   :players [{:breaches [{:prepped-spells [spark]}]
                              :hand     [garnet-shard]}]}
                  (play 0 :garnet-shard)
-                 (choose :cast)
                  (choose {:player-no 0
                           :breach-no 0
                           :card-name :spark}))
@@ -73,7 +74,6 @@
                                                 :bonus-damage   1
                                                 :prepped-spells [buried-light]}]}]}
                  (play 0 :garnet-shard)
-                 (choose :cast)
                  (choose {:player-no 1
                           :breach-no 0
                           :card-name :buried-light}))
