@@ -2,7 +2,33 @@
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
-            [aeons-end.cards.gems :refer :all]))
+            [aeons-end.cards.gems :refer :all]
+            [aeons-end.cards.base :refer [crystal spark]]))
+
+(deftest alien-element-test
+  (testing "Pain Stone"
+    (is (= (-> {:players [{:breaches [{:status :opened}]
+                           :hand     [alien-element]}]}
+               (play 0 :alien-element))
+           {:players [{:breaches  [{:status :opened}]
+                       :play-area [alien-element]
+                       :aether    1}]}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
+                           :hand     [alien-element]}]}
+               (play 0 :alien-element))
+           {:players [{:breaches  [{:prepped-spells [spark]}]
+                       :play-area [alien-element]
+                       :aether    2}]}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [spark spark]}
+                                      {:status         :closed
+                                       :prepped-spells [spark]}]
+                           :hand     [alien-element]}]}
+               (play 0 :alien-element))
+           {:players [{:breaches  [{:prepped-spells [spark spark]}
+                                   {:status         :closed
+                                    :prepped-spells [spark]}]
+                       :play-area [alien-element]
+                       :aether    3}]}))))
 
 (deftest pain-stone-test
   (testing "Pain Stone"

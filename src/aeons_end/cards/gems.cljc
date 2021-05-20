@@ -1,7 +1,22 @@
 (ns aeons-end.cards.gems
-  (:require [aeons-end.cards.common]
+  (:require [aeons-end.cards.common :refer [gain-aether]]
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]))
+
+(defn alien-element-gain-aether [game {:keys [player-no]}]
+  (let [breaches-with-prepped-spells (->> (get-in game [:players player-no :breaches])
+                                          (filter (comp not-empty :prepped-spells))
+                                          count)]
+    (gain-aether game {:player-no player-no
+                       :arg       (inc breaches-with-prepped-spells)})))
+
+(effects/register {::alien-element-gain-aether alien-element-gain-aether})
+
+(def alien-element {:name    :alien-element
+                    :type    :gem
+                    :cost    4
+                    :text    "Gain 1 Aether. For each of your breaches with a spell prepped to it, gain an additional 1 Aether."
+                    :effects [[::alien-element-gain-aether]]})
 
 (def jade {:name    :jade
            :type    :gem
