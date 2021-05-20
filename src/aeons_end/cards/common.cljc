@@ -1,5 +1,5 @@
 (ns aeons-end.cards.common
-  (:require [aeons-end.operations :refer [move-cards]]
+  (:require [aeons-end.operations :refer [move-cards push-effect-stack]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]))
 
@@ -22,7 +22,7 @@
   (let [amount (min life
                     (- 10 (get-in game [:players player-no :life])))]
     (-> game
-       (update-in [:players player-no :life] ut/plus amount))))
+        (update-in [:players player-no :life] ut/plus amount))))
 
 (effects/register {:heal heal})
 
@@ -32,4 +32,16 @@
                                                              :to   :discard}))))
 
 (effects/register {:discard-from-hand discard-from-hand})
+
+(defn play-twice [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:move-card {:card-name card-name
+                                                              :from      :hand
+                                                              :to        :play-area}]
+                                                 [:card-effect {:card card}]
+                                                 [:card-effect {:card card}]]}))))
+
+(effects/register {:play-twice play-twice})
 

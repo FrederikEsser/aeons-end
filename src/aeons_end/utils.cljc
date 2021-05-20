@@ -348,7 +348,7 @@
             name (filter (comp #{name} :name))
             names (filter (comp names :name))
             not-names (remove (comp not-names :name))
-            type (filter (comp type (partial get-types game)))
+            type (filter (comp #{type} :type))
             types (filter (partial types-match game types))
             not-type (remove (comp not-type (partial get-types game)))
             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)

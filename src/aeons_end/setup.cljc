@@ -1,5 +1,6 @@
 (ns aeons-end.setup
   (:require [aeons-end.cards.gems :as gems]
+            [aeons-end.cards.relics :as relics]
             [aeons-end.cards.spells :as spells]
             [aeons-end.mages :as mages]
             [aeons-end.turn-order :as turn-order]))
@@ -31,6 +32,7 @@
    :nemesis    {:life 50}
    :supply     [{:card gems/jade :pile-size 7}
                 {:card gems/pain-stone :pile-size 7}
+                {:card relics/unstable-prism :pile-size 5}
                 {:card spells/ignite :pile-size 5}
                 {:card spells/dark-fire :pile-size 5}]
    :players    [(create-player mages/brama)
