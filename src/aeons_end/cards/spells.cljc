@@ -14,10 +14,13 @@
                                       :min     1
                                       :max     1}]]})
 
-(defn dark-fire-discard [game {:keys [player-no card-names]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:discard-from-hand {:card-names card-names}]
-                                       [:deal-damage (* 3 (count card-names))]]}))
+(defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
+  (let [card-count (cond card-name 1
+                         card-names (count card-names)
+                         :else 0)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:discard-from-hand args]
+                                         [:deal-damage (* 3 card-count)]]})))
 
 (effects/register {::dark-fire-discard dark-fire-discard})
 

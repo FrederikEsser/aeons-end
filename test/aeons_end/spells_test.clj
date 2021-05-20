@@ -2,8 +2,59 @@
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
+            [aeons-end.cards.base :refer [crystal spark]]
             [aeons-end.cards.spells :refer :all]
             [aeons-end.mages :refer [garnet-shard]]))
+
+(deftest dark-fire-test
+  (testing "Dark Fire"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
+                           :hand     [crystal crystal spark]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0)
+               (choose nil))
+           {:players [{:breaches [{}]
+                       :hand     [crystal crystal spark]
+                       :discard  [dark-fire]}]
+            :nemesis {:life 50}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
+                           :hand     [spark]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0)
+               (choose :spark))
+           {:players [{:breaches [{}]
+                       :discard  [dark-fire spark]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
+                           :hand     [crystal crystal spark]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0)
+               (choose [:crystal :crystal]))
+           {:players [{:breaches [{}]
+                       :hand     [spark]
+                       :discard  [dark-fire crystal crystal]}]
+            :nemesis {:life 44}}))
+    (is (thrown-with-msg? AssertionError #"Choose error"
+                          (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
+                                          :hand     [crystal crystal spark]}]
+                               :nemesis {:life 50}}
+                              (cast-spell 0 :dark-fire 0)
+                              (choose [:crystal :crystal :spark]))))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0))
+           {:players [{:breaches [{}]
+                       :discard  [dark-fire]}]
+            :nemesis {:life 50}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [dark-fire]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}]
+                       :discard  [dark-fire]}]
+            :nemesis {:life 49}}))))
 
 (deftest ignite-test
   (testing "Ignite"

@@ -344,8 +344,8 @@
             (view-row row1)
             (view-row row2)
             (view-row row3)]])]
-       #_[:div (str "Trash (" (get-in @state [:game :trash :number-of-cards]) " cards)")
-          [view-expandable-pile :trash (get-in @state [:game :trash])]]])))
+       [:div (str "Destroyed (" (get-in @state [:game :trash :number-of-cards]) " cards)")
+        [view-expandable-pile :trash (get-in @state [:game :trash])]]])))
 
 ;; -------------------------
 ;; Initialize app

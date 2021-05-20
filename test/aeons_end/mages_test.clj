@@ -1,9 +1,9 @@
 (ns aeons-end.mages-test
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
-            [aeons-end.cards.base :refer [spark]]
-            [aeons-end.cards.common]
             [aeons-end.operations :refer [choose]]
+            [aeons-end.cards.base :refer [crystal spark]]
+            [aeons-end.cards.common]
             [aeons-end.mages :refer :all]))
 
 (deftest brama-test
@@ -83,4 +83,23 @@
                                 :aether    1}
                                {:breaches [{:status       :opened
                                             :bonus-damage 1}]
-                                :discard  [buried-light]}]})))))
+                                :discard  [buried-light]}]})))
+    (testing "Divine Augury"
+      (is (= (-> {:players [{:ability (assoc divine-augury :charges 5)}
+                            {:hand [crystal crystal crystal crystal crystal]
+                             :deck [spark spark spark spark spark]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 1}))
+             {:players [{:ability (assoc divine-augury :charges 0)}
+                        {:hand [crystal crystal crystal crystal crystal spark spark spark spark]
+                         :deck [spark]}]}))
+      (is (= (-> {:players [{:ability (assoc divine-augury :charges 5)}
+                            {:hand [crystal crystal crystal crystal crystal]
+                             :deck [spark spark spark]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 1}))
+             {:players [{:ability (assoc divine-augury :charges 0)}
+                        {:hand [crystal crystal crystal crystal crystal spark spark spark]}]}))
+      (is (= (-> {:players [{:ability (assoc divine-augury :charges 5)}]}
+                 (activate-ability 0))
+             {:players [{:ability (assoc divine-augury :charges 0)}]})))))

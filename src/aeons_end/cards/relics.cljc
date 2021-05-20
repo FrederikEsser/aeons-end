@@ -3,8 +3,7 @@
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]))
 
-(defn unstable-prism-play [game {:keys [player-no card-name] :as args}]
-  (prn "unstable-prism-play" args)
+(defn unstable-prism-play [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:play-twice {:card-name card-name}]
                                        [:move-card {:card-name card-name
