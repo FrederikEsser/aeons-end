@@ -34,6 +34,7 @@
                 {:card gems/alien-element :pile-size 7}
                 {:card gems/pain-stone :pile-size 7}
                 {:card relics/unstable-prism :pile-size 5}
+                {:card relics/vortex-gauntlet :pile-size 5}
                 {:card spells/amplify-vision :pile-size 5}
                 {:card spells/ignite :pile-size 5}
                 {:card spells/dark-fire :pile-size 5}
