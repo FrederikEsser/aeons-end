@@ -221,7 +221,9 @@
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
            "Undo"])]
 
-       [:div "Nemesis" " Life: " (-> @state :game :nemesis :life)]
+       (when-let [{:keys [name life tokens]} (-> @state :game :nemesis)]
+         [:div (ut/format-name name) " Life: " life " Tokens: " tokens])
+       [:div "Gravehold Life: " (-> @state :game :gravehold :life)]
        [:div "Players"
         [:table
          [:tbody

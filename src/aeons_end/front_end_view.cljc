@@ -257,7 +257,8 @@
           :life      life
           :aether    aether}
          (when (and choice
-                    (or (not (#{:players :prepped-spells} (:source choice)))
+                    (or (nil? (:player-no choice))
+                        (not (#{:players :prepped-spells} (:source choice)))
                         active-player?))
            {:choice (view-choice choice)})
          (choice-interaction-player {:area      :players
@@ -302,23 +303,25 @@
                                (and (#{:casting :main} phase)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
-(defn view-game [{:keys [nemesis players effect-stack current-player] :as game}]
+(defn view-game [{:keys [nemesis gravehold players effect-stack current-player] :as game}]
   (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
-           {:nemesis  nemesis
-            :supply   (view-supply (merge game {:player (assoc player :player-no current-player)
-                                                :choice choice}))
-            :players  (->> players
-                           (map-indexed (fn [idx player]
-                                          (let [active-player? (and (= idx current-player)
-                                                                    (or (nil? choice)
-                                                                        (= idx player-no))
-                                                                    (not= phase :end-of-game))]
-                                            (view-player (merge game {:active-player? active-player?
-                                                                      :player         (assoc player :player-no idx)}
-                                                                (when (or (= idx player-no)
-                                                                          (#{:players :prepped-spells} source))
-                                                                  {:choice choice})))))))
-            :trash    (view-trash (merge game {:choice choice}))
-            :commands (view-commands game)}))))
+           {:nemesis   nemesis
+            :gravehold gravehold
+            :supply    (view-supply (merge game {:player (assoc player :player-no current-player)
+                                                 :choice choice}))
+            :players   (->> players
+                            (map-indexed (fn [idx player]
+                                           (let [active-player? (and (= idx current-player)
+                                                                     (or (nil? choice)
+                                                                         (= idx player-no))
+                                                                     (not= phase :end-of-game))]
+                                             (view-player (merge game {:active-player? active-player?
+                                                                       :player         (assoc player :player-no idx)}
+                                                                 (when (or (nil? player-no)
+                                                                           (= idx player-no)
+                                                                           (#{:players :prepped-spells} source))
+                                                                   {:choice choice})))))))
+            :trash     (view-trash (merge game {:choice choice}))
+            :commands  (view-commands game)}))))

@@ -3,7 +3,9 @@
             [aeons-end.cards.relics :as relics]
             [aeons-end.cards.spells :as spells]
             [aeons-end.mages :as mages]
-            [aeons-end.turn-order :as turn-order]))
+            [aeons-end.nemeses :as nemeses]
+            [aeons-end.turn-order :as turn-order]
+            [aeons-end.utils :as ut]))
 
 (defn create-player [{:keys [breaches ability] :as mage}]
   (merge mage
@@ -24,12 +26,13 @@
                                ))
           :ability  (merge ability
                            {:charges 0})
-          :life     1
+          :life     ut/player-starting-life
           :phase    :out-of-turn}))
 
 (defn create-game []
   {:mode       :swift
-   :nemesis    {:life 50}
+   :nemesis    nemeses/umbra-titan
+   :gravehold  {:life ut/gravehold-starting-life}
    :supply     [{:card gems/jade :pile-size 7}
                 {:card gems/alien-element :pile-size 7}
                 {:card gems/pain-stone :pile-size 7}
@@ -44,5 +47,7 @@
    :turn-order {:deck (->> [turn-order/player-0
                             turn-order/player-0
                             turn-order/player-1
-                            turn-order/player-1]
+                            turn-order/player-1
+                            turn-order/nemesis
+                            turn-order/nemesis]
                            shuffle)}})

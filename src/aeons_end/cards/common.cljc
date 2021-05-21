@@ -20,7 +20,7 @@
 
 (defn heal [game {:keys [player-no life]}]
   (let [amount (min life
-                    (- 10 (get-in game [:players player-no :life])))]
+                    (- ut/player-starting-life (get-in game [:players player-no :life])))]
     (-> game
         (update-in [:players player-no :life] ut/plus amount))))
 
