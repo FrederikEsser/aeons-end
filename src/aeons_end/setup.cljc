@@ -38,26 +38,28 @@
                     vec)})))
 
 (defn create-player [{:keys [breaches ability] :as mage}]
-  (merge mage
-         {:breaches (->> breaches
-                         (mapv merge
-                               [{:status :opened}
-                                {:status     :closed
-                                 :focus-cost 2
-                                 :open-costs [5 4 3 2]}
-                                {:status       :closed
-                                 :focus-cost   3
-                                 :open-costs   [9 7 5 3]
-                                 :bonus-damage 1}
-                                {:status       :closed
-                                 :focus-cost   4
-                                 :open-costs   [13 10 7 4]
-                                 :bonus-damage 1}]
-                               ))
-          :ability  (merge ability
-                           {:charges 0})
-          :life     ut/player-starting-life
-          :phase    :out-of-turn}))
+  (-> mage
+      (merge {:breaches (->> breaches
+                             (mapv merge
+                                   [{:status :opened}
+                                    {:status     :closed
+                                     :focus-cost 2
+                                     :open-costs [5 4 3 2]}
+                                    {:status       :closed
+                                     :focus-cost   3
+                                     :open-costs   [9 7 5 3]
+                                     :bonus-damage 1}
+                                    {:status       :closed
+                                     :focus-cost   4
+                                     :open-costs   [13 10 7 4]
+                                     :bonus-damage 1}]
+                                   ))
+              :ability  (merge ability
+                               {:charges 0})
+              :life     ut/player-starting-life
+              :phase    :out-of-turn})
+      (update :hand #(map ut/give-id! %))
+      (update :deck #(map ut/give-id! %))))
 
 (defn create-game []
   {:mode       :swift
