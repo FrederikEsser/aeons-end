@@ -4,6 +4,7 @@
             [aeons-end.cards.common]
             [aeons-end.nemeses :as nemeses]
             [aeons-end.cards.base :refer :all]
+            [aeons-end.cards.gems :refer [jade]]
             [aeons-end.cards.nemesis :refer :all]
             [aeons-end.turn-order :as turn-order]))
 
@@ -55,6 +56,45 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
+
+(deftest nix-test
+  (testing "Nix"
+    (is (= (-> {:nemesis   {:deck    [nix]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal]
+                             :life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :crystal))
+           {:nemesis   {:discard [nix]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:discard [crystal]
+                         :life    9}]}))
+    (is (= (-> {:nemesis   {:deck    [nix]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal jade]
+                             :life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :jade))
+           {:nemesis   {:discard [nix]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:hand    [crystal]
+                         :discard [jade]
+                         :life    9}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [nix]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:hand [crystal jade]
+                                            :life 10}]}
+                              draw-nemesis-card
+                              (choose {:player-no 0})
+                              (choose :crystal))))))
 
 (deftest umbra-titan-test
   (testing "Umbra Titan"
