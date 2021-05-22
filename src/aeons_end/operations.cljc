@@ -243,10 +243,13 @@
                    :apply-triggers  apply-triggers})
 
 (defn state-maintenance [game player-no from to]
-  (let [from-cards (get-in game [:players player-no from])]
+  (let [from-cards (if player-no
+                     (get-in game [:players player-no from])
+                     (get-in game [:nemesis from]))]
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
-            (empty? from-cards) (update-in [:players player-no] dissoc from)
+            (and player-no (empty? from-cards)) (update-in [:players player-no] dissoc from)
+            (and (nil? player-no) (empty? from-cards)) (update :nemesis dissoc from)
             (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
                                                                          (->> breaches
                                                                               (mapv (fn [{:keys [prepped-spells] :as breach}]
@@ -264,19 +267,20 @@
         {:card      (ut/give-id! card)
          :from-path from
          :idx       idx}))
-    (let [player    (get-in game [:players player-no])
-          from-path (case from
-                      :trash [:trash]
-                      :breach [:players player-no :breaches breach-no :prepped-spells]
-                      [:players player-no from])]
+    (let [from-path (if player-no
+                      (case from
+                        :trash [:trash]
+                        :breach [:players player-no :breaches breach-no :prepped-spells]
+                        [:players player-no from])
+                      [:nemesis from])]
       (merge {:from-path from-path}
              (case from-position
-               :bottom {:idx (dec (count (get player from))) :card (last (get player from))}
-               :top {:idx 0 :card (first (get player from))}
+               :bottom {:idx (dec (count (get-in game from-path))) :card (last (get-in game from-path))}
+               :top {:idx 0 :card (first (get-in game from-path))}
                (cond
                  move-card-id (ut/get-card-idx game from-path {:id move-card-id})
                  card-name (ut/get-card-idx game from-path {:name card-name})
-                 :else {:idx 0 :card (first (get player from))}))))))
+                 :else {:idx 0 :card (first (get-in game from-path))}))))))
 
 (defn- remove-card [game from-path idx]
   (if (#{:supply :extra-cards} from-path)
@@ -463,12 +467,14 @@
 (effects/register {:peek-deck peek-deck})
 
 (defn do-move-card [game {:keys [player-no card from-path idx card-name from to to-position to-player breach-no]}]
-  (let [to-path (case to
-                  :breach [:players (or to-player player-no) :breaches breach-no :prepped-spells]
-                  :trash [:trash]
-                  :supply :supply
-                  :extra-cards :extra-cards
-                  [:players (or to-player player-no) to])]
+  (let [to-path (if player-no
+                  (case to
+                    :breach [:players (or to-player player-no) :breaches breach-no :prepped-spells]
+                    :trash [:trash]
+                    :supply :supply
+                    :extra-cards :extra-cards
+                    [:players (or to-player player-no) to])
+                  [:nemesis to])]
     (when card-name
       (assert card (str "Move error: There is no " (ut/format-name card-name) " in " from-path ".")))
     (cond-> game
@@ -492,7 +498,10 @@
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])
         {:keys [card] :as card-info} (get-card game args)]
-    (if (and (= :deck from) (empty? deck) (not-empty discard))
+    (if (and player-no
+             (= :deck from)
+             (empty? deck)
+             (not-empty discard))
       (push-effect-stack game {:player-no player-no
                                :effects   [[:flip-discard]
                                            [:move-card args]]})

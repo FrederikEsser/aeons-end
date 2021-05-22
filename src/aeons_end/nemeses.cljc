@@ -1,6 +1,7 @@
 (ns aeons-end.nemeses
   (:require [aeons-end.operations :refer [push-effect-stack give-choice]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.cards.nemesis :as cards]))
 
 (defn unleash [game _]
   (let [effects (get-in game [:nemesis :unleash])]
@@ -34,15 +35,14 @@
                                      count)]
     (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
     (give-choice game (case discarded-nemesis-cards
-                        1 {:title     :umbra-titan
+                        1 {:title     :unleash
                            :text      "Any player suffers 2 damage."
                            :choice    [:damage-player {:arg 2}]
                            :or-choice {:text    "Umbra titan loses one nemesis token"
                                        :effects [[:lose-nemesis-tokens 1]]}
                            :options   [:players]
                            :max       1}
-                        2 {:title   :umbra-titan
-                           :text    "Choose one:"
+                        2 {:title   :unleash
                            :choice  ::umbra-titan-choice
                            :options [:special
                                      {:option :damage :text "Gravehold suffers 2 damage"}
@@ -57,4 +57,7 @@
                   :difficulty 3
                   :life       80
                   :tokens     5
-                  :unleash    [[::umbra-titan-unleash]]})
+                  :unleash    [[::umbra-titan-unleash]]
+                  :cards      [cards/unleash-1 cards/unleash-1 cards/unleash-1
+                               cards/unleash-2 cards/unleash-2 cards/unleash-2
+                               cards/unleash-3 cards/unleash-3 cards/unleash-3]})

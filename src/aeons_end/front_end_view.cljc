@@ -162,8 +162,6 @@
               (when-not (nil? optional?)
                 {:optional? optional?}))))
 
-
-
 (defn view-breaches [{{:keys [player-no
                               breaches
                               phase
@@ -256,13 +254,38 @@
           :discard   (view-discard data)
           :life      life
           :aether    aether}
-         (when (and choice
-                    (or (nil? (:player-no choice))
-                        (not (#{:players :prepped-spells} (:source choice)))
+         (when (and (:player-no choice)
+                    (or (not (#{:players :prepped-spells} (:source choice)))
                         active-player?))
            {:choice (view-choice choice)})
          (choice-interaction-player {:area      :players
                                      :player-no player-no} choice)))
+
+(defn view-nemesis [{:keys [name life tokens deck play-area discard]} choice]
+  (merge {:name-ui (ut/format-name name)
+          :life    life
+          :tokens  tokens
+          :deck    (if (empty? deck)
+                     {}
+                     {:number-of-cards (count deck)})}
+         (when (not-empty play-area)
+           {:play-area (->> play-area
+                            (map (fn [{:keys [name text type tier]}]
+                                   (merge {:name    name
+                                           :name-ui (ut/format-name name)
+                                           :text    text
+                                           :type    type
+                                           :tier    tier}
+                                          (choice-interaction {:area      :nemesis
+                                                               :card-name name} choice)))))})
+         (when (not-empty discard)
+           (let [{:keys [name text type]} (last discard)]
+             {:discard {:name    name
+                        :name-ui (ut/format-name name)
+                        :text    text
+                        :type    type}}))
+         (when choice
+           {:choice (view-choice choice)})))
 
 (defn view-trash [{:keys [trash choice] :as game}]
   (merge
@@ -307,7 +330,8 @@
   (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
-           {:nemesis   nemesis
+           {:nemesis   (view-nemesis nemesis (when (nil? player-no)
+                                               choice))
             :gravehold gravehold
             :supply    (view-supply (merge game {:player (assoc player :player-no current-player)
                                                  :choice choice}))
@@ -319,8 +343,7 @@
                                                                      (not= phase :end-of-game))]
                                              (view-player (merge game {:active-player? active-player?
                                                                        :player         (assoc player :player-no idx)}
-                                                                 (when (or (nil? player-no)
-                                                                           (= idx player-no)
+                                                                 (when (or (= idx player-no)
                                                                            (#{:players :prepped-spells} source))
                                                                    {:choice choice})))))))
             :trash     (view-trash (merge game {:choice choice}))

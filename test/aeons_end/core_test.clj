@@ -2,11 +2,12 @@
   (:require [clojure.test :refer :all]
             [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
+            [aeons-end.operations :refer [push-effect-stack check-stack]]
             [aeons-end.cards.common]
             [aeons-end.cards.base :refer [crystal spark]]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.mages :refer [buried-light]]
-            [aeons-end.turn-order :refer :all]))
+            [aeons-end.turn-order :as turn-order]))
 
 (defn fixture [f]
   #_(ut/reset-ids!)
@@ -420,20 +421,46 @@
                                    :stage          2}]
                        :phase    :out-of-turn}]}))
     (is (= (-> {:current-player 0
-                :turn-order     {:deck    [player-1 player-2]
-                                 :discard [player-0]}
+                :turn-order     {:deck    [turn-order/player-1
+                                           turn-order/player-2]
+                                 :discard [turn-order/player-0]}
                 :players        [{} {} {}]}
                (end-turn 0))
            {:current-player 1
-            :turn-order     {:deck    [player-2]
-                             :discard [player-0 player-1]}
+            :turn-order     {:deck    [turn-order/player-2]
+                             :discard [turn-order/player-0
+                                       turn-order/player-1]}
             :players        [{} {} {}]}))
     (is (= (-> {:current-player 1
                 :turn-order     {:deck    []
-                                 :discard [player-2 player-0 player-3 player-1]}
+                                 :discard [turn-order/player-2
+                                           turn-order/player-0
+                                           turn-order/player-3
+                                           turn-order/player-1]}
                 :players        [{} {} {} {}]}
                (end-turn 1))
            {:current-player 2
-            :turn-order     {:deck    [player-0 player-1 player-3]
-                             :discard [player-2]}
+            :turn-order     {:deck    [turn-order/player-0
+                                       turn-order/player-1
+                                       turn-order/player-3]
+                             :discard [turn-order/player-2]}
             :players        [{} {} {} {}]}))))
+
+(defn draw-nemesis-card [game]
+  (-> game
+      (push-effect-stack {:effects [[:draw-nemesis-card]]})
+      check-stack))
+
+(deftest draw-nemesis-card-test
+  (testing "Draw nemesis card"
+    (is (= (-> {:nemesis   {:deck    [{:name        :fugazi
+                                       :type        :attack
+                                       :immediately [[:unleash]]}]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [{:name        :fugazi
+                                   :type        :attack
+                                   :immediately [[:unleash]]}]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}}))))

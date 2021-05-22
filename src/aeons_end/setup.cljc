@@ -1,11 +1,41 @@
 (ns aeons-end.setup
-  (:require [aeons-end.cards.gems :as gems]
+  (:require [aeons-end.cards.nemesis :as nemesis-cards]
+            [aeons-end.cards.gems :as gems]
             [aeons-end.cards.relics :as relics]
             [aeons-end.cards.spells :as spells]
             [aeons-end.mages :as mages]
             [aeons-end.nemeses :as nemeses]
             [aeons-end.turn-order :as turn-order]
             [aeons-end.utils :as ut]))
+
+(def basic-nemesis-cards {1 {1 1
+                             2 3
+                             3 7}
+                          2 {1 3
+                             2 5
+                             3 7}
+                          3 {1 5
+                             2 6
+                             3 7}
+                          4 {1 8
+                             2 7
+                             3 7}})
+
+(defn create-nemesis [{:keys [cards] :as nemesis} number-of-players]
+  (-> nemesis
+      (dissoc :cards)
+      (merge
+        {:deck (->> (range 1 4)
+                    (mapcat (fn [tier]
+                              (->> nemesis-cards/cards
+                                   (filter (comp #{tier} :tier))
+                                   (take 9)
+                                   shuffle
+                                   (take (get-in basic-nemesis-cards [number-of-players tier]))
+                                   (concat (->> cards
+                                                (filter (comp #{tier} :tier))))
+                                   shuffle)))
+                    vec)})))
 
 (defn create-player [{:keys [breaches ability] :as mage}]
   (merge mage
@@ -31,7 +61,7 @@
 
 (defn create-game []
   {:mode       :swift
-   :nemesis    nemeses/umbra-titan
+   :nemesis    (create-nemesis nemeses/umbra-titan 2)
    :gravehold  {:life ut/gravehold-starting-life}
    :supply     [{:card gems/jade :pile-size 7}
                 {:card gems/alien-element :pile-size 7}

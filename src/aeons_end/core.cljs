@@ -34,9 +34,9 @@
                                :else :black))
      :font-weight      :bold
      :background-color (cond
-                         (= :gem type) "#cfbede"
-                         (= :relic type) "#c7dff5"
-                         (= :spell type) "#f7e2b5"
+                         (#{:gem :attack} type) "#cfbede"
+                         (#{:relic} type) "#c7dff5"
+                         (#{:spell :power} type) "#f7e2b5"
                          (= :minion type) "#aadfef"
                          (= :breach type) (if (= :opened status)
                                             "#f8e238"
@@ -46,9 +46,9 @@
                                              "#f9e395" #_"#b4afa2"))
      :border-color     (cond
                          (zero? number-of-cards) :red
-                         (= :gem type) "#9d77af"
-                         (= :relic type) "#6bb6dc"
-                         (= :spell type) "#f8c44e"
+                         (#{:gem :attack} type) "#9d77af"
+                         (#{:relic} type) "#6bb6dc"
+                         (#{:spell :power} type) "#f8c44e"
                          (= :minion type) "#49c4e9"
                          (= :breach type) (if (#{:closed :openable} status)
                                             "#434f64"
@@ -181,6 +181,85 @@
             (map view-kingdom-card)
             (mapk (fn [card] [:td card])))])
 
+(defn view-nemesis-card
+  [{:keys [name name-ui text choice-value type interaction] :as card}]
+  (let [disabled (nil? interaction)]
+    [:button {:style    (button-style :disabled disabled
+                                      :type type)
+              :title    text
+              :disabled disabled
+              :on-click (when interaction
+                          (fn [] (case interaction
+                                   :discardable (swap! state assoc :game (cmd/discard name)))))}
+     [:div
+      [:div name-ui]
+      [:div text]]]))
+
+(defn view-choice [{:keys [choice-title
+                           text
+                           or-text
+                           options
+                           interval
+                           min
+                           max
+                           quick-choice?
+                           optional?] :as choice}]
+  (let [selection (:selection @state)]
+    [:td
+     (when choice-title
+       [:div {:style {:font-weight :bold}}
+        choice-title])
+     [:div text]
+     [:div (mapk-indexed (fn [idx {:keys [option text]}]
+                           (let [disabled (and (not quick-choice?)
+                                               (or (= max (count selection))
+                                                   (-> selection set option)))]
+                             [:<>
+                              (when (pos? idx)
+                                [:div {:style {:font-weight :bold}}
+                                 "OR"])
+                              [:button {:style    (button-style :disabled disabled)
+                                        :disabled disabled
+                                        :on-click (fn [] (if quick-choice?
+                                                           (swap! state assoc :game (cmd/choose option))
+                                                           (select! option)))}
+                               text]])) options)]
+     (when interval
+       [:div [:button {:style    (button-style)
+                       :on-click (fn [] (swap! state assoc
+                                               :game (cmd/choose 0)
+                                               :selection []))}
+              "Top"]
+        (when (pos? (:to interval))
+          [:span [:input {:type      :number
+                          :min       1
+                          :max       (dec (:to interval))
+                          :on-change (fn [e] (swap! state assoc :selection [(js/parseInt (-> e .-target .-value))]))
+                          :value     (or (-> @state :selection first) 0)}]
+           [:button {:style    (button-style)
+                     :on-click (fn [] (swap! state assoc
+                                             :game (cmd/choose (:to interval))
+                                             :selection []))}
+            "Bottom"]])])
+     (when (or (not quick-choice?) interval)
+       [:div
+        (when (< 1 max)
+          [:div "Selected: " (mapk-indexed (fn [idx selected]
+                                             [:button {:style    (button-style)
+                                                       :on-click (fn [] (deselect! idx))}
+                                              (ut/format-name selected)]) selection)])
+        (when or-text
+          [:div {:style {:font-weight :bold}}
+           "OR"])
+        (let [disabled (and min (< (count selection) min)
+                            (not (and optional? (empty? selection))))]
+          [:button {:style    (button-style :disabled disabled)
+                    :disabled disabled
+                    :on-click (fn [] (swap! state assoc
+                                            :game (cmd/choose selection)
+                                            :selection []))}
+           (or or-text "Done")])])]))
+
 (defn set-selector []
   (fn [sets set-name]
     [:div
@@ -202,7 +281,7 @@
 
 (defn home-page []
   (fn []
-    (let [{:keys [setup-game? selection]} @state]
+    (let [{:keys [setup-game?]} @state]
       [:div [:h2 "Aeon's End"]
 
        (when setup-game?
@@ -221,28 +300,44 @@
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
            "Undo"])]
 
-       (when-let [{:keys [name life tokens]} (-> @state :game :nemesis)]
-         [:div (ut/format-name name) " Life: " life " Tokens: " tokens])
+       (when-let [{:keys [name name-ui life tokens deck play-area discard interaction choice-value choice]} (-> @state :game :nemesis)]
+         [:div [:table
+                [:tbody
+                 [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
+                 [:tr
+                  [:td
+                   [:div
+                    (let [disabled (nil? interaction)]
+                      [:button {:title    "Nemesis"
+                                :style    (button-style :disabled disabled)
+                                :disabled disabled
+                                :on-click (when interaction
+                                            (fn [] (case interaction
+                                                     :choosable (select! (or choice-value name))
+                                                     :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
+                       name-ui])]
+                   [:div "Life: " life]
+                   [:div "Tokens: " tokens]]
+                  [:td [:div
+                        (mapk view-nemesis-card play-area)]]
+                  [:td [:div
+                        (str (:number-of-cards deck) " Cards")]]
+                  [:td (when discard
+                         (view-nemesis-card discard))]
+                  (when choice
+                    (view-choice choice))]]]])
        [:div "Gravehold Life: " (-> @state :game :gravehold :life)]
-       [:div "Players"
+       [:div
         [:table
          [:tbody
           [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
           (->> (get-in @state [:game :players])
-               (mapk (fn [{:keys                          [name-ui title life ability aether breaches hand play-area deck discard active? choice-value interaction]
-                           {:keys [choice-title
-                                   text
-                                   or-text
-                                   options
-                                   interval
-                                   min
-                                   max
-                                   quick-choice?
-                                   optional?] :as choice} :choice}]
+               (mapk (fn [{:keys                    [name-ui title life ability aether breaches hand play-area deck discard active? choice-value interaction]
+                           {:keys [max] :as choice} :choice}]
                        (let [breach-no     (->> breaches
                                                 (remove (comp #{:closed} :status))
                                                 (filter (comp empty? :prepped-spells))
-                                                (sort-by :bonus-damage)
+                                                (sort-by (juxt :bonus-damage :status))
                                                 last
                                                 :breach-no)
                              add-breach-no (fn [{:keys [type] :as card}]
@@ -259,7 +354,9 @@
                                                     (fn [] (case interaction
                                                              :choosable (select! (or choice-value name))
                                                              :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
-                               name-ui])]
+                               [:div
+                                [:div name-ui]
+                                [:div title]]])]
                            (view-ability ability)
                            [:div "Life: " life]
                            [:div "Aether: " aether]]
@@ -294,57 +391,8 @@
                                    [:hr]])
                                 (view-player-pile deck max)]]
                           [:td (view-player-pile discard max)]
-                          (if choice
-                            [:td
-                             (when choice-title
-                               [:div {:style {:font-weight :bold}}
-                                choice-title])
-                             [:div text]
-                             [:div (mapk (fn [{:keys [option text]}]
-                                           (let [disabled (and (not quick-choice?)
-                                                               (or (= max (count selection))
-                                                                   (-> selection set option)))]
-                                             [:button {:style    (button-style :disabled disabled)
-                                                       :disabled disabled
-                                                       :on-click (fn [] (if quick-choice?
-                                                                          (swap! state assoc :game (cmd/choose option))
-                                                                          (select! option)))}
-                                              text])) options)]
-                             (when interval
-                               [:div [:button {:style    (button-style)
-                                               :on-click (fn [] (swap! state assoc
-                                                                       :game (cmd/choose 0)
-                                                                       :selection []))}
-                                      "Top"]
-                                (when (pos? (:to interval))
-                                  [:span [:input {:type      :number
-                                                  :min       1
-                                                  :max       (dec (:to interval))
-                                                  :on-change (fn [e] (swap! state assoc :selection [(js/parseInt (-> e .-target .-value))]))
-                                                  :value     (or (-> @state :selection first) 0)}]
-                                   [:button {:style    (button-style)
-                                             :on-click (fn [] (swap! state assoc
-                                                                     :game (cmd/choose (:to interval))
-                                                                     :selection []))}
-                                    "Bottom"]])])
-                             (when (or (not quick-choice?) interval)
-                               [:div
-                                (when (< 1 max)
-                                  [:div "Selected: " (mapk-indexed (fn [idx selected]
-                                                                     [:button {:style    (button-style)
-                                                                               :on-click (fn [] (deselect! idx))}
-                                                                      (ut/format-name selected)]) selection)])
-                                (when or-text
-                                  [:div {:style {:font-weight :bold}}
-                                   "OR"])
-                                (let [disabled (and min (< (count selection) min)
-                                                    (not (and optional? (empty? selection))))]
-                                  [:button {:style    (button-style :disabled disabled)
-                                            :disabled disabled
-                                            :on-click (fn [] (swap! state assoc
-                                                                    :game (cmd/choose selection)
-                                                                    :selection []))}
-                                   (or or-text "Done")])])])]))))]]]
+                          (when choice
+                            (view-choice choice))]))))]]]
 
        [:div "Supply"
         (let [supply (-> (:game @state) :supply)

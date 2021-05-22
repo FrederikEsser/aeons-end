@@ -1,4 +1,6 @@
-(ns aeons-end.turn-order)
+(ns aeons-end.turn-order
+  (:require [aeons-end.operations :refer [push-effect-stack]]
+            [aeons-end.effects :as effects]))
 
 (def player-0 {:text    "Player 1"
                :actor   {:player-no 0}
@@ -16,7 +18,21 @@
                :actor   {:player-no 3}
                :effects [[:set-current-player {:player-no 3}]]})
 
+(defn draw-nemesis-card [game _]
+  (let [{:keys [name type immediately]} (get-in game [:nemesis :deck 0])]
+    (push-effect-stack game {:effects (concat [[:move-card {:from          :deck
+                                                            :from-position :top
+                                                            :to            :play-area}]]
+                                              (when immediately
+                                                immediately)
+                                              (when (= :attack type)
+                                                [[:move-card {:card-name name
+                                                              :from      :play-area
+                                                              :to        :discard}]]))})))
+
+(effects/register {:draw-nemesis-card draw-nemesis-card})
+
 (def nemesis {:text    "Nemesis"
               :actor   :nemesis
-              :effects [[:unleash]
+              :effects [[:draw-nemesis-card]
                         [:next-turn]]})

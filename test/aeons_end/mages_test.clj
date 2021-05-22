@@ -4,7 +4,8 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.base :refer [crystal spark]]
             [aeons-end.cards.common]
-            [aeons-end.mages :refer :all]))
+            [aeons-end.mages :refer :all]
+            [aeons-end.utils :as ut]))
 
 (deftest brama-test
   (testing "Brama"
@@ -18,23 +19,23 @@
               :nemesis {:life 49}})))
     (testing "Brink Siphon"
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
-                             :life    5}]}
+                             :life    3}]}
                  (activate-ability 0)
                  (choose {:player-no 0}))
              {:players [{:ability (assoc brink-siphon :charges 0)
-                         :life    9}]}))
+                         :life    7}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
-                             :life    7}]}
+                             :life    (- ut/player-starting-life 3)}]}
                  (activate-ability 0)
                  (choose {:player-no 0}))
              {:players [{:ability (assoc brink-siphon :charges 0)
-                         :life    10}]}))
+                         :life    ut/player-starting-life}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
-                             :life    10}]}
+                             :life    ut/player-starting-life}]}
                  (activate-ability 0)
                  (choose {:player-no 0}))
              {:players [{:ability (assoc brink-siphon :charges 0)
-                         :life    10}]}))
+                         :life    ut/player-starting-life}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)}
                             {:life 1}]}
                  (activate-ability 0)
