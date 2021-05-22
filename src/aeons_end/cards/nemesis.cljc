@@ -1,4 +1,6 @@
-(ns aeons-end.cards.nemesis)
+(ns aeons-end.cards.nemesis
+  (:require [aeons-end.operations :refer [push-effect-stack]]
+            [aeons-end.effects :as effects]))
 
 (def unleash-1 {:name        :unleash-1
                 :text        "Unleash."
@@ -21,7 +23,31 @@
                               [:unleash]]
                 :tier        3})
 
-(def cards (mapcat vector
-                   (repeat unleash-1)
-                   (repeat unleash-2)
-                   (repeat unleash-3)))
+(defn afflict-damage-player [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 3]
+                                       [:give-choice {:title   :afflict
+                                                      :text    "You may place a card in your discard pile into your hand."
+                                                      :choice  :take-from-discard
+                                                      :options [:player :discard]
+                                                      :max     1}]]}))
+
+(effects/register {::afflict-damage-player afflict-damage-player})
+
+(def afflict {:name        :afflict
+              :type        :attack
+              :tier        1
+              :text        "Unleash. Any player suffers 3 damage and may place a card in their discard pile into their hand."
+              :immediately [[:unleash]
+                            [:give-choice {:title   :afflict
+                                           :text    "Any player suffers 3 damage and may place a card in their discard pile into their hand."
+                                           :choice  ::afflict-damage-player
+                                           :options [:players]
+                                           :min     1
+                                           :max     1}]]
+              :quote       "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
+(def cards (concat [afflict]
+                   (mapcat vector
+                           (repeat unleash-1)
+                           (repeat unleash-2)
+                           (repeat unleash-3))))

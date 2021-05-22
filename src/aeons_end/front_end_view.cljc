@@ -128,7 +128,8 @@
                                          (view-area :deck data :top revealed-cards-in-deck)))})))))
 
 (defn view-discard [{{:keys [discard
-                             gaining]} :player}]
+                             gaining]} :player
+                     choice            :choice}]
   (merge
     (when (not-empty discard)
       {:card (let [{:keys [name type]} (last discard)]
@@ -141,7 +142,9 @@
                              (map (fn [{:keys [name type]}]
                                     (merge {:name    name
                                             :name-ui (ut/format-name name)
-                                            :type    type})))))
+                                            :type    type}
+                                           (choice-interaction {:area      :discard
+                                                                :card-name name} choice))))))
      :number-of-cards (count discard)}))
 
 (defn view-options [options]
@@ -276,9 +279,10 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name text type tier]}]
+                            (map (fn [{:keys [name text quote type tier]}]
                                    (merge {:name    name
                                            :name-ui (ut/format-name name)
+                                           :quote   quote
                                            :text    text
                                            :type    type
                                            :tier    tier}

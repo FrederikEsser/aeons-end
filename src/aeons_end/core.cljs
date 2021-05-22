@@ -212,11 +212,11 @@
             (mapk (fn [card] [:td card])))])
 
 (defn view-nemesis-card
-  [{:keys [name name-ui text choice-value type interaction] :as card}]
+  [{:keys [name name-ui text quote choice-value type interaction] :as card}]
   (let [disabled (nil? interaction)]
     [:button {:style    (button-style :disabled disabled
                                       :type type)
-              :title    text
+              :title    quote
               :disabled disabled
               :on-click (when interaction
                           (fn [] (case interaction

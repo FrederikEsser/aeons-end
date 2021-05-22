@@ -33,6 +33,13 @@
 
 (effects/register {:discard-from-hand discard-from-hand})
 
+(defn take-from-discard [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :discard
+                                                             :to   :hand}))))
+
+(effects/register {:take-from-discard take-from-discard})
+
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game
