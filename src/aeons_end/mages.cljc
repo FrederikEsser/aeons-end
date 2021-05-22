@@ -43,11 +43,12 @@
 
 (effects/register {::garnet-shard-choice garnet-shard-choice})
 
-(def garnet-shard {:name    :garnet-shard
-                   :type    :gem
-                   :cost    0
-                   :text    "Gain 1 Aether. OR Cast any player's prepped spell."
-                   :effects [[::garnet-shard-choice]]})
+(def garnet-shard {:name            :garnet-shard
+                   :type            :gem
+                   :cost            0
+                   :auto-play-index 1
+                   :text            "Gain 1 Aether. OR Cast any player's prepped spell."
+                   :effects         [[::garnet-shard-choice]]})
 
 (def divine-augury {:name        :divine-augury
                     :activation  :your-main-phase

@@ -33,14 +33,15 @@
 
 (effects/register {::pain-stone-choices pain-stone-choices})
 
-(def pain-stone {:name    :pain-stone
-                 :type    :gem
-                 :cost    6
-                 :text    "Gain 3 Aether. OR Gain 2 Aether and deal 1 damage."
-                 :effects [[:give-choice {:title   :pain-stone
-                                          :choice  ::pain-stone-choices
-                                          :options [:special
-                                                    {:option :aether :text "Gain 3 Aether"}
-                                                    {:option :damage :text "Gain 2 Aether and deal 1 damage"}]
-                                          :min     1
-                                          :max     1}]]})
+(def pain-stone {:name            :pain-stone
+                 :type            :gem
+                 :cost            6
+                 :auto-play-index 1
+                 :text            "Gain 3 Aether. OR Gain 2 Aether and deal 1 damage."
+                 :effects         [[:give-choice {:title   :pain-stone
+                                                  :choice  ::pain-stone-choices
+                                                  :options [:special
+                                                            {:option :aether :text "Gain 3 Aether"}
+                                                            {:option :damage :text "Gain 2 Aether and deal 1 damage"}]
+                                                  :min     1
+                                                  :max     1}]]})

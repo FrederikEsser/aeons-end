@@ -128,17 +128,21 @@
                                          (view-area :deck data :top revealed-cards-in-deck)))})))))
 
 (defn view-discard [{{:keys [discard
-                             gaining
-                             revealed-cards]} :player
-                     :as                      data}]
-  (let [full-discard (concat gaining discard)]
-    (if (empty? full-discard)
-      {}
-      (let [revealed-cards-in-discard (or (:discard revealed-cards)
-                                          1)]
-        {:visible-cards   (concat (view-area :gaining data)
-                                  (view-area :discard data :bottom revealed-cards-in-discard))
-         :number-of-cards (count full-discard)}))))
+                             gaining]} :player}]
+  (merge
+    (when (not-empty discard)
+      {:card (let [{:keys [name type]} (last discard)]
+               {:name    name
+                :name-ui (ut/format-name name)
+                :type    type})})
+    {:cards           (if (empty? discard)
+                        []
+                        (->> discard
+                             (map (fn [{:keys [name type]}]
+                                    (merge {:name    name
+                                            :name-ui (ut/format-name name)
+                                            :type    type})))))
+     :number-of-cards (count discard)}))
 
 (defn view-options [options]
   (->> options
@@ -244,8 +248,10 @@
                                         active-player?]
                     :as                data}]
   (merge {:active?   active-player?
+          :name      name
           :name-ui   (ut/format-name name)
           :title     title
+          :type      {:player-no player-no}
           :ability   (view-ability data)
           :breaches  (view-breaches data)
           :hand      (view-area :hand data)
@@ -326,25 +332,45 @@
                                (and (#{:casting :main} phase)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
-(defn view-game [{:keys [nemesis gravehold players effect-stack current-player] :as game}]
+(defn view-turn-order [{:keys [deck discard]}]
+  {:deck    (if (empty? deck)
+              {}
+              {:number-of-cards (count deck)})
+   :discard (merge
+              (when (not-empty discard)
+                {:card (let [{:keys [name type]} (last discard)]
+                         {:name    name
+                          :name-ui (ut/format-name name)
+                          :type    type})})
+              {:cards           (if (empty? discard)
+                                  []
+                                  (->> discard
+                                       (map (fn [{:keys [name type]}]
+                                              (merge {:name    name
+                                                      :name-ui (ut/format-name name)
+                                                      :type    type})))))
+               :number-of-cards (count discard)})})
+
+(defn view-game [{:keys [nemesis gravehold turn-order players effect-stack current-player] :as game}]
   (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
-           {:nemesis   (view-nemesis nemesis (when (nil? player-no)
-                                               choice))
-            :gravehold gravehold
-            :supply    (view-supply (merge game {:player (assoc player :player-no current-player)
-                                                 :choice choice}))
-            :players   (->> players
-                            (map-indexed (fn [idx player]
-                                           (let [active-player? (and (= idx current-player)
-                                                                     (or (nil? choice)
-                                                                         (= idx player-no))
-                                                                     (not= phase :end-of-game))]
-                                             (view-player (merge game {:active-player? active-player?
-                                                                       :player         (assoc player :player-no idx)}
-                                                                 (when (or (= idx player-no)
-                                                                           (#{:players :prepped-spells} source))
-                                                                   {:choice choice})))))))
-            :trash     (view-trash (merge game {:choice choice}))
-            :commands  (view-commands game)}))))
+           {:nemesis    (view-nemesis nemesis (when (nil? player-no)
+                                                choice))
+            :gravehold  gravehold
+            :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
+                                                  :choice choice}))
+            :turn-order (view-turn-order turn-order)
+            :players    (->> players
+                             (map-indexed (fn [idx player]
+                                            (let [active-player? (and (= idx current-player)
+                                                                      (or (nil? choice)
+                                                                          (= idx player-no))
+                                                                      (not= phase :end-of-game))]
+                                              (view-player (merge game {:active-player? active-player?
+                                                                        :player         (assoc player :player-no idx)}
+                                                                  (when (or (= idx player-no)
+                                                                            (#{:players :prepped-spells} source))
+                                                                    {:choice choice})))))))
+            :trash      (view-trash (merge game {:choice choice}))
+            :commands   (view-commands game)}))))

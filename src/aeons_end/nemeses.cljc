@@ -31,7 +31,7 @@
 
 (defn umbra-titan-unleash [game _]
   (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
-                                     (filter (comp #{:nemesis} :actor))
+                                     (filter (comp #{:nemesis} :type))
                                      count)]
     (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
     (give-choice game (case discarded-nemesis-cards
