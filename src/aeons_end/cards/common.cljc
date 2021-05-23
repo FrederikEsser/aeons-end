@@ -40,6 +40,16 @@
 
 (effects/register {:take-from-discard take-from-discard})
 
+(defn discard-prepped-spells [game {:keys [player-no spells]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (->> spells
+                                           (map (fn [args]
+                                                  [:move-card (merge args
+                                                                     {:from :breach
+                                                                      :to   :discard})])))}))
+
+(effects/register {:discard-prepped-spells discard-prepped-spells})
+
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game

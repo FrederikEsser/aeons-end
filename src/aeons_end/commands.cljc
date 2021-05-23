@@ -130,6 +130,13 @@
                                            [:open-breach {:breach-no breach-no}]]})
         op/check-stack)))
 
+(defn discard-power-card [game player-no card-name]
+  (check-command "Resolve TO DISCARD" game player-no)
+  (-> game
+      (op/push-effect-stack {:player-no player-no
+                             :effects   [[:discard-power-card {:card-name card-name}]]})
+      op/check-stack))
+
 (defn discard [game player-no card-name]
   (check-command "Discard" game player-no)
   (-> game

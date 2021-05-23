@@ -582,6 +582,19 @@
 
 (effects/register {:cast-spell cast-spell})
 
+(defn discard-power-card [game {:keys [player-no card-name]}]
+  (let [{:keys [predicate effects text]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name}) :card :to-discard)
+        pred-fn (effects/get-predicate predicate)]
+    (assert (pred-fn game {:player-no player-no}) (str "Resolve TO DISCARD error: " (ut/format-name card-name)
+                                                       " can't be discarded, because you can't '" text "'."))
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:set-phase {:phase :main}]]
+                                               effects
+                                               [[:discard-nemesis-card {:card-name card-name}]])}))))
+
+(effects/register {:discard-power-card discard-power-card})
+
 (defn- get-choice-fn [data]
   (let [{:keys [choice] :as result} (if (vector? data)
                                       {:choice (first data)
@@ -629,13 +642,13 @@
                           :overpay :amount
                           :special :choices
                           :mixed :choices
+                          :prepped-spells :spells
                           :card-names)
         multi-selection (if (sequential? selection)
                           selection
                           (if selection
                             [selection]
                             []))]
-
     (when min
       (assert (or (<= min (count multi-selection))
                   (and optional? (empty? multi-selection))) (str "Choose error: You must pick at least " min " options.")))

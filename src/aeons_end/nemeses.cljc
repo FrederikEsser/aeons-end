@@ -1,5 +1,5 @@
 (ns aeons-end.nemeses
-  (:require [aeons-end.operations :refer [push-effect-stack give-choice]]
+  (:require [aeons-end.operations :refer [push-effect-stack give-choice move-card]]
             [aeons-end.effects :as effects]
             [aeons-end.cards.nemesis :as cards]))
 
@@ -8,6 +8,13 @@
     (push-effect-stack game {:effects effects})))
 
 (effects/register {:unleash unleash})
+
+(defn discard-nemesis-card [game {:keys [card-name]}]
+  (move-card game {:card-name card-name
+                   :from      :play-area
+                   :to        :discard}))
+
+(effects/register {:discard-nemesis-card discard-nemesis-card})
 
 (defn lose-nemesis-tokens [game {:keys [arg]}]
   (update-in game [:nemesis :tokens] - arg))

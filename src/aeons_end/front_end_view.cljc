@@ -1,5 +1,6 @@
 (ns aeons-end.front-end-view
-  (:require [aeons-end.utils :as ut]))
+  (:require [aeons-end.utils :as ut]
+            [aeons-end.effects :as effects]))
 
 (defn- choice-interaction [{:keys [area card-name]}
                            {:keys [source options max choice-opts]}]
@@ -270,7 +271,10 @@
          (choice-interaction-player {:area      :players
                                      :player-no player-no} choice)))
 
-(defn view-nemesis [{:keys [name life tokens deck play-area discard]} choice]
+(defn view-nemesis [{{:keys [name life tokens deck play-area discard]} :nemesis
+                     {:keys [player-no phase]}                         :player
+                     choice                                            :choice
+                     :as                                               game}]
   (merge {:name-ui (ut/format-name name)
           :life    life
           :tokens  tokens
@@ -279,24 +283,42 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name text quote type tier power]}]
-                                   (merge {:name    name
-                                           :name-ui (ut/format-name name)
-                                           :text    text
-                                           :quote   quote
-                                           :type    type
-                                           :tier    tier}
-                                          (when power
-                                            {:power power})
-                                          (choice-interaction {:area      :nemesis
-                                                               :card-name name} choice)))))})
+                            (map (fn [{:keys [name text quote type to-discard power]}]
+                                   (let [can-discard-fn (when (and to-discard
+                                                                   (:predicate to-discard))
+                                                          (effects/get-predicate (:predicate to-discard)))
+                                         can-discard?   (and can-discard-fn
+                                                             (can-discard-fn game {:player-no player-no}))]
+                                     (merge {:name    name
+                                             :name-ui (ut/format-name name)
+                                             :text    text
+                                             :quote   quote
+                                             :type    type}
+                                            (when to-discard
+                                              {:to-discard-text (:text to-discard)})
+                                            (when power
+                                              {:power      (:power power)
+                                               :power-text (:text power)})
+                                            (when (and can-discard?
+                                                       (not choice)
+                                                       (#{:casting :main} phase))
+                                              {:interaction :discardable})
+                                            (choice-interaction {:area      :nemesis
+                                                                 :card-name name} choice))))))})
          (when (not-empty discard)
-           (let [{:keys [name text quote type]} (last discard)]
-             {:discard {:name    name
-                        :name-ui (ut/format-name name)
-                        :text    text
-                        :quote   quote
-                        :type    type}}))
+           (let [{:keys [name text quote type to-discard power]} (last discard)]
+             {:discard (merge {:name    name
+                               :name-ui (ut/format-name name)
+                               :text    text
+                               :quote   quote
+                               :type    type}
+                              (when to-discard
+                                {:to-discard-text (:text to-discard)})
+                              (when power
+                                {:power      (:power power)
+                                 :power-text (:text power)})
+                              (choice-interaction {:area      :nemesis
+                                                   :card-name name} choice))}))
          (when choice
            {:choice (view-choice choice)})))
 
@@ -362,8 +384,11 @@
   (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (->> (merge
-           {:nemesis    (view-nemesis nemesis (when (nil? player-no)
-                                                choice))
+           {:nemesis    (view-nemesis (merge game
+                                             (when player
+                                               {:player (assoc player :player-no current-player)})
+                                             (when (nil? player-no)
+                                               {:choice choice})))
             :gravehold  gravehold
             :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
                                                   :choice choice}))

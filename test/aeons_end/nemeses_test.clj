@@ -1,6 +1,7 @@
 (ns aeons-end.nemeses-test
   (:require [clojure.test :refer :all]
             [aeons-end.test-utils :refer :all]
+            [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
             [aeons-end.nemeses :as nemeses]
@@ -89,33 +90,87 @@
 
 (deftest night-unending-test
   (testing "Night Unending"
-    (is (= (-> {:nemesis   {:play-area [(assoc night-unending :power 1)]}
+    (is (= (-> {:nemesis   {:play-area [(assoc-in night-unending [:power :power] 1)]}
                 :gravehold {:life 30}
                 :players   [{:breaches [{:prepped-spells [spark]}]}]}
                resolve-nemesis-cards-in-play)
-           {:nemesis   {:discard [(assoc night-unending :power 0)]}
+           {:nemesis   {:discard [(assoc-in night-unending [:power :power] 0)]}
             :gravehold {:life 28}
             :players   [{:breaches [{:prepped-spells [spark]}]}]}))
-    (is (= (-> {:nemesis   {:play-area [(assoc night-unending :power 1)]}
+    (is (= (-> {:nemesis   {:play-area [(assoc-in night-unending [:power :power] 1)]}
                 :gravehold {:life 30}
                 :players   [{:breaches [{:prepped-spells [spark]}]}
                             {:breaches [{:prepped-spells [spark spark]}
                                         {:prepped-spells [spark]}
                                         {:prepped-spells []}]}]}
                resolve-nemesis-cards-in-play)
-           {:nemesis   {:discard [(assoc night-unending :power 0)]}
+           {:nemesis   {:discard [(assoc-in night-unending [:power :power] 0)]}
             :gravehold {:life 24}
             :players   [{:breaches [{:prepped-spells [spark]}]}
                         {:breaches [{:prepped-spells [spark spark]}
                                     {:prepped-spells [spark]}
                                     {:prepped-spells []}]}]}))
-    (is (= (-> {:nemesis   {:play-area [(assoc night-unending :power 1)]}
+    (is (= (-> {:nemesis   {:play-area [(assoc-in night-unending [:power :power] 1)]}
                 :gravehold {:life 30}
                 :players   [{:breaches [{}]}]}
                resolve-nemesis-cards-in-play)
-           {:nemesis   {:discard [(assoc night-unending :power 0)]}
+           {:nemesis   {:discard [(assoc-in night-unending [:power :power] 0)]}
             :gravehold {:life 30}
             :players   [{:breaches [{}]}]}))))
+
+(deftest planar-collision-test
+  (testing "Planar Collision"
+    (is (= (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}]}]}
+               (discard-power-card 0 :planar-collision)
+               (choose [{:player-no 0
+                         :breach-no 0
+                         :card-name :spark}
+                        {:player-no 0
+                         :breach-no 1
+                         :card-name :spark}]))
+           {:nemesis {:discard [(assoc-in planar-collision [:power :power] 1)]}
+            :players [{:breaches [{}
+                                  {}]
+                       :discard  [spark spark]}]}))
+    (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
+                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                               :players [{:breaches [{:prepped-spells [spark]}]}]}
+                              (discard-power-card 0 :planar-collision))))
+    (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
+                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                               :players [{:breaches [{:prepped-spells [spark]}
+                                                     {:prepped-spells [spark]}]}
+                                         {}]}
+                              (discard-power-card 1 :planar-collision))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                               :players [{:breaches [{:prepped-spells [spark]}
+                                                     {:prepped-spells [spark]}]}]}
+                              (discard-power-card 0 :planar-collision)
+                              (choose [{:player-no 1
+                                        :breach-no 0
+                                        :card-name :spark}]))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                               :players [{:breaches [{:prepped-spells [spark]}
+                                                     {:prepped-spells [spark]}]}
+                                         {:breaches [{:prepped-spells [spark]}]}]}
+                              (discard-power-card 0 :planar-collision)
+                              (choose [{:player-no 0
+                                        :breach-no 0
+                                        :card-name :spark}
+                                       {:player-no 1
+                                        :breach-no 0
+                                        :card-name :spark}]))))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in planar-collision [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in planar-collision [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}}))))
 
 (deftest umbra-titan-test
   (testing "Umbra Titan"

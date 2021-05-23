@@ -471,32 +471,32 @@
 (deftest resolve-nemesis-card-test
   (testing "Resolve nemesis card"
     (testing "Power"
-      (is (= (-> {:nemesis {:play-area [{:name    :iznogood
-                                         :type    :power
-                                         :power   3
-                                         :effects [[:damage-gravehold 1]]}]}}
+      (is (= (-> {:nemesis {:play-area [{:name  :iznogood
+                                         :type  :power
+                                         :power {:power   3
+                                                 :effects [[:damage-gravehold 1]]}}]}}
                  resolve-nemesis-cards-in-play)
-             {:nemesis {:play-area [{:name    :iznogood
-                                     :type    :power
-                                     :power   2
-                                     :effects [[:damage-gravehold 1]]}]}}))
-      (is (= (-> {:nemesis {:play-area [{:name    :iznogood
-                                         :type    :power
-                                         :power   2
-                                         :effects [[:damage-gravehold 1]]}]}}
+             {:nemesis {:play-area [{:name  :iznogood
+                                     :type  :power
+                                     :power {:power   2
+                                             :effects [[:damage-gravehold 1]]}}]}}))
+      (is (= (-> {:nemesis {:play-area [{:name  :iznogood
+                                         :type  :power
+                                         :power {:power   2
+                                                 :effects [[:damage-gravehold 1]]}}]}}
                  resolve-nemesis-cards-in-play)
-             {:nemesis {:play-area [{:name    :iznogood
-                                     :type    :power
-                                     :power   1
-                                     :effects [[:damage-gravehold 1]]}]}}))
-      (is (= (-> {:nemesis   {:play-area [{:name    :iznogood
-                                           :type    :power
-                                           :power   1
-                                           :effects [[:damage-gravehold 1]]}]}
+             {:nemesis {:play-area [{:name  :iznogood
+                                     :type  :power
+                                     :power {:power   1
+                                             :effects [[:damage-gravehold 1]]}}]}}))
+      (is (= (-> {:nemesis   {:play-area [{:name  :iznogood
+                                           :type  :power
+                                           :power {:power   1
+                                                   :effects [[:damage-gravehold 1]]}}]}
                   :gravehold {:life 30}}
                  resolve-nemesis-cards-in-play)
-             {:nemesis   {:discard [{:name    :iznogood
-                                     :type    :power
-                                     :power   0
-                                     :effects [[:damage-gravehold 1]]}]}
+             {:nemesis   {:discard [{:name  :iznogood
+                                     :type  :power
+                                     :power {:power   0
+                                             :effects [[:damage-gravehold 1]]}}]}
               :gravehold {:life 29}})))))

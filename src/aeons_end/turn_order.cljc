@@ -21,14 +21,12 @@
 
 (defn resolve-power-card [game {:keys [card-name]}]
   (let [{:keys [idx card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-        {:keys [power effects]} card]
+        {{:keys [power effects]} :power} card]
     (-> game
-        (update-in [:nemesis :play-area idx :power] dec)
+        (update-in [:nemesis :play-area idx :power :power] dec)
         (cond->
           (= 1 power) (push-effect-stack {:effects (concat effects
-                                                           [[:move-card {:card-name card-name
-                                                                         :from      :play-area
-                                                                         :to        :discard}]])})))))
+                                                           [[:discard-nemesis-card {:card-name card-name}]])})))))
 
 (defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
   (push-effect-stack game {:effects (->> (:play-area nemesis)
@@ -48,9 +46,7 @@
                                               (when immediately
                                                 immediately)
                                               (when (= :attack type)
-                                                [[:move-card {:card-name name
-                                                              :from      :play-area
-                                                              :to        :discard}]]))})))
+                                                [[:discard-nemesis-card {:card-name name}]]))})))
 
 (effects/register {:draw-nemesis-card draw-nemesis-card})
 

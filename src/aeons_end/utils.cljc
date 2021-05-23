@@ -380,10 +380,10 @@
 (effects/register-options {:players options-from-players})
 
 (defn options-from-prepped-spells
-  ([{:keys [players] :as game} _ _ & [area]]
+  ([{:keys [players] :as game} player-no _ & [{:keys [own]}]]
    (let [options (->> players
-                      (map-indexed (fn [player-no player]
-                                     (->> (:breaches player)
+                      (map-indexed (fn [player-no {:keys [breaches]}]
+                                     (->> breaches
                                           (map-indexed (fn [breach-no breach]
                                                          (->> (:prepped-spells breach)
                                                               (map (fn [{:keys [name]}]
@@ -392,7 +392,8 @@
                                                                       :card-name name})))))
                                           (apply concat))))
                       (apply concat))]
-     options)))
+     (cond->> options
+              own (filter (comp #{player-no} :player-no))))))
 
 (effects/register-options {:prepped-spells options-from-prepped-spells})
 

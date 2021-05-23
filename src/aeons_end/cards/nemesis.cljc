@@ -59,13 +59,13 @@
 
 (effects/register {::night-unending-damage night-unending-damage})
 
-(def night-unending {:name    :night-unending
-                     :type    :power
-                     :tier    1
-                     :power   3
-                     :text    "Gravehold suffers 2 damage for each spell prepped by the player with the most prepped spells."
-                     :effects [[::night-unending-damage]]
-                     :quote   "'Here beneath The World That Was there is no day, no time really, just night unending.' Xaxos, Voidbringer"})
+(def night-unending {:name  :night-unending
+                     :type  :power
+                     :tier  1
+                     :power {:power   3
+                             :text    "Gravehold suffers 2 damage for each spell prepped by the player with the most prepped spells."
+                             :effects [[::night-unending-damage]]}
+                     :quote "'Here beneath The World That Was there is no day, no time really, just night unending.' Xaxos, Voidbringer"})
 
 (defn nix-damage-player [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -93,7 +93,34 @@
                                        :max     1}]]
           :quote       "'It's as if the world itself is screaming.' Nerva, Survivor"})
 
-(def cards (concat [afflict
+(defn planar-collision-can-discard? [game {:keys [player-no]}]
+  (let [prepped-spells (->> (get-in game [:players player-no :breaches])
+                            (remove (comp #{:closed} :status))
+                            (mapcat :prepped-spells)
+                            count)]
+    (>= prepped-spells 2)))
+
+(effects/register-predicates {::planar-collision-can-discard? planar-collision-can-discard?})
+
+(def planar-collision {:name       :planar-collision
+                       :type       :power
+                       :tier       1
+                       :to-discard {:text      "Discard two prepped spells."
+                                    :predicate ::planar-collision-can-discard?
+                                    :effects   [[:give-choice {:title   :planar-collision
+                                                               :text    "Discard two prepped spells."
+                                                               :choice  :discard-prepped-spells
+                                                               :options [:prepped-spells {:own true}]
+                                                               :min     2
+                                                               :max     2}]]}
+                       :power      {:power   2
+                                    :text    "Unleash twice."
+                                    :effects [[:unleash]
+                                              [:unleash]]}
+                       :quote      "'None remembered the true name of The World That Was until Yan Magda spoke it aloud: Khasad Vol.'"})
+
+(def cards (concat [planar-collision
+                    afflict
                     night-unending
                     nix]
                    (mapcat vector

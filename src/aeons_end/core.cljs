@@ -32,7 +32,7 @@
                          inverse? (cond disabled "#cccccc"
                                         (= :openable status) "#f8e238"
                                         :else :white)
-                         nemesis-card? (if disabled "#333333" :black)
+                         nemesis-card? (if disabled "#555555" :black)
                          :else (if disabled :grey :black))
      :font-weight      :bold
      :background-color (cond
@@ -215,7 +215,7 @@
 
 (defn view-nemesis-card
   [{:keys [name name-ui text quote choice-value type
-           power interaction] :as card}]
+           to-discard-text power power-text interaction] :as card}]
   (let [disabled (nil? interaction)]
     [:button {:style    (button-style :disabled disabled
                                       :max-width "140px"
@@ -224,7 +224,7 @@
               :disabled disabled
               :on-click (when interaction
                           (fn [] (case interaction
-                                   :discardable (swap! state assoc :game (cmd/discard name)))))}
+                                   :discardable (swap! state assoc :game (cmd/discard-power-card name)))))}
      [:div
       [:div {:style {:font-size "1.4em"}} name-ui]
       (if (coll? text)
@@ -237,12 +237,25 @@
                                          power)
                                 [:strong (str "POWER " power ": ")])
                               paragraph])))
-        [:div {:style {:font-size   "0.9em"
-                       :font-weight :normal
-                       :paddingTop  "3px"}}
-         (when power
-           [:strong (str "POWER " power ": ")])
-         text])]]))
+        [:div
+         (when text
+           [:div {:style {:font-size   "0.9em"
+                          :font-weight :normal
+                          :paddingTop  "3px"}}
+            text])
+         (when to-discard-text
+           [:div {:style {:font-size   "0.9em"
+                          :font-weight :normal
+                          :paddingTop  "3px"}}
+            [:strong (str "TO DISCARD: ")]
+            to-discard-text])
+         (when power-text
+           [:div {:style {:font-size   "0.9em"
+                          :font-weight :normal
+                          :paddingTop  "3px"}}
+            (when power
+              [:strong (str "POWER " power ": ")])
+            power-text])])]]))
 
 (defn view-choice [{:keys [choice-title
                            text
