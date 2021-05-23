@@ -28,6 +28,12 @@
           (= 1 power) (push-effect-stack {:effects (concat effects
                                                            [[:discard-nemesis-card {:card-name card-name}]])})))))
 
+(defn resolve-minion-card [game {:keys [card-name]}]
+  (let [{:keys [effects]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+                              :card
+                              :persistent)]
+    (push-effect-stack game {:effects effects})))
+
 (defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
   (push-effect-stack game {:effects (->> (:play-area nemesis)
                                          (map (fn [{:keys [type name]}]
@@ -36,6 +42,7 @@
                                                   :minion [:resolve-minion-card {:card-name name}]))))}))
 
 (effects/register {:resolve-power-card            resolve-power-card
+                   :resolve-minion-card           resolve-minion-card
                    :resolve-nemesis-cards-in-play resolve-nemesis-cards-in-play})
 
 (defn draw-nemesis-card [game _]

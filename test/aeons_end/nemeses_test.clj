@@ -49,6 +49,15 @@
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
 
+(deftest howling-spinners-test
+  (testing "Howling Spinners"
+    (is (= (-> {:nemesis {:play-area [howling-spinners]}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [howling-spinners]}
+            :players [{:life 8}]}))))
+
 (deftest nix-test
   (testing "Nix"
     (is (= (-> {:nemesis   {:deck    [nix]

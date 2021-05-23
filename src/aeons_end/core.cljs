@@ -224,7 +224,7 @@
 
 (defn view-nemesis-card
   [{:keys [name name-ui text quote choice-value type
-           to-discard-text power power-text interaction] :as card}]
+           to-discard-text power power-text life persistent-text interaction] :as card}]
   (let [disabled (nil? interaction)]
     [:button {:style    (button-style :disabled disabled
                                       :max-width "140px"
@@ -233,7 +233,9 @@
               :disabled disabled
               :on-click (when interaction
                           (fn [] (case interaction
-                                   :discardable (swap! state assoc :game (cmd/discard-power-card name)))))}
+                                   :discardable (swap! state assoc :game (cmd/discard-power-card name))
+                                   :choosable (select! (or choice-value name))
+                                   :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
      [:div
       [:div {:style {:font-size "1.4em"}} name-ui]
       (if (coll? text)
@@ -262,9 +264,18 @@
            [:div {:style {:font-size   "0.9em"
                           :font-weight :normal
                           :paddingTop  "3px"}}
-            (when power
-              [:strong (str "POWER " power ": ")])
-            (format-text power-text)])])]]))
+            [:strong (str "POWER" (when power (str " " power)) ": ")]
+            (format-text power-text)])
+         (when life
+           [:div {:style {:font-size  "0.9em"
+                          :paddingTop "3px"}}
+            (str "Life: " life)])
+         (when persistent-text
+           [:div {:style {:font-size   "0.9em"
+                          :font-weight :normal
+                          :paddingTop  "3px"}}
+            [:strong (str "PERSISTENT: ")]
+            (format-text persistent-text)])])]]))
 
 (defn view-choice [{:keys [choice-title
                            text

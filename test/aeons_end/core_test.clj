@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
-            [aeons-end.operations :refer [push-effect-stack check-stack]]
+            [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.base :refer [crystal spark]]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.mages :refer [buried-light]]
@@ -458,15 +458,16 @@
                                    :immediately [[:unleash]]}]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 29}}))
-    (is (= (-> {:nemesis {:deck [{:name    :iznogood
-                                  :type    :power
-                                  :power   3
-                                  :effects [[:damage-gravehold 1]]}]}}
+    (is (= (-> {:nemesis {:deck [{:name :iznogood
+                                  :type :power}]}}
                draw-nemesis-card)
-           {:nemesis {:play-area [{:name    :iznogood
-                                   :type    :power
-                                   :power   3
-                                   :effects [[:damage-gravehold 1]]}]}}))))
+           {:nemesis {:play-area [{:name :iznogood
+                                   :type :power}]}}))
+    (is (= (-> {:nemesis {:deck [{:name :bad-motherfucker
+                                  :type :minion}]}}
+               draw-nemesis-card)
+           {:nemesis {:play-area [{:name :bad-motherfucker
+                                   :type :minion}]}}))))
 
 (deftest resolve-nemesis-card-test
   (testing "Resolve nemesis card"
@@ -499,4 +500,52 @@
                                      :type  :power
                                      :power {:power   0
                                              :effects [[:damage-gravehold 1]]}}]}
+              :gravehold {:life 29}})))
+    (testing "Minion"
+      (is (= (-> {:nemesis   {:play-area [{:name       :bad-motherfucker
+                                           :type       :minion
+                                           :persistent {:effects [[:damage-gravehold 1]]}}]}
+                  :gravehold {:life 30}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis   {:play-area [{:name       :bad-motherfucker
+                                       :type       :minion
+                                       :persistent {:effects [[:damage-gravehold 1]]}}]}
               :gravehold {:life 29}})))))
+
+(deftest damage-minion-test
+  (testing "Damage Minions"
+    (is (= (-> {:nemesis {:life 50}}
+               (deal-damage 1))
+           {:nemesis {:life 49}}))
+    (is (= (-> {:nemesis {:life      50
+                          :play-area [{:name :bad-motherfucker
+                                       :type :minion
+                                       :life 5}]}}
+               (deal-damage 1)
+               (choose {:area :nemesis}))
+           {:nemesis {:life      49
+                      :play-area [{:name :bad-motherfucker
+                                   :type :minion
+                                   :life 5}]}}))
+    (is (= (-> {:nemesis {:life      50
+                          :play-area [{:name :bad-motherfucker
+                                       :type :minion
+                                       :life 5}]}}
+               (deal-damage 1)
+               (choose {:area      :minions
+                        :card-name :bad-motherfucker}))
+           {:nemesis {:life      50
+                      :play-area [{:name :bad-motherfucker
+                                   :type :minion
+                                   :life 4}]}}))
+    (is (= (-> {:nemesis {:life      50
+                          :play-area [{:name :bad-motherfucker
+                                       :type :minion
+                                       :life 1}]}}
+               (deal-damage 1)
+               (choose {:area      :minions
+                        :card-name :bad-motherfucker}))
+           {:nemesis {:life    50
+                      :discard [{:name :bad-motherfucker
+                                 :type :minion
+                                 :life 0}]}}))))

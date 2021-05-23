@@ -12,13 +12,17 @@
     (cond
       (and (= area source)
            (contains? (set options) card-name)) interaction
-      (= :mixed source) (let [card-names (->> options
-                                              (filter (comp #{area} :area))
-                                              (map :card-name)
-                                              set)]
-                          (when (contains? card-names card-name)
+      (= :mixed source) (if card-name
+                          (let [card-names (->> options
+                                                (filter (comp #{area} :area))
+                                                (map :card-name)
+                                                set)]
+                            (when (contains? card-names card-name)
+                              (merge interaction
+                                     {:choice-value {:area area :card-name card-name}})))
+                          (when (contains? (set options) {:area area})
                             (merge interaction
-                                   {:choice-value {:area area :card-name card-name}}))))))
+                                   {:choice-value {:area area}}))))))
 
 (defn- choice-interaction-player [{:keys [area player-no breach-no card-name]}
                                   {:keys [source options max choice-opts]}]
@@ -283,7 +287,7 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name text quote type to-discard power]}]
+                            (map (fn [{:keys [name text quote type to-discard power persistent life]}]
                                    (let [can-discard-fn (when (and to-discard
                                                                    (:predicate to-discard))
                                                           (effects/get-predicate (:predicate to-discard)))
@@ -299,15 +303,19 @@
                                             (when power
                                               {:power      (:power power)
                                                :power-text (:text power)})
+                                            (when persistent
+                                              {:persistent-text (:text persistent)})
+                                            (when life
+                                              {:life life})
                                             (when (and can-discard?
                                                        (not choice)
                                                        (not (:choice player))
                                                        (#{:casting :main} phase))
                                               {:interaction :discardable})
-                                            (choice-interaction {:area      :nemesis
+                                            (choice-interaction {:area      :minions
                                                                  :card-name name} choice))))))})
          (when (not-empty discard)
-           (let [{:keys [name text quote type to-discard power]} (last discard)]
+           (let [{:keys [name text quote type to-discard power persistent]} (last discard)]
              {:discard (merge {:name    name
                                :name-ui (ut/format-name name)
                                :text    text
@@ -316,10 +324,10 @@
                               (when to-discard
                                 {:to-discard-text (:text to-discard)})
                               (when power
-                                {:power      (:power power)
-                                 :power-text (:text power)})
-                              (choice-interaction {:area      :nemesis
-                                                   :card-name name} choice))}))
+                                {:power-text (:text power)})
+                              (when persistent
+                                {:persistent-text (:text persistent)}))}))
+         (choice-interaction {:area :nemesis} choice)
          (when choice
            {:choice (view-choice choice)})))
 

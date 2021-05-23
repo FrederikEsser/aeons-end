@@ -1,5 +1,5 @@
 (ns aeons-end.cards.spells
-  (:require [aeons-end.cards.common :refer [deal-damage]]
+  (:require [aeons-end.nemeses :refer [deal-damage]]
             [aeons-end.operations :refer [push-effect-stack focus-breach]]
             [aeons-end.effects :as effects]))
 

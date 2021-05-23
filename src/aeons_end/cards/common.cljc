@@ -12,12 +12,6 @@
 
 (effects/register {:gain-aether gain-aether})
 
-(defn deal-damage [game {:keys [arg]}]
-  (-> game
-      (update-in [:nemesis :life] - arg)))
-
-(effects/register {:deal-damage deal-damage})
-
 (defn heal [game {:keys [player-no life]}]
   (let [amount (min life
                     (- ut/player-starting-life (get-in game [:players player-no :life])))]

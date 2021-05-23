@@ -90,6 +90,19 @@
                                                              :max     1}]]}
                        :quote      "'Beyond our world is a vast nothing. At the center of this lies The Nameless.' Mist, Voidwalker"})
 
+(def howling-spinners {:name       :howling-spinners
+                       :type       :minion
+                       :tier       1
+                       :life       5
+                       :persistent {:text    "Any player suffers 2 damage."
+                                    :effects [[:give-choice {:title   :howling-spinners
+                                                             :text    "Any player suffers 2 damage."
+                                                             :choice  [:damage-player {:arg 2}]
+                                                             :options [:players]
+                                                             :min     1
+                                                             :max     1}]]}
+                       :quote      "'The sound they make as they weave echoes through the cave is like the otherworldly throes of our lost companions.' Ges, Breach Mage Adviser"})
+
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
                                  (map (fn [{:keys [breaches]}]
@@ -163,6 +176,7 @@
 
 (def cards (concat [afflict
                     heart-of-nothing
+                    howling-spinners
                     night-unending
                     nix
                     planar-collision]

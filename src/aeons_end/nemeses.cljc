@@ -1,5 +1,6 @@
 (ns aeons-end.nemeses
   (:require [aeons-end.operations :refer [push-effect-stack give-choice move-card]]
+            [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
             [aeons-end.cards.nemesis :as cards]))
 
@@ -15,6 +16,41 @@
                    :to        :discard}))
 
 (effects/register {:discard-nemesis-card discard-nemesis-card})
+
+(defn deal-damage-to-nemesis [game {:keys [damage]}]
+  (let [life (get-in game [:nemesis :life])]
+    (assoc-in game [:nemesis :life] (max (- life damage) 0))))
+
+(defn deal-damage-to-minion [game {:keys [card-name damage]}]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+        {:keys [life]} card]
+    (-> game
+        (assoc-in [:nemesis :play-area idx :life] (max (- life damage) 0))
+        (cond-> (<= life damage) (discard-nemesis-card {:card-name card-name})))))
+
+(defn deal-damage-to-target [game {:keys [damage choice]}]
+  (let [{:keys [area card-name]} choice]
+    (push-effect-stack game {:effects (case area
+                                        :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
+                                        :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])})))
+
+(defn deal-damage [game {:keys [arg]}]
+  (let [minions (->> (get-in game [:nemesis :play-area])
+                     (filter (comp #{:minion} :type)))]
+    (push-effect-stack game {:effects (if (not-empty minions)
+                                        [[:give-choice {:text    "Deal damage to Nemesis or a Minion."
+                                                        :choice  [:deal-damage-to-target {:damage arg}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:minions]]
+                                                        :min     1
+                                                        :max     1}]]
+                                        [[:deal-damage-to-nemesis {:damage arg}]])})))
+
+(effects/register {:deal-damage-to-nemesis deal-damage-to-nemesis
+                   :deal-damage-to-minion  deal-damage-to-minion
+                   :deal-damage-to-target  deal-damage-to-target
+                   :deal-damage            deal-damage})
 
 (defn lose-nemesis-tokens [game {:keys [arg]}]
   (update-in game [:nemesis :tokens] - arg))
@@ -62,8 +98,8 @@
 
 (def umbra-titan {:name       :umbra-titan
                   :difficulty 3
-                  :life       80
-                  :tokens     5
+                  :life       70
+                  :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cards/unleash-1 cards/unleash-1 cards/unleash-1
                                cards/unleash-2 cards/unleash-2 cards/unleash-2

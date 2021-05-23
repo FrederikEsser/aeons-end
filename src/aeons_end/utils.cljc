@@ -3,9 +3,9 @@
             [clojure.set :refer [intersection]]
             [aeons-end.effects :as effects]))
 
-(def player-starting-life 8)
+(def player-starting-life 10)
 
-(def gravehold-starting-life 25)
+(def gravehold-starting-life 30)
 
 (defonce id-state (atom 0))
 
@@ -397,6 +397,18 @@
 
 (effects/register-options {:prepped-spells options-from-prepped-spells})
 
+(defn options-from-nemesis [_ _ _]
+  [nil])
+
+(effects/register-options {:nemesis options-from-nemesis})
+
+(defn options-from-minions [game _ _]
+  (->> (get-in game [:nemesis :play-area])
+       (filter (comp #{:minion} :type))
+       (map :name)))
+
+(effects/register-options {:minions options-from-minions})
+
 (defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost costs-less-than cost type types not-type names not-names all]}]]
   (let [supply-piles (if all
                        (mapcat access-pile supply)
@@ -460,8 +472,9 @@
                        {:keys [source]} (get-source option)]
                    (->> (apply opt-fn game player-no card-id opt-args)
                         (map (fn [card-name]
-                               {:area      source
-                                :card-name card-name}))))))))
+                               (merge {:area source}
+                                      (when card-name
+                                        {:card-name card-name}))))))))))
 
 (effects/register-options {:mixed mixed-options})
 

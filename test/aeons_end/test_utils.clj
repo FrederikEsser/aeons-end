@@ -50,6 +50,11 @@
       (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
       check-stack))
 
+(defn deal-damage [game damage]
+  (-> game
+      (push-effect-stack {:effects [[:deal-damage damage]]})
+      check-stack))
+
 (defn get-trigger [{:keys [id name trigger]} & [trigger-id]]
   (merge {:id (or trigger-id 1)}
          (when id {:card-id id})
