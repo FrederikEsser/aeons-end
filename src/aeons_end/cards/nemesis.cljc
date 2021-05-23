@@ -48,6 +48,48 @@
                                            :max     1}]]
               :quote       "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
 
+(defn heart-of-nothing-choice [game {:keys [choice]}]
+  (push-effect-stack game {:effects (case choice
+                                      :unleash [[:unleash]
+                                                [:unleash]]
+                                      :damage [[:give-choice {:title   :heart-of-nothing
+                                                              :text    "Any player suffers 4 damage."
+                                                              :choice  [:damage-player {:arg 4}]
+                                                              :options [:players]
+                                                              :min     1
+                                                              :max     1}]])}))
+
+(effects/register {::heart-of-nothing-choice heart-of-nothing-choice})
+
+(defn heart-of-nothing-can-discard? [game {:keys [player-no]}]
+  (let [cards-in-hand (->> (get-in game [:players player-no :hand])
+                           count)]
+    (>= cards-in-hand 4)))
+
+(effects/register-predicates {::heart-of-nothing-can-discard? heart-of-nothing-can-discard?})
+
+(def heart-of-nothing {:name       :heart-of-nothing
+                       :type       :power
+                       :tier       1
+                       :to-discard {:text      "Discard four cards in hand."
+                                    :predicate ::heart-of-nothing-can-discard?
+                                    :effects   [[:give-choice {:title   :heart-of-nothing
+                                                               :text    "Discard four cards in hand."
+                                                               :choice  :discard-from-hand
+                                                               :options [:player :hand]
+                                                               :min     4
+                                                               :max     4}]]}
+                       :power      {:power   2
+                                    :text    "Unleash twice.\nOR\nAny player suffers 4 damage."
+                                    :effects [[:give-choice {:title   :heart-of-nothing
+                                                             :choice  ::heart-of-nothing-choice
+                                                             :options [:special
+                                                                       {:option :unleash :text "Unleash twice"}
+                                                                       {:option :damage :text "Any player suffers 4 damage"}]
+                                                             :min     1
+                                                             :max     1}]]}
+                       :quote      "'Beyond our world is a vast nothing. At the center of this lies The Nameless.' Mist, Voidwalker"})
+
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
                                  (map (fn [{:keys [breaches]}]
@@ -119,10 +161,11 @@
                                               [:unleash]]}
                        :quote      "'None remembered the true name of The World That Was until Yan Magda spoke it aloud: Khasad Vol.'"})
 
-(def cards (concat [planar-collision
-                    afflict
+(def cards (concat [afflict
+                    heart-of-nothing
                     night-unending
-                    nix]
+                    nix
+                    planar-collision]
                    (mapcat vector
                            (repeat unleash-1)
                            (repeat unleash-2)

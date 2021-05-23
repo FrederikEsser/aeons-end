@@ -29,11 +29,10 @@
                           (#{:closed :focused :openable} status))
         nemesis-card? (#{:attack :power :minion} type)]
     {:color            (cond
-                         inverse? (cond disabled "#cccccc"
+                         inverse? (cond disabled "#ccc"
                                         (= :openable status) "#f8e238"
                                         :else :white)
-                         nemesis-card? (if disabled "#555555" :black)
-                         :else (if disabled :grey :black))
+                         :else (if disabled "#666" :black))
      :font-weight      :bold
      :background-color (cond
                          (#{:gem :attack} type) "#cfbede"
@@ -213,6 +212,16 @@
             (map view-kingdom-card)
             (mapk (fn [card] [:td card])))])
 
+(defn format-text [text]
+  [:div
+   (->> (string/split text #"\nOR\n")
+        (mapk-indexed (fn [idx s]
+                        [:<>
+                         (when (pos? idx)
+                           [:div {:style {:font-weight :bold}}
+                            "OR"])
+                         s])))])
+
 (defn view-nemesis-card
   [{:keys [name name-ui text quote choice-value type
            to-discard-text power power-text interaction] :as card}]
@@ -242,20 +251,20 @@
            [:div {:style {:font-size   "0.9em"
                           :font-weight :normal
                           :paddingTop  "3px"}}
-            text])
+            (format-text text)])
          (when to-discard-text
            [:div {:style {:font-size   "0.9em"
                           :font-weight :normal
                           :paddingTop  "3px"}}
             [:strong (str "TO DISCARD: ")]
-            to-discard-text])
+            (format-text to-discard-text)])
          (when power-text
            [:div {:style {:font-size   "0.9em"
                           :font-weight :normal
                           :paddingTop  "3px"}}
             (when power
               [:strong (str "POWER " power ": ")])
-            power-text])])]]))
+            (format-text power-text)])])]]))
 
 (defn view-choice [{:keys [choice-title
                            text

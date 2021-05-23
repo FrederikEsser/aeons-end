@@ -272,7 +272,7 @@
                                      :player-no player-no} choice)))
 
 (defn view-nemesis [{{:keys [name life tokens deck play-area discard]} :nemesis
-                     {:keys [player-no phase]}                         :player
+                     {:keys [player-no phase] :as player}              :player
                      choice                                            :choice
                      :as                                               game}]
   (merge {:name-ui (ut/format-name name)
@@ -301,6 +301,7 @@
                                                :power-text (:text power)})
                                             (when (and can-discard?
                                                        (not choice)
+                                                       (not (:choice player))
                                                        (#{:casting :main} phase))
                                               {:interaction :discardable})
                                             (choice-interaction {:area      :nemesis
@@ -386,7 +387,9 @@
     (->> (merge
            {:nemesis    (view-nemesis (merge game
                                              (when player
-                                               {:player (assoc player :player-no current-player)})
+                                               {:player (-> player
+                                                            (assoc :player-no current-player)
+                                                            (cond-> player-no (assoc :choice choice)))})
                                              (when (nil? player-no)
                                                {:choice choice})))
             :gravehold  gravehold
@@ -399,8 +402,9 @@
                                                                       (or (nil? choice)
                                                                           (= idx player-no))
                                                                       (not= phase :end-of-game))]
-                                              (view-player (merge game {:active-player? active-player?
-                                                                        :player         (assoc player :player-no idx)}
+                                              (view-player (merge game
+                                                                  {:active-player? active-player?
+                                                                   :player         (assoc player :player-no idx)}
                                                                   (when (or (= idx player-no)
                                                                             (#{:players :prepped-spells} source))
                                                                     {:choice choice})))))))
