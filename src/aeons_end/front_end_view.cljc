@@ -282,17 +282,18 @@
                             (map (fn [{:keys [name text quote type tier]}]
                                    (merge {:name    name
                                            :name-ui (ut/format-name name)
-                                           :quote   quote
                                            :text    text
+                                           :quote   quote
                                            :type    type
                                            :tier    tier}
                                           (choice-interaction {:area      :nemesis
                                                                :card-name name} choice)))))})
          (when (not-empty discard)
-           (let [{:keys [name text type]} (last discard)]
+           (let [{:keys [name text quote type]} (last discard)]
              {:discard {:name    name
                         :name-ui (ut/format-name name)
                         :text    text
+                        :quote   quote
                         :type    type}}))
          (when choice
            {:choice (view-choice choice)})))

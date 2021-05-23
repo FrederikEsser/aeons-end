@@ -37,7 +37,8 @@
 (def afflict {:name        :afflict
               :type        :attack
               :tier        1
-              :text        "Unleash. Any player suffers 3 damage and may place a card in their discard pile into their hand."
+              :text        ["Unleash."
+                            "Any player suffers 3 damage and may place a card in their discard pile into their hand."]
               :immediately [[:unleash]
                             [:give-choice {:title   :afflict
                                            :text    "Any player suffers 3 damage and may place a card in their discard pile into their hand."
@@ -51,7 +52,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:damage-player 1]
                                        [:give-choice {:title   :nix
-                                                      :text    "Discards the most expensive card in your hand."
+                                                      :text    "Discard the most expensive card in your hand."
                                                       :choice  :discard-from-hand
                                                       :options [:player :hand {:most-expensive true}]
                                                       :min     1
@@ -62,7 +63,8 @@
 (def nix {:name        :nix
           :type        :attack
           :tier        1
-          :text        "Unleash. Any player suffers 1 damage and discards their most expensive card in hand."
+          :text        ["Unleash."
+                        "Any player suffers 1 damage and discards their most expensive card in hand."]
           :immediately [[:unleash]
                         [:give-choice {:title   :afflict
                                        :text    "Any player suffers 1 damage and discards their most expensive card in hand."

@@ -42,7 +42,7 @@
 (def unstable-prism {:name    :unstable-prism
                      :type    :relic
                      :cost    3
-                     :text    "Play a gem in hand twice and destroy it. OR Gain 2 Aether."
+                     :text    "Play a gem in hand twice and destroy it.\nOR\nGain 2 Aether."
                      :effects [[:give-choice {:title     :unstable-prism
                                               :text      "Play a gem in hand twice and destroy it."
                                               :choice    ::unstable-prism-play-gem

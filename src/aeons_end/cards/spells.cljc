@@ -28,21 +28,9 @@
 (def amplify-vision {:name    :amplify-vision
                      :type    :spell
                      :cost    4
-                     :text    "Cast: Focus your closed breach with the lowest focus cost. Deal 2 damage. If all of your breaches are opened, deal 1 additional damage."
+                     :text    "Cast: Focus your closed breach with the lowest focus cost.\nDeal 2 damage. If all of your breaches are opened, deal 1 additional damage."
                      :effects [[::amplify-vision-focus]
                                [::amplify-vision-damage]]})
-
-(def ignite {:name    :ignite
-             :type    :spell
-             :cost    4
-             :text    "Cast: Deal 2 damage. Any ally gains 1 charge."
-             :effects [[:deal-damage 2]
-                       [:give-choice {:title   :ignite
-                                      :text    "Any ally gains 1 charge"
-                                      :choice  :gain-charge
-                                      :options [:players {:ally true}]
-                                      :min     1
-                                      :max     1}]]})
 
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
   (let [card-count (cond card-name 1
@@ -57,16 +45,28 @@
 (def dark-fire {:name    :dark-fire
                 :type    :spell
                 :cost    5
-                :text    "Cast: Discard up to two cards in hand. Deal 3 damage for each card discarded this way."
+                :text    "Cast: Discard up to two cards in hand.\nDeal 3 damage for each card discarded this way."
                 :effects [[:give-choice {:title   :dark-fire
                                          :text    "Discard up to two cards in hand"
                                          :choice  ::dark-fire-discard
                                          :options [:player :hand]
                                          :max     2}]]})
 
+(def ignite {:name    :ignite
+             :type    :spell
+             :cost    4
+             :text    "Cast: Deal 2 damage.\nAny ally gains 1 charge."
+             :effects [[:deal-damage 2]
+                       [:give-choice {:title   :ignite
+                                      :text    "Any ally gains 1 charge"
+                                      :choice  :gain-charge
+                                      :options [:players {:ally true}]
+                                      :min     1
+                                      :max     1}]]})
+
 (def radiance {:name    :radiance
                :type    :spell
                :cost    8
-               :text    "Cast: Deal 5 damage. Each ally draws a card."
+               :text    "Cast: Deal 5 damage.\nEach ally draws a card."
                :effects [[:deal-damage 5]
                          [:other-players {:effects [[:draw 1]]}]]})

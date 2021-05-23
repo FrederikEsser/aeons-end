@@ -15,7 +15,7 @@
 (def alien-element {:name    :alien-element
                     :type    :gem
                     :cost    4
-                    :text    "Gain 1 Aether. For each of your breaches with a spell prepped to it, gain an additional 1 Aether."
+                    :text    "Gain 1 Aether.\nFor each of your breaches with a spell prepped to it, gain an additional 1 Aether."
                     :effects [[::alien-element-gain-aether]]})
 
 (def jade {:name    :jade
@@ -37,7 +37,7 @@
                  :type            :gem
                  :cost            6
                  :auto-play-index 1
-                 :text            "Gain 3 Aether. OR Gain 2 Aether and deal 1 damage."
+                 :text            "Gain 3 Aether.\nOR\nGain 2 Aether and deal 1 damage."
                  :effects         [[:give-choice {:title   :pain-stone
                                                   :choice  ::pain-stone-choices
                                                   :options [:special

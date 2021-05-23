@@ -24,15 +24,16 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
-(defn button-style [& {:keys [disabled type status number-of-cards]}]
-  (let [inverse? (or (#{:nemesis} type)
-                     (#{:closed :focused :openable} status))]
-    {:color            (if inverse?
-                         (cond disabled "#cccccc"
-                               (= :openable status) "#f8e238"
-                               :else :white)
-                         (cond disabled :grey
-                               :else :black))
+(defn button-style [& {:keys [disabled type status number-of-cards max-width]}]
+  (let [inverse?      (or (#{:nemesis} type)
+                          (#{:closed :focused :openable} status))
+        nemesis-card? (#{:attack :power :minion} type)]
+    {:color            (cond
+                         inverse? (cond disabled "#cccccc"
+                                        (= :openable status) "#f8e238"
+                                        :else :white)
+                         nemesis-card? (if disabled "#333333" :black)
+                         :else (if disabled :grey :black))
      :font-weight      :bold
      :background-color (cond
                          (#{:gem :attack} type) "#cfbede"
@@ -66,7 +67,8 @@
                          (= {:player-no 3} type) "#73304f"
                          (= :nemesis type) "#782d2a"
                          :else :grey)
-     :border-width     2}))
+     :border-width     2
+     :max-width        max-width}))
 
 (defn mapk [f coll]
   (->> coll
@@ -215,6 +217,7 @@
   [{:keys [name name-ui text quote choice-value type interaction] :as card}]
   (let [disabled (nil? interaction)]
     [:button {:style    (button-style :disabled disabled
+                                      :max-width "140px"
                                       :type type)
               :title    quote
               :disabled disabled
@@ -222,8 +225,17 @@
                           (fn [] (case interaction
                                    :discardable (swap! state assoc :game (cmd/discard name)))))}
      [:div
-      [:div name-ui]
-      [:div text]]]))
+      [:div {:style {:font-size "1.4em"}} name-ui]
+      (if (coll? text)
+        (->> text
+             (mapk (fn [paragraph] [:div {:style {:font-size   "0.9em"
+                                                  :font-weight :normal
+                                                  :paddingTop  "3px"}}
+                                    paragraph])))
+        [:div {:style {:font-size   "0.9em"
+                       :font-weight :normal
+                       :paddingTop  "3px"}}
+         text])]]))
 
 (defn view-choice [{:keys [choice-title
                            text
@@ -393,8 +405,7 @@
                             [:td
                              [:div
                               (let [disabled (nil? interaction)]
-                                [:button {:title    title
-                                          :style    (button-style :type type
+                                [:button {:style    (button-style :type type
                                                                   :disabled disabled)
                                           :disabled disabled
                                           :on-click (when interaction
@@ -402,8 +413,11 @@
                                                                :choosable (select! (or choice-value name))
                                                                :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
                                  [:div
-                                  [:div name-ui]
-                                  [:div title]]])]
+                                  [:div {:style {:font-size "1.3em"}} name-ui]
+                                  [:div {:style {:font-size   "0.9em"
+                                                 :font-weight :normal
+                                                 :paddingTop  "3px"}}
+                                   title]]])]
                              (view-ability ability)
                              [:div "Life: " life]
                              [:div "Aether: " aether]]
