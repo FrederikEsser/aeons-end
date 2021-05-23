@@ -1,5 +1,8 @@
 (ns aeons-end.test-utils
-  (:require [clojure.test :refer :all]))
+  (:require [clojure.test :refer :all]
+            [aeons-end.operations :refer [push-effect-stack check-stack]]
+            [aeons-end.cards.common]
+            [aeons-end.nemeses]))
 
 (defn rand-with-seed
   ([seed]
@@ -31,6 +34,21 @@
                   (is (= 0.2372438907623291 (rand)))
                   (is (= 9.90898847579956 (rand 10)))
                   (is (= [7 5 6 2 0 1 8 4 3 9] (shuffle (range 10))))))
+
+(defn unleash [game]
+  (-> game
+      (push-effect-stack {:effects [[:unleash]]})
+      check-stack))
+
+(defn draw-nemesis-card [game]
+  (-> game
+      (push-effect-stack {:effects [[:draw-nemesis-card]]})
+      check-stack))
+
+(defn resolve-nemesis-cards-in-play [game]
+  (-> game
+      (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
+      check-stack))
 
 (defn get-trigger [{:keys [id name trigger]} & [trigger-id]]
   (merge {:id (or trigger-id 1)}

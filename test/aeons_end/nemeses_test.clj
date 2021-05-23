@@ -1,5 +1,6 @@
 (ns aeons-end.nemeses-test
   (:require [clojure.test :refer :all]
+            [aeons-end.test-utils :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
             [aeons-end.nemeses :as nemeses]
@@ -7,16 +8,6 @@
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.cards.nemesis :refer :all]
             [aeons-end.turn-order :as turn-order]))
-
-(defn unleash [game]
-  (-> game
-      (push-effect-stack {:effects [[:unleash]]})
-      check-stack))
-
-(defn draw-nemesis-card [game]
-  (-> game
-      (push-effect-stack {:effects [[:draw-nemesis-card]]})
-      check-stack))
 
 (deftest afflict-test
   (testing "Afflict"
@@ -95,6 +86,36 @@
                               draw-nemesis-card
                               (choose {:player-no 0})
                               (choose :crystal))))))
+
+(deftest night-unending-test
+  (testing "Night Unending"
+    (is (= (-> {:nemesis   {:play-area [(assoc night-unending :power 1)]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc night-unending :power 0)]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}]}]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc night-unending :power 1)]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [spark spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells []}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc night-unending :power 0)]}
+            :gravehold {:life 24}
+            :players   [{:breaches [{:prepped-spells [spark]}]}
+                        {:breaches [{:prepped-spells [spark spark]}
+                                    {:prepped-spells [spark]}
+                                    {:prepped-spells []}]}]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc night-unending :power 1)]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc night-unending :power 0)]}
+            :gravehold {:life 30}
+            :players   [{:breaches [{}]}]}))))
 
 (deftest umbra-titan-test
   (testing "Umbra Titan"

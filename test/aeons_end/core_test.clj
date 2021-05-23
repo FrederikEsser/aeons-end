@@ -3,7 +3,6 @@
             [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack]]
-            [aeons-end.cards.common]
             [aeons-end.cards.base :refer [crystal spark]]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.mages :refer [buried-light]]
@@ -446,11 +445,6 @@
                              :discard [turn-order/player-2]}
             :players        [{} {} {} {}]}))))
 
-(defn draw-nemesis-card [game]
-  (-> game
-      (push-effect-stack {:effects [[:draw-nemesis-card]]})
-      check-stack))
-
 (deftest draw-nemesis-card-test
   (testing "Draw nemesis card"
     (is (= (-> {:nemesis   {:deck    [{:name        :fugazi
@@ -463,4 +457,46 @@
                                    :type        :attack
                                    :immediately [[:unleash]]}]
                         :unleash [[:damage-gravehold 1]]}
-            :gravehold {:life 29}}))))
+            :gravehold {:life 29}}))
+    (is (= (-> {:nemesis {:deck [{:name    :iznogood
+                                  :type    :power
+                                  :power   3
+                                  :effects [[:damage-gravehold 1]]}]}}
+               draw-nemesis-card)
+           {:nemesis {:play-area [{:name    :iznogood
+                                   :type    :power
+                                   :power   3
+                                   :effects [[:damage-gravehold 1]]}]}}))))
+
+(deftest resolve-nemesis-card-test
+  (testing "Resolve nemesis card"
+    (testing "Power"
+      (is (= (-> {:nemesis {:play-area [{:name    :iznogood
+                                         :type    :power
+                                         :power   3
+                                         :effects [[:damage-gravehold 1]]}]}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis {:play-area [{:name    :iznogood
+                                     :type    :power
+                                     :power   2
+                                     :effects [[:damage-gravehold 1]]}]}}))
+      (is (= (-> {:nemesis {:play-area [{:name    :iznogood
+                                         :type    :power
+                                         :power   2
+                                         :effects [[:damage-gravehold 1]]}]}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis {:play-area [{:name    :iznogood
+                                     :type    :power
+                                     :power   1
+                                     :effects [[:damage-gravehold 1]]}]}}))
+      (is (= (-> {:nemesis   {:play-area [{:name    :iznogood
+                                           :type    :power
+                                           :power   1
+                                           :effects [[:damage-gravehold 1]]}]}
+                  :gravehold {:life 30}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis   {:discard [{:name    :iznogood
+                                     :type    :power
+                                     :power   0
+                                     :effects [[:damage-gravehold 1]]}]}
+              :gravehold {:life 29}})))))

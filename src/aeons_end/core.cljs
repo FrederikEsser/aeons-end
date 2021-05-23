@@ -214,7 +214,8 @@
             (mapk (fn [card] [:td card])))])
 
 (defn view-nemesis-card
-  [{:keys [name name-ui text quote choice-value type interaction] :as card}]
+  [{:keys [name name-ui text quote choice-value type
+           power interaction] :as card}]
   (let [disabled (nil? interaction)]
     [:button {:style    (button-style :disabled disabled
                                       :max-width "140px"
@@ -228,13 +229,19 @@
       [:div {:style {:font-size "1.4em"}} name-ui]
       (if (coll? text)
         (->> text
-             (mapk (fn [paragraph] [:div {:style {:font-size   "0.9em"
-                                                  :font-weight :normal
-                                                  :paddingTop  "3px"}}
-                                    paragraph])))
+             (mapk-indexed (fn [idx paragraph]
+                             [:div {:style {:font-size   "0.9em"
+                                            :font-weight :normal
+                                            :paddingTop  "3px"}}
+                              (when (and (zero? idx)
+                                         power)
+                                [:strong (str "POWER " power ": ")])
+                              paragraph])))
         [:div {:style {:font-size   "0.9em"
                        :font-weight :normal
                        :paddingTop  "3px"}}
+         (when power
+           [:strong (str "POWER " power ": ")])
          text])]]))
 
 (defn view-choice [{:keys [choice-title

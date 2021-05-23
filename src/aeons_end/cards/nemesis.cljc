@@ -48,6 +48,25 @@
                                            :max     1}]]
               :quote       "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
 
+(defn night-unending-damage [{:keys [players] :as game} _]
+  (let [most-prepped-spells (->> players
+                                 (map (fn [{:keys [breaches]}]
+                                        (->> breaches
+                                             (mapcat :prepped-spells)
+                                             count)))
+                                 (apply max))]
+    (push-effect-stack game {:effects [[:damage-gravehold (* 2 most-prepped-spells)]]})))
+
+(effects/register {::night-unending-damage night-unending-damage})
+
+(def night-unending {:name    :night-unending
+                     :type    :power
+                     :tier    1
+                     :power   3
+                     :text    "Gravehold suffers 2 damage for each spell prepped by the player with the most prepped spells."
+                     :effects [[::night-unending-damage]]
+                     :quote   "'Here beneath The World That Was there is no day, no time really, just night unending.' Xaxos, Voidbringer"})
+
 (defn nix-damage-player [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:damage-player 1]
@@ -75,6 +94,7 @@
           :quote       "'It's as if the world itself is screaming.' Nerva, Survivor"})
 
 (def cards (concat [afflict
+                    night-unending
                     nix]
                    (mapcat vector
                            (repeat unleash-1)

@@ -1,6 +1,7 @@
 (ns aeons-end.turn-order
   (:require [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (def player-0 {:name    "Player 1"
                :type    {:player-no 0}
@@ -18,6 +19,27 @@
                :type    {:player-no 3}
                :effects [[:set-current-player {:player-no 3}]]})
 
+(defn resolve-power-card [game {:keys [card-name]}]
+  (let [{:keys [idx card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+        {:keys [power effects]} card]
+    (-> game
+        (update-in [:nemesis :play-area idx :power] dec)
+        (cond->
+          (= 1 power) (push-effect-stack {:effects (concat effects
+                                                           [[:move-card {:card-name card-name
+                                                                         :from      :play-area
+                                                                         :to        :discard}]])})))))
+
+(defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
+  (push-effect-stack game {:effects (->> (:play-area nemesis)
+                                         (map (fn [{:keys [type name]}]
+                                                (case type
+                                                  :power [:resolve-power-card {:card-name name}]
+                                                  :minion [:resolve-minion-card {:card-name name}]))))}))
+
+(effects/register {:resolve-power-card            resolve-power-card
+                   :resolve-nemesis-cards-in-play resolve-nemesis-cards-in-play})
+
 (defn draw-nemesis-card [game _]
   (let [{:keys [name type immediately]} (get-in game [:nemesis :deck 0])]
     (push-effect-stack game {:effects (concat [[:move-card {:from          :deck
@@ -34,5 +56,6 @@
 
 (def nemesis {:name    "Nemesis"
               :type    :nemesis
-              :effects [[:draw-nemesis-card]
+              :effects [[:resolve-nemesis-cards-in-play]
+                        [:draw-nemesis-card]
                         [:next-turn]]})

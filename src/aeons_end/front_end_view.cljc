@@ -279,13 +279,15 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name text quote type tier]}]
+                            (map (fn [{:keys [name text quote type tier power]}]
                                    (merge {:name    name
                                            :name-ui (ut/format-name name)
                                            :text    text
                                            :quote   quote
                                            :type    type
                                            :tier    tier}
+                                          (when power
+                                            {:power power})
                                           (choice-interaction {:area      :nemesis
                                                                :card-name name} choice)))))})
          (when (not-empty discard)

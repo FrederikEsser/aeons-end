@@ -349,7 +349,7 @@
    (let [cards        (get-in game [:players player-no area])
          highest-cost (->> cards
                            (map :cost)
-                           (apply max))]
+                           (apply max 0))]
      (cond->> cards
               last (take-last 1)                            ; it's important that 'last' is evaluated first
               this (filter (comp #{card-id} :id))
