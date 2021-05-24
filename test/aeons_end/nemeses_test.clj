@@ -4,7 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
-            [aeons-end.nemeses :as nemeses :refer [cryptid]]
+            [aeons-end.nemeses :as nemeses :refer [cryptid grubber]]
             [aeons-end.cards.base :refer :all]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.cards.spells :refer [ignite]]
@@ -278,4 +278,23 @@
               :players [{:breaches [{:prepped-spells [spark]}
                                     {}]
                          :discard  [ignite]}
-                        {:breaches [{:prepped-spells [ignite]}]}]})))))
+                        {:breaches [{:prepped-spells [ignite]}]}]})))
+    (testing "Grubber"
+      (is (= (-> {:nemesis    {:play-area [grubber]
+                               :tokens    8}
+                  :gravehold  {:life 30}
+                  :turn-order {:discard [turn-order/nemesis]}}
+                 (resolve-nemesis-cards-in-play))
+             {:nemesis    {:play-area [grubber]
+                           :tokens    8}
+              :gravehold  {:life 28}
+              :turn-order {:discard [turn-order/nemesis]}}))
+      (is (= (-> {:nemesis    {:play-area [grubber]
+                               :tokens    8}
+                  :gravehold  {:life 30}
+                  :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}}
+                 (resolve-nemesis-cards-in-play))
+             {:nemesis    {:play-area [grubber]
+                           :tokens    7}
+              :gravehold  {:life 30}
+              :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}})))))

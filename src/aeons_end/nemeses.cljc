@@ -110,11 +110,29 @@
                                                     :max       1}]]}
               :quote      "'The beasts of this cave seem to revere the Titan as though it were some ancient god.' Mazhaedron, Henge Mystic"})
 
+(defn grubber-persistent [game _]
+  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+                                     (filter (comp #{:nemesis} :type))
+                                     count)]
+    (push-effect-stack game {:effects (if (= 2 discarded-nemesis-cards)
+                                        [[:lose-nemesis-tokens 1]]
+                                        [[:damage-gravehold 2]])})))
+
+(effects/register {::grubber-persistent grubber-persistent})
+
+(def grubber {:name       :grubber
+              :type       :minion
+              :tier       1
+              :life       5
+              :persistent {:text    "If the nemesis has two turn order cards in the turn order discard pile, Umbra Titan loses one nemesis token.\nOtherwise, Gravehold suffers 2 damage."
+                           :effects [[::grubber-persistent]]}
+              :quote      "'Kick it, stab it, burn it... the thing just keeps grinning.' Sparrow, Breach Mage Soldier"})
+
 (def umbra-titan {:name       :umbra-titan
                   :difficulty 3
                   :life       70
                   :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
-                  :cards      [cryptid cards/unleash-1 cards/unleash-1
+                  :cards      [cryptid grubber cards/unleash-1
                                cards/unleash-2 cards/unleash-2 cards/unleash-2
                                cards/unleash-3 cards/unleash-3 cards/unleash-3]})
