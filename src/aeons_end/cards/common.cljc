@@ -34,13 +34,17 @@
 
 (effects/register {:take-from-discard take-from-discard})
 
-(defn discard-prepped-spells [game {:keys [player-no spells]}]
+(defn discard-prepped-spells [game {:keys [player-no spells] :as args}]
   (push-effect-stack game {:player-no player-no
-                           :effects   (->> spells
-                                           (map (fn [args]
-                                                  [:move-card (merge args
-                                                                     {:from :breach
-                                                                      :to   :discard})])))}))
+                           :effects   (if spells
+                                        (->> spells
+                                             (map (fn [args]
+                                                    [:move-card (merge args
+                                                                       {:from :breach
+                                                                        :to   :discard})])))
+                                        [[:move-card (merge args
+                                                            {:from :breach
+                                                             :to   :discard})]])}))
 
 (effects/register {:discard-prepped-spells discard-prepped-spells})
 

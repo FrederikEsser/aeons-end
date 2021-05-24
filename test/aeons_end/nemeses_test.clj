@@ -4,9 +4,10 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
-            [aeons-end.nemeses :as nemeses]
+            [aeons-end.nemeses :as nemeses :refer [cryptid]]
             [aeons-end.cards.base :refer :all]
             [aeons-end.cards.gems :refer [jade]]
+            [aeons-end.cards.spells :refer [ignite]]
             [aeons-end.cards.nemesis :refer :all]
             [aeons-end.turn-order :as turn-order]))
 
@@ -223,4 +224,58 @@
              {:nemesis    {:tokens  8
                            :unleash [[::nemeses/umbra-titan-unleash]]}
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
-              :gravehold  {:life 28}})))))
+              :gravehold  {:life 28}})))
+    (testing "Cryptid"
+      (is (= (-> {:nemesis {:play-area [cryptid]
+                            :tokens    8}}
+                 (resolve-nemesis-cards-in-play))
+             {:nemesis {:play-area [cryptid]
+                        :tokens    7}}))
+      (is (= (-> {:nemesis {:play-area [cryptid]
+                            :tokens    8}
+                  :players [{:breaches [{:prepped-spells [spark]}]}]}
+                 (resolve-nemesis-cards-in-play)
+                 (choose nil))
+             {:nemesis {:play-area [cryptid]
+                        :tokens    7}
+              :players [{:breaches [{:prepped-spells [spark]}]}]}))
+      (is (= (-> {:nemesis {:play-area [cryptid]
+                            :tokens    8}
+                  :players [{:breaches [{:prepped-spells [spark]}]}]}
+                 (resolve-nemesis-cards-in-play)
+                 (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+             {:nemesis {:play-area [cryptid]
+                        :tokens    8}
+              :players [{:breaches [{}]
+                         :discard  [spark]}]}))
+      (is (= (-> {:nemesis {:play-area [cryptid]
+                            :tokens    8}
+                  :players [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
+                 (resolve-nemesis-cards-in-play)
+                 (choose {:player-no 1 :breach-no 0 :card-name :ignite}))
+             {:nemesis {:play-area [cryptid]
+                        :tokens    8}
+              :players [{:breaches [{:prepped-spells [spark]}]}
+                        {:breaches [{}]
+                         :discard  [ignite]}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:play-area [cryptid]
+                                           :tokens    8}
+                                 :players [{:breaches [{:prepped-spells [spark]}]}
+                                           {:breaches [{:prepped-spells [ignite]}]}]}
+                                (resolve-nemesis-cards-in-play)
+                                (choose {:player-no 0 :breach-no 0 :card-name :spark}))))
+      (is (= (-> {:nemesis {:play-area [cryptid]
+                            :tokens    8}
+                  :players [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
+                 (resolve-nemesis-cards-in-play)
+                 (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
+             {:nemesis {:play-area [cryptid]
+                        :tokens    8}
+              :players [{:breaches [{:prepped-spells [spark]}
+                                    {}]
+                         :discard  [ignite]}
+                        {:breaches [{:prepped-spells [ignite]}]}]})))))

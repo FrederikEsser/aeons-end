@@ -96,11 +96,25 @@
 (effects/register {::umbra-titan-choice  umbra-titan-choice
                    ::umbra-titan-unleash umbra-titan-unleash})
 
+(def cryptid {:name       :cryptid
+              :type       :minion
+              :tier       1
+              :life       6
+              :persistent {:text    "The player with the most expensive prepped spell discards that spell.\nOR\nUmbra Titan loses one nemesis token."
+                           :effects [[:give-choice {:title     :cryptid
+                                                    :text      "The player with the most expensive prepped spell discards that spell."
+                                                    :choice    :discard-prepped-spells
+                                                    :or-choice {:text    "Umbra titan loses one nemesis token"
+                                                                :effects [[:lose-nemesis-tokens 1]]}
+                                                    :options   [:prepped-spells {:most-expensive true}]
+                                                    :max       1}]]}
+              :quote      "'The beasts of this cave seem to revere the Titan as though it were some ancient god.' Mazhaedron, Henge Mystic"})
+
 (def umbra-titan {:name       :umbra-titan
                   :difficulty 3
                   :life       70
                   :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
-                  :cards      [cards/unleash-1 cards/unleash-1 cards/unleash-1
+                  :cards      [cryptid cards/unleash-1 cards/unleash-1
                                cards/unleash-2 cards/unleash-2 cards/unleash-2
                                cards/unleash-3 cards/unleash-3 cards/unleash-3]})

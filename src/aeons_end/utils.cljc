@@ -379,21 +379,25 @@
 
 (effects/register-options {:players options-from-players})
 
-(defn options-from-prepped-spells
-  ([{:keys [players] :as game} player-no _ & [{:keys [own]}]]
-   (let [options (->> players
-                      (map-indexed (fn [player-no {:keys [breaches]}]
-                                     (->> breaches
-                                          (map-indexed (fn [breach-no breach]
-                                                         (->> (:prepped-spells breach)
-                                                              (map (fn [{:keys [name]}]
-                                                                     {:player-no player-no
-                                                                      :breach-no breach-no
-                                                                      :card-name name})))))
-                                          (apply concat))))
-                      (apply concat))]
-     (cond->> options
-              own (filter (comp #{player-no} :player-no))))))
+(defn options-from-prepped-spells [{:keys [players] :as game} player-no _ & [{:keys [own most-expensive]}]]
+  (let [options      (->> players
+                          (map-indexed (fn [player-no {:keys [breaches]}]
+                                         (->> breaches
+                                              (map-indexed (fn [breach-no breach]
+                                                             (->> (:prepped-spells breach)
+                                                                  (map (fn [{:keys [name] :as card}]
+                                                                         (assoc card :option {:player-no player-no
+                                                                                              :breach-no breach-no
+                                                                                              :card-name name}))))))
+                                              (apply concat))))
+                          (apply concat))
+        highest-cost (->> options
+                          (map :cost)
+                          (apply max 0))]
+    (cond->> options
+             own (filter (comp #{player-no} :player-no :option))
+             most-expensive (filter (comp #{highest-cost} :cost))
+             :always (map :option))))
 
 (effects/register-options {:prepped-spells options-from-prepped-spells})
 

@@ -180,7 +180,7 @@
                     night-unending
                     nix
                     planar-collision]
-                   (mapcat vector
-                           (repeat unleash-1)
-                           (repeat unleash-2)
-                           (repeat unleash-3))))
+                   (concat
+                     (repeat 2 unleash-1)
+                     (repeat 7 unleash-2)
+                     (repeat 7 unleash-3))))
