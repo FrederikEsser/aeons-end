@@ -128,11 +128,28 @@
                            :effects [[::grubber-persistent]]}
               :quote      "'Kick it, stab it, burn it... the thing just keeps grinning.' Sparrow, Breach Mage Soldier"})
 
+(defn seismic-roar-can-discard? [game {:keys [player-no]}]
+  (let [aether (or (get-in game [:players player-no :aether]) 0)]
+    (>= aether 6)))
+
+(effects/register-predicates {::seismic-roar-can-discard? seismic-roar-can-discard?})
+
+(def seismic-roar {:name       :seismic-roar
+                   :type       :power
+                   :tier       1
+                   :to-discard {:text      "Spend 6 Aether."
+                                :predicate ::seismic-roar-can-discard?
+                                :effects   [[:pay 6]]}
+                   :power      {:power   3
+                                :text    "Umbra Titan loses two nemesis tokens."
+                                :effects [[:lose-nemesis-tokens 2]]}
+                   :quote      "'It roared as it bore through the rock. And Gravehold shuddered like those within its walls.' Nerva, Survivor"})
+
 (def umbra-titan {:name       :umbra-titan
                   :difficulty 3
                   :life       70
                   :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
-                  :cards      [cryptid grubber cards/unleash-1
+                  :cards      [cryptid grubber seismic-roar
                                cards/unleash-2 cards/unleash-2 cards/unleash-2
                                cards/unleash-3 cards/unleash-3 cards/unleash-3]})

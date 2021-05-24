@@ -4,7 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
-            [aeons-end.nemeses :as nemeses :refer [cryptid grubber]]
+            [aeons-end.nemeses :as nemeses :refer [cryptid grubber seismic-roar]]
             [aeons-end.cards.base :refer :all]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.cards.spells :refer [ignite]]
@@ -130,7 +130,7 @@
 
 (deftest planar-collision-test
   (testing "Planar Collision"
-    (is (= (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+    (is (= (-> {:nemesis {:play-area [planar-collision]}
                 :players [{:breaches [{:prepped-spells [spark]}
                                       {:prepped-spells [spark]}]}]}
                (discard-power-card 0 :planar-collision)
@@ -140,30 +140,30 @@
                         {:player-no 0
                          :breach-no 1
                          :card-name :spark}]))
-           {:nemesis {:discard [(assoc-in planar-collision [:power :power] 1)]}
+           {:nemesis {:discard [planar-collision]}
             :players [{:breaches [{}
                                   {}]
                        :discard  [spark spark]}]}))
     (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
-                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                          (-> {:nemesis {:play-area [planar-collision]}
                                :players [{:breaches [{:prepped-spells [spark]}]}]}
                               (discard-power-card 0 :planar-collision))))
     (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
-                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                          (-> {:nemesis {:play-area [planar-collision]}
                                :players [{:breaches [{:prepped-spells [spark]}
                                                      {:prepped-spells [spark]}]}
                                          {}]}
                               (discard-power-card 1 :planar-collision))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                          (-> {:nemesis {:play-area [planar-collision]}
                                :players [{:breaches [{:prepped-spells [spark]}
                                                      {:prepped-spells [spark]}]}]}
                               (discard-power-card 0 :planar-collision)
-                              (choose [{:player-no 1
+                              (choose [{:player-no 0
                                         :breach-no 0
                                         :card-name :spark}]))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis {:play-area [(assoc-in planar-collision [:power :power] 1)]}
+                          (-> {:nemesis {:play-area [planar-collision]}
                                :players [{:breaches [{:prepped-spells [spark]}
                                                      {:prepped-spells [spark]}]}
                                          {:breaches [{:prepped-spells [spark]}]}]}
@@ -297,4 +297,19 @@
              {:nemesis    {:play-area [grubber]
                            :tokens    7}
               :gravehold  {:life 30}
-              :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}})))))
+              :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}})))
+    (testing "Seismic Roar"
+      (is (= (-> {:nemesis {:play-area [seismic-roar]}
+                  :players [{:aether 6}]}
+                 (discard-power-card 0 :seismic-roar))
+             {:nemesis {:discard [seismic-roar]}
+              :players [{:aether 0}]}))
+      (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
+                            (-> {:nemesis {:play-area [seismic-roar]}
+                                 :players [{:aether 5}]}
+                                (discard-power-card 0 :seismic-roar))))
+      (is (= (-> {:nemesis {:play-area [(assoc-in seismic-roar [:power :power] 1)]
+                            :tokens    8}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis {:discard [(assoc-in seismic-roar [:power :power] 0)]
+                        :tokens  6}})))))
