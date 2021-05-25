@@ -1,25 +1,26 @@
 (ns aeons-end.cards.relics
   (:require [aeons-end.cards.common]
-            [aeons-end.operations :refer [push-effect-stack give-choice]]
+            [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
 (defn vortex-gauntlet-cast [game {:keys [player-no breach-no card-name] :as args}]
   (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:cast-spell args]
-                                         [:move-card {:move-card-id id
-                                                      :from         :discard
-                                                      :to           :hand}]]})))
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :effects   [[:cast-spell args]
+                                                      [:move-card {:move-card-id id
+                                                                   :from         :discard
+                                                                   :to           :hand}]]}))))
 
 (defn vortex-gauntlet-choice [game {:keys [player-no]}]
-  (give-choice game {:player-no player-no
-                     :title     :vortex-gauntlet
-                     :text      "Cast any player's prepped spell. Return that spell to that player's hand."
-                     :choice    [::vortex-gauntlet-cast {:caster player-no}]
-                     :options   [:prepped-spells]
-                     :min       1
-                     :max       1}))
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :vortex-gauntlet
+                                                      :text    "Cast any player's prepped spell. Return that spell to that player's hand."
+                                                      :choice  [::vortex-gauntlet-cast {:caster player-no}]
+                                                      :options [:prepped-spells]
+                                                      :min     1
+                                                      :max     1}]]}))
 
 (effects/register {::vortex-gauntlet-cast   vortex-gauntlet-cast
                    ::vortex-gauntlet-choice vortex-gauntlet-choice})

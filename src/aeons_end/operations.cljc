@@ -567,10 +567,9 @@
         {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])]
     (-> game
         (push-effect-stack {:player-no (or caster player-no)
-                            :effects   (concat effects
-                                               (when (and (= :opened status)
-                                                          bonus-damage)
-                                                 [[:deal-damage bonus-damage]]))})
+                            :args      {:bonus-damage (when (= :opened status)
+                                                        bonus-damage)}
+                            :effects   effects})
         (push-effect-stack {:player-no player-no
                             :effects   [[:move-card {:card-name card-name
                                                      :from      :breach
@@ -602,7 +601,7 @@
 (defn- choose-single [game valid-choices selection]
   (when (sequential? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no card-id choice or-choice source min optional?]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice or-choice source min optional? bonus-damage]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name         (case source
                            :deck-position :position
@@ -622,9 +621,13 @@
         (as-> game
               (if (and (nil? single-selection)
                        or-choice)
-                (push-effect-stack game {:player-no player-no
-                                         :effects   (:effects or-choice)})
+                (push-effect-stack game (merge {:player-no player-no
+                                                :effects   (:effects or-choice)}
+                                               (when bonus-damage
+                                                 {:args {:bonus-damage bonus-damage}})))
                 (choice-fn game (merge args
+                                       (when bonus-damage
+                                         {:bonus-damage bonus-damage})
                                        (if (#{:players :prepped-spells} source)
                                          single-selection
                                          {:player-no player-no
@@ -632,7 +635,7 @@
                                           arg-name   single-selection}))))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no card-id choice source min max optional? choice-opts]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice source min max optional? choice-opts bonus-damage]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name        (case source
                           :deck-position :position
@@ -667,6 +670,8 @@
     (-> game
         pop-effect-stack
         (choice-fn (merge args
+                          (when bonus-damage
+                            {:bonus-damage bonus-damage})
                           {:player-no player-no
                            :card-id   card-id
                            arg-name   multi-selection})))))
@@ -680,7 +685,8 @@
                                       option-data)))
                            set)]
     (assert choice "Choose error: You don't have a choice to make.")
-    (assert (not-empty options) "Choose error: Choice has no options")
+    (assert (or (not-empty options)
+                (nil? selection)) "Choose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
     (-> game
         (choose-fn valid-choices selection)
@@ -704,17 +710,21 @@
                        (apply = options)
                        (= min (or max (count options)))
                        (not optional?))]
-    (-> game
-        (cond-> (not-empty options) (push-effect-stack {:player-no player-no
-                                                        :card-id   card-id
-                                                        :choice    choice})
-                swiftable (choose (->> options
-                                       (take min)
-                                       (map (fn [o] (or (:option o) o)))))
-                (and (empty? options)
-                     effects) (push-effect-stack {:player-no player-no
-                                                  :effects   effects}))
-        check-stack)))
+    (cond
+      (not-empty options) (-> game
+                              (push-effect-stack {:player-no player-no
+                                                  :card-id   card-id
+                                                  :choice    choice})
+                              (cond-> swiftable (choose (->> options
+                                                             (take min)
+                                                             (map (fn [o] (or (:option o) o)))))))
+      effects (push-effect-stack game {:player-no player-no
+                                       :effects   effects})
+      :else (-> game
+                (push-effect-stack {:player-no player-no
+                                    :card-id   card-id
+                                    :choice    choice})
+                (choose nil)))))
 
 (effects/register {:give-choice give-choice})
 

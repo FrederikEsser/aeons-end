@@ -65,7 +65,35 @@
                                   {:status :opened}
                                   {:status :opened}]
                        :discard  [amplify-vision]}]
-            :nemesis {:life 47}}))))
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [amplify-vision]}
+                                      {:status     :closed
+                                       :focus-cost 2
+                                       :stage      0}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :amplify-vision 0))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}
+                                  {:status     :focused
+                                   :focus-cost 2
+                                   :stage      1}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [amplify-vision]}
+                                      {:status     :focused
+                                       :focus-cost 2
+                                       :stage      3}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :amplify-vision 0))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}
+                                  {:status :opened}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 46}}))))
 
 (deftest dark-fire-test
   (testing "Dark Fire"
@@ -107,6 +135,29 @@
            {:players [{:breaches [{}]
                        :discard  [dark-fire]}]
             :nemesis {:life 50}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [dark-fire]}]
+                           :hand     [crystal]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0)
+               (choose [:crystal]))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}]
+                       :discard  [dark-fire crystal]}]
+            :nemesis {:life 46}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [dark-fire]}]
+                           :hand     [crystal]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 :dark-fire 0)
+               (choose nil))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}]
+                       :hand     [crystal]
+                       :discard  [dark-fire]}]
+            :nemesis {:life 49}}))
     (is (= (-> {:players [{:breaches [{:status         :opened
                                        :bonus-damage   1
                                        :prepped-spells [dark-fire]}]}]

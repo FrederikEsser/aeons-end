@@ -1,5 +1,5 @@
 (ns aeons-end.nemeses
-  (:require [aeons-end.operations :refer [push-effect-stack give-choice move-card]]
+  (:require [aeons-end.operations :refer [push-effect-stack move-card]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
             [aeons-end.cards.nemesis :as cards]))
@@ -34,19 +34,21 @@
                                         :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
                                         :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])})))
 
-(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg]}]
+(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage]}]
   (let [{:keys [name play-area]} nemesis
         minions (->> play-area
-                     (filter (comp #{:minion} :type)))]
+                     (filter (comp #{:minion} :type)))
+        damage  (cond-> arg
+                        bonus-damage (+ bonus-damage))]
     (push-effect-stack game {:effects (if (not-empty minions)
-                                        [[:give-choice {:text    (str "Deal " arg " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
-                                                        :choice  [:deal-damage-to-target {:damage arg}]
+                                        [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                        :choice  [:deal-damage-to-target {:damage damage}]
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:minions]]
                                                         :min     1
                                                         :max     1}]]
-                                        [[:deal-damage-to-nemesis {:damage arg}]])})))
+                                        [[:deal-damage-to-nemesis {:damage damage}]])})))
 
 (effects/register {:deal-damage-to-nemesis deal-damage-to-nemesis
                    :deal-damage-to-minion  deal-damage-to-minion
@@ -127,21 +129,21 @@
                                      (filter (comp #{:nemesis} :type))
                                      count)]
     (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
-    (give-choice game (case discarded-nemesis-cards
-                        1 {:title     :unleash
-                           :text      "Any player suffers 2 damage."
-                           :choice    [:damage-player {:arg 2}]
-                           :or-choice {:text    "Umbra titan loses one nemesis token"
-                                       :effects [[:lose-nemesis-tokens 1]]}
-                           :options   [:players]
-                           :max       1}
-                        2 {:title   :unleash
-                           :choice  ::umbra-titan-choice
-                           :options [:special
-                                     {:option :damage :text "Gravehold suffers 2 damage"}
-                                     {:option :token :text "Umbra titan loses one nemesis token"}]
-                           :min     1
-                           :max     1}))))
+    (push-effect-stack game {:effects [[:give-choice (case discarded-nemesis-cards
+                                                       1 {:title     :unleash
+                                                          :text      "Any player suffers 2 damage."
+                                                          :choice    [:damage-player {:arg 2}]
+                                                          :or-choice {:text    "Umbra titan loses one nemesis token"
+                                                                      :effects [[:lose-nemesis-tokens 1]]}
+                                                          :options   [:players]
+                                                          :max       1}
+                                                       2 {:title   :unleash
+                                                          :choice  ::umbra-titan-choice
+                                                          :options [:special
+                                                                    {:option :damage :text "Gravehold suffers 2 damage"}
+                                                                    {:option :token :text "Umbra titan loses one nemesis token"}]
+                                                          :min     1
+                                                          :max     1})]]})))
 
 (effects/register {::umbra-titan-choice  umbra-titan-choice
                    ::umbra-titan-unleash umbra-titan-unleash})

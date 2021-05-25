@@ -1,5 +1,5 @@
 (ns aeons-end.cards.spells
-  (:require [aeons-end.nemeses :refer [deal-damage]]
+  (:require [aeons-end.nemeses]
             [aeons-end.operations :refer [push-effect-stack focus-breach]]
             [aeons-end.effects :as effects]))
 
@@ -16,11 +16,12 @@
             breach-no (focus-breach {:player-no player-no
                                      :breach-no breach-no}))))
 
-(defn amplify-vision-damage [game {:keys [player-no]}]
+(defn amplify-vision-damage [game {:keys [player-no] :as args}]
   (let [all-breaches-opened? (->> (get-in game [:players player-no :breaches])
                                   (every? (comp #{:opened} :status)))]
-    (deal-damage game {:player-no player-no
-                       :arg       (if all-breaches-opened? 3 2)})))
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (if all-breaches-opened? 3 2)]]})))
 
 (effects/register {::amplify-vision-focus  amplify-vision-focus
                    ::amplify-vision-damage amplify-vision-damage})
@@ -36,9 +37,10 @@
   (let [card-count (cond card-name 1
                          card-names (count card-names)
                          :else 0)]
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:discard-from-hand args]
-                                         [:deal-damage (* 3 card-count)]]})))
+    (push-effect-stack game (merge {:player-no player-no
+                                    :args      args         ; bonus-damage
+                                    :effects   [[:discard-from-hand args]
+                                                [:deal-damage (* 3 card-count)]]}))))
 
 (effects/register {::dark-fire-discard dark-fire-discard})
 

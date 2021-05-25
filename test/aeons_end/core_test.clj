@@ -548,4 +548,41 @@
            {:nemesis {:life    50
                       :discard [{:name :bad-motherfucker
                                  :type :minion
+                                 :life 0}]}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [spark]}]
+                           :phase    :casting}]
+                :nemesis {:life      50
+                          :play-area [{:name :bad-motherfucker
+                                       :type :minion
+                                       :life 2}]}}
+               (cast-spell 0 :spark 0)
+               (choose {:area :nemesis}))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}]
+                       :discard  [spark]
+                       :phase    :casting}]
+            :nemesis {:life      48
+                      :play-area [{:name :bad-motherfucker
+                                   :type :minion
+                                   :life 2}]}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [spark]}]
+                           :phase    :casting}]
+                :nemesis {:life      50
+                          :play-area [{:name :bad-motherfucker
+                                       :type :minion
+                                       :life 2}]}}
+               (cast-spell 0 :spark 0)
+               (choose {:area      :minions
+                        :card-name :bad-motherfucker}))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}]
+                       :discard  [spark]
+                       :phase    :casting}]
+            :nemesis {:life    50
+                      :discard [{:name :bad-motherfucker
+                                 :type :minion
                                  :life 0}]}}))))
