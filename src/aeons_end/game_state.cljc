@@ -89,7 +89,7 @@
 (defn cast-spell [card-name breach-no]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (commands/cast-spell current-player card-name breach-no)))
+                                            (commands/cast-spell current-player breach-no card-name)))
     (view)))
 
 (defn discard-power-card [card-name]

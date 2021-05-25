@@ -1,7 +1,8 @@
 (ns aeons-end.cards.common
   (:require [aeons-end.operations :refer [move-cards push-effect-stack]]
             [aeons-end.utils :as ut]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [medley.core :as medley]))
 
 (defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg]}]
   (let [current-player? (or (nil? current-player)
@@ -26,6 +27,30 @@
                                                              :to   :discard}))))
 
 (effects/register {:discard-from-hand discard-from-hand})
+
+(defn collective-discard-from-hand [game {:keys [player-card-name player-card-names]}]
+  (->> (or player-card-names
+           (when player-card-name
+             [player-card-name]))
+       (group-by :player-no)
+       (medley/map-vals #(map :card-name %))
+       (reduce (fn [game [player-no card-names]]
+                 (push-effect-stack game {:player-no player-no
+                                          :effects   [[:discard-from-hand {:card-names card-names}]]}))
+               game)))
+
+(effects/register {:collective-discard-from-hand collective-discard-from-hand})
+
+(defn collective-discard-prepped-spells [game {:keys [spells] :as args}]
+  (->> spells
+       (group-by :player-no)
+       (reduce (fn [game [player-no spells]]
+                 (push-effect-stack game {:player-no player-no
+                                          :args      args
+                                          :effects   [[:discard-prepped-spells {:spells spells}]]}))
+               game)))
+
+(effects/register {:collective-discard-prepped-spells collective-discard-prepped-spells})
 
 (defn take-from-discard [game {:keys [card-name card-names] :as args}]
   (cond-> game

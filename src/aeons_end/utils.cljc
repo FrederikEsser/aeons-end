@@ -343,33 +343,45 @@
                      cost)]
     (merge-with + card-cost added-cost)))
 
-(defn options-from-player
-  ([game player-no card-id area & [{:keys [last this id ids name names not-names type types not-type reacts-to min-cost max-cost leaves-play
-                                           most-expensive]}]]
-   (let [cards        (get-in game [:players player-no area])
-         highest-cost (->> cards
-                           (map :cost)
-                           (apply max 0))]
-     (cond->> cards
-              last (take-last 1)                            ; it's important that 'last' is evaluated first
-              this (filter (comp #{card-id} :id))
-              id (filter (comp #{id} :id))
-              name (filter (comp #{name} :name))
-              names (filter (comp names :name))
-              not-names (remove (comp not-names :name))
-              type (filter (comp #{type} :type))
-              types (filter (partial types-match game types))
-              not-type (remove (comp not-type (partial get-types game)))
-              reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
-                                            (partial can-react? game player-no)))
-              min-cost (filter (comp #(>= % min-cost) :cost))
-              max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
-              leaves-play (remove (partial stay-in-play game player-no))
-              most-expensive (filter (comp #{highest-cost} :cost))
-              ids (filter (comp ids :id))
-              :always (map :name)))))
+(defn options-from-player [game player-no card-id area &
+                           [{:keys [last this id ids name names not-names type types not-type reacts-to min-cost max-cost leaves-play
+                                    most-expensive]}]]
+  (let [cards        (get-in game [:players player-no area])
+        highest-cost (->> cards
+                          (map :cost)
+                          (apply max 0))]
+    (cond->> cards
+             last (take-last 1)                             ; it's important that 'last' is evaluated first
+             this (filter (comp #{card-id} :id))
+             id (filter (comp #{id} :id))
+             name (filter (comp #{name} :name))
+             names (filter (comp names :name))
+             not-names (remove (comp not-names :name))
+             type (filter (comp #{type} :type))
+             types (filter (partial types-match game types))
+             not-type (remove (comp not-type (partial get-types game)))
+             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
+                                           (partial can-react? game player-no)))
+             min-cost (filter (comp #(>= % min-cost) :cost))
+             max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
+             leaves-play (remove (partial stay-in-play game player-no))
+             most-expensive (filter (comp #{highest-cost} :cost))
+             ids (filter (comp ids :id))
+             :always (map :name))))
 
 (effects/register-options {:player options-from-player})
+
+(defn options-from-collective-hands [{:keys [players] :as game} _ _ & [{:keys []}]]
+  (->> players
+       (map-indexed (fn [player-no {:keys [hand]}]
+                      (->> hand
+                           (map (fn [{:keys [name] :as card}]
+                                  (assoc card :option {:player-no player-no
+                                                       :card-name name}))))))
+       (apply concat)
+       (map :option)))
+
+(effects/register-options {:collective-hands options-from-collective-hands})
 
 (defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges]}]]
   (let [highest-charge (->> players

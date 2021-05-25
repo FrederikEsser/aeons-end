@@ -608,6 +608,7 @@
                            :overpay :amount
                            :special :choice
                            :mixed :choice
+                           :collective-hands :player-card-name
                            :card-name)
         single-selection (if (sequential? selection)
                            (first selection)
@@ -643,6 +644,7 @@
                           :special :choices
                           :mixed :choices
                           :prepped-spells :spells
+                          :collective-hands :player-card-names
                           :card-names)
         multi-selection (if (sequential? selection)
                           selection

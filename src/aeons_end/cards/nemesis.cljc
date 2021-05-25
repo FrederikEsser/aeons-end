@@ -145,6 +145,34 @@
                                                              :max     1}]]}
                        :quote      "'The sound they make as they weave echoes through the cave is like the otherworldly throes of our lost companions.' Ges, Breach Mage Adviser"})
 
+(def mangleroot {:name       :mangleroot
+                 :type       :minion
+                 :tier       2
+                 :life       12
+                 :persistent {:text    "Gravehold suffers 3 damage.\nThis minion suffers 2 damage."
+                              :effects [[:damage-gravehold 3]
+                                        [:deal-damage-to-minion {:card-name :mangleroot
+                                                                 :damage    2}]]}
+                 :quote      "'One of the few indigenous creatures of the cave, though corrupted from exposure to the breach.' ― Gex, Breach Mage Advisor"})
+
+(def morbid-gyre {:name       :morbid-gyre
+                  :type       :power
+                  :tier       2
+                  :to-discard {:text      "Spend 7 Aether."
+                               :predicate ::aphotic-sun-can-discard?
+                               :effects   [[:pay 7]]}
+                  :power      {:power   1
+                               :text    "Unleash twice.\nThe players collectively discard three cards in hand."
+                               :effects [[:unleash]
+                                         [:unleash]
+                                         [:give-choice {:title   :morbid-gyre
+                                                        :text    "The players collectively discard three cards in hand."
+                                                        :choice  :collective-discard-from-hand
+                                                        :options [:collective-hands]
+                                                        :min     3
+                                                        :max     3}]]}
+                  :quote      "'It churned and rolled , a maelstrom of malign power. The void was upon me and yet I felt only the throes of freedom from my prison of sleep.' ― Yan Magda, Enlightened Exile"})
+
 (defn monstrosity-of-omens-modify-damage [damage]
   (min damage 1))
 
@@ -164,6 +192,26 @@
                            :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
                                            :effects [[::monstrosity-of-omens-damage]]}
                            :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' ― Yan Magda, Enlightened Exile"})
+
+(def mutilate {:name        :mutilate
+               :type        :attack
+               :tier        2
+               :text        ["Unleash."
+                             "The players collectively discard two prepped spells. Any player suffers 2 damage."]
+               :immediately [[:unleash]
+                             [:give-choice {:title   :mutilate
+                                            :text    "The players collectively discard two prepped spells."
+                                            :choice  :collective-discard-prepped-spells
+                                            :options [:prepped-spells]
+                                            :min     2
+                                            :max     2}]
+                             [:give-choice {:title   :mutilate
+                                            :text    "Any player suffers 2 damage."
+                                            :choice  [:damage-player {:arg 2}]
+                                            :options [:players]
+                                            :min     1
+                                            :max     1}]]
+               :quote       "'They say that before The Nameless found Gravehold, nothing grew in these caves. It appears the cave burgeons through our blood.' ― Gex, Breach Mage Advisor"})
 
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
@@ -335,15 +383,12 @@
                           night-unending
                           nix
                           planar-collision]
-                         (apply concat (repeat 1 [howling-spinners
-                                                  nix
-                                                  planar-collision]))
                          [aphotic-sun
+                          mangleroot
+                          morbid-gyre
+                          mutilate
                           null-scion
                           smite]
-                         (apply concat (repeat 2 [aphotic-sun
-                                                  null-scion
-                                                  smite]))
                          [apocalypse-ritual
                           monstrosity-of-omens
                           quell

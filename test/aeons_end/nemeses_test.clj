@@ -100,6 +100,39 @@
                               resolve-nemesis-cards-in-play
                               (choose {:player-no 1}))))))
 
+(deftest howling-spinners-test
+  (testing "Howling Spinners"
+    (is (= (-> {:nemesis {:play-area [howling-spinners]}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [howling-spinners]}
+            :players [{:life 8}]}))))
+
+(deftest mangleroot-test
+  (testing "Mangleroot"
+    (is (= (-> {:nemesis   {:play-area [mangleroot]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis   {:play-area [(assoc mangleroot :life 10)]}
+            :gravehold {:life 27}}))
+    (is (= (-> {:nemesis   {:play-area [(assoc mangleroot :life 3)]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis   {:play-area [(assoc mangleroot :life 1)]}
+            :gravehold {:life 27}}))
+    (is (= (-> {:nemesis   {:play-area [(assoc mangleroot :life 2)]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis   {:discard [(assoc mangleroot :life 0)]}
+            :gravehold {:life 27}}))
+    (is (= (-> {:nemesis   {:play-area [(assoc mangleroot :life 1)]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis   {:discard [(assoc mangleroot :life 0)]}
+            :gravehold {:life 27}}))))
+
+
 (deftest monstrosity-of-omens-test
   (testing "Monstrosity of Omens"
     (is (= (-> {:nemesis   {:play-area [monstrosity-of-omens]}
@@ -154,14 +187,139 @@
                                      :bonus-damage 1}]
                          :discard  [dark-fire]}]})))))
 
-(deftest howling-spinners-test
-  (testing "Howling Spinners"
-    (is (= (-> {:nemesis {:play-area [howling-spinners]}
-                :players [{:life 10}]}
-               (resolve-nemesis-cards-in-play)
-               (choose {:player-no 0}))
-           {:nemesis {:play-area [howling-spinners]}
-            :players [{:life 8}]}))))
+(deftest morbid-gyre-test
+  (testing "Morbid Gyre"
+    (is (= (-> {:nemesis   {:play-area [morbid-gyre]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal crystal crystal spark spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}
+                        {:player-no 0 :card-name :spark}
+                        {:player-no 0 :card-name :spark}]))
+           {:nemesis   {:discard [(assoc-in morbid-gyre [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand    [crystal crystal]
+                         :discard [crystal spark spark]}]}))
+    (is (= (-> {:nemesis   {:play-area [morbid-gyre]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal crystal crystal spark spark]}
+                            {:hand [crystal crystal crystal spark spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}
+                        {:player-no 0 :card-name :spark}
+                        {:player-no 1 :card-name :spark}]))
+           {:nemesis   {:discard [(assoc-in morbid-gyre [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand    [crystal crystal spark]
+                         :discard [crystal spark]}
+                        {:hand    [crystal crystal crystal spark]
+                         :discard [spark]}]}))
+    (is (= (-> {:nemesis   {:play-area [morbid-gyre]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal crystal crystal spark spark]}
+                            {:hand [crystal crystal crystal spark spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}
+                        {:player-no 0 :card-name :spark}
+                        {:player-no 1 :card-name :spark}]))
+           {:nemesis   {:discard [(assoc-in morbid-gyre [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand    [crystal crystal spark]
+                         :discard [crystal spark]}
+                        {:hand    [crystal crystal crystal spark]
+                         :discard [spark]}]}))
+    (is (= (-> {:nemesis   {:play-area [morbid-gyre]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal]}
+                            {:hand [spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}
+                        {:player-no 1 :card-name :spark}]))
+           {:nemesis   {:discard [(assoc-in morbid-gyre [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:discard [crystal]}
+                        {:discard [spark]}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:play-area [morbid-gyre]
+                                           :unleash   [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:hand [crystal crystal crystal spark spark]}]}
+                              resolve-nemesis-cards-in-play
+                              (choose [{:player-no 0 :card-name :crystal}
+                                       {:player-no 0 :card-name :spark}]))))
+    (is (= (-> {:nemesis   {:play-area [morbid-gyre]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}]))
+           {:nemesis   {:discard [(assoc-in morbid-gyre [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:discard [crystal]}]}))
+    (is (= (-> {:nemesis   {:play-area [morbid-gyre]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in morbid-gyre [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{}]}))))
+
+(deftest mutilate-test
+  (testing "Mutilate"
+    (is (= (-> {:nemesis   {:deck    [mutilate]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                        {:player-no 1 :breach-no 1 :card-name :spark}])
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [mutilate]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:breaches [{}]
+                         :discard  [spark]
+                         :life     10}
+                        {:breaches [{:prepped-spells [spark]}
+                                    {}]
+                         :discard  [spark]
+                         :life     8}]}))
+    (is (= (-> {:nemesis   {:deck    [mutilate]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose [{:player-no 1 :breach-no 0 :card-name :spark}
+                        {:player-no 1 :breach-no 1 :card-name :spark}])
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [mutilate]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:breaches [{:prepped-spells [spark]}]
+                         :life     10}
+                        {:breaches [{}
+                                    {}]
+                         :discard  [spark spark]
+                         :life     8}]}))))
 
 (deftest nix-test
   (testing "Nix"
