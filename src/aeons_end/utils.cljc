@@ -362,7 +362,7 @@
               not-type (remove (comp not-type (partial get-types game)))
               reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
                                             (partial can-react? game player-no)))
-              min-cost (filter (comp (partial costs-at-least min-cost) (partial get-cost game)))
+              min-cost (filter (comp #(>= % min-cost) :cost))
               max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
               leaves-play (remove (partial stay-in-play game player-no))
               most-expensive (filter (comp #{highest-cost} :cost))

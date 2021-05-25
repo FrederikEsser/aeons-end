@@ -1,6 +1,7 @@
 (ns aeons-end.cards.nemesis
   (:require [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (def unleash-3 {:name        :unleash-3
                 :text        "Unleash three times."
@@ -35,18 +36,42 @@
                                            :max     1}]]
               :quote       "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
 
+(defn apocalypse-ritual-can-discard? [game {:keys [player-no]}]
+  (let [aether (or (get-in game [:players player-no :aether]) 0)]
+    (>= aether 8)))
+
+(effects/register-predicates {::apocalypse-ritual-can-discard? apocalypse-ritual-can-discard?})
+
+(defn apocalypse-ritual-damage [game _]
+  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+                                     (filter (comp #{:nemesis} :type))
+                                     count)]
+    (push-effect-stack game {:effects [[:damage-gravehold (* 5 discarded-nemesis-cards)]]})))
+
+(effects/register {::apocalypse-ritual-damage apocalypse-ritual-damage})
+
+(def apocalypse-ritual {:name       :apocalypse-ritual
+                        :type       :power
+                        :tier       3
+                        :to-discard {:text      "Spend 8 Aether."
+                                     :predicate ::apocalypse-ritual-can-discard?
+                                     :effects   [[:pay 8]]}
+                        :power      {:power   2
+                                     :text    "Gravehold suffers 5 damage for each nemesis turn order card in the turn order discard pile."
+                                     :effects [[::apocalypse-ritual-damage]]}})
+
 (defn aphotic-sun-can-discard? [game {:keys [player-no]}]
   (let [aether (or (get-in game [:players player-no :aether]) 0)]
     (>= aether 7)))
 
 (effects/register-predicates {::aphotic-sun-can-discard? aphotic-sun-can-discard?})
 
-(defn aphonic-sun-damage [game {:keys [player-no]}]
+(defn aphotic-sun-damage [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:damage-player 3]
                                        [:spend-charges]]}))
 
-(effects/register {::aphonic-sun-damage aphonic-sun-damage})
+(effects/register {::aphotic-sun-damage aphotic-sun-damage})
 
 (def aphotic-sun {:name       :aphotic-sun
                   :type       :power
@@ -59,7 +84,7 @@
                                :effects [[:unleash]
                                          [:give-choice {:title   :aphotic-sun
                                                         :text    "The player with the most charges suffers 3 damage and loses all of their charges."
-                                                        :choice  ::aphonic-sun-damage
+                                                        :choice  ::aphotic-sun-damage
                                                         :options [:players {:most-charges true}]
                                                         :min     1
                                                         :max     1}]]}
@@ -199,6 +224,28 @@
                                               [:unleash]]}
                        :quote      "'None remembered the true name of The World That Was until Yan Magda spoke it aloud: Khasad Vol.'"})
 
+(defn quell-choice [game {:keys [choice]}]
+  (push-effect-stack game {:effects (case choice
+                                      :damage [[:damage-gravehold 7]]
+                                      :unleash [[:unleash]
+                                                [:unleash]
+                                                [:unleash]])}))
+
+(effects/register {::quell-choice quell-choice})
+
+(def quell {:name        :quell
+            :type        :attack
+            :tier        3
+            :text        ["Gravehold suffers 7 damage.\nOR\nUnleash three times."]
+            :immediately [[:give-choice {:title   :quell
+                                         :choice  ::quell-choice
+                                         :options [:special
+                                                   {:option :damage :text "Gravehold suffers 7 damage."}
+                                                   {:option :unleash :text "Unleash three times."}]
+                                         :min     1
+                                         :max     1}]]
+            :quote       "'The Nameless hunger for the same thing we do; an end to this war.' ― Garu, Oathsworn Protector"})
+
 (def smite {:name        :smite
             :type        :attack
             :tier        2
@@ -209,16 +256,78 @@
                           [:damage-gravehold 2]]
             :quote       "'One side of this struggle must fall for the other to truly live.' Xaxos, Voidbringer"})
 
-(def cards (concat [afflict
-                    heart-of-nothing
-                    howling-spinners
-                    night-unending
-                    nix
-                    planar-collision]
-                   (apply concat (repeat 1 [howling-spinners
-                                            nix
-                                            planar-collision]))
-                   (apply concat (repeat 3 [aphotic-sun
-                                            null-scion
-                                            smite]))
-                   (repeat 7 unleash-3)))
+(defn throttle-destroy-cards [game {:keys [player-no]}]
+  (let [sorted-hand          (->> (get-in game [:players player-no :hand])
+                                  (sort-by :cost >)
+                                  vec)
+        third-highest-cost   (->> sorted-hand
+                                  (take 3)
+                                  last
+                                  :cost)
+        auto-destroy-cards   (cond
+                               (<= (count sorted-hand) 3) sorted-hand
+                               (not= third-highest-cost (get-in sorted-hand [3 :cost])) (take 3 sorted-hand)
+                               :else (->> sorted-hand
+                                          (filter (comp #(> % third-highest-cost) :cost))))
+        manual-destroy-count (- (min 3 (count sorted-hand))
+                                (count auto-destroy-cards))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat
+                                          (when (not-empty auto-destroy-cards)
+                                            [[:move-cards {:card-names (map :name auto-destroy-cards)
+                                                           :from       :hand
+                                                           :to         :trash}]])
+                                          (when (pos? manual-destroy-count)
+                                            [[:give-choice {:title   :throttle
+                                                            :text    (str "Destroy the "
+                                                                          (when (> manual-destroy-count 1)
+                                                                            (ut/number->text manual-destroy-count))
+                                                                          " most expensive card"
+                                                                          (when (> manual-destroy-count 1)
+                                                                            "s")
+                                                                          " in your hand.")
+                                                            :choice  [:move-cards {:from :hand
+                                                                                   :to   :trash}]
+                                                            :options [:player :hand {:cost third-highest-cost}]
+                                                            :min     manual-destroy-count
+                                                            :max     manual-destroy-count}]]))})))
+
+(effects/register {::throttle-destroy-cards throttle-destroy-cards})
+
+(def throttle {:name        :throttle
+               :type        :attack
+               :tier        3
+               :text        ["Unleash twice."
+                             "Any player destroys their three most expensive cards in hand."]
+               :immediately [[:unleash]
+                             [:unleash]
+                             [:give-choice {:title   :throttle
+                                            :text    "Any player destroys their three most expensive cards in hand."
+                                            :choice  ::throttle-destroy-cards
+                                            :options [:players]
+                                            :min     1
+                                            :max     1}]]
+               :quote       "'Were I made of muscle and blood like the others, the impact would have surely ended me.' ― Remnant, Aetherial Entity"})
+
+(def basic-cards (concat [afflict
+                          heart-of-nothing
+                          howling-spinners
+                          night-unending
+                          nix
+                          planar-collision]
+                         (apply concat (repeat 1 [howling-spinners
+                                                  nix
+                                                  planar-collision]))
+                         [aphotic-sun
+                          null-scion
+                          smite]
+                         (apply concat (repeat 2 [aphotic-sun
+                                                  null-scion
+                                                  smite]))
+                         [apocalypse-ritual
+                          apocalypse-ritual
+                          apocalypse-ritual
+                          quell
+                          quell
+                          throttle
+                          throttle]))

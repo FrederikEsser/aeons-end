@@ -232,6 +232,78 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}}))))
 
+(deftest throttle-test
+  (testing "Throttle"
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal crystal crystal spark spark]}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose [:crystal :spark :spark]))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [crystal crystal]}]
+            :trash     [crystal spark spark]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [jade crystal crystal spark spark]}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose [:spark :spark]))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [crystal crystal]}]
+            :trash     [jade spark spark]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [jade crystal ignite spark spark]}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :spark))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [crystal spark]}]
+            :trash     [ignite jade spark]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [jade crystal ignite jade spark]}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [crystal spark]}]
+            :trash     [ignite jade jade]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [jade crystal ignite]}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{}]
+            :trash     [ignite jade crystal]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [spark crystal]}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{}]
+            :trash     [spark crystal]}))))
+
 (deftest umbra-titan-test
   (testing "Umbra Titan"
     (testing "Unleash"

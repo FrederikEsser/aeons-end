@@ -27,7 +27,7 @@
       (merge
         {:deck (->> (range 1 4)
                     (mapcat (fn [tier]
-                              (->> nemesis-cards/cards
+                              (->> nemesis-cards/basic-cards
                                    (filter (comp #{tier} :tier))
                                    shuffle
                                    (take (get-in basic-nemesis-cards [number-of-players tier]))

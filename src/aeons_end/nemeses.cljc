@@ -153,4 +153,13 @@
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
                                cards/aphotic-sun cards/null-scion cards/smite
-                               cards/unleash-3 cards/unleash-3 cards/unleash-3]})
+                               cards/apocalypse-ritual cards/unleash-3 cards/throttle]})
+
+(def generic-nemesis {:name       :generic
+                      :difficulty 3
+                      :life       70
+                      :unleash    [[:damage-gravehold 2]]
+                      :cards      [cryptid grubber seismic-roar
+                                   cards/howling-spinners cards/nix cards/planar-collision
+                                   cards/aphotic-sun cards/null-scion cards/smite
+                                   cards/apocalypse-ritual cards/unleash-3 cards/throttle]})
