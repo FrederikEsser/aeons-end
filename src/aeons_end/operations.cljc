@@ -414,11 +414,8 @@
 (effects/register {:gain-charge gain-charge})
 
 (defn spend-charges [game {:keys [player-no]}]
-  (let [{:keys [name charges charge-cost]
-         :or   {charges 0}} (get-in game [:players player-no :ability])]
-    (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
-    (-> game
-        (assoc-in [:players player-no :ability :charges] 0))))
+  (-> game
+      (assoc-in [:players player-no :ability :charges] 0)))
 
 (effects/register {:spend-charges spend-charges})
 

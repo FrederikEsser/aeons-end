@@ -50,6 +50,56 @@
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
 
+(deftest aphotic-sun-test
+  (testing "Aphotic Sun"
+    (is (= (-> {:nemesis {:play-area [aphotic-sun]}
+                :players [{:aether 7}]}
+               (discard-power-card 0 :aphotic-sun))
+           {:nemesis {:discard [aphotic-sun]}
+            :players [{:aether 0}]}))
+    (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
+                          (-> {:nemesis {:play-area [aphotic-sun]}
+                               :players [{:aether 6}]}
+                              (discard-power-card 0 :aphotic-sun))))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in aphotic-sun [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:ability {:charges 5}
+                             :life    10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [(assoc-in aphotic-sun [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:ability {:charges 0}
+                         :life    7}]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in aphotic-sun [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:ability {:charges 0}
+                             :life    10}
+                            {:ability {:charges 0}
+                             :life    10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [(assoc-in aphotic-sun [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:ability {:charges 0}
+                         :life    10}
+                        {:ability {:charges 0}
+                         :life    7}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:play-area [(assoc-in aphotic-sun [:power :power] 1)]
+                                           :unleash   [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:ability {:charges 1}
+                                            :life    10}
+                                           {:ability {:charges 0}
+                                            :life    10}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 1}))))))
+
 (deftest howling-spinners-test
   (testing "Howling Spinners"
     (is (= (-> {:nemesis {:play-area [howling-spinners]}

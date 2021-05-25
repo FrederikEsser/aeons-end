@@ -2,19 +2,6 @@
   (:require [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]))
 
-(def unleash-1 {:name        :unleash-1
-                :text        "Unleash."
-                :type        :attack
-                :immediately [[:unleash]]
-                :tier        1})
-
-(def unleash-2 {:name        :unleash-2
-                :text        "Unleash twice."
-                :type        :attack
-                :immediately [[:unleash]
-                              [:unleash]]
-                :tier        2})
-
 (def unleash-3 {:name        :unleash-3
                 :text        "Unleash three times."
                 :type        :attack
@@ -47,6 +34,36 @@
                                            :min     1
                                            :max     1}]]
               :quote       "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
+
+(defn aphotic-sun-can-discard? [game {:keys [player-no]}]
+  (let [aether (or (get-in game [:players player-no :aether]) 0)]
+    (>= aether 7)))
+
+(effects/register-predicates {::aphotic-sun-can-discard? aphotic-sun-can-discard?})
+
+(defn aphonic-sun-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 3]
+                                       [:spend-charges]]}))
+
+(effects/register {::aphonic-sun-damage aphonic-sun-damage})
+
+(def aphotic-sun {:name       :aphotic-sun
+                  :type       :power
+                  :tier       2
+                  :to-discard {:text      "Spend 7 Aether."
+                               :predicate ::aphotic-sun-can-discard?
+                               :effects   [[:pay 7]]}
+                  :power      {:power   2
+                               :text    "Unleash. The player with the most charges suffers 3 damage and loses all of their charges."
+                               :effects [[:unleash]
+                                         [:give-choice {:title   :aphotic-sun
+                                                        :text    "The player with the most charges suffers 3 damage and loses all of their charges."
+                                                        :choice  ::aphonic-sun-damage
+                                                        :options [:players {:most-charges true}]
+                                                        :min     1
+                                                        :max     1}]]}
+                  :quote      "'The harsh light of the dead star burned away the dark as it crept through the breach. And around it I saw ravaged worlds The Nameless had already claimed.' ― Indira, Breach Mage Apprentice"})
 
 (defn heart-of-nothing-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
@@ -140,13 +157,21 @@
           :text        ["Unleash."
                         "Any player suffers 1 damage and discards their most expensive card in hand."]
           :immediately [[:unleash]
-                        [:give-choice {:title   :afflict
+                        [:give-choice {:title   :nix
                                        :text    "Any player suffers 1 damage and discards their most expensive card in hand."
                                        :choice  ::nix-damage-player
                                        :options [:players]
                                        :min     1
                                        :max     1}]]
           :quote       "'It's as if the world itself is screaming.' Nerva, Survivor"})
+
+(def null-scion {:name       :null-scion
+                 :type       :minion
+                 :tier       2
+                 :life       11
+                 :persistent {:text    "Unleash."
+                              :effects [[:unleash]]}
+                 :quote      "'Qiulius's first blow glanced off its carapace like breath, but her second blow carved it in twain.' ― Dezmodia, Voidborn Prodigy"})
 
 (defn planar-collision-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
@@ -174,13 +199,26 @@
                                               [:unleash]]}
                        :quote      "'None remembered the true name of The World That Was until Yan Magda spoke it aloud: Khasad Vol.'"})
 
+(def smite {:name        :smite
+            :type        :attack
+            :tier        2
+            :text        ["Unleash twice."
+                          "Gravehold suffers 2 damage."]
+            :immediately [[:unleash]
+                          [:unleash]
+                          [:damage-gravehold 2]]
+            :quote       "'One side of this struggle must fall for the other to truly live.' Xaxos, Voidbringer"})
+
 (def cards (concat [afflict
                     heart-of-nothing
                     howling-spinners
                     night-unending
                     nix
                     planar-collision]
-                   (concat
-                     (repeat 2 unleash-1)
-                     (repeat 7 unleash-2)
-                     (repeat 7 unleash-3))))
+                   (apply concat (repeat 1 [howling-spinners
+                                            nix
+                                            planar-collision]))
+                   (apply concat (repeat 3 [aphotic-sun
+                                            null-scion
+                                            smite]))
+                   (repeat 7 unleash-3)))

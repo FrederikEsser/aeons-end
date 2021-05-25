@@ -34,11 +34,12 @@
                                         :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
                                         :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])})))
 
-(defn deal-damage [game {:keys [arg]}]
-  (let [minions (->> (get-in game [:nemesis :play-area])
+(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg]}]
+  (let [{:keys [name play-area]} nemesis
+        minions (->> play-area
                      (filter (comp #{:minion} :type)))]
     (push-effect-stack game {:effects (if (not-empty minions)
-                                        [[:give-choice {:text    "Deal damage to Nemesis or a Minion."
+                                        [[:give-choice {:text    (str "Deal " arg " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
                                                         :choice  [:deal-damage-to-target {:damage arg}]
                                                         :options [:mixed
                                                                   [:nemesis]
@@ -66,35 +67,6 @@
   (update-in game [:players player-no :life] - arg))
 
 (effects/register {:damage-player damage-player})
-
-(defn umbra-titan-choice [game {:keys [choice]}]
-  (push-effect-stack game {:effects (case choice
-                                      :damage [[:damage-gravehold 2]]
-                                      :token [[:lose-nemesis-tokens 1]])}))
-
-(defn umbra-titan-unleash [game _]
-  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
-                                     (filter (comp #{:nemesis} :type))
-                                     count)]
-    (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
-    (give-choice game (case discarded-nemesis-cards
-                        1 {:title     :unleash
-                           :text      "Any player suffers 2 damage."
-                           :choice    [:damage-player {:arg 2}]
-                           :or-choice {:text    "Umbra titan loses one nemesis token"
-                                       :effects [[:lose-nemesis-tokens 1]]}
-                           :options   [:players]
-                           :max       1}
-                        2 {:title   :unleash
-                           :choice  ::umbra-titan-choice
-                           :options [:special
-                                     {:option :damage :text "Gravehold suffers 2 damage"}
-                                     {:option :token :text "Umbra titan loses one nemesis token"}]
-                           :min     1
-                           :max     1}))))
-
-(effects/register {::umbra-titan-choice  umbra-titan-choice
-                   ::umbra-titan-unleash umbra-titan-unleash})
 
 (def cryptid {:name       :cryptid
               :type       :minion
@@ -143,7 +115,36 @@
                    :power      {:power   3
                                 :text    "Umbra Titan loses two nemesis tokens."
                                 :effects [[:lose-nemesis-tokens 2]]}
-                   :quote      "'It roared as it bore through the rock. And Gravehold shuddered like those within its walls.' Nerva, Survivor"})
+                   :quote      "'I roared as it bore through the rock. And Gravehold shuddered like those within its walls.' Nerva, Survivor"})
+
+(defn umbra-titan-choice [game {:keys [choice]}]
+  (push-effect-stack game {:effects (case choice
+                                      :damage [[:damage-gravehold 2]]
+                                      :token [[:lose-nemesis-tokens 1]])}))
+
+(defn umbra-titan-unleash [game _]
+  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+                                     (filter (comp #{:nemesis} :type))
+                                     count)]
+    (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
+    (give-choice game (case discarded-nemesis-cards
+                        1 {:title     :unleash
+                           :text      "Any player suffers 2 damage."
+                           :choice    [:damage-player {:arg 2}]
+                           :or-choice {:text    "Umbra titan loses one nemesis token"
+                                       :effects [[:lose-nemesis-tokens 1]]}
+                           :options   [:players]
+                           :max       1}
+                        2 {:title   :unleash
+                           :choice  ::umbra-titan-choice
+                           :options [:special
+                                     {:option :damage :text "Gravehold suffers 2 damage"}
+                                     {:option :token :text "Umbra titan loses one nemesis token"}]
+                           :min     1
+                           :max     1}))))
+
+(effects/register {::umbra-titan-choice  umbra-titan-choice
+                   ::umbra-titan-unleash umbra-titan-unleash})
 
 (def umbra-titan {:name       :umbra-titan
                   :difficulty 3
@@ -151,5 +152,5 @@
                   :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
-                               cards/unleash-2 cards/unleash-2 cards/unleash-2
+                               cards/aphotic-sun cards/null-scion cards/smite
                                cards/unleash-3 cards/unleash-3 cards/unleash-3]})

@@ -376,7 +376,7 @@
                   :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
                                      (swap! state assoc :game (cmd/restart) :selection [])))}
          "Restart"]
-        (let [disabled (-> @state :game :commands :can-undo? not)]
+        (let [disabled false #_(-> @state :game :commands :can-undo? not)]
           [:button {:style    (button-style :disabled disabled)
                     :disabled disabled
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}

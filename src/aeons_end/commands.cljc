@@ -101,7 +101,9 @@
 
 (defn activate-ability [game player-no]
   (check-command "Activate" game player-no)
-  (let [{:keys [effects]} (get-in game [:players player-no :ability])]
+  (let [{:keys [name charges charge-cost effects]
+         :or   {charges 0}} (get-in game [:players player-no :ability])]
+    (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   (concat [[:set-phase {:phase :main}]

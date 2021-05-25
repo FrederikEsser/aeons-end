@@ -371,11 +371,15 @@
 
 (effects/register-options {:player options-from-player})
 
-(defn options-from-players
-  ([{:keys [players] :as game} player-no _ & [{:keys [ally]}]]
-   (let [options (cond->> (keep-indexed (fn [idx _] {:player-no idx}) players)
-                          ally (remove (comp #{player-no} :player-no)))]
-     options)))
+(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges]}]]
+  (let [highest-charge (->> players
+                            (map #(get-in % [:ability :charges] 0))
+                            (apply max 0))]
+    (cond->> (map-indexed (fn [player-no player]
+                            (assoc player :option {:player-no player-no})) players)
+             ally (remove (comp #{player-no} :player-no :option))
+             most-charges (filter (comp #{highest-charge} :charges :ability))
+             :always (map :option))))
 
 (effects/register-options {:players options-from-players})
 
