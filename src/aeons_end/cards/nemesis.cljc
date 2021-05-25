@@ -145,6 +145,26 @@
                                                              :max     1}]]}
                        :quote      "'The sound they make as they weave echoes through the cave is like the otherworldly throes of our lost companions.' Ges, Breach Mage Adviser"})
 
+(defn monstrosity-of-omens-modify-damage [damage]
+  (min damage 1))
+
+(effects/register-predicates {::monstrosity-of-omens-modify-damage monstrosity-of-omens-modify-damage})
+
+(defn monstrosity-of-omens-damage [game _]
+  (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :monstrosity-of-omens})]
+    (push-effect-stack game {:effects [[:damage-gravehold life]]})))
+
+(effects/register {::monstrosity-of-omens-damage monstrosity-of-omens-damage})
+
+(def monstrosity-of-omens {:name          :monstrosity-of-omens
+                           :type          :minion
+                           :tier          3
+                           :life          5
+                           :modify-damage ::monstrosity-of-omens-modify-damage
+                           :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
+                                           :effects [[::monstrosity-of-omens-damage]]}
+                           :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' ― Yan Magda, Enlightened Exile"})
+
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
                                  (map (fn [{:keys [breaches]}]
@@ -325,9 +345,10 @@
                                                   null-scion
                                                   smite]))
                          [apocalypse-ritual
-                          apocalypse-ritual
+                          monstrosity-of-omens
+                          quell
+                          throttle]
+                         [apocalypse-ritual
                           apocalypse-ritual
                           quell
-                          quell
-                          throttle
                           throttle]))

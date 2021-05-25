@@ -12,7 +12,7 @@
     (testing "Buried Light"
       (is (= (-> {:players [{:breaches [{:prepped-spells [buried-light]}]}]
                   :nemesis {:life 50}}
-                 (cast-spell 0 :buried-light 0))
+                 (cast-spell 0 0 :buried-light))
              {:players [{:breaches [{}]
                          :discard  [buried-light]
                          :aether   1}]

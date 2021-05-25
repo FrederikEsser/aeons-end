@@ -14,7 +14,7 @@
                                        :focus-cost 2
                                        :stage      0}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :amplify-vision 0))
+               (cast-spell 0 0 :amplify-vision))
            {:players [{:breaches [{:status :opened}
                                   {:status     :focused
                                    :focus-cost 2
@@ -27,7 +27,7 @@
                                        :focus-cost 2
                                        :stage      3}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :amplify-vision 0))
+               (cast-spell 0 0 :amplify-vision))
            {:players [{:breaches [{:status :opened}
                                   {:status :opened}]
                        :discard  [amplify-vision]}]
@@ -42,7 +42,7 @@
                                        :focus-cost 4
                                        :stage      3}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :amplify-vision 0))
+               (cast-spell 0 0 :amplify-vision))
            {:players [{:breaches [{:status :opened}
                                   {:status :opened}
                                   {:status :opened}
@@ -59,7 +59,7 @@
                                        :focus-cost 4
                                        :stage      3}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :amplify-vision 0))
+               (cast-spell 0 0 :amplify-vision))
            {:players [{:breaches [{:status :opened}
                                   {:status :opened}
                                   {:status :opened}
@@ -73,7 +73,7 @@
                                        :focus-cost 2
                                        :stage      0}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :amplify-vision 0))
+               (cast-spell 0 0 :amplify-vision))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}
                                   {:status     :focused
@@ -88,7 +88,7 @@
                                        :focus-cost 2
                                        :stage      3}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :amplify-vision 0))
+               (cast-spell 0 0 :amplify-vision))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}
                                   {:status :opened}]
@@ -100,7 +100,7 @@
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
                            :hand     [crystal crystal spark]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0)
+               (cast-spell 0 0 :dark-fire)
                (choose nil))
            {:players [{:breaches [{}]
                        :hand     [crystal crystal spark]
@@ -109,7 +109,7 @@
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
                            :hand     [spark]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0)
+               (cast-spell 0 0 :dark-fire)
                (choose :spark))
            {:players [{:breaches [{}]
                        :discard  [dark-fire spark]}]
@@ -117,7 +117,7 @@
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
                            :hand     [crystal crystal spark]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0)
+               (cast-spell 0 0 :dark-fire)
                (choose [:crystal :crystal]))
            {:players [{:breaches [{}]
                        :hand     [spark]
@@ -127,11 +127,11 @@
                           (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]
                                           :hand     [crystal crystal spark]}]
                                :nemesis {:life 50}}
-                              (cast-spell 0 :dark-fire 0)
+                              (cast-spell 0 0 :dark-fire)
                               (choose [:crystal :crystal :spark]))))
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0))
+               (cast-spell 0 0 :dark-fire))
            {:players [{:breaches [{}]
                        :discard  [dark-fire]}]
             :nemesis {:life 50}}))
@@ -140,7 +140,7 @@
                                        :prepped-spells [dark-fire]}]
                            :hand     [crystal]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0)
+               (cast-spell 0 0 :dark-fire)
                (choose [:crystal]))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
@@ -151,7 +151,7 @@
                                        :prepped-spells [dark-fire]}]
                            :hand     [crystal]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0)
+               (cast-spell 0 0 :dark-fire)
                (choose nil))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
@@ -162,7 +162,7 @@
                                        :bonus-damage   1
                                        :prepped-spells [dark-fire]}]}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :dark-fire 0))
+               (cast-spell 0 0 :dark-fire))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
                        :discard  [dark-fire]}]
@@ -174,7 +174,7 @@
                           {:ability {:charges     0
                                      :charge-cost 4}}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :ignite 0)
+               (cast-spell 0 0 :ignite)
                (choose {:player-no 1}))
            {:players [{:breaches [{}]
                        :discard  [ignite]}
@@ -186,7 +186,7 @@
                                          {:ability {:charges     0
                                                     :charge-cost 4}}]
                                :nemesis {:life 50}}
-                              (cast-spell 0 :ignite 0)
+                              (cast-spell 0 0 :ignite)
                               (choose {:player-no 0}))))
     (is (= (-> {:players [{:hand [garnet-shard]}
                           {:breaches [{:prepped-spells [ignite]}]
@@ -213,7 +213,7 @@
                           {:deck [crystal]}
                           {}]
                 :nemesis {:life 50}}
-               (cast-spell 0 :radiance 0))
+               (cast-spell 0 0 :radiance))
            {:players [{:breaches [{}]
                        :deck     [crystal]
                        :discard  [radiance]}

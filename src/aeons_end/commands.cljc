@@ -65,7 +65,7 @@
                                                         :breach-no breach-no}]]})
         op/check-stack)))
 
-(defn cast-spell [game player-no card-name breach-no]
+(defn cast-spell [game player-no breach-no card-name]
   (check-command "Cast" game player-no)
   (-> game
       (op/push-effect-stack {:player-no player-no

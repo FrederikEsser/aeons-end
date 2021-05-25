@@ -99,7 +99,7 @@
       (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
                              :phase    :casting}]
                   :nemesis {:life 50}}
-                 (cast-spell 0 :spark 0))
+                 (cast-spell 0 0 :spark))
              {:players [{:breaches [{}]
                          :discard  [spark]
                          :phase    :casting}]
@@ -109,7 +109,7 @@
                                          :prepped-spells [spark]}]
                              :phase    :casting}]
                   :nemesis {:life 50}}
-                 (cast-spell 0 :spark 0))
+                 (cast-spell 0 0 :spark))
              {:players [{:breaches [{:status       :opened
                                      :bonus-damage 1}]
                          :discard  [spark]
@@ -120,7 +120,7 @@
                                          :prepped-spells [spark]}]
                              :phase    :casting}]
                   :nemesis {:life 50}}
-                 (cast-spell 0 :spark 0))
+                 (cast-spell 0 0 :spark))
              {:players [{:breaches [{:status       :closed
                                      :bonus-damage 1}]
                          :discard  [spark]
@@ -130,7 +130,7 @@
                             (-> {:players [{:breaches [{:prepped-spells [spark]}]
                                             :phase    :main}]
                                  :nemesis {:life 50}}
-                                (cast-spell 0 :spark 0))))
+                                (cast-spell 0 0 :spark))))
       (is (= (-> {:players [{:hand     [crystal]
                              :breaches [{:status         :opened
                                          :prepped-spells [spark]}]
@@ -557,7 +557,7 @@
                           :play-area [{:name :bad-motherfucker
                                        :type :minion
                                        :life 2}]}}
-               (cast-spell 0 :spark 0)
+               (cast-spell 0 0 :spark)
                (choose {:area :nemesis}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
@@ -575,7 +575,7 @@
                           :play-area [{:name :bad-motherfucker
                                        :type :minion
                                        :life 2}]}}
-               (cast-spell 0 :spark 0)
+               (cast-spell 0 0 :spark)
                (choose {:area      :minions
                         :card-name :bad-motherfucker}))
            {:players [{:breaches [{:status       :opened

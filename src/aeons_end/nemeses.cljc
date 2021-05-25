@@ -23,7 +23,12 @@
 
 (defn deal-damage-to-minion [game {:keys [card-name damage]}]
   (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-        {:keys [life]} card]
+        {:keys [life modify-damage]} card
+        modify-damage-fn (when modify-damage
+                           (effects/get-predicate modify-damage))
+        damage           (if modify-damage-fn
+                           (modify-damage-fn damage)
+                           damage)]
     (-> game
         (assoc-in [:nemesis :play-area idx :life] (max (- life damage) 0))
         (cond-> (<= life damage) (discard-nemesis-card {:card-name card-name})))))
@@ -155,7 +160,7 @@
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
                                cards/aphotic-sun cards/null-scion cards/smite
-                               cards/apocalypse-ritual cards/unleash-3 cards/throttle]})
+                               cards/apocalypse-ritual cards/monstrosity-of-omens cards/throttle]})
 
 (def generic-nemesis {:name       :generic
                       :difficulty 3
@@ -164,4 +169,4 @@
                       :cards      [cryptid grubber seismic-roar
                                    cards/howling-spinners cards/nix cards/planar-collision
                                    cards/aphotic-sun cards/null-scion cards/smite
-                                   cards/apocalypse-ritual cards/unleash-3 cards/throttle]})
+                                   cards/apocalypse-ritual cards/monstrosity-of-omens cards/throttle]})
