@@ -189,6 +189,7 @@
                            :tier          3
                            :life          5
                            :modify-damage ::monstrosity-of-omens-modify-damage
+                           :text          "When damage is dealt to this minion, reduce that damage to 1."
                            :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
                                            :effects [[::monstrosity-of-omens-damage]]}
                            :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' ― Yan Magda, Enlightened Exile"})

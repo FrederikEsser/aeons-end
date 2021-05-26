@@ -109,7 +109,11 @@
                                    (not choice))
                           {:interaction :discardable})
                         (choice-interaction {:area      area
-                                             :card-name name} choice))))
+                                             :card-name name} choice)
+                        (when (= :hand area)
+                          (choice-interaction-player {:area      :collective-hands
+                                                      :player-no player-no
+                                                      :card-name name} choice)))))
           frequencies
           (map (fn [[card number-of-cards]]
                  (cond-> card
@@ -416,7 +420,7 @@
                                                                   {:active-player? active-player?
                                                                    :player         (assoc player :player-no idx)}
                                                                   (when (or (= idx player-no)
-                                                                            (#{:players :prepped-spells} source))
+                                                                            (#{:players :prepped-spells :collective-hands} source))
                                                                     {:choice choice})))))))
             :trash      (view-trash (merge game {:choice choice}))
             :commands   (view-commands game)}))))

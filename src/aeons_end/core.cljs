@@ -125,7 +125,7 @@
                 (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
 
-(defn view-breach [{:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value choice-opts interactions]}]
+(defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value choice-opts interactions]}]
   (let [disabled (empty? interactions)]
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
@@ -148,7 +148,7 @@
                    :vertical-align :top}}
       (->> prepped-spells
            (map #(assoc % :breach-no breach-no))
-           (mapk view-card))]]))
+           (mapk (partial view-card max)))]]))
 
 (defn view-ability [{:keys [name-ui text type charges charge-cost interaction]}]
   (let [disabled (nil? interaction)]
@@ -376,7 +376,7 @@
                   :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
                                      (swap! state assoc :game (cmd/restart) :selection [])))}
          "Restart"]
-        (let [disabled false #_(-> @state :game :commands :can-undo? not)]
+        (let [disabled (-> @state :game :commands :can-undo? not)]
           [:button {:style    (button-style :disabled disabled)
                     :disabled disabled
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
@@ -432,7 +432,8 @@
             (->> players
                  (mapk (fn [{:keys                    [name name-ui title type life ability aether breaches hand play-area deck discard active? choice-value interaction]
                              {:keys [max] :as choice} :choice}]
-                         (let [breach-no     (->> breaches
+                         (let [max           (or max (get-in @state [:game :nemesis :choice :max]))
+                               breach-no     (->> breaches
                                                   (remove (comp #{:closed} :status))
                                                   (filter (comp empty? :prepped-spells))
                                                   (sort-by (juxt :bonus-damage :status))
@@ -463,7 +464,7 @@
                              [:div "Aether: " aether]]
                             [:td [:table
                                   [:tbody {:style {:border :none}}
-                                   (mapk view-breach breaches)]]]
+                                   (mapk (partial view-breach max) breaches)]]]
                             [:td [:div
                                   (when (and active? (-> @state :game :commands :can-play-all-gems?))
                                     [:div [:button {:style    (button-style)
