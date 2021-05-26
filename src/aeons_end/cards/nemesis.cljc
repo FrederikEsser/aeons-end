@@ -364,7 +364,7 @@
                                                                           " in your hand.")
                                                             :choice  [:move-cards {:from :hand
                                                                                    :to   :trash}]
-                                                            :options [:player :hand {:cost third-highest-cost}]
+                                                            :options [:player :hand {:min-cost third-highest-cost}]
                                                             :min     manual-destroy-count
                                                             :max     manual-destroy-count}]]))})))
 

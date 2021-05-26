@@ -514,7 +514,27 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
             :players   [{}]
-            :trash     [spark crystal]}))))
+            :trash     [spark crystal]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [jade ignite ignite jade spark]}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :jade))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [jade spark]}]
+            :trash     [ignite ignite jade]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [throttle]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:hand [jade ignite ignite jade spark]}]}
+                              draw-nemesis-card
+                              (choose {:player-no 0})
+                              (choose :spark))))))
 
 (deftest umbra-titan-test
   (testing "Umbra Titan"

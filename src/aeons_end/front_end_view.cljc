@@ -142,10 +142,12 @@
   (merge
     (when (not-empty discard)
       {:card (let [{:keys [name text type]} (last discard)]
-               {:name    name
-                :name-ui (ut/format-name name)
-                :text    text
-                :type    type})})
+               (merge {:name    name
+                       :name-ui (ut/format-name name)
+                       :text    text
+                       :type    type}
+                      (choice-interaction {:area      :discard
+                                           :card-name name} choice)))})
     {:cards           (if (empty? discard)
                         []
                         (->> discard
