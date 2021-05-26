@@ -212,15 +212,21 @@
             (map view-kingdom-card)
             (mapk (fn [card] [:td card])))])
 
-(defn format-text [text]
-  [:div
-   (->> (string/split text #"\nOR\n")
-        (mapk-indexed (fn [idx s]
-                        [:<>
-                         (when (pos? idx)
-                           [:div {:style {:font-weight :bold}}
-                            "OR"])
-                         s])))])
+(defn format-text [text & [title]]
+  (cond
+    (coll? text) (->> text
+                      (mapk-indexed (fn [idx paragraph]
+                                      (format-text paragraph (when (zero? idx) title)))))
+    (and (string? text)
+         (re-find #"\n" text)) (format-text (string/split text #"\n") title)
+    :else [:div {:style {:font-size   "0.9em"
+                         :font-weight (if (= "OR" text)
+                                        :bold
+                                        :normal)
+                         :paddingTop  "3px"}}
+           (when title
+             [:strong (str title (when text ": "))])
+           text]))
 
 (defn view-nemesis-card
   [{:keys [name name-ui text quote choice-value type
@@ -238,44 +244,20 @@
                                    :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
      [:div
       [:div {:style {:font-size "1.4em"}} name-ui]
-      (if (coll? text)
-        (->> text
-             (mapk-indexed (fn [idx paragraph]
-                             [:div {:style {:font-size   "0.9em"
-                                            :font-weight :normal
-                                            :paddingTop  "3px"}}
-                              (when (and (zero? idx)
-                                         power)
-                                [:strong (str "POWER " power ": ")])
-                              paragraph])))
-        [:div
-         (when text
-           [:div {:style {:font-size   "0.9em"
-                          :font-weight :normal
-                          :paddingTop  "3px"}}
-            (format-text text)])
-         (when to-discard-text
-           [:div {:style {:font-size   "0.9em"
-                          :font-weight :normal
-                          :paddingTop  "3px"}}
-            [:strong (str "TO DISCARD: ")]
-            (format-text to-discard-text)])
-         (when power-text
-           [:div {:style {:font-size   "0.9em"
-                          :font-weight :normal
-                          :paddingTop  "3px"}}
-            [:strong (str "POWER" (when power (str " " power)) ": ")]
-            (format-text power-text)])
-         (when life
-           [:div {:style {:font-size  "0.9em"
+      [:div
+       (when text
+         (format-text text))
+       (when to-discard-text
+         (format-text to-discard-text "TO DISCARD"))
+       (when power-text
+         (format-text power-text (str "POWER" (when power (str " " power)))))
+       (when life
+         #_[:div {:style {:font-size  "0.9em"
                           :paddingTop "3px"}}
-            (str "Life: " life)])
-         (when persistent-text
-           [:div {:style {:font-size   "0.9em"
-                          :font-weight :normal
-                          :paddingTop  "3px"}}
-            [:strong (str "PERSISTENT: ")]
-            (format-text persistent-text)])])]]))
+            (str "Life: " life)]
+         (format-text nil (str "Life: " life)))
+       (when persistent-text
+         (format-text persistent-text "PERSISTENT"))]]]))
 
 (defn view-choice [{:keys [choice-title
                            text

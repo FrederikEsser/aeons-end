@@ -46,14 +46,14 @@
                    :resolve-nemesis-cards-in-play resolve-nemesis-cards-in-play})
 
 (defn draw-nemesis-card [game _]
-  (let [{:keys [name type immediately]} (get-in game [:nemesis :deck 0])]
+  (let [{:keys [name type effects]} (get-in game [:nemesis :deck 0])]
     (push-effect-stack game {:effects (concat [[:move-card {:from          :deck
                                                             :from-position :top
                                                             :to            :play-area}]]
-                                              (when immediately
-                                                immediately)
                                               (when (= :attack type)
-                                                [[:discard-nemesis-card {:card-name name}]]))})))
+                                                (concat
+                                                  effects
+                                                  [[:discard-nemesis-card {:card-name name}]])))})))
 
 (effects/register {:draw-nemesis-card draw-nemesis-card})
 

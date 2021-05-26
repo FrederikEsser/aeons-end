@@ -447,15 +447,15 @@
 
 (deftest draw-nemesis-card-test
   (testing "Draw nemesis card"
-    (is (= (-> {:nemesis   {:deck    [{:name        :fugazi
-                                       :type        :attack
-                                       :immediately [[:unleash]]}]
+    (is (= (-> {:nemesis   {:deck    [{:name    :fugazi
+                                       :type    :attack
+                                       :effects [[:unleash]]}]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
                draw-nemesis-card)
-           {:nemesis   {:discard [{:name        :fugazi
-                                   :type        :attack
-                                   :immediately [[:unleash]]}]
+           {:nemesis   {:discard [{:name    :fugazi
+                                   :type    :attack
+                                   :effects [[:unleash]]}]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 29}}))
     (is (= (-> {:nemesis {:deck [{:name :iznogood
