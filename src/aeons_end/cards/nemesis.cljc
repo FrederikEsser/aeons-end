@@ -92,19 +92,6 @@
                                             [:damage-gravehold 1]]}
                      :quote      "'Kadir remains convinced the drones were once merely creatures from The Depths.'"})
 
-(defn heart-of-nothing-choice [game {:keys [choice]}]
-  (push-effect-stack game {:effects (case choice
-                                      :unleash [[:unleash]
-                                                [:unleash]]
-                                      :damage [[:give-choice {:title   :heart-of-nothing
-                                                              :text    "Any player suffers 4 damage."
-                                                              :choice  [:damage-player {:arg 4}]
-                                                              :options [:players]
-                                                              :min     1
-                                                              :max     1}]])}))
-
-(effects/register {::heart-of-nothing-choice heart-of-nothing-choice})
-
 (defn heart-of-nothing-can-discard? [game {:keys [player-no]}]
   (let [cards-in-hand (->> (get-in game [:players player-no :hand])
                            count)]
@@ -124,14 +111,17 @@
                                                                :min     4
                                                                :max     4}]]}
                        :power      {:power   2
-                                    :text    "Unleash twice.\nOR\nAny player suffers 4 damage."
-                                    :effects [[:give-choice {:title   :heart-of-nothing
-                                                             :choice  ::heart-of-nothing-choice
-                                                             :options [:special
-                                                                       {:option :unleash :text "Unleash twice"}
-                                                                       {:option :damage :text "Any player suffers 4 damage"}]
-                                                             :min     1
-                                                             :max     1}]]}
+                                    :text    ["Any player suffers 4 damage."
+                                              "OR"
+                                              "Unleash twice."]
+                                    :effects [[:give-choice {:title     :heart-of-nothing
+                                                             :text      "Any player suffers 4 damage."
+                                                             :choice    [:damage-player {:arg 4}]
+                                                             :or-choice {:text    "Unleash twice"
+                                                                         :effects [[:unleash]
+                                                                                   [:unleash]]}
+                                                             :options   [:players]
+                                                             :max       1}]]}
                        :quote      "'Beyond our world is a vast nothing. At the center of this lies The Nameless.' Mist, Voidwalker"})
 
 (def howling-spinners {:name       :howling-spinners

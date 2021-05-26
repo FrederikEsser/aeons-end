@@ -124,6 +124,44 @@
                                 :effects [[:lose-nemesis-tokens 2]]}
                    :quote      "'I roared as it bore through the rock. And Gravehold shuddered like those within its walls.' Nerva, Survivor"})
 
+(defn tombfright-persistent [game _]
+  (let [tokens (get-in game [:nemesis :tokens])]
+    (push-effect-stack game {:effects (if (>= tokens 5)
+                                        [[:lose-nemesis-tokens 1]]
+                                        [[:damage-gravehold 3]])})))
+
+(effects/register {::tombfright-persistent tombfright-persistent})
+
+(def tombfright {:name       :tombfright
+                 :type       :minion
+                 :tier       2
+                 :life       8
+                 :persistent {:text    ["If Umbra Titan has 5 or more nemesis tokens, it loses a nemesis token."
+                                        "Otherwise, Gravehold suffers 3 damage."]
+                              :effects [[::tombfright-persistent]]}
+                 :quote      "'With two heads, it's twice as eager to make a meal of a mage.' ― Sparrow, Breach Mage Soldier"})
+
+(defn vault-behemoth-lose-token [game _]
+  (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :vault-behemoth})]
+    (cond-> game
+            (<= life 8) (push-effect-stack {:effects [[:lose-nemesis-tokens 1]]}))))
+
+(effects/register {::vault-behemoth-lose-token vault-behemoth-lose-token})
+
+(def vault-behemoth {:name       :vault-behemoth
+                     :type       :minion
+                     :tier       2
+                     :life       9
+                     :persistent {:text    "Any player suffers 2 damage. If this minion has 8 or less life, Umbra Titan loses one nemesis token."
+                                  :effects [[:give-choice {:title   :vault-behemoth
+                                                           :text    "Any player suffers 2 damage."
+                                                           :choice  [:damage-player {:arg 2}]
+                                                           :options [:players]
+                                                           :min     1
+                                                           :max     1}]
+                                            [::vault-behemoth-lose-token]]}
+                     :quote      "'The air rasping in its massive lungs in enough to burst your eardrums.'"})
+
 (defn umbra-titan-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
                                       :damage [[:damage-gravehold 2]]
@@ -159,7 +197,7 @@
                   :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
-                               cards/aphotic-sun cards/null-scion cards/smite
+                               cards/smite tombfright vault-behemoth
                                cards/apocalypse-ritual cards/monstrosity-of-omens cards/throttle]})
 
 (def generic-nemesis {:name       :generic
