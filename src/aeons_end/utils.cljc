@@ -383,7 +383,12 @@
 
 (effects/register-options {:collective-hands options-from-collective-hands})
 
-(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges]}]]
+(defn count-prepped-spells [{:keys [breaches]}]
+  (->> breaches
+       (mapcat :prepped-spells)
+       count))
+
+(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges prepped-spells]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
                             (apply max 0))]
@@ -391,6 +396,7 @@
                             (assoc player :option {:player-no player-no})) players)
              ally (remove (comp #{player-no} :player-no :option))
              most-charges (filter (comp #{highest-charge} :charges :ability))
+             prepped-spells (filter (comp #{prepped-spells} count-prepped-spells))
              :always (map :option))))
 
 (effects/register-options {:players options-from-players})

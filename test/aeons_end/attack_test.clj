@@ -46,6 +46,86 @@
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
 
+(deftest banish-test
+  (testing "Banish"
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{}]
+                             :life     10}
+                            {:breaches [{}]
+                             :life     10}]}
+               draw-nemesis-card)
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]
+                         :life     10}
+                        {:breaches [{}]
+                         :life     10}]}))
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}]
+                         :life     9}
+                        {:breaches [{}]
+                         :life     10}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [banish]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:breaches [{:prepped-spells [spark]}]
+                                            :life     10}
+                                           {:breaches [{}]
+                                            :life     10}]}
+                              draw-nemesis-card
+                              (choose {:player-no 1}))))
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark spark]}]
+                         :life     8}
+                        {:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [spark]}]
+                         :life     10}]}))
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark spark]}]
+                         :life     10}
+                        {:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [spark]}]
+                         :life     8}]}))))
+
 (deftest mutilate-test
   (testing "Mutilate"
     (is (= (-> {:nemesis   {:deck    [mutilate]

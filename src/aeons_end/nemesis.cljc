@@ -98,9 +98,9 @@
                           minion/null-scion
                           attack/smite]
                          [power/apocalypse-ritual
+                          attack/banish
                           minion/monstrosity-of-omens
                           attack/quell
                           attack/throttle
                           power/withering-beam]
-                         [attack/quell
-                          attack/throttle]))
+                         [attack/quell]))

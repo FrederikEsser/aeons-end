@@ -110,10 +110,7 @@
 
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
-                                 (map (fn [{:keys [breaches]}]
-                                        (->> breaches
-                                             (mapcat :prepped-spells)
-                                             count)))
+                                 (map ut/count-prepped-spells)
                                  (apply max))]
     (push-effect-stack game {:effects [[:damage-gravehold (* 2 most-prepped-spells)]]})))
 

@@ -28,6 +28,30 @@
                                        :max     1}]]
               :quote   "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
 
+(defn banish-damage [{:keys [players] :as game} _]
+  (let [most-prepped-spells (->> players
+                                 (map ut/count-prepped-spells)
+                                 (apply max))]
+    (cond-> game
+            (pos? most-prepped-spells) (push-effect-stack {:effects [[:give-choice {:title   :banish
+                                                                                    :text    "The player with the most prepped spells suffers 1 damage for each of their prepped spells."
+                                                                                    :choice  [:damage-player {:arg most-prepped-spells}]
+                                                                                    :options [:players {:prepped-spells most-prepped-spells}]
+                                                                                    :min     1
+                                                                                    :max     1}]]}))))
+
+(effects/register {::banish-damage banish-damage})
+
+(def banish {:name    :banish
+             :type    :attack
+             :tier    3
+             :text    ["Unleash twice."
+                       "The player with the most prepped spells suffers 1 damage for each of their prepped spells."]
+             :effects [[:unleash]
+                       [:unleash]
+                       [::banish-damage]]
+             :quote   "'Get down! It's ejecting back at us!' ― Ohat, Dirt Merchant"})
+
 (def mutilate {:name    :mutilate
                :type    :attack
                :tier    2
