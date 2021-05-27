@@ -636,7 +636,7 @@
                                           arg-name   single-selection}))))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no card-id choice source min max optional? choice-opts bonus-damage]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice or-choice source min max optional? choice-opts bonus-damage]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name        (case source
                           :deck-position :position
@@ -671,12 +671,19 @@
 
     (-> game
         pop-effect-stack
-        (choice-fn (merge args
-                          (when bonus-damage
-                            {:bonus-damage bonus-damage})
-                          {:player-no player-no
-                           :card-id   card-id
-                           arg-name   multi-selection})))))
+        (as-> game
+              (if (and (empty? multi-selection)
+                       or-choice)
+                (push-effect-stack game (merge {:player-no player-no
+                                                :effects   (:effects or-choice)}
+                                               (when bonus-damage
+                                                 {:args {:bonus-damage bonus-damage}})))
+                (choice-fn game (merge args
+                                       (when bonus-damage
+                                         {:bonus-damage bonus-damage})
+                                       {:player-no player-no
+                                        :card-id   card-id
+                                        arg-name   multi-selection})))))))
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)

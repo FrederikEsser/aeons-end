@@ -334,17 +334,13 @@
 
 (defn throttle-destroy-cards [game {:keys [player-no]}]
   (let [sorted-hand          (->> (get-in game [:players player-no :hand])
-                                  (sort-by :cost >)
-                                  vec)
-        third-highest-cost   (->> sorted-hand
-                                  (take 3)
-                                  last
-                                  :cost)
+                                  (sort-by :cost >))
+        [_ _ cost-3 cost-4] (map :cost sorted-hand)
         auto-destroy-cards   (cond
                                (<= (count sorted-hand) 3) sorted-hand
-                               (not= third-highest-cost (get-in sorted-hand [3 :cost])) (take 3 sorted-hand)
+                               (not= cost-3 cost-4) (take 3 sorted-hand)
                                :else (->> sorted-hand
-                                          (filter (comp #(> % third-highest-cost) :cost))))
+                                          (filter (comp #(> % cost-3) :cost))))
         manual-destroy-count (- (min 3 (count sorted-hand))
                                 (count auto-destroy-cards))]
     (push-effect-stack game {:player-no player-no
@@ -364,7 +360,7 @@
                                                                           " in your hand.")
                                                             :choice  [:move-cards {:from :hand
                                                                                    :to   :trash}]
-                                                            :options [:player :hand {:min-cost third-highest-cost}]
+                                                            :options [:player :hand {:min-cost cost-3}]
                                                             :min     manual-destroy-count
                                                             :max     manual-destroy-count}]]))})))
 
@@ -404,6 +400,5 @@
                           quell
                           throttle]
                          [apocalypse-ritual
-                          apocalypse-ritual
                           quell
                           throttle]))

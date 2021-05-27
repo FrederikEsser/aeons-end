@@ -73,6 +73,19 @@
 
 (effects/register {:discard-prepped-spells discard-prepped-spells})
 
+(defn destroy-prepped-spells [game {:keys [spells] :as args}]
+  (push-effect-stack game {:effects (if spells
+                                      (->> spells
+                                           (map (fn [spell]
+                                                  [:move-card (merge spell
+                                                                     {:from :breach
+                                                                      :to   :trash})])))
+                                      [[:move-card (merge args
+                                                          {:from :breach
+                                                           :to   :trash})]])}))
+
+(effects/register {:destroy-prepped-spells destroy-prepped-spells})
+
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game

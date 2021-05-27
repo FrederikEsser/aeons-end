@@ -4,7 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
-            [aeons-end.nemeses :as nemeses :refer [cryptid grubber seismic-roar]]
+            [aeons-end.nemeses :as nemeses :refer [cryptid grubber seismic-roar maul]]
             [aeons-end.cards.base :refer :all]
             [aeons-end.cards.gems :refer [jade]]
             [aeons-end.cards.spells :refer [amplify-vision dark-fire ignite]]
@@ -132,6 +132,166 @@
            {:nemesis   {:discard [(assoc mangleroot :life 0)]}
             :gravehold {:life 27}}))))
 
+(deftest maul-test
+  (testing "Maul"
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{}]}]}
+               draw-nemesis-card)
+           {:nemesis {:discard [maul]
+                      :tokens  6}
+            :players [{:breaches [{}]}]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}]}]}
+               draw-nemesis-card)
+           {:nemesis {:discard [maul]
+                      :tokens  6}
+            :players [{:breaches [{:prepped-spells [spark]}]}]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}]}]}
+               draw-nemesis-card
+               (choose nil))
+           {:nemesis {:discard [maul]
+                      :tokens  6}
+            :players [{:breaches [{:prepped-spells [spark]}
+                                  {:prepped-spells [spark]}]}]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}]}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                        {:player-no 0 :breach-no 1 :card-name :spark}]))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{}
+                                  {}]}]
+            :trash   [spark spark]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:deck   [maul]
+                                         :tokens 8}
+                               :players [{:breaches [{:prepped-spells [spark]}
+                                                     {:prepped-spells [spark]}]}]}
+                              draw-nemesis-card
+                              (choose [{:player-no 0 :breach-no 0 :card-name :spark}]))))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}]}
+                          {:breaches [{:prepped-spells [ignite]}]}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                        {:player-no 1 :breach-no 0 :card-name :ignite}]))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{}]}
+                      {:breaches [{}]}]
+            :trash   [spark ignite]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}]}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                        {:player-no 0 :breach-no 1 :card-name :spark}]))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{}
+                                  {}
+                                  {:prepped-spells [spark]}]}]
+            :trash   [spark spark]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [ignite]}
+                                      {:prepped-spells [spark]}
+                                      {:prepped-spells [ignite]}]}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
+                        {:player-no 0 :breach-no 2 :card-name :ignite}]))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{}
+                                  {:prepped-spells [spark]}
+                                  {}]}]
+            :trash   [ignite ignite]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:deck   [maul]
+                                         :tokens 8}
+                               :players [{:breaches [{:prepped-spells [ignite]}
+                                                     {:prepped-spells [spark]}
+                                                     {:prepped-spells [ignite]}]}]}
+                              draw-nemesis-card
+                              (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
+                                       {:player-no 0 :breach-no 1 :card-name :spark}]))))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [dark-fire]}
+                                      {:prepped-spells [spark]}
+                                      {:prepped-spells [ignite]}]}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :dark-fire}
+                        {:player-no 0 :breach-no 2 :card-name :ignite}]))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{}
+                                  {:prepped-spells [spark]}
+                                  {}]}]
+            :trash   [dark-fire ignite]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}
+                                      {:prepped-spells [ignite]}]}]}
+               draw-nemesis-card
+               (choose :lose-tokens))
+           {:nemesis {:discard [maul]
+                      :tokens  6}
+            :players [{:breaches [{:prepped-spells [spark]}
+                                  {:prepped-spells [spark]}
+                                  {:prepped-spells [ignite]}]}]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [spark]}
+                                      {:prepped-spells [ignite]}]}]}
+               draw-nemesis-card
+               (choose :destroy)
+               (choose {:player-no 0 :breach-no 1 :card-name :spark}))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{:prepped-spells [spark]}
+                                  {}
+                                  {}]}]
+            :trash   [ignite spark]}))
+    (is (= (-> {:nemesis {:deck   [maul]
+                          :tokens 8}
+                :players [{:breaches [{:prepped-spells [spark]}
+                                      {:prepped-spells [ignite]}
+                                      {:prepped-spells [ignite]}
+                                      {:prepped-spells [dark-fire]}]}]}
+               draw-nemesis-card
+               (choose :destroy)
+               (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
+           {:nemesis {:discard [maul]
+                      :tokens  8}
+            :players [{:breaches [{:prepped-spells [spark]}
+                                  {}
+                                  {:prepped-spells [ignite]}
+                                  {}]}]
+            :trash   [dark-fire ignite]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:deck   [maul]
+                                         :tokens 8}
+                               :players [{:breaches [{:prepped-spells [spark]}
+                                                     {:prepped-spells [ignite]}
+                                                     {:prepped-spells [ignite]}
+                                                     {:prepped-spells [dark-fire]}]}]}
+                              draw-nemesis-card
+                              (choose :destroy)
+                              (choose {:player-no 0 :breach-no 0 :card-name :spark}))))))
 
 (deftest monstrosity-of-omens-test
   (testing "Monstrosity of Omens"

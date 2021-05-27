@@ -51,8 +51,7 @@
                                     {:status       :closed
                                      :focus-cost   4
                                      :open-costs   [13 10 7 4]
-                                     :bonus-damage 1}]
-                                   ))
+                                     :bonus-damage 1}]))
               :ability  (merge ability
                                {:charges 0})
               :life     ut/player-starting-life

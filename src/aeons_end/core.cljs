@@ -307,12 +307,14 @@
             "Bottom"]])])
      (when (or (not quick-choice?) interval)
        [:div
-        (when (< 1 max)
+        (when (and (not-empty selection)
+                   (< 1 max))
           [:div "Selected: " (mapk-indexed (fn [idx selected]
                                              [:button {:style    (button-style)
                                                        :on-click (fn [] (deselect! idx))}
                                               (ut/format-name selected)]) selection)])
-        (when or-text
+        (when (and (empty? selection)
+                   or-text)
           [:div {:style {:font-weight :bold}}
            "OR"])
         (let [disabled (and min (< (count selection) min)
@@ -322,7 +324,9 @@
                     :on-click (fn [] (swap! state assoc
                                             :game (cmd/choose selection)
                                             :selection []))}
-           (or or-text "Done")])])]))
+           (or (and (empty? selection)
+                    or-text)
+               "Done")])])]))
 
 (defn set-selector []
   (fn [sets set-name]

@@ -107,6 +107,68 @@
                            :effects [[::grubber-persistent]]}
               :quote      "'Kick it, stab it, burn it... the thing just keeps grinning.' Sparrow, Breach Mage Soldier"})
 
+(defn maul-choice [{:keys [players] :as game} {:keys [choice]}]
+  (case choice
+    :lose-tokens (push-effect-stack game {:effects [[:lose-nemesis-tokens 2]]})
+    :destroy (let [sorted-spells (->> players
+                                      (map-indexed (fn [player-no {:keys [breaches]}]
+                                                     (->> breaches
+                                                          (map-indexed (fn [breach-no breach]
+                                                                         (->> (:prepped-spells breach)
+                                                                              (map (fn [{:keys [name cost] :as card}]
+                                                                                     {:player-no player-no
+                                                                                      :breach-no breach-no
+                                                                                      :card-name name
+                                                                                      :cost      cost})))))
+                                                          (apply concat))))
+                                      (apply concat)
+                                      (sort-by :cost >))
+                   [_ cost-2] (map :cost sorted-spells)]
+               (push-effect-stack game {:effects (concat
+                                                   [[:destroy-prepped-spells (first sorted-spells)]
+                                                    [:give-choice {:title   :maul
+                                                                   :text    "The players collectively destroy the most expensive prepped spell."
+                                                                   :choice  :destroy-prepped-spells
+                                                                   :options [:prepped-spells {:min-cost cost-2}]
+                                                                   :min     1
+                                                                   :max     1}]])}))))
+
+(defn maul-give-choice [{:keys [players] :as game} _]
+  (let [[cost-1 cost-2 cost-3] (->> players
+                                    (mapcat :breaches)
+                                    (mapcat :prepped-spells)
+                                    (map :cost)
+                                    (sort >))]
+    (push-effect-stack game {:effects (cond
+                                        (nil? cost-2) [[:lose-nemesis-tokens 2]]
+                                        (or (= cost-1 cost-2)
+                                            (not= cost-2 cost-3)) [[:give-choice {:title     :maul
+                                                                                  :text      "The players collectively destroy the two most expensive prepped spells."
+                                                                                  :choice    :destroy-prepped-spells
+                                                                                  :or-choice {:text    "Umbra Titan loses two nemesis tokens"
+                                                                                              :effects [[:lose-nemesis-tokens 2]]}
+                                                                                  :options   [:prepped-spells {:min-cost cost-2}]
+                                                                                  :min       2
+                                                                                  :max       2
+                                                                                  :optional? true}]]
+                                        :else [[:give-choice {:title   :maul
+                                                              :choice  ::maul-choice
+                                                              :options [:special
+                                                                        {:option :destroy :text "The players collectively destroy the two most expensive prepped spells"}
+                                                                        {:option :lose-tokens :text "Umbra Titan loses two nemesis tokens"}]
+                                                              :min     1
+                                                              :max     1}]])})))
+
+(effects/register {::maul-choice      maul-choice
+                   ::maul-give-choice maul-give-choice})
+
+(def maul {:name    :maul
+           :type    :attack
+           :text    ["The players collectively destroy the two most expensive prepped spells."
+                     "OR"
+                     "Umbra Titan loses two nemesis tokens."]
+           :effects [[::maul-give-choice]]})
+
 (defn seismic-roar-can-discard? [game {:keys [player-no]}]
   (let [aether (or (get-in game [:players player-no :aether]) 0)]
     (>= aether 6)))
@@ -197,7 +259,7 @@
                   :tokens     8
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
-                               cards/smite tombfright vault-behemoth
+                               maul tombfright vault-behemoth
                                cards/apocalypse-ritual cards/monstrosity-of-omens cards/throttle]})
 
 (def generic-nemesis {:name       :generic

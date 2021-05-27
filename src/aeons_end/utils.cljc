@@ -395,7 +395,7 @@
 
 (effects/register-options {:players options-from-players})
 
-(defn options-from-prepped-spells [{:keys [players] :as game} player-no _ & [{:keys [own most-expensive]}]]
+(defn options-from-prepped-spells [{:keys [players] :as game} player-no _ & [{:keys [own most-expensive min-cost]}]]
   (let [options      (->> players
                           (map-indexed (fn [player-no {:keys [breaches]}]
                                          (->> breaches
@@ -413,6 +413,7 @@
     (cond->> options
              own (filter (comp #{player-no} :player-no :option))
              most-expensive (filter (comp #{highest-cost} :cost))
+             min-cost (filter (comp #(>= % min-cost) :cost))
              :always (map :option))))
 
 (effects/register-options {:prepped-spells options-from-prepped-spells})
