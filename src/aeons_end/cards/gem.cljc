@@ -1,4 +1,4 @@
-(ns aeons-end.cards.gems
+(ns aeons-end.cards.gem
   (:require [aeons-end.cards.common :refer [gain-aether]]
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]))

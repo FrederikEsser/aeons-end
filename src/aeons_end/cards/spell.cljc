@@ -1,5 +1,5 @@
-(ns aeons-end.cards.spells
-  (:require [aeons-end.nemeses]
+(ns aeons-end.cards.spell
+  (:require [aeons-end.nemesis]
             [aeons-end.operations :refer [push-effect-stack focus-breach]]
             [aeons-end.effects :as effects]))
 

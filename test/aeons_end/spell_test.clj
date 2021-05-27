@@ -1,9 +1,9 @@
-(ns aeons-end.spells-test
+(ns aeons-end.spell-test
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
-            [aeons-end.cards.base :refer [crystal spark]]
-            [aeons-end.cards.spells :refer :all]
+            [aeons-end.cards.spell :refer :all]
+            [aeons-end.cards.base :refer :all]
             [aeons-end.mages :refer [garnet-shard]]))
 
 (deftest amplify-vision-test

@@ -1,8 +1,8 @@
-(ns aeons-end.gems-test
+(ns aeons-end.gem-test
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
-            [aeons-end.cards.gems :refer :all]
+            [aeons-end.cards.gem :refer :all]
             [aeons-end.cards.base :refer [crystal spark]]))
 
 (deftest alien-element-test

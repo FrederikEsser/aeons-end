@@ -1,4 +1,4 @@
-(ns aeons-end.cards.relics
+(ns aeons-end.cards.relic
   (:require [aeons-end.cards.common]
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]

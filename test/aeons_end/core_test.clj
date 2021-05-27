@@ -4,7 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.base :refer [crystal spark]]
-            [aeons-end.cards.gems :refer [jade]]
+            [aeons-end.cards.gem :refer [jade]]
             [aeons-end.mages :refer [buried-light]]
             [aeons-end.turn-order :as turn-order]))
 

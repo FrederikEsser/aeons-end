@@ -1,0 +1,106 @@
+(ns aeons-end.nemesis
+  (:require [aeons-end.operations :refer [push-effect-stack move-card]]
+            [aeons-end.utils :as ut]
+            [aeons-end.effects :as effects]
+            [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
+            [aeons-end.cards.attack :as attack]
+            [aeons-end.cards.minion :as minion]
+            [aeons-end.cards.power :as power]))
+
+(defn unleash [game _]
+  (let [effects (get-in game [:nemesis :unleash])]
+    (push-effect-stack game {:effects effects})))
+
+(effects/register {:unleash unleash})
+
+(defn discard-nemesis-card [game {:keys [card-name]}]
+  (move-card game {:card-name card-name
+                   :from      :play-area
+                   :to        :discard}))
+
+(effects/register {:discard-nemesis-card discard-nemesis-card})
+
+(defn deal-damage-to-nemesis [game {:keys [damage]}]
+  (let [life (get-in game [:nemesis :life])]
+    (assoc-in game [:nemesis :life] (max (- life damage) 0))))
+
+(defn deal-damage-to-minion [game {:keys [card-name damage]}]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+        {:keys [life modify-damage]} card
+        modify-damage-fn (when modify-damage
+                           (effects/get-predicate modify-damage))
+        damage           (if modify-damage-fn
+                           (modify-damage-fn damage)
+                           damage)]
+    (-> game
+        (assoc-in [:nemesis :play-area idx :life] (max (- life damage) 0))
+        (cond-> (<= life damage) (discard-nemesis-card {:card-name card-name})))))
+
+(defn deal-damage-to-target [game {:keys [damage choice]}]
+  (let [{:keys [area card-name]} choice]
+    (push-effect-stack game {:effects (case area
+                                        :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
+                                        :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])})))
+
+(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage]}]
+  (let [{:keys [name play-area]} nemesis
+        minions (->> play-area
+                     (filter (comp #{:minion} :type)))
+        damage  (cond-> arg
+                        bonus-damage (+ bonus-damage))]
+    (push-effect-stack game {:effects (if (not-empty minions)
+                                        [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                        :choice  [:deal-damage-to-target {:damage damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:minions]]
+                                                        :min     1
+                                                        :max     1}]]
+                                        [[:deal-damage-to-nemesis {:damage damage}]])})))
+
+(effects/register {:deal-damage-to-nemesis deal-damage-to-nemesis
+                   :deal-damage-to-minion  deal-damage-to-minion
+                   :deal-damage-to-target  deal-damage-to-target
+                   :deal-damage            deal-damage})
+
+(defn damage-gravehold [game {:keys [arg]}]
+  (update-in game [:gravehold :life] - arg))
+
+(effects/register {:damage-gravehold damage-gravehold})
+
+(defn damage-player [game {:keys [player-no arg]}]
+  (update-in game [:players player-no :life] - arg))
+
+(effects/register {:damage-player damage-player})
+
+(def generic-nemesis {:name       :generic
+                      :difficulty 3
+                      :life       70
+                      :unleash    [[:damage-gravehold 2]]
+                      :cards      [attack/nix minion/howling-spinners power/planar-collision
+                                   attack/smite minion/null-scion power/aphotic-sun
+                                   attack/throttle minion/monstrosity-of-omens power/apocalypse-ritual]})
+
+(def nemeses [umbra-titan])
+
+(def basic-cards (concat [attack/afflict
+                          minion/catacomb-drone
+                          power/heart-of-nothing
+                          minion/howling-spinners
+                          power/night-unending
+                          attack/nix
+                          power/planar-collision
+                          attack/thrash]
+                         [power/aphotic-sun
+                          minion/mangleroot
+                          power/morbid-gyre
+                          attack/mutilate
+                          minion/null-scion
+                          attack/smite]
+                         [power/apocalypse-ritual
+                          minion/monstrosity-of-omens
+                          attack/quell
+                          attack/throttle]
+                         [power/apocalypse-ritual
+                          attack/quell
+                          attack/throttle]))

@@ -1,10 +1,10 @@
 (ns aeons-end.setup
-  (:require [aeons-end.cards.nemesis :as nemesis-cards]
-            [aeons-end.cards.gems :as gems]
-            [aeons-end.cards.relics :as relics]
-            [aeons-end.cards.spells :as spells]
+  (:require [aeons-end.nemesis :as nemesis]
+            [aeons-end.cards.gem :as gem]
+            [aeons-end.cards.relic :as relic]
+            [aeons-end.cards.spell :as spell]
             [aeons-end.mages :as mages]
-            [aeons-end.nemeses :as nemeses]
+            [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.turn-order :as turn-order]
             [aeons-end.utils :as ut]))
 
@@ -27,7 +27,7 @@
       (merge
         {:deck (->> (range 1 4)
                     (mapcat (fn [tier]
-                              (->> nemesis-cards/basic-cards
+                              (->> nemesis/basic-cards
                                    (filter (comp #{tier} :tier))
                                    shuffle
                                    (take (get-in basic-nemesis-cards [number-of-players tier]))
@@ -61,17 +61,17 @@
 
 (defn create-game []
   {:mode       :swift
-   :nemesis    (create-nemesis nemeses/umbra-titan 2)
+   :nemesis    (create-nemesis umbra-titan 2)
    :gravehold  {:life ut/gravehold-starting-life}
-   :supply     [{:card gems/jade :pile-size 7}
-                {:card gems/alien-element :pile-size 7}
-                {:card gems/pain-stone :pile-size 7}
-                {:card relics/unstable-prism :pile-size 5}
-                {:card relics/vortex-gauntlet :pile-size 5}
-                {:card spells/amplify-vision :pile-size 5}
-                {:card spells/ignite :pile-size 5}
-                {:card spells/dark-fire :pile-size 5}
-                {:card spells/radiance :pile-size 5}]
+   :supply     [{:card gem/jade :pile-size 7}
+                {:card gem/alien-element :pile-size 7}
+                {:card gem/pain-stone :pile-size 7}
+                {:card relic/unstable-prism :pile-size 5}
+                {:card relic/vortex-gauntlet :pile-size 5}
+                {:card spell/amplify-vision :pile-size 5}
+                {:card spell/ignite :pile-size 5}
+                {:card spell/dark-fire :pile-size 5}
+                {:card spell/radiance :pile-size 5}]
    :players    [(create-player mages/brama)
                 (create-player mages/mist)]
    :turn-order {:deck (->> [turn-order/player-0

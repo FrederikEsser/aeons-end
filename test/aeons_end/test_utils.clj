@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack]]
             [aeons-end.cards.common]
-            [aeons-end.nemeses]))
+            [aeons-end.nemesis]))
 
 (defn rand-with-seed
   ([seed]

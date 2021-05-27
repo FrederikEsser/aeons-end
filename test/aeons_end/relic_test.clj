@@ -1,11 +1,11 @@
-(ns aeons-end.relics-test
+(ns aeons-end.relic-test
   (:require [clojure.test :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
-            [aeons-end.cards.base :refer [crystal spark]]
-            [aeons-end.cards.relics :refer :all]
-            [aeons-end.cards.gems :refer [jade]]
-            [aeons-end.cards.spells :refer [dark-fire radiance]]))
+            [aeons-end.cards.relic :refer :all]
+            [aeons-end.cards.base :refer :all]
+            [aeons-end.cards.gem :refer [jade]]
+            [aeons-end.cards.spell :refer [dark-fire radiance]]))
 
 (deftest unstable-prism-test
   (testing "Unstable Prism"
