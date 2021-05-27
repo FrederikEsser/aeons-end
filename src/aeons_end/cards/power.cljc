@@ -1,6 +1,7 @@
 (ns aeons-end.cards.power
   (:require [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (defn apocalypse-ritual-can-discard? [game {:keys [player-no]}]
   (let [aether (or (get-in game [:players player-no :aether]) 0)]
@@ -151,3 +152,54 @@
                                     :effects [[:unleash]
                                               [:unleash]]}
                        :quote      "'None remembered the true name of The World That Was until Yan Magda spoke it aloud: Khasad Vol.'"})
+
+(defn withering-beam-destroy-spells [{:keys [players] :as game} _]
+  (let [sorted-spells        (->> players
+                                  (map-indexed (fn [player-no {:keys [breaches]}]
+                                                 (->> breaches
+                                                      (map-indexed (fn [breach-no breach]
+                                                                     (->> (:prepped-spells breach)
+                                                                          (map (fn [{:keys [name cost]}]
+                                                                                 {:player-no player-no
+                                                                                  :breach-no breach-no
+                                                                                  :card-name name
+                                                                                  :cost      cost})))))
+                                                      (apply concat))))
+                                  (apply concat)
+                                  (sort-by :cost >))
+        [_ cost-2 cost-3] (map :cost sorted-spells)
+        auto-destroy-cards   (cond
+                               (<= (count sorted-spells) 2) sorted-spells
+                               (not= cost-2 cost-3) (take 2 sorted-spells)
+                               :else (->> sorted-spells
+                                          (filter (comp #(> % cost-2) :cost))))
+        manual-destroy-count (- (min 2 (count sorted-spells))
+                                (count auto-destroy-cards))]
+    (push-effect-stack game {:effects (concat
+                                        (when (not-empty auto-destroy-cards)
+                                          [[:destroy-prepped-spells {:spells auto-destroy-cards}]])
+                                        (when (pos? manual-destroy-count)
+                                          [[:give-choice {:title   :withering-beam
+                                                          :text    (str "The players collectively destroy the "
+                                                                        (when (> manual-destroy-count 1)
+                                                                          (ut/number->text manual-destroy-count))
+                                                                        " most expensive prepped spell"
+                                                                        (when (> manual-destroy-count 1)
+                                                                          "s")
+                                                                        ".")
+                                                          :choice  :destroy-prepped-spells
+                                                          :options [:prepped-spells {:min-cost cost-2}]
+                                                          :min     manual-destroy-count
+                                                          :max     manual-destroy-count}]]))})))
+
+(effects/register {::withering-beam-destroy-spells withering-beam-destroy-spells})
+
+(def withering-beam {:name  :withering-beam
+                     :type  :power
+                     :tier  3
+                     :power {:power   2
+                             :text    "Unleash twice. The players collectively destroy the two most expensive prepped spells."
+                             :effects [[:unleash]
+                                       [:unleash]
+                                       [::withering-beam-destroy-spells]]}
+                     :quote "'I watched a fellow merchant atrophy and fall to the ground in ash as the beam hit his cart.' ― Ohat, Dirt Merchant"})

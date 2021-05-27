@@ -229,3 +229,132 @@
            {:nemesis   {:discard [(assoc-in planar-collision [:power :power] 0)]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}}))))
+
+(deftest withering-beam-test
+  (testing "Withering Beam"
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]}]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]}]
+            :trash     [spark]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{} {}]}]
+            :trash     [spark spark]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{} {}]}]
+            :trash     [ignite spark]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                        {:player-no 0 :breach-no 1 :card-name :spark}]))
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{} {}
+                                    {:prepped-spells [spark]}]}]
+            :trash     [spark spark]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [ignite]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}
+                                    {:prepped-spells [spark]}
+                                    {}]}]
+            :trash     [ignite ignite]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [dark-fire]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}
+                                    {:prepped-spells [spark]}
+                                    {}]}]
+            :trash     [dark-fire ignite]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :breach-no 1 :card-name :spark}]))
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {}
+                                    {}]}]
+            :trash     [ignite spark]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}
+                                        {:prepped-spells [ignite]}
+                                        {:prepped-spells [dark-fire]}]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
+           {:nemesis   {:discard [(assoc-in withering-beam [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {}
+                                    {:prepped-spells [ignite]}
+                                    {}]}]
+            :trash     [dark-fire ignite]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]
+                                           :unleash   [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:breaches [{:prepped-spells [spark]}
+                                                       {:prepped-spells [ignite]}
+                                                       {:prepped-spells [ignite]}
+                                                       {:prepped-spells [dark-fire]}]}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 0 :breach-no 0 :card-name :spark}))))))

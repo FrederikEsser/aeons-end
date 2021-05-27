@@ -49,7 +49,7 @@
                                                      (->> breaches
                                                           (map-indexed (fn [breach-no breach]
                                                                          (->> (:prepped-spells breach)
-                                                                              (map (fn [{:keys [name cost] :as card}]
+                                                                              (map (fn [{:keys [name cost]}]
                                                                                      {:player-no player-no
                                                                                       :breach-no breach-no
                                                                                       :card-name name

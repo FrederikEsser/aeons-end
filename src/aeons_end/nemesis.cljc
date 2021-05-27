@@ -100,7 +100,7 @@
                          [power/apocalypse-ritual
                           minion/monstrosity-of-omens
                           attack/quell
-                          attack/throttle]
-                         [power/apocalypse-ritual
-                          attack/quell
+                          attack/throttle
+                          power/withering-beam]
+                         [attack/quell
                           attack/throttle]))
