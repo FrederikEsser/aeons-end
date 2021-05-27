@@ -464,10 +464,13 @@
            {:nemesis {:play-area [{:name :iznogood
                                    :type :power}]}}))
     (is (= (-> {:nemesis {:deck [{:name :bad-motherfucker
-                                  :type :minion}]}}
+                                  :type :minion
+                                  :life 2}]}}
                draw-nemesis-card)
-           {:nemesis {:play-area [{:name :bad-motherfucker
-                                   :type :minion}]}}))))
+           {:nemesis {:play-area [{:name     :bad-motherfucker
+                                   :type     :minion
+                                   :life     2
+                                   :max-life 2}]}}))))
 
 (deftest resolve-nemesis-card-test
   (testing "Resolve nemesis card"
@@ -539,16 +542,18 @@
                                    :type :minion
                                    :life 4}]}}))
     (is (= (-> {:nemesis {:life      50
-                          :play-area [{:name :bad-motherfucker
-                                       :type :minion
-                                       :life 1}]}}
+                          :play-area [{:name     :bad-motherfucker
+                                       :type     :minion
+                                       :life     1
+                                       :max-life 2}]}}
                (deal-damage 1)
                (choose {:area      :minions
                         :card-name :bad-motherfucker}))
            {:nemesis {:life    50
-                      :discard [{:name :bad-motherfucker
-                                 :type :minion
-                                 :life 0}]}}))
+                      :discard [{:name     :bad-motherfucker
+                                 :type     :minion
+                                 :life     2
+                                 :max-life 2}]}}))
     (is (= (-> {:players [{:breaches [{:status         :opened
                                        :bonus-damage   1
                                        :prepped-spells [spark]}]
@@ -572,9 +577,10 @@
                                        :prepped-spells [spark]}]
                            :phase    :casting}]
                 :nemesis {:life      50
-                          :play-area [{:name :bad-motherfucker
-                                       :type :minion
-                                       :life 2}]}}
+                          :play-area [{:name     :bad-motherfucker
+                                       :type     :minion
+                                       :life     2
+                                       :max-life 2}]}}
                (cast-spell 0 0 :spark)
                (choose {:area      :minions
                         :card-name :bad-motherfucker}))
@@ -583,6 +589,7 @@
                        :discard  [spark]
                        :phase    :casting}]
             :nemesis {:life    50
-                      :discard [{:name :bad-motherfucker
-                                 :type :minion
-                                 :life 0}]}}))))
+                      :discard [{:name     :bad-motherfucker
+                                 :type     :minion
+                                 :life     2
+                                 :max-life 2}]}}))))

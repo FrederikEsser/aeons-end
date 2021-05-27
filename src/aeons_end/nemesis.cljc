@@ -26,15 +26,17 @@
 
 (defn deal-damage-to-minion [game {:keys [card-name damage]}]
   (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-        {:keys [life modify-damage]} card
+        {:keys [life max-life modify-damage]} card
         modify-damage-fn (when modify-damage
                            (effects/get-predicate modify-damage))
         damage           (if modify-damage-fn
                            (modify-damage-fn damage)
-                           damage)]
+                           damage)
+        killed?          (<= life damage)]
     (-> game
-        (assoc-in [:nemesis :play-area idx :life] (max (- life damage) 0))
-        (cond-> (<= life damage) (discard-nemesis-card {:card-name card-name})))))
+        (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
+                                                              (- life damage)))
+        (cond-> killed? (discard-nemesis-card {:card-name card-name})))))
 
 (defn deal-damage-to-target [game {:keys [damage choice]}]
   (let [{:keys [area card-name]} choice]
@@ -74,7 +76,7 @@
 (effects/register {:damage-player damage-player})
 
 (def generic-nemesis {:name       :generic
-                      :difficulty 3
+                      :difficulty 1
                       :life       70
                       :unleash    [[:damage-gravehold 2]]
                       :cards      [attack/nix minion/howling-spinners power/planar-collision
@@ -91,12 +93,14 @@
                           attack/nix
                           power/planar-collision
                           attack/thrash]
+
                          [power/aphotic-sun
                           minion/mangleroot
                           power/morbid-gyre
                           attack/mutilate
                           minion/null-scion
                           attack/smite]
+
                          [power/apocalypse-ritual
                           attack/banish
                           minion/monstrosity-of-omens

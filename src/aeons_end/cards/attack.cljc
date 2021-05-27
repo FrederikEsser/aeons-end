@@ -110,7 +110,9 @@
 (def quell {:name    :quell
             :type    :attack
             :tier    3
-            :text    ["Gravehold suffers 7 damage.\nOR\nUnleash three times."]
+            :text    ["Gravehold suffers 7 damage."
+                      "OR"
+                      "Unleash three times."]
             :effects [[:give-choice {:title   :quell
                                      :choice  ::quell-choice
                                      :options [:special

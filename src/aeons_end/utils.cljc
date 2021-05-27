@@ -429,6 +429,14 @@
 
 (effects/register-options {:nemesis options-from-nemesis})
 
+(defn options-from-nemesis-discard [game _ _ & [{:keys [type most-recent]}]]
+  (cond->> (get-in game [:nemesis :discard])
+           type (filter (comp #{type} :type))
+           most-recent (take-last 1)                        ; it's important that 'most-recent' is evaluated last
+           :always (map :name)))
+
+(effects/register-options {:nemesis-discard options-from-nemesis-discard})
+
 (defn options-from-minions [game _ _]
   (->> (get-in game [:nemesis :play-area])
        (filter (comp #{:minion} :type))

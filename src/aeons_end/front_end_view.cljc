@@ -322,19 +322,44 @@
                                               {:interaction :discardable})
                                             (choice-interaction {:area      :minions
                                                                  :card-name name} choice))))))})
-         (when (not-empty discard)
-           (let [{:keys [name text quote type to-discard power persistent]} (last discard)]
-             {:discard (merge {:name    name
-                               :name-ui (ut/format-name name)
-                               :text    text
-                               :quote   quote
-                               :type    type}
-                              (when to-discard
-                                {:to-discard-text (:text to-discard)})
-                              (when power
-                                {:power-text (:text power)})
-                              (when persistent
-                                {:persistent-text (:text persistent)}))}))
+         {:discard (merge
+                     (when (not-empty discard)
+                       {:card (let [{:keys [name text quote type to-discard power persistent life]} (last discard)]
+                                (merge {:name    name
+                                        :name-ui (ut/format-name name)
+                                        :text    text
+                                        :quote   quote
+                                        :type    type}
+                                       (when to-discard
+                                         {:to-discard-text (:text to-discard)})
+                                       (when power
+                                         {:power-text (:text power)})
+                                       (when persistent
+                                         {:persistent-text (:text persistent)})
+                                       (when life
+                                         {:life life})
+                                       (choice-interaction {:area      :nemesis-discard
+                                                            :card-name name} choice)))})
+                     {:cards           (if (empty? discard)
+                                         []
+                                         (->> discard
+                                              (map (fn [{:keys [name text quote type to-discard power persistent life]}]
+                                                     (merge {:name    name
+                                                             :name-ui (ut/format-name name)
+                                                             :text    text
+                                                             :quote   quote
+                                                             :type    type}
+                                                            (when to-discard
+                                                              {:to-discard-text (:text to-discard)})
+                                                            (when power
+                                                              {:power-text (:text power)})
+                                                            (when persistent
+                                                              {:persistent-text (:text persistent)})
+                                                            (when life
+                                                              {:life life})
+                                                            (choice-interaction {:area      :nemesis-discard
+                                                                                 :card-name name} choice))))))
+                      :number-of-cards (count discard)})}
          (choice-interaction {:area :nemesis} choice)
          (when choice
            {:choice (view-choice choice)})))

@@ -125,6 +125,53 @@
                 (when number-of-cards (str " x" number-of-cards)))]]))
      card)))
 
+(defn format-text [text & [title]]
+  (cond
+    (coll? text) (->> text
+                      (mapk-indexed (fn [idx paragraph]
+                                      (format-text paragraph (when (zero? idx) title)))))
+    (and (string? text)
+         (re-find #"\n" text)) (format-text (string/split text #"\n") title)
+    :else [:div {:style {:font-size   "0.9em"
+                         :font-weight (if (= "OR" text)
+                                        :bold
+                                        :normal)
+                         :paddingTop  "3px"}}
+           (when title
+             [:strong (str title (when text ": "))])
+           text]))
+
+(defn view-nemesis-card [{:keys [name name-ui text quote choice-value type
+                                 to-discard-text power power-text life persistent-text interaction] :as card}]
+  (when card
+    (let [disabled (nil? interaction)]
+      [:button {:style    (button-style :disabled disabled
+                                        :max-width "140px"
+                                        :type type)
+                :title    quote
+                :disabled disabled
+                :on-click (when interaction
+                            (fn [] (case interaction
+                                     :discardable (swap! state assoc :game (cmd/discard-power-card name))
+                                     :choosable (select! (or choice-value name))
+                                     :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
+       [:div
+        [:div {:style {:font-size "1.4em"}} name-ui]
+        [:div
+         (when text
+           (format-text text))
+         (when to-discard-text
+           (format-text to-discard-text "TO DISCARD"))
+         (when power-text
+           (format-text power-text (str "POWER" (when power (str " " power)))))
+         (when life
+           #_[:div {:style {:font-size  "0.9em"
+                            :paddingTop "3px"}}
+              (str "Life: " life)]
+           (format-text nil (str "Life: " life)))
+         (when persistent-text
+           (format-text persistent-text "PERSISTENT"))]]])))
+
 (defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value choice-opts interactions]}]
   (let [disabled (empty? interactions)]
     [:tr {:style {:border :none}}
@@ -171,8 +218,11 @@
    (when (:number-of-cards pile)
      (str (:number-of-cards pile) " Cards"))])
 
-(defn view-expandable-pile [key {:keys [card cards number-of-cards]} & [{:keys [deck split-after]}]]
-  (let [expanded? (get-in @state [:expanded? key])]
+(defn view-expandable-pile [key {:keys [card cards number-of-cards]} & [{:keys [deck split-after nemesis?]}]]
+  (let [expanded?    (get-in @state [:expanded? key])
+        view-card-fn (if nemesis?
+                       view-nemesis-card
+                       view-card)]
     [:table
      [:tbody {:style {:border :none}}
       (when deck
@@ -194,10 +244,10 @@
                                     (when (pos? idx)
                                       [:hr])
                                     (->> cards
-                                         (mapk view-card))]))))
+                                         (mapk view-card-fn))]))))
             (->> cards
                  (mapk view-card)))
-          (view-card card))]
+          (view-card-fn card))]
        [:td {:style {:border         :none
                      :vertical-align :top}}
         (when (> number-of-cards 1)
@@ -211,53 +261,6 @@
   [:tr (->> row
             (map view-kingdom-card)
             (mapk (fn [card] [:td card])))])
-
-(defn format-text [text & [title]]
-  (cond
-    (coll? text) (->> text
-                      (mapk-indexed (fn [idx paragraph]
-                                      (format-text paragraph (when (zero? idx) title)))))
-    (and (string? text)
-         (re-find #"\n" text)) (format-text (string/split text #"\n") title)
-    :else [:div {:style {:font-size   "0.9em"
-                         :font-weight (if (= "OR" text)
-                                        :bold
-                                        :normal)
-                         :paddingTop  "3px"}}
-           (when title
-             [:strong (str title (when text ": "))])
-           text]))
-
-(defn view-nemesis-card
-  [{:keys [name name-ui text quote choice-value type
-           to-discard-text power power-text life persistent-text interaction] :as card}]
-  (let [disabled (nil? interaction)]
-    [:button {:style    (button-style :disabled disabled
-                                      :max-width "140px"
-                                      :type type)
-              :title    quote
-              :disabled disabled
-              :on-click (when interaction
-                          (fn [] (case interaction
-                                   :discardable (swap! state assoc :game (cmd/discard-power-card name))
-                                   :choosable (select! (or choice-value name))
-                                   :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
-     [:div
-      [:div {:style {:font-size "1.4em"}} name-ui]
-      [:div
-       (when text
-         (format-text text))
-       (when to-discard-text
-         (format-text to-discard-text "TO DISCARD"))
-       (when power-text
-         (format-text power-text (str "POWER" (when power (str " " power)))))
-       (when life
-         #_[:div {:style {:font-size  "0.9em"
-                          :paddingTop "3px"}}
-            (str "Life: " life)]
-         (format-text nil (str "Life: " life)))
-       (when persistent-text
-         (format-text persistent-text "PERSISTENT"))]]]))
 
 (defn view-choice [{:keys [choice-title
                            text
@@ -391,8 +394,8 @@
                         (mapk view-nemesis-card play-area)]]
                   [:td [:div
                         (str (:number-of-cards deck) " Cards")]]
-                  [:td (when discard
-                         (view-nemesis-card discard))]
+                  [:td [view-expandable-pile :discard/nemesis discard
+                        {:nemesis? true}]]
                   (when choice
                     (view-choice choice))]]]])
        (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]

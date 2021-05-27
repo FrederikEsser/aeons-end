@@ -9,11 +9,36 @@
 
 (effects/register {:lose-nemesis-tokens lose-nemesis-tokens})
 
+(defn crumble-revive-minion [game {:keys [card-name]}]
+  (-> game
+      (push-effect-stack {:effects [[:move-card {:card-name card-name
+                                                 :from      :discard
+                                                 :to        :play-area}]
+                                    [:unleash]]})))
+
+(effects/register {::crumble-revive-minion crumble-revive-minion})
+
+(def crumble {:name    :crumble
+              :type    :attack
+              :tier    3
+              :text    ["Place the most recently discarded minion in the nemesis discard pile back into play. Unleash."
+                        "OR"
+                        "Umbra Titan loses three nemesis tokens."]
+              :effects [[:give-choice {:title     :crumble
+                                       :text      "Place the most recently discarded minion in the nemesis discard pile back into play. Unleash."
+                                       :choice    ::crumble-revive-minion
+                                       :or-choice {:text    "Umbra Titan loses three nemesis tokens."
+                                                   :effects [[:lose-nemesis-tokens 3]]}
+                                       :options   [:nemesis-discard {:type :minion :most-recent true}]
+                                       :max       1}]]})
+
 (def cryptid {:name       :cryptid
               :type       :minion
               :tier       1
               :life       6
-              :persistent {:text    "The player with the most expensive prepped spell discards that spell.\nOR\nUmbra Titan loses one nemesis token."
+              :persistent {:text    ["The player with the most expensive prepped spell discards that spell."
+                                     "OR"
+                                     "Umbra Titan loses one nemesis token."]
                            :effects [[:give-choice {:title     :cryptid
                                                     :text      "The player with the most expensive prepped spell discards that spell."
                                                     :choice    :discard-prepped-spells
@@ -37,7 +62,8 @@
               :type       :minion
               :tier       1
               :life       5
-              :persistent {:text    "If the nemesis has two turn order cards in the turn order discard pile, Umbra Titan loses one nemesis token.\nOtherwise, Gravehold suffers 2 damage."
+              :persistent {:text    ["If the nemesis has two turn order cards in the turn order discard pile, Umbra Titan loses one nemesis token."
+                                     "Otherwise, Gravehold suffers 2 damage."]
                            :effects [[::grubber-persistent]]}
               :quote      "'Kick it, stab it, burn it... the thing just keeps grinning.' Sparrow, Breach Mage Soldier"})
 
@@ -98,6 +124,7 @@
 
 (def maul {:name    :maul
            :type    :attack
+           :tier    2
            :text    ["The players collectively destroy the two most expensive prepped spells."
                      "OR"
                      "Umbra Titan loses two nemesis tokens."]
@@ -227,4 +254,4 @@
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
                                maul tombfright vault-behemoth
-                               yawning-black demi-ancient aeons-end.cards.attack/throttle]})
+                               crumble demi-ancient yawning-black]})

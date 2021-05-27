@@ -45,17 +45,24 @@
                    :resolve-minion-card           resolve-minion-card
                    :resolve-nemesis-cards-in-play resolve-nemesis-cards-in-play})
 
+(defn set-minion-max-life [game {:keys [card-name life]}]
+  (ut/update-in-vec game [:nemesis :play-area] {:name card-name} assoc :max-life life))
+
 (defn draw-nemesis-card [game _]
-  (let [{:keys [name type effects]} (get-in game [:nemesis :deck 0])]
+  (let [{:keys [name type life effects]} (get-in game [:nemesis :deck 0])]
     (push-effect-stack game {:effects (concat [[:move-card {:from          :deck
                                                             :from-position :top
                                                             :to            :play-area}]]
+                                              (when (= :minion type)
+                                                [[:set-minion-max-life {:card-name name
+                                                                        :life      life}]])
                                               (when (= :attack type)
                                                 (concat
                                                   effects
                                                   [[:discard-nemesis-card {:card-name name}]])))})))
 
-(effects/register {:draw-nemesis-card draw-nemesis-card})
+(effects/register {:set-minion-max-life set-minion-max-life
+                   :draw-nemesis-card   draw-nemesis-card})
 
 (def nemesis {:name    "Nemesis"
               :type    :nemesis

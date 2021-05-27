@@ -9,6 +9,61 @@
             [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]
             [aeons-end.turn-order :as turn-order]))
 
+(deftest crumble-test
+  (testing "Crumble"
+    (is (= (-> {:nemesis   {:deck    [crumble]
+                            :unleash [[:damage-gravehold 1]]
+                            :tokens  8}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [crumble]
+                        :unleash [[:damage-gravehold 1]]
+                        :tokens  5}
+            :gravehold {:life 30}}))
+    (is (= (-> {:nemesis   {:deck    [crumble]
+                            :discard [cryptid]
+                            :unleash [[:damage-gravehold 1]]
+                            :tokens  8}
+                :gravehold {:life 30}}
+               draw-nemesis-card
+               (choose nil))
+           {:nemesis   {:discard [cryptid crumble]
+                        :unleash [[:damage-gravehold 1]]
+                        :tokens  5}
+            :gravehold {:life 30}}))
+    (is (= (-> {:nemesis   {:deck    [crumble]
+                            :discard [cryptid]
+                            :unleash [[:damage-gravehold 1]]
+                            :tokens  8}
+                :gravehold {:life 30}}
+               draw-nemesis-card
+               (choose :cryptid))
+           {:nemesis   {:play-area [cryptid]
+                        :discard   [crumble]
+                        :unleash   [[:damage-gravehold 1]]
+                        :tokens    8}
+            :gravehold {:life 29}}))
+    (is (= (-> {:nemesis   {:deck    [crumble]
+                            :discard [cryptid grubber]
+                            :unleash [[:damage-gravehold 1]]
+                            :tokens  8}
+                :gravehold {:life 30}}
+               draw-nemesis-card
+               (choose :grubber))
+           {:nemesis   {:play-area [grubber]
+                        :discard   [cryptid crumble]
+                        :unleash   [[:damage-gravehold 1]]
+                        :tokens    8}
+            :gravehold {:life 29}}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [crumble]
+                                           :discard [cryptid grubber]
+                                           :unleash [[:damage-gravehold 1]]
+                                           :tokens  8}
+                               :gravehold {:life 30}}
+                              draw-nemesis-card
+                              (choose :cryptid))))))
+
 (deftest cryptid-test
   (testing "Cryptid"
     (is (= (-> {:nemesis {:play-area [cryptid]
