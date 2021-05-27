@@ -224,6 +224,39 @@
                                             [::vault-behemoth-lose-token]]}
                      :quote      "'The air rasping in its massive lungs in enough to burst your eardrums.'"})
 
+(def demi-ancient {:name       :demi-ancient
+                   :type       :minion
+                   :tier       3
+                   :life       18
+                   :persistent {:text    "Umbra Titan loses one nemesis token."
+                                :effects [[:lose-nemesis-tokens 1]]}
+                   :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' ― Mazahaedron, Henge Mystic"})
+
+(defn yawning-black-can-discard? [game {:keys [player-no]}]
+  (let [aether (or (get-in game [:players player-no :aether]) 0)]
+    (>= aether 8)))
+
+(effects/register-predicates {::yawning-black-can-discard? yawning-black-can-discard?})
+
+(def yawning-black {:name       :yawning-black
+                    :type       :power
+                    :tier       3
+                    :to-discard {:text      "Spend 8 Aether."
+                                 :predicate ::yawning-black-can-discard?
+                                 :effects   [[:pay 8]]}
+                    :power      {:power   2
+                                 :text    ["Any player suffers 6 damage."
+                                           "OR"
+                                           "Umbra Titan loses three nemesis tokens."]
+                                 :effects [[:give-choice {:title     :yawning-black
+                                                          :text      "Any player suffers 6 damage."
+                                                          :choice    [:damage-player {:arg 6}]
+                                                          :or-choice {:text    "Umbra Titan loses three nemesis tokens."
+                                                                      :effects [[:lose-nemesis-tokens 3]]}
+                                                          :options   [:players]
+                                                          :max       1}]]}
+                    :quote      "The Titan hides beneath the skin of the cave, emerging only to strike."})
+
 (defn umbra-titan-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
                                       :damage [[:damage-gravehold 2]]
@@ -260,7 +293,7 @@
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
                                maul tombfright vault-behemoth
-                               cards/apocalypse-ritual cards/monstrosity-of-omens cards/throttle]})
+                               yawning-black demi-ancient cards/throttle]})
 
 (def generic-nemesis {:name       :generic
                       :difficulty 3
