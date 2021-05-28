@@ -58,6 +58,54 @@
                               resolve-nemesis-cards-in-play
                               (choose {:player-no 1}))))))
 
+(deftest cataclysmic-fate-test
+  (testing "Cataclysmic Fate"
+    (is (= (-> {:nemesis {:play-area [cataclysmic-fate]}
+                :players [{:breaches [{:prepped-spells [dark-fire]}]}]}
+               (discard-power-card 0 :cataclysmic-fate)
+               (choose {:player-no 0 :breach-no 0 :card-name :dark-fire}))
+           {:nemesis {:discard [cataclysmic-fate]}
+            :players [{:breaches [{:status :destroyed}]}]
+            :trash   [dark-fire]}))
+    (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
+                          (-> {:nemesis {:play-area [cataclysmic-fate]}
+                               :players [{:breaches [{:prepped-spells [ignite]}]}]}
+                              (discard-power-card 0 :cataclysmic-fate))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [cataclysmic-fate]}
+                               :players [{:breaches [{:prepped-spells [ignite]}
+                                                     {:prepped-spells [dark-fire]}]}]}
+                              (discard-power-card 0 :cataclysmic-fate)
+                              (choose {:player-no 0 :breach-no 0 :card-name :ignite}))))
+    (is (= (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard [(assoc-in cataclysmic-fate [:power :power] 0)]}
+            :players [{:life 6}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
+                :players [{:life 8}
+                          {:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard [(assoc-in cataclysmic-fate [:power :power] 0)]}
+            :players [{:life 4}
+                      {:life 10}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
+                               :players [{:life 8}
+                                         {:life 10}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 1}))))
+    (is (= (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
+                :players [{:life 0}
+                          {:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 1}))
+           {:nemesis {:discard [(assoc-in cataclysmic-fate [:power :power] 0)]}
+            :players [{:life 0}
+                      {:life 6}]}))))
+
 (deftest morbid-gyre-test
   (testing "Morbid Gyre"
     (is (= (-> {:nemesis   {:play-area [morbid-gyre]

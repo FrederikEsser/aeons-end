@@ -57,6 +57,41 @@
                                                         :max     1}]]}
                   :quote      "'The harsh light of the dead star burned away the dark as it crept through the breach. And around it I saw ravaged worlds The Nameless had already claimed.' ― Indira, Breach Mage Apprentice"})
 
+(defn cataclysmic-fate-can-discard? [game {:keys [player-no]}]
+  (let [prepped-spells (->> (get-in game [:players player-no :breaches])
+                            (mapcat :prepped-spells))]
+    (some (comp #(>= % 5) :cost) prepped-spells)))
+
+(effects/register-predicates {::cataclysmic-fate-can-discard? cataclysmic-fate-can-discard?})
+
+(defn cataclysmic-fate-destroy-breach [game {:keys [player-no breach-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:destroy-prepped-spells {:breach-no breach-no
+                                                                 :card-name card-name}]
+                                       [:destroy-breach {:breach-no breach-no}]]}))
+
+(effects/register {::cataclysmic-fate-destroy-breach cataclysmic-fate-destroy-breach})
+
+(def cataclysmic-fate {:name       :cataclysmic-fate
+                       :type       :power
+                       :tier       3
+                       :to-discard {:text      "Destroy a prepped spell that costs 5 Aether or more and a breach in which it was prepped."
+                                    :predicate ::cataclysmic-fate-can-discard?
+                                    :effects   [[:give-choice {:title   :cataclysmic-fate
+                                                               :text    "Destroy a prepped spell that costs 5 Aether or more and a breach in which it was prepped."
+                                                               :choice  ::cataclysmic-fate-destroy-breach
+                                                               :options [:prepped-spells {:min-cost 5}]
+                                                               :min     1
+                                                               :max     1}]]}
+                       :power      {:power   1
+                                    :text    "The player with the lowest life suffers 4 damage."
+                                    :effects [[:give-choice {:title   :cataclysmic-fate
+                                                             :text    "The player with the lowest life suffers 4 damage."
+                                                             :choice  [:damage-player {:arg 4}]
+                                                             :options [:players {:lowest-life true}]
+                                                             :min     1
+                                                             :max     1}]]}})
+
 (defn heart-of-nothing-can-discard? [game {:keys [player-no]}]
   (let [cards-in-hand (->> (get-in game [:players player-no :hand])
                            count)]
@@ -126,7 +161,7 @@
 
 (defn planar-collision-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
-                            (remove (comp #{:closed} :status))
+                            (remove (comp #{:closed} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
                             (mapcat :prepped-spells)
                             count)]
     (>= prepped-spells 2)))

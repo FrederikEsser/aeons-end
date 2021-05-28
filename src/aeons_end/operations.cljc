@@ -421,7 +421,7 @@
 
 (defn open-breach [game {:keys [player-no breach-no]}]
   (let [{:keys [status]} (get-in game [:players player-no :breaches breach-no])]
-    (assert (not (= :opened status)) (str "Open error: Breach " breach-no " is already opened."))
+    (assert (#{:closed :focused} status) (str "Open error: Breach " breach-no " has status " status "."))
     (-> game
         (assoc-in [:players player-no :breaches breach-no :status] :opened)
         (update-in [:players player-no :breaches breach-no] dissoc :focus-cost :open-costs :stage))))
@@ -430,7 +430,7 @@
   (let [{:keys [status stage]} (get-in game [:players player-no :breaches breach-no])
         current-player? (or (nil? current-player)
                             (= current-player player-no))]
-    (assert (not (= :opened status)) (str "Focus error: Breach " breach-no " is already opened."))
+    (assert (#{:closed :focused} status) (str "Focus error: Breach " breach-no " has status " status "."))
     (if (< stage 3)
       (-> game
           (update-in [:players player-no :breaches breach-no :stage] ut/plus 1)
@@ -753,7 +753,7 @@
       (ut/update-in-if-present [:players player-no :breaches]
                                (partial mapv (fn [{:keys [status] :as breach}]
                                                (cond-> breach
-                                                       (= :focused status) (assoc :status :closed)))))))
+                                                       (#{:focused} status) (assoc :status :closed)))))))
 
 (defn set-current-player [game {:keys [player-no]}]
   (-> game

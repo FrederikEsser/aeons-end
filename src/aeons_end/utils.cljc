@@ -388,15 +388,20 @@
        (mapcat :prepped-spells)
        count))
 
-(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges prepped-spells]}]]
+(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges prepped-spells lowest-life]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
-                            (apply max 0))]
+                            (apply max 0))
+        low-life       (->> players
+                            (keep :life)
+                            (filter pos?)                   ; Exhausted players are spared
+                            (apply min player-starting-life))]
     (cond->> (map-indexed (fn [player-no player]
                             (assoc player :option {:player-no player-no})) players)
              ally (remove (comp #{player-no} :player-no :option))
              most-charges (filter (comp #{highest-charge} :charges :ability))
              prepped-spells (filter (comp #{prepped-spells} count-prepped-spells))
+             lowest-life (filter (comp #{low-life} :life))
              :always (map :option))))
 
 (effects/register-options {:players options-from-players})

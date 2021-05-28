@@ -85,7 +85,7 @@
         cards        (cond->> (get player area)
                               number-of-cards (take-fn number-of-cards))
         open-breach? (->> breaches
-                          (remove (comp #{:closed} :status))
+                          (filter (comp #{:opened :focused} :status))
                           (some (comp empty? :prepped-spells)))]
     (-> cards
         (->>
@@ -192,11 +192,13 @@
   (->> breaches
        (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage]}]
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
-                        (merge {:name-ui   (case idx
-                                             0 "I"
-                                             1 "II"
-                                             2 "III"
-                                             3 "IV")
+                        (merge {:name-ui   (if (= :destroyed status)
+                                             "X"
+                                             (case idx
+                                               0 "I"
+                                               1 "II"
+                                               2 "III"
+                                               3 "IV"))
                                 :breach-no idx
                                 :status    status}
                                (when (not-empty prepped-spells)

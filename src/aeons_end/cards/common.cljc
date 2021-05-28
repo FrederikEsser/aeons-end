@@ -86,6 +86,11 @@
 
 (effects/register {:destroy-prepped-spells destroy-prepped-spells})
 
+(defn destroy-breach [game {:keys [player-no breach-no]}]
+  (assoc-in game [:players player-no :breaches breach-no] {:status :destroyed}))
+
+(effects/register {:destroy-breach destroy-breach})
+
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game

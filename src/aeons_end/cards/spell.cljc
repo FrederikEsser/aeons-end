@@ -6,7 +6,7 @@
 (defn amplify-vision-focus [game {:keys [player-no]}]
   (let [breach-no (->> (get-in game [:players player-no :breaches])
                        (keep-indexed (fn [idx {:keys [status focus-cost]}]
-                                       (when (not= :opened status)
+                                       (when (#{:closed :focused} status)
                                          {:breach-no  idx
                                           :focus-cost focus-cost})))
                        (sort-by :focus-cost)
@@ -18,6 +18,7 @@
 
 (defn amplify-vision-damage [game {:keys [player-no] :as args}]
   (let [all-breaches-opened? (->> (get-in game [:players player-no :breaches])
+                                  (remove (comp #{:destroyed} :status))
                                   (every? (comp #{:opened} :status)))]
     (push-effect-stack game {:player-no player-no
                              :args      args                ; bonus-damage

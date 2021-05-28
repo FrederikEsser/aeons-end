@@ -85,26 +85,28 @@
 
 (def nemeses [umbra-titan])
 
-(def basic-cards (concat [attack/afflict
-                          minion/catacomb-drone
-                          power/heart-of-nothing
-                          minion/howling-spinners
-                          power/night-unending
-                          attack/nix
-                          power/planar-collision
-                          attack/thrash]
-
-                         [power/aphotic-sun
-                          minion/mangleroot
-                          power/morbid-gyre
-                          attack/mutilate
-                          minion/null-scion
-                          attack/smite]
-
-                         [power/apocalypse-ritual
-                          attack/banish
-                          minion/monstrosity-of-omens
-                          attack/quell
-                          attack/throttle
-                          power/withering-beam]
-                         [attack/quell]))
+(def basic-cards (concat
+                   ; WE Tier 1
+                   [attack/afflict
+                    minion/catacomb-drone
+                    power/heart-of-nothing
+                    minion/howling-spinners
+                    power/night-unending
+                    attack/nix
+                    power/planar-collision
+                    attack/thrash]
+                   ; WE Tier 2
+                   [power/aphotic-sun
+                    minion/mangleroot
+                    power/morbid-gyre
+                    attack/mutilate
+                    minion/null-scion
+                    attack/smite]
+                   ; WE Tier 3
+                   [power/apocalypse-ritual
+                    attack/banish
+                    power/cataclysmic-fate
+                    minion/monstrosity-of-omens
+                    attack/quell
+                    attack/throttle
+                    power/withering-beam]))

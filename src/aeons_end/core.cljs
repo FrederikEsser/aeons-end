@@ -32,6 +32,7 @@
                          inverse? (cond disabled "#ccc"
                                         (= :openable status) "#f8e238"
                                         :else :white)
+                         (= :destroyed status) "#d66"
                          :else (if disabled "#666" :black))
      :font-weight      :bold
      :background-color (cond
@@ -39,9 +40,10 @@
                          (#{:relic} type) "#c7dff5"
                          (#{:spell :power} type) "#f7e2b5"
                          (= :minion type) "#aadfef"
-                         (= :breach type) (if (= :opened status)
-                                            "#f8e238"
-                                            "#506f9a")
+                         (= :breach type) (cond
+                                            (= :opened status) "#f8e238"
+                                            (= :destroyed status) :white
+                                            :else "#506f9a")
                          (= :ability type) (if (= :charged status)
                                              "#f5bb11" #_"#f9e395"
                                              "#f9e395" #_"#b4afa2")
@@ -56,9 +58,10 @@
                          (#{:relic} type) "#6bb6dc"
                          (#{:spell :power} type) "#f8c44e"
                          (= :minion type) "#49c4e9"
-                         (= :breach type) (if (#{:closed :openable} status)
-                                            "#434f64"
-                                            "#f9cf23")
+                         (= :breach type) (cond
+                                            (#{:closed :openable} status) "#434f64"
+                                            (#{:destroyed} status) "#ccc"
+                                            :else "#f9cf23")
                          (= :ability type) "#c0895e"
                          (= {:player-no 0} type) "#9d8c42"
                          (= {:player-no 1} type) "#a1642b"
@@ -423,7 +426,7 @@
                              {:keys [max] :as choice} :choice}]
                          (let [max           (or max (get-in @state [:game :nemesis :choice :max]))
                                breach-no     (->> breaches
-                                                  (remove (comp #{:closed} :status))
+                                                  (filter (comp #{:opened :focused} :status))
                                                   (filter (comp empty? :prepped-spells))
                                                   (sort-by (juxt :bonus-damage :status))
                                                   last
