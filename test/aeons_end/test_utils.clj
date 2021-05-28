@@ -56,6 +56,18 @@
       (push-effect-stack {:effects [[:deal-damage damage]]})
       check-stack))
 
+(defn damage-player [game player-no damage]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:damage-player damage]]})
+      check-stack))
+
+(defn heal-player [game player-no life]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:heal {:life life}]]})
+      check-stack))
+
 (defn get-trigger [{:keys [id name trigger]} & [trigger-id]]
   (merge {:id (or trigger-id 1)}
          (when id {:card-id id})

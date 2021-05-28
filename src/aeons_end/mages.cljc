@@ -17,7 +17,7 @@
                    :effects     [[:give-choice {:title   :brink-siphon
                                                 :text    "Any player gains 4 life"
                                                 :choice  [:heal {:life 4}]
-                                                :options [:players]
+                                                :options [:players {:not-exhausted true}]
                                                 :min     1
                                                 :max     1}]]})
 

@@ -24,8 +24,8 @@
                             (merge interaction
                                    {:choice-value {:area area}}))))))
 
-(defn- choice-interaction-player [{:keys [area player-no breach-no card-name]}
-                                  {:keys [source options max choice-opts]}]
+(defn- choice-interaction-player [{:keys [area player-no breach-no card-name] :as arg1}
+                                  {:keys [source options max choice-opts] :as choice}]
   (let [interaction  (if (= 1 (or max (count options)))
                        {:interaction :quick-choosable}
                        (merge {:interaction :choosable}
@@ -232,7 +232,9 @@
                                           open-cost)
                                  {:interactions (cond-> #{}
                                                         (>= aether focus-cost) (conj :focusable)
-                                                        (>= aether open-cost) (conj :openable))})))))))
+                                                        (>= aether open-cost) (conj :openable))})
+                               (choice-interaction-player {:area      :breaches
+                                                           :breach-no idx} choice)))))))
 
 (defn view-ability [{{:keys [ability
                              phase

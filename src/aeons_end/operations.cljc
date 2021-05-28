@@ -627,13 +627,13 @@
                                                (when bonus-damage
                                                  {:args {:bonus-damage bonus-damage}})))
                 (choice-fn game (merge args
+                                       {:player-no player-no}
                                        (when bonus-damage
                                          {:bonus-damage bonus-damage})
-                                       (if (#{:players :prepped-spells} source)
+                                       (if (#{:players :breaches :prepped-spells} source)
                                          single-selection
-                                         {:player-no player-no
-                                          :card-id   card-id
-                                          arg-name   single-selection}))))))))
+                                         {:card-id card-id
+                                          arg-name single-selection}))))))))
 
 (defn- choose-multi [game valid-choices selection]
   (let [[{:keys [player-no card-id choice or-choice source min max optional? choice-opts bonus-damage]}] (get game :effect-stack)

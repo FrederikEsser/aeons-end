@@ -70,10 +70,33 @@
 
 (effects/register {:damage-gravehold damage-gravehold})
 
-(defn damage-player [game {:keys [player-no arg]}]
-  (update-in game [:players player-no :life] - arg))
+(defn exhaust-player [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:unleash]
+                                       [:unleash]
+                                       [:give-choice {:title   :player-exhausted
+                                                      :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
+                                                      :choice  :destroy-breach
+                                                      :options [:breaches]
+                                                      :min     1
+                                                      :max     1}]
+                                       [:spend-charges]]}))
 
-(effects/register {:damage-player damage-player})
+(defn damage-player [game {:keys [player-no arg]}]
+  (let [{:keys [life]} (get-in game [:players player-no])]
+    (if (< arg life)
+      (update-in game [:players player-no :life] - arg)
+      (-> game
+          (assoc-in [:players player-no :life] 0)
+          (push-effect-stack {:player-no player-no
+                              :effects   (concat
+                                           (when (> arg life)
+                                             [[:damage-gravehold (* 2 (- arg life))]])
+                                           (when (pos? life)
+                                             [[:exhaust-player]]))})))))
+
+(effects/register {:exhaust-player exhaust-player
+                   :damage-player  damage-player})
 
 (def generic-nemesis {:name       :generic
                       :difficulty 1

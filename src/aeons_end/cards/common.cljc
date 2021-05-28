@@ -14,8 +14,10 @@
 (effects/register {:gain-aether gain-aether})
 
 (defn heal [game {:keys [player-no life]}]
-  (let [amount (min life
-                    (- ut/player-starting-life (get-in game [:players player-no :life])))]
+  (let [current-life (get-in game [:players player-no :life])
+        amount       (min life
+                          (- ut/player-starting-life current-life))]
+    (assert (pos? current-life) "Heal error: Exhausted player cannot be healed.")
     (-> game
         (update-in [:players player-no :life] ut/plus amount))))
 
@@ -87,7 +89,10 @@
 (effects/register {:destroy-prepped-spells destroy-prepped-spells})
 
 (defn destroy-breach [game {:keys [player-no breach-no]}]
-  (assoc-in game [:players player-no :breaches breach-no] {:status :destroyed}))
+  (let [{:keys [prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
+    (-> game
+        (assoc-in [:players player-no :breaches breach-no] {:status :destroyed})
+        (cond-> (not-empty prepped-spells) (update-in [:players player-no :discard] concat prepped-spells)))))
 
 (effects/register {:destroy-breach destroy-breach})
 

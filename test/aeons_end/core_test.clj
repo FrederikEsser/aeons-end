@@ -593,3 +593,70 @@
                                  :type     :minion
                                  :life     2
                                  :max-life 2}]}}))))
+
+(deftest exhaust-player-test
+  (testing "Exhausted"
+    (is (= (-> {:players   [{:breaches [{:status     :closed
+                                         :focus-cost 2}]
+                             :ability  {:charges 3}
+                             :life     1}]
+                :nemesis   {:unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               (damage-player 0 1)
+               (choose {:breach-no 0}))
+           {:players   [{:breaches [{:status :destroyed}]
+                         :ability  {:charges 0}
+                         :life     0}]
+            :nemesis   {:unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}}))
+    (is (= (-> {:players   [{:breaches [{:status         :opened
+                                         :prepped-spells [spark]}]
+                             :ability  {:charges 3}
+                             :life     1}]
+                :nemesis   {:unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               (damage-player 0 1)
+               (choose {:breach-no 0}))
+           {:players   [{:breaches [{:status :destroyed}]
+                         :discard  [spark]
+                         :ability  {:charges 0}
+                         :life     0}]
+            :nemesis   {:unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:players   [{:breaches [{:status :destroyed}
+                                                       {:status :closed}]
+                                            :life     1}]
+                               :nemesis   {:unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}}
+                              (damage-player 0 1)
+                              (choose {:breach-no 0}))))
+    (is (= (-> {:players   [{:breaches [{:status :opened}]
+                             :ability  {:charges 3}
+                             :life     1}]
+                :nemesis   {:unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               (damage-player 0 2)
+               (choose {:breach-no 0}))
+           {:players   [{:breaches [{:status :destroyed}]
+                         :ability  {:charges 0}
+                         :life     0}]
+            :nemesis   {:unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 26}}))
+    (is (= (-> {:players   [{:breaches [{:status :opened}]
+                             :ability  {:charges 3}
+                             :life     0}]
+                :nemesis   {:unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               (damage-player 0 2))
+           {:players   [{:breaches [{:status :opened}]
+                         :ability  {:charges 3}
+                         :life     0}]
+            :nemesis   {:unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 26}}))
+    (is (= (-> {:players [{:life 1}]}
+               (heal-player 0 1))
+           {:players [{:life 2}]}))
+    (is (thrown-with-msg? AssertionError #"Heal error: Exhausted player cannot be healed"
+                          (-> {:players [{:life 0}]}
+                              (heal-player 0 1))))))

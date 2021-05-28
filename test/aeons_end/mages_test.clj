@@ -36,12 +36,20 @@
                  (choose {:player-no 0}))
              {:players [{:ability (assoc brink-siphon :charges 0)
                          :life    ut/player-starting-life}]}))
-      (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)}
+      (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
+                             :life    5}
                             {:life 1}]}
                  (activate-ability 0)
                  (choose {:player-no 1}))
-             {:players [{:ability (assoc brink-siphon :charges 0)}
-                        {:life 5}]})))))
+             {:players [{:ability (assoc brink-siphon :charges 0)
+                         :life    5}
+                        {:life 5}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:players [{:ability (assoc brink-siphon :charges 5)
+                                            :life    5}
+                                           {:life 0}]}
+                                (activate-ability 0)
+                                (choose {:player-no 1})))))))
 
 (deftest mist-test
   (testing "Mist"

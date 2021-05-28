@@ -104,7 +104,13 @@
                (choose {:player-no 1}))
            {:nemesis {:discard [(assoc-in cataclysmic-fate [:power :power] 0)]}
             :players [{:life 0}
-                      {:life 6}]}))))
+                      {:life 6}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
+                               :players [{:life 0}
+                                         {:life 10}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 0}))))))
 
 (deftest morbid-gyre-test
   (testing "Morbid Gyre"

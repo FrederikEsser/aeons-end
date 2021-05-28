@@ -175,8 +175,11 @@
          (when persistent-text
            (format-text persistent-text "PERSISTENT"))]]])))
 
-(defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value choice-opts interactions]}]
-  (let [disabled (empty? interactions)]
+(defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value choice-opts interaction interactions]}]
+  (let [interactions (if interaction
+                       #{interaction}
+                       interactions)
+        disabled     (empty? interactions)]
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
       [:button {:style    (button-style :disabled disabled
@@ -187,7 +190,9 @@
                 :on-click (when (not-empty interactions)
                             (fn [] (cond
                                      (:openable interactions) (swap! state assoc :game (cmd/open-breach breach-no))
-                                     (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no)))))}
+                                     (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no))
+                                     (:choosable interactions) (select! (or choice-value breach-no))
+                                     (:quick-choosable interactions) (swap! state assoc :game (cmd/choose (or choice-value breach-no))))))}
        (str name-ui
             (when (= :opened status)
               (if bonus-damage

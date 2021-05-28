@@ -388,23 +388,32 @@
        (mapcat :prepped-spells)
        count))
 
-(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges prepped-spells lowest-life]}]]
+(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges prepped-spells lowest-life not-exhausted]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
                             (apply max 0))
         low-life       (->> players
                             (keep :life)
                             (filter pos?)                   ; Exhausted players are spared
-                            (apply min player-starting-life))]
+                            (apply min 20))]
     (cond->> (map-indexed (fn [player-no player]
                             (assoc player :option {:player-no player-no})) players)
              ally (remove (comp #{player-no} :player-no :option))
              most-charges (filter (comp #{highest-charge} :charges :ability))
              prepped-spells (filter (comp #{prepped-spells} count-prepped-spells))
              lowest-life (filter (comp #{low-life} :life))
+             not-exhausted (filter (comp pos? :life))
              :always (map :option))))
 
 (effects/register-options {:players options-from-players})
+
+(defn options-from-breaches [game player-no _ & [{:keys []}]]
+  (->> (get-in game [:players player-no :breaches])
+       (keep-indexed (fn [breach-no {:keys [status]}]
+                       (when (not= :destroyed status)
+                         {:breach-no breach-no})))))
+
+(effects/register-options {:breaches options-from-breaches})
 
 (defn options-from-prepped-spells [{:keys [players] :as game} player-no _ & [{:keys [own most-expensive min-cost]}]]
   (let [options      (->> players
