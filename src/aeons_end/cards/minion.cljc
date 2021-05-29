@@ -34,7 +34,7 @@
                               :effects [[:damage-gravehold 3]
                                         [:deal-damage-to-minion {:card-name :mangleroot
                                                                  :damage    2}]]}
-                 :quote      "'One of the few indigenous creatures of the cave, though corrupted from exposure to the breach.' ― Gex, Breach Mage Advisor"})
+                 :quote      "'One of the few indigenous creatures of the cave, though corrupted from exposure to the breach.' Gex, Breach Mage Advisor"})
 
 (defn monstrosity-of-omens-modify-damage [damage]
   (min damage 1))
@@ -55,7 +55,7 @@
                            :text          "When damage is dealt to this minion, reduce that damage to 1."
                            :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
                                            :effects [[::monstrosity-of-omens-damage]]}
-                           :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' ― Yan Magda, Enlightened Exile"})
+                           :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' Yan Magda, Enlightened Exile"})
 
 (def null-scion {:name       :null-scion
                  :type       :minion
@@ -63,4 +63,4 @@
                  :life       11
                  :persistent {:text    "Unleash."
                               :effects [[:unleash]]}
-                 :quote      "'Qiulius's first blow glanced off its carapace like breath, but her second blow carved it in twain.' ― Dezmodia, Voidborn Prodigy"})
+                 :quote      "'Qiulius's first blow glanced off its carapace like breath, but her second blow carved it in twain.' Dezmodia, Voidborn Prodigy"})

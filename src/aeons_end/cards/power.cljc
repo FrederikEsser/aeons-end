@@ -55,7 +55,7 @@
                                                         :options [:players {:most-charges true}]
                                                         :min     1
                                                         :max     1}]]}
-                  :quote      "'The harsh light of the dead star burned away the dark as it crept through the breach. And around it I saw ravaged worlds The Nameless had already claimed.' ― Indira, Breach Mage Apprentice"})
+                  :quote      "'The harsh light of the dead star burned away the dark as it crept through the breach. And around it I saw ravaged worlds The Nameless had already claimed.' Indira, Breach Mage Apprentice"})
 
 (defn cataclysmic-fate-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
@@ -141,7 +141,7 @@
                                                         :options [:collective-hands]
                                                         :min     3
                                                         :max     3}]]}
-                  :quote      "'It churned and rolled , a maelstrom of malign power. The void was upon me and yet I felt only the throes of freedom from my prison of sleep.' ― Yan Magda, Enlightened Exile"})
+                  :quote      "'It churned and rolled , a maelstrom of malign power. The void was upon me and yet I felt only the throes of freedom from my prison of sleep.' Yan Magda, Enlightened Exile"})
 
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
@@ -234,4 +234,4 @@
                              :effects [[:unleash]
                                        [:unleash]
                                        [::withering-beam-destroy-spells]]}
-                     :quote "'I watched a fellow merchant atrophy and fall to the ground in ash as the beam hit his cart.' ― Ohat, Dirt Merchant"})
+                     :quote "'I watched a fellow merchant atrophy and fall to the ground in ash as the beam hit his cart.' Ohat, Dirt Merchant"})

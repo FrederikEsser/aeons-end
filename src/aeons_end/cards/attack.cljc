@@ -50,7 +50,7 @@
              :effects [[:unleash]
                        [:unleash]
                        [::banish-damage]]
-             :quote   "'Get down! It's ejecting back at us!' ― Ohat, Dirt Merchant"})
+             :quote   "'Get down! It's ejecting back at us!' Ohat, Dirt Merchant"})
 
 (def mutilate {:name    :mutilate
                :type    :attack
@@ -70,7 +70,7 @@
                                         :options [:players]
                                         :min     1
                                         :max     1}]]
-               :quote   "'They say that before The Nameless found Gravehold, nothing grew in these caves. It appears the cave burgeons through our blood.' ― Gex, Breach Mage Advisor"})
+               :quote   "'They say that before The Nameless found Gravehold, nothing grew in these caves. It appears the cave burgeons through our blood.' Gex, Breach Mage Advisor"})
 
 (defn nix-damage-player [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -120,7 +120,7 @@
                                                {:option :unleash :text "Unleash three times."}]
                                      :min     1
                                      :max     1}]]
-            :quote   "'The Nameless hunger for the same thing we do; an end to this war.' ― Garu, Oathsworn Protector"})
+            :quote   "'The Nameless hunger for the same thing we do; an end to this war.' Garu, Oathsworn Protector"})
 
 (def smite {:name    :smite
             :type    :attack
@@ -193,4 +193,4 @@
                                         :options [:players]
                                         :min     1
                                         :max     1}]]
-               :quote   "'Were I made of muscle and blood like the others, the impact would have surely ended me.' ― Remnant, Aetherial Entity"})
+               :quote   "'Were I made of muscle and blood like the others, the impact would have surely ended me.' Remnant, Aetherial Entity"})

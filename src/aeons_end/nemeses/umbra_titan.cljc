@@ -162,7 +162,7 @@
                  :persistent {:text    ["If Umbra Titan has 5 or more nemesis tokens, it loses a nemesis token."
                                         "Otherwise, Gravehold suffers 3 damage."]
                               :effects [[::tombfright-persistent]]}
-                 :quote      "'With two heads, it's twice as eager to make a meal of a mage.' ― Sparrow, Breach Mage Soldier"})
+                 :quote      "'With two heads, it's twice as eager to make a meal of a mage.' Sparrow, Breach Mage Soldier"})
 
 (defn vault-behemoth-lose-token [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :vault-behemoth})]
@@ -191,7 +191,7 @@
                    :life       18
                    :persistent {:text    "Umbra Titan loses one nemesis token."
                                 :effects [[:lose-nemesis-tokens 1]]}
-                   :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' ― Mazahaedron, Henge Mystic"})
+                   :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' Mazahaedron, Henge Mystic"})
 
 (defn yawning-black-can-discard? [game {:keys [player-no]}]
   (let [aether (or (get-in game [:players player-no :aether]) 0)]
@@ -249,8 +249,8 @@
 
 (def umbra-titan {:name       :umbra-titan
                   :difficulty 3
-                  :life       70
-                  :tokens     8
+                  :life       80
+                  :tokens     5
                   :unleash    [[::umbra-titan-unleash]]
                   :cards      [cryptid grubber seismic-roar
                                maul tombfright vault-behemoth

@@ -3,9 +3,9 @@
             [clojure.set :refer [intersection]]
             [aeons-end.effects :as effects]))
 
-(def player-starting-life 10)
+(def player-starting-life 8)
 
-(def gravehold-starting-life 30)
+(def gravehold-starting-life 25)
 
 (defonce id-state (atom 0))
 
