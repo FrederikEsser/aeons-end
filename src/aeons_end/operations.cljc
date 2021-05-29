@@ -18,6 +18,44 @@
         :finished)
       :active)))
 
+(defn game-won? [{:keys [nemesis]}]
+  (or (<= (:life nemesis) 0)
+      (and (empty? (:deck nemesis))
+           (empty? (:play-area nemesis)))))
+
+(defn game-lost? [{:keys [players gravehold nemesis]}]
+  (or (every? (comp zero? :life) players)
+      (<= (:life gravehold) 0)
+      (<= (:tokens nemesis) 0)))
+
+(defn game-over? [{:keys                              [real-game? players]
+                   {gravehold-life :life}             :gravehold
+                   {nemesis-life :life
+                    :keys        [name
+                                  deck
+                                  play-area
+                                  victory-condition]} :nemesis
+                   :as                                game}]
+  (when real-game?
+    (let [nemesis-victory-fn (when victory-condition
+                               (effects/get-predicate victory-condition))]
+      (cond
+        (and nemesis-life
+             (<= nemesis-life 0)) {:conclusion :victory
+                                   :text       [(str (ut/format-name name) " has been defeated and all its minions retreat.")
+                                                "Gravehold is safe - for now."]}
+        (and (empty? deck)
+             (empty? play-area)) {:conclusion :victory
+                                  :text       [(str (ut/format-name name) " is exhausted and all its minions defeated.")
+                                               "Gravehold is safe - for now."]}
+        (and gravehold-life
+             (<= gravehold-life 0)) {:conclusion :defeat
+                                     :text       ["The last defenses are destroyed and Gravehold is overrun."]}
+        (and (not-empty players)
+             (every? (comp zero? :life) players)) {:conclusion :defeat
+                                                   :text       ["All breach mages are defeated and Gravehold is defenseless."]}
+        nemesis-victory-fn (nemesis-victory-fn game)))))
+
 (defn push-effect-stack [game {:keys [player-no card-id effects choice args]}]
   (cond-> game
           (or (not-empty effects)
@@ -53,14 +91,18 @@
     (effect-fn game args)))
 
 (defn check-stack [game]
-  (let [[{:keys [player-no card-id effect args] :as top}] (get game :effect-stack)]
-    (cond-> game
-            effect (-> pop-effect-stack
-                       (do-effect {:player-no player-no
-                                   :card-id   card-id
-                                   :effect    effect
-                                   :args      args})
-                       check-stack))))
+  (if (game-over? game)
+    (-> game
+        (dissoc :effect-stack :current-player)
+        (assoc :game-over (game-over? game)))
+    (let [[{:keys [player-no card-id effect args] :as top}] (get game :effect-stack)]
+      (cond-> game
+              effect (-> pop-effect-stack
+                         (do-effect {:player-no player-no
+                                     :card-id   card-id
+                                     :effect    effect
+                                     :args      args})
+                         check-stack)))))
 
 (defn get-effects-from-trigger [{:keys [id effects card-id set-aside]}]
   (let [effect-args (merge {:trigger-id id

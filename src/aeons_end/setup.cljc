@@ -61,6 +61,7 @@
 
 (defn create-game []
   {:mode       :swift
+   :real-game? true
    :nemesis    (create-nemesis umbra-titan 2)
    :gravehold  {:life ut/gravehold-starting-life}
    :supply     [{:card gem/jade :pile-size 7}

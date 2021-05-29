@@ -250,11 +250,21 @@
 (effects/register {::umbra-titan-choice  umbra-titan-choice
                    ::umbra-titan-unleash umbra-titan-unleash})
 
-(def umbra-titan {:name       :umbra-titan
-                  :difficulty 3
-                  :life       80
-                  :tokens     5
-                  :unleash    [[::umbra-titan-unleash]]
-                  :cards      [cryptid grubber seismic-roar
-                               maul tombfright vault-behemoth
-                               crumble demi-ancient yawning-black]})
+(defn victory-condition [{:keys [real-game? nemesis] :as game}]
+  (let [tokens (get-in game [:nemesis :tokens])]
+    (when (and real-game?
+               (<= tokens 0))
+      {:conclusion :defeat
+       :text       "Gravehold's foundation is undermined. Gravehold collapses into rubble."})))
+
+(effects/register-predicates {::victory-condition victory-condition})
+
+(def umbra-titan {:name              :umbra-titan
+                  :difficulty        3
+                  :life              80
+                  :tokens            5
+                  :unleash           [[::umbra-titan-unleash]]
+                  :victory-condition ::victory-condition
+                  :cards             [cryptid grubber seismic-roar
+                                      maul tombfright vault-behemoth
+                                      crumble demi-ancient yawning-black]})

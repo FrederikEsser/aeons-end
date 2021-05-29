@@ -660,3 +660,120 @@
     (is (thrown-with-msg? AssertionError #"Heal error: Exhausted player cannot be healed"
                           (-> {:players [{:life 0}]}
                               (heal-player 0 1))))))
+
+(deftest game-over-test
+  (testing "Game Over"
+    (testing "Nemesis defeated"
+      (is (= (-> {:real-game? true
+                  :nemesis    {:life 2
+                               :deck [{}]}}
+                 (deal-damage 1))
+             {:real-game? true
+              :nemesis    {:life 1
+                           :deck [{}]}}))
+      (is (= (-> {:real-game? true
+                  :nemesis    {:life 1
+                               :deck [{}]}}
+                 (deal-damage 1)
+                 (update :game-over dissoc :text))
+             {:real-game? true
+              :nemesis    {:life 0
+                           :deck [{}]}
+              :game-over  {:conclusion :victory}})))
+    (testing "Nemesis exhausted"
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck [{:name    :last-attack
+                                       :type    :attack
+                                       :effects [[:damage-gravehold 1]]}
+                                      {}]}
+                  :gravehold  {:life 30}}
+                 draw-nemesis-card)
+             {:real-game? true
+              :nemesis    {:deck    [{}]
+                           :discard [{:name    :last-attack
+                                      :type    :attack
+                                      :effects [[:damage-gravehold 1]]}]}
+              :gravehold  {:life 29}}))
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck      [{:name    :last-attack
+                                            :type    :attack
+                                            :effects [[:damage-gravehold 1]]}]
+                               :play-area [{}]}
+                  :gravehold  {:life 30}}
+                 draw-nemesis-card)
+             {:real-game? true
+              :nemesis    {:play-area [{}]
+                           :discard   [{:name    :last-attack
+                                        :type    :attack
+                                        :effects [[:damage-gravehold 1]]}]}
+              :gravehold  {:life 29}}))
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck [{:name    :last-attack
+                                       :type    :attack
+                                       :effects [[:damage-gravehold 1]]}]}
+                  :gravehold  {:life 30}}
+                 draw-nemesis-card
+                 (update :game-over dissoc :text))
+             {:real-game? true
+              :nemesis    {:discard [{:name    :last-attack
+                                      :type    :attack
+                                      :effects [[:damage-gravehold 1]]}]}
+              :gravehold  {:life 29}
+              :game-over  {:conclusion :victory}})))
+    (testing "Gravehold defeated"
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck    [{}]
+                               :unleash [[:damage-gravehold 1]]}
+                  :gravehold  {:life 2}}
+                 unleash)
+             {:real-game? true
+              :nemesis    {:deck    [{}]
+                           :unleash [[:damage-gravehold 1]]}
+              :gravehold  {:life 1}}))
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck    [{}]
+                               :unleash [[:damage-gravehold 1]]}
+                  :gravehold  {:life 1}}
+                 unleash
+                 (update :game-over dissoc :text))
+             {:real-game? true
+              :nemesis    {:deck    [{}]
+                           :unleash [[:damage-gravehold 1]]}
+              :gravehold  {:life 0}
+              :game-over  {:conclusion :defeat}}))
+      (testing "before nemesis exhausted"
+        (is (= (-> {:real-game? true
+                    :nemesis    {:deck [{:name    :last-attack
+                                         :type    :attack
+                                         :effects [[:damage-gravehold 1]]}]}
+                    :gravehold  {:life 1}}
+                   draw-nemesis-card
+                   (update :game-over dissoc :text))
+               {:real-game? true
+                :resolving  :last-attack
+                :nemesis    {:play-area [{:name    :last-attack
+                                          :type    :attack
+                                          :effects [[:damage-gravehold 1]]}]}
+                :gravehold  {:life 0}
+                :game-over  {:conclusion :defeat}}))))
+    (testing "Players exhausted"
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck [{}]}
+                  :players    [{:life 2}
+                               {:life 0}]}
+                 (damage-player 0 1))
+             {:real-game? true
+              :nemesis    {:deck [{}]}
+              :players    [{:life 1}
+                           {:life 0}]}))
+      (is (= (-> {:real-game? true
+                  :nemesis    {:deck [{}]}
+                  :players    [{:life 1}
+                               {:life 0}]}
+                 (damage-player 0 1)
+                 (update :game-over dissoc :text))
+             {:real-game? true
+              :nemesis    {:deck [{}]}
+              :players    [{:life 0}
+                           {:life 0}]
+              :game-over  {:conclusion :defeat}})))))

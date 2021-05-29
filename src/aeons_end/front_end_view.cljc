@@ -449,32 +449,34 @@
                                                       :type    type})))))
                :number-of-cards (count discard)})})
 
-(defn view-game [{:keys [nemesis gravehold turn-order players effect-stack current-player] :as game}]
+(defn view-game [{:keys [nemesis gravehold turn-order players effect-stack current-player game-over] :as game}]
   (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
-    (->> (merge
-           {:nemesis    (view-nemesis (merge game
-                                             (when player
-                                               {:player (-> player
-                                                            (assoc :player-no current-player)
-                                                            (cond-> player-no (assoc :choice choice)))})
-                                             (when (nil? player-no)
-                                               {:choice choice})))
-            :gravehold  gravehold
-            :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
-                                                  :choice choice}))
-            :turn-order (view-turn-order turn-order)
-            :players    (->> players
-                             (map-indexed (fn [idx player]
-                                            (let [active-player? (and (= idx current-player)
-                                                                      (or (nil? choice)
-                                                                          (= idx player-no))
-                                                                      (not= phase :end-of-game))]
-                                              (view-player (merge game
-                                                                  {:active-player? active-player?
-                                                                   :player         (assoc player :player-no idx)}
-                                                                  (when (or (= idx player-no)
-                                                                            (#{:players :prepped-spells :collective-hands} source))
-                                                                    {:choice choice})))))))
-            :trash      (view-trash (merge game {:choice choice}))
-            :commands   (view-commands game)}))))
+    (merge
+      {:nemesis    (view-nemesis (merge game
+                                        (when player
+                                          {:player (-> player
+                                                       (assoc :player-no current-player)
+                                                       (cond-> player-no (assoc :choice choice)))})
+                                        (when (nil? player-no)
+                                          {:choice choice})))
+       :gravehold  gravehold
+       :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
+                                             :choice choice}))
+       :turn-order (view-turn-order turn-order)
+       :players    (->> players
+                        (map-indexed (fn [idx player]
+                                       (let [active-player? (and (= idx current-player)
+                                                                 (or (nil? choice)
+                                                                     (= idx player-no))
+                                                                 (not= phase :end-of-game))]
+                                         (view-player (merge game
+                                                             {:active-player? active-player?
+                                                              :player         (assoc player :player-no idx)}
+                                                             (when (or (= idx player-no)
+                                                                       (#{:players :prepped-spells :collective-hands} source))
+                                                               {:choice choice})))))))
+       :trash      (view-trash (merge game {:choice choice}))
+       :commands   (view-commands game)}
+      (when game-over
+        {:game-over game-over}))))

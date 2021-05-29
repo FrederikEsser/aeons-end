@@ -361,4 +361,31 @@
              {:nemesis    {:tokens  8
                            :unleash [[::umbra-titan/umbra-titan-unleash]]}
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
-              :gravehold  {:life 28}})))))
+              :gravehold  {:life 28}})))
+    (testing "Victory condition"
+      (is (= (-> {:real-game? true
+                  :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
+                  :nemesis    (merge umbra-titan
+                                     {:deck   [{}]
+                                      :tokens 2})}
+                 unleash
+                 (choose :token))
+             {:real-game? true
+              :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
+              :nemesis    (merge umbra-titan
+                                 {:deck   [{}]
+                                  :tokens 1})}))
+      (is (= (-> {:real-game? true
+                  :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
+                  :nemesis    (merge umbra-titan
+                                     {:deck   [{}]
+                                      :tokens 1})}
+                 unleash
+                 (choose :token)
+                 (update :game-over dissoc :text))
+             {:real-game? true
+              :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
+              :nemesis    (merge umbra-titan
+                                 {:deck   [{}]
+                                  :tokens 0})
+              :game-over  {:conclusion :defeat}})))))

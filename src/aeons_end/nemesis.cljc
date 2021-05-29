@@ -66,8 +66,8 @@
                    :deal-damage-to-target  deal-damage-to-target
                    :deal-damage            deal-damage})
 
-(defn damage-gravehold [game {:keys [arg]}]
-  (update-in game [:gravehold :life] - arg))
+(defn damage-gravehold [{:keys [gravehold] :as game} {:keys [arg]}]
+  (assoc-in game [:gravehold :life] (max (- (:life gravehold) arg) 0)))
 
 (effects/register {:damage-gravehold damage-gravehold})
 

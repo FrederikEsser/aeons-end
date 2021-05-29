@@ -24,8 +24,8 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
-(defn button-style [& {:keys [disabled type status number-of-cards max-width]}]
-  (let [inverse?      (or (#{:nemesis} type)
+(defn button-style [& {:keys [disabled type status number-of-cards min-width max-width]}]
+  (let [inverse? (or (#{:nemesis} type)
                      (#{:closed :focused :openable} status))]
     {:color            (cond
                          inverse? (cond disabled "#ccc"
@@ -70,6 +70,7 @@
                          (= :nemesis type) "#782d2a"
                          :else :grey)
      :border-width     2
+     :min-width        min-width
      :max-width        max-width}))
 
 (defn mapk [f coll]
@@ -171,9 +172,6 @@
          (when power-text
            (format-text power-text (str "POWER" (when power (str " " power)))))
          (when life
-           #_[:div {:style {:font-size  "0.9em"
-                            :paddingTop "3px"}}
-              (str "Life: " life)]
            (format-text nil (str "Life: " life)))
          (when persistent-text
            (format-text persistent-text "PERSISTENT"))]]])))
@@ -188,7 +186,8 @@
       [:button {:style    (button-style :disabled disabled
                                         :type :breach
                                         :status (or (get interactions :openable)
-                                                    status))
+                                                    status)
+                                        :min-width 88)
                 :disabled disabled
                 :on-click (when (not-empty interactions)
                             (fn [] (cond
@@ -375,7 +374,7 @@
         [:button {:style    (button-style)
                   :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
                                      (swap! state assoc :game (cmd/restart) :selection [])))}
-         "Restart"]
+         "Retry"]
         (let [disabled (-> @state :game :commands :can-undo? not)]
           [:button {:style    (button-style :disabled disabled)
                     :disabled disabled
@@ -423,7 +422,19 @@
                                   :disabled true}
                          (if (pos? number-of-cards)
                            (str "Turn order x" number-of-cards)
-                           "(empty)")]}])]]]]])
+                           "(empty)")]}])]
+             (when-let [{:keys [conclusion text]} (-> @state :game :game-over)]
+               [:td
+                [:div {:style {:text-align :center}}
+                 [:div {:style {:font-size   "3em"
+                                :font-weight :bold
+                                :padding     "20px"
+                                :color       (case conclusion
+                                               :defeat :red
+                                               :victory :green)}}
+                  (ut/format-name conclusion)]
+                 [:div
+                  (format-text text)]]])]]]])
        (when-let [players (get-in @state [:game :players])]
          [:div
           [:table
