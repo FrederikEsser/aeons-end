@@ -67,6 +67,19 @@
                        :discard  [amplify-vision]}]
             :nemesis {:life 47}}))
     (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [amplify-vision]}
+                                      {:status :opened}
+                                      {:status :opened}
+                                      {:status :destroyed}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :amplify-vision))
+           {:players [{:breaches [{:status :opened}
+                                  {:status :opened}
+                                  {:status :opened}
+                                  {:status :destroyed}]
+                       :discard  [amplify-vision]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
                                        :bonus-damage   1
                                        :prepped-spells [amplify-vision]}
                                       {:status     :closed

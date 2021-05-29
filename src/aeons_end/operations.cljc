@@ -729,11 +729,13 @@
                                                              (map (fn [o] (or (:option o) o)))))))
       effects (push-effect-stack game {:player-no player-no
                                        :effects   effects})
-      :else (-> game
-                (push-effect-stack {:player-no player-no
-                                    :card-id   card-id
-                                    :choice    choice})
-                (choose nil)))))
+      (or (nil? min)
+          optional?) (-> game
+                         (push-effect-stack {:player-no player-no
+                                             :card-id   card-id
+                                             :choice    choice})
+                         (choose nil))
+      :else game)))
 
 (effects/register {:give-choice give-choice})
 

@@ -19,20 +19,33 @@
                :type    {:player-no 3}
                :effects [[:set-current-player {:player-no 3}]]})
 
+(defn set-resolving [game {:keys [card-name]}]
+  (assoc game :resolving card-name))
+
+(defn clear-resolving [game _]
+  (dissoc game :resolving))
+
+(effects/register {:set-resolving   set-resolving
+                   :clear-resolving clear-resolving})
+
 (defn resolve-power-card [game {:keys [card-name]}]
   (let [{:keys [idx card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
         {{:keys [power effects]} :power} card]
     (-> game
         (update-in [:nemesis :play-area idx :power :power] dec)
         (cond->
-          (= 1 power) (push-effect-stack {:effects (concat effects
+          (= 1 power) (push-effect-stack {:effects (concat [[:set-resolving {:card-name card-name}]]
+                                                           effects
+                                                           [[:clear-resolving]]
                                                            [[:discard-nemesis-card {:card-name card-name}]])})))))
 
 (defn resolve-minion-card [game {:keys [card-name]}]
   (let [{:keys [effects]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
                               :card
                               :persistent)]
-    (push-effect-stack game {:effects effects})))
+    (push-effect-stack game {:effects (concat [[:set-resolving {:card-name card-name}]]
+                                              effects
+                                              [[:clear-resolving]])})))
 
 (defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
   (push-effect-stack game {:effects (->> (:play-area nemesis)
@@ -58,7 +71,9 @@
                                                                         :life      life}]])
                                               (when (= :attack type)
                                                 (concat
+                                                  [[:set-resolving {:card-name name}]]
                                                   effects
+                                                  [[:clear-resolving]]
                                                   [[:discard-nemesis-card {:card-name name}]])))})))
 
 (effects/register {:set-minion-max-life set-minion-max-life

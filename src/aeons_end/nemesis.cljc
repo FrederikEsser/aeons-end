@@ -7,9 +7,10 @@
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]))
 
-(defn unleash [game _]
+(defn unleash [game args]
   (let [effects (get-in game [:nemesis :unleash])]
-    (push-effect-stack game {:effects effects})))
+    (push-effect-stack game {:args    args
+                             :effects effects})))
 
 (effects/register {:unleash unleash})
 
@@ -71,16 +72,18 @@
 (effects/register {:damage-gravehold damage-gravehold})
 
 (defn exhaust-player [game {:keys [player-no]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:unleash]
-                                       [:unleash]
-                                       [:give-choice {:title   :player-exhausted
-                                                      :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
-                                                      :choice  :destroy-breach
-                                                      :options [:breaches]
-                                                      :min     1
-                                                      :max     1}]
-                                       [:spend-charges]]}))
+  (let [{:keys [name]} (get-in game [:players player-no])
+        resolve-text (str (ut/format-name name) " exhausted")]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:unleash {:resolving resolve-text}]
+                                         [:unleash {:resolving resolve-text}]
+                                         [:give-choice {:title   resolve-text
+                                                        :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
+                                                        :choice  :destroy-breach
+                                                        :options [:breaches]
+                                                        :min     1
+                                                        :max     1}]
+                                         [:spend-charges]]})))
 
 (defn damage-player [game {:keys [player-no arg]}]
   (let [{:keys [life]} (get-in game [:players player-no])]

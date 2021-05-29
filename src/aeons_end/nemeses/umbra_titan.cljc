@@ -223,20 +223,23 @@
                                       :damage [[:damage-gravehold 2]]
                                       :token [[:lose-nemesis-tokens 1]])}))
 
-(defn umbra-titan-unleash [game _]
-  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+(defn umbra-titan-unleash [game args]
+  (let [title                   (keyword (or (:resolving args)
+                                             (:resolving game))
+                                         "unleash")
+        discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
                                      (filter (comp #{:nemesis} :type))
                                      count)]
     (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
     (push-effect-stack game {:effects [[:give-choice (case discarded-nemesis-cards
-                                                       1 {:title     :unleash
+                                                       1 {:title     title
                                                           :text      "Any player suffers 2 damage."
                                                           :choice    [:damage-player {:arg 2}]
                                                           :or-choice {:text    "Umbra titan loses one nemesis token"
                                                                       :effects [[:lose-nemesis-tokens 1]]}
                                                           :options   [:players]
                                                           :max       1}
-                                                       2 {:title   :unleash
+                                                       2 {:title   title
                                                           :choice  ::umbra-titan-choice
                                                           :options [:special
                                                                     {:option :damage :text "Gravehold suffers 2 damage"}

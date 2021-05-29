@@ -141,7 +141,7 @@
                                                         :options [:collective-hands]
                                                         :min     3
                                                         :max     3}]]}
-                  :quote      "'It churned and rolled , a maelstrom of malign power. The void was upon me and yet I felt only the throes of freedom from my prison of sleep.' Yan Magda, Enlightened Exile"})
+                  :quote      "'It churned and rolled, a maelstrom of malign power. The void was upon me and yet I felt only the throes of freedom from my prison of sleep.' Yan Magda, Enlightened Exile"})
 
 (defn night-unending-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players

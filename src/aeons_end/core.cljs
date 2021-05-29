@@ -26,8 +26,7 @@
 
 (defn button-style [& {:keys [disabled type status number-of-cards max-width]}]
   (let [inverse?      (or (#{:nemesis} type)
-                          (#{:closed :focused :openable} status))
-        nemesis-card? (#{:attack :power :minion} type)]
+                     (#{:closed :focused :openable} status))]
     {:color            (cond
                          inverse? (cond disabled "#ccc"
                                         (= :openable status) "#f8e238"
@@ -54,6 +53,7 @@
                          (= :nemesis type) "#b22b2e")
      :border-color     (cond
                          (zero? number-of-cards) :red
+                         (= :resolving status) :red
                          (#{:gem :attack} type) "#9d77af"
                          (#{:relic} type) "#6bb6dc"
                          (#{:spell :power} type) "#f8c44e"
@@ -112,7 +112,9 @@
           [:button {:style    (button-style :disabled disabled
                                             :type type
                                             :number-of-cards number-of-cards)
-                    :title    text
+                    :title    (if (coll? text)
+                                (string/join "\n" text)
+                                text)
                     :disabled disabled
                     :on-click (when interaction
                                 (fn [] (case interaction
@@ -144,13 +146,14 @@
              [:strong (str title (when text ": "))])
            text]))
 
-(defn view-nemesis-card [{:keys [name name-ui text quote choice-value type
+(defn view-nemesis-card [{:keys [name name-ui text quote choice-value type status
                                  to-discard-text power power-text life persistent-text interaction] :as card}]
   (when card
     (let [disabled (nil? interaction)]
       [:button {:style    (button-style :disabled disabled
                                         :max-width "140px"
-                                        :type type)
+                                        :type type
+                                        :status status)
                 :title    quote
                 :disabled disabled
                 :on-click (when interaction

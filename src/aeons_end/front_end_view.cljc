@@ -287,9 +287,21 @@
          (choice-interaction-player {:area      :players
                                      :player-no player-no} choice)))
 
+(defn format-text [text & [title]]
+  (cond
+    (coll? text) (->> text
+                      (map-indexed (fn [idx paragraph]
+                                     (str (when (and (zero? idx) title)
+                                            (str title ": "))
+                                          paragraph))))
+    text [(str (when title
+                 (str title ": "))
+               text)]))
+
 (defn view-nemesis [{{:keys [name life tokens deck play-area discard]} :nemesis
                      {:keys [player-no phase] :as player}              :player
                      choice                                            :choice
+                     resolving                                         :resolving
                      :as                                               game}]
   (merge {:name-ui (ut/format-name name)
           :life    life
@@ -310,6 +322,8 @@
                                              :text    text
                                              :quote   quote
                                              :type    type}
+                                            (when (= resolving name)
+                                              {:status :resolving})
                                             (when to-discard
                                               {:to-discard-text (:text to-discard)})
                                             (when power
@@ -350,7 +364,16 @@
                                               (map (fn [{:keys [name text quote type to-discard power persistent life]}]
                                                      (merge {:name    name
                                                              :name-ui (ut/format-name name)
-                                                             :text    text
+                                                             :text    (concat (when life
+                                                                                [(str "Life: " life)])
+                                                                              (when text
+                                                                                (format-text text))
+                                                                              (when to-discard
+                                                                                (format-text (:text to-discard) "TO DISCARD"))
+                                                                              (when power
+                                                                                (format-text (:text power) "POWER"))
+                                                                              (when persistent
+                                                                                (format-text (:text persistent) "PERSISTENT")))
                                                              :quote   quote
                                                              :type    type}
                                                             (when to-discard

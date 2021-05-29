@@ -19,14 +19,18 @@
   (cond-> card
           (nil? id) (assoc :id (next-id!))))
 
-(defn format-name [{:keys [card-name] :as kw}]
-  (if card-name
-    (format-name card-name)
-    (-> kw
-        name
-        (s/split #"[- ]")
-        (->> (map s/capitalize)
-             (s/join " ")))))
+(defn format-name [{:keys [card-name] :as n}]
+  (cond
+    card-name (format-name card-name)
+    (and (keyword? n)
+         (namespace n)) (str (format-name (namespace n))
+                             " - "
+                             (format-name (name n)))
+    (keyword? n) (format-name (name n))
+    (string? n) (-> n
+                    (s/split #"[- ]")
+                    (->> (map s/capitalize)
+                         (s/join " ")))))
 
 (defn format-name-short [n]
   (-> n
