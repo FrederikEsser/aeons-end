@@ -26,7 +26,7 @@
   (view))
 
 (defn start-game []
-  (let [game (setup/create-game)]
+  (let [game (setup/create-game :expert)]
     (swap! game-state assoc :game (-> game
                                       (commands/start-game)
                                       list))

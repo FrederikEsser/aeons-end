@@ -25,17 +25,17 @@
              {:players [{:ability (assoc brink-siphon :charges 0)
                          :life    7}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
-                             :life    (- ut/player-starting-life 3)}]}
+                             :life    7}]}
                  (activate-ability 0)
                  (choose {:player-no 0}))
              {:players [{:ability (assoc brink-siphon :charges 0)
-                         :life    ut/player-starting-life}]}))
+                         :life    10}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
-                             :life    ut/player-starting-life}]}
+                             :life    10}]}
                  (activate-ability 0)
                  (choose {:player-no 0}))
              {:players [{:ability (assoc brink-siphon :charges 0)
-                         :life    ut/player-starting-life}]}))
+                         :life    10}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
                              :life    5}
                             {:life 1}]}

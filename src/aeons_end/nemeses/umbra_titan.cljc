@@ -218,12 +218,17 @@
                                                           :max       1}]]}
                     :quote      "The Titan hides beneath the skin of the cave, emerging only to strike."})
 
-(defn umbra-titan-choice [game {:keys [choice]}]
+(defn setup [{:keys [difficulty] :as game} _]
+  (assoc-in game [:nemesis :tokens] (if (#{:expert :extinction} difficulty) 5 8)))
+
+(effects/register {::setup setup})
+
+(defn unleash-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
                                       :damage [[:damage-gravehold 2]]
                                       :token [[:lose-nemesis-tokens 1]])}))
 
-(defn umbra-titan-unleash [game args]
+(defn do-unleash [game args]
   (let [title                   (keyword (or (:resolving args)
                                              (:resolving game))
                                          "unleash")
@@ -240,19 +245,20 @@
                                                           :options   [:players]
                                                           :max       1}
                                                        2 {:title   title
-                                                          :choice  ::umbra-titan-choice
+                                                          :choice  ::unleash-choice
                                                           :options [:special
                                                                     {:option :damage :text "Gravehold suffers 2 damage"}
                                                                     {:option :token :text "Umbra titan loses one nemesis token"}]
                                                           :min     1
                                                           :max     1})]]})))
 
-(effects/register {::umbra-titan-choice  umbra-titan-choice
-                   ::umbra-titan-unleash umbra-titan-unleash})
+(effects/register {::unleash-choice unleash-choice
+                   ::unleash        do-unleash})
 
 (defn victory-condition [{:keys [real-game? nemesis] :as game}]
   (let [tokens (get-in game [:nemesis :tokens])]
     (when (and real-game?
+               tokens
                (<= tokens 0))
       {:conclusion :defeat
        :text       "Gravehold's foundation is undermined. Gravehold collapses into rubble."})))
@@ -261,9 +267,9 @@
 
 (def umbra-titan {:name              :umbra-titan
                   :difficulty        3
-                  :life              80
-                  :tokens            5
-                  :unleash           [[::umbra-titan-unleash]]
+                  :life              70
+                  :setup             [[::setup]]
+                  :unleash           [[::unleash]]
                   :victory-condition ::victory-condition
                   :cards             [cryptid grubber seismic-roar
                                       maul tombfright vault-behemoth

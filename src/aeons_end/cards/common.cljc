@@ -13,10 +13,12 @@
 
 (effects/register {:gain-aether gain-aether})
 
-(defn heal [game {:keys [player-no life]}]
+(defn heal [{:keys [player-starting-life]
+             :or   {player-starting-life 10} :as game}
+            {:keys [player-no life]}]
   (let [current-life (get-in game [:players player-no :life])
         amount       (min life
-                          (- ut/player-starting-life current-life))]
+                          (- player-starting-life current-life))]
     (assert (pos? current-life) "Heal error: Exhausted player cannot be healed.")
     (-> game
         (update-in [:players player-no :life] ut/plus amount))))

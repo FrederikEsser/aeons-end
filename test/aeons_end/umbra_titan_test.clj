@@ -323,43 +323,43 @@
   (testing "Umbra Titan"
     (testing "Unleash"
       (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                               :unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/nemesis]}
                   :players    [{:life 10}]}
                  unleash
                  (choose nil))
              {:nemesis    {:tokens  7
-                           :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                           :unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/nemesis]}
               :players    [{:life 10}]}))
       (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                               :unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/player-0 turn-order/nemesis]}
                   :players    [{:life 10}]}
                  unleash
                  (choose {:player-no 0}))
              {:nemesis    {:tokens  8
-                           :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                           :unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/player-0 turn-order/nemesis]}
               :players    [{:life 8}]}))
       (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                               :unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
                   :gravehold  {:life 30}}
                  unleash
                  (choose :token))
              {:nemesis    {:tokens  7
-                           :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                           :unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
               :gravehold  {:life 30}}))
       (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                               :unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
                   :gravehold  {:life 30}}
                  unleash
                  (choose :damage))
              {:nemesis    {:tokens  8
-                           :unleash [[::umbra-titan/umbra-titan-unleash]]}
+                           :unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
               :gravehold  {:life 28}})))
     (testing "Victory condition"
