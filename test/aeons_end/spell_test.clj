@@ -218,6 +218,64 @@
                        :discard  [ignite]}]
             :nemesis {:life 48}}))))
 
+(deftest phoenix-flame-test
+  (testing "Phoenix Flame"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :phoenix-flame))
+           {:players [{:breaches [{}]
+                       :discard  [phoenix-flame]}]
+            :nemesis {:life 48}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]
+                           :ability  {:charges 1}}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :phoenix-flame)
+               (choose :charges))
+           {:players [{:breaches [{}]
+                       :ability  {:charges 0}
+                       :discard  [phoenix-flame]}]
+            :nemesis {:life 46}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]
+                           :ability  {:charges 1}}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :phoenix-flame)
+               (choose nil))
+           {:players [{:breaches [{}]
+                       :ability  {:charges 1}
+                       :discard  [phoenix-flame]}]
+            :nemesis {:life 48}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]
+                           :ability  {:charges 2}}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :phoenix-flame)
+               (choose :charges))
+           {:players [{:breaches [{}]
+                       :ability  {:charges 1}
+                       :discard  [phoenix-flame]}]
+            :nemesis {:life 46}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [phoenix-flame]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :phoenix-flame))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1}]
+                       :discard  [phoenix-flame]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [phoenix-flame]}]
+                           :ability  {:charges 1}}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :phoenix-flame)
+               (choose :charges))
+           {:players [{:breaches [{:status       :opened
+                                   :bonus-damage 1
+                                   }]
+                       :ability  {:charges 0}
+                       :discard  [phoenix-flame]}]
+            :nemesis {:life 45}}))))
+
 (deftest radiance-test
   (testing "Radiance"
     (is (= (-> {:players [{:breaches [{:prepped-spells [radiance]}]

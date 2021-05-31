@@ -79,7 +79,7 @@
                           {:card gem/pain-stone :pile-size 7}
                           {:card relic/unstable-prism :pile-size 5}
                           {:card relic/vortex-gauntlet :pile-size 5}
-                          {:card spell/amplify-vision :pile-size 5}
+                          {:card spell/phoenix-flame :pile-size 5}
                           {:card spell/ignite :pile-size 5}
                           {:card spell/dark-fire :pile-size 5}
                           {:card spell/radiance :pile-size 5}]

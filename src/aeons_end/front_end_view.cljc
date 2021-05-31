@@ -255,7 +255,10 @@
              (and active?
                   (not choice)
                   (#{:casting :main} phase)
-                  (>= charges charge-cost)) {:interaction :activatable}))))
+                  (>= charges charge-cost)) {:interaction :activatable})
+           (when (= :charges (:source choice))
+             {:interaction  :quick-choosable
+              :choice-value :charges}))))
 
 (defn view-player [{{:keys [player-no name title life]
                      :as   player} :player

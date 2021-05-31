@@ -471,9 +471,10 @@
 
 (effects/register {:gain-charge gain-charge})
 
-(defn spend-charges [game {:keys [player-no]}]
-  (-> game
-      (assoc-in [:players player-no :ability :charges] 0)))
+(defn spend-charges [game {:keys [player-no arg]}]
+  (if arg
+    (update-in game [:players player-no :ability :charges] - arg)
+    (assoc-in game [:players player-no :ability :charges] 0)))
 
 (effects/register {:spend-charges spend-charges})
 
@@ -759,7 +760,7 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                            [player-no card-id min max optional? choice-opts]
+(defn give-choice [{:keys [mode] :as game} {:keys                            [player-no card-id min max optional? choice-opts bonus-damage]
                                             [opt-name & opt-args :as option] :options
                                             {:keys [effects]}                :or-choice
                                             :as                              choice}]
@@ -785,8 +786,10 @@
                               (cond-> swiftable (choose (->> options
                                                              (take min)
                                                              (map (fn [o] (or (:option o) o)))))))
-      effects (push-effect-stack game {:player-no player-no
-                                       :effects   effects})
+      effects (push-effect-stack game (merge {:player-no player-no
+                                              :effects   effects}
+                                             (when bonus-damage
+                                               {:args {:bonus-damage bonus-damage}})))
       (or (nil? min)
           optional?) (-> game
                          (push-effect-stack {:player-no player-no

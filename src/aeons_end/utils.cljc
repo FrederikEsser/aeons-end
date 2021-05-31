@@ -458,6 +458,14 @@
 
 (effects/register-options {:prepped-spells options-from-prepped-spells})
 
+(defn options-from-charges [game player-no _ & [{:keys []}]]
+  (let [charges (get-in game [:players player-no :ability :charges])]
+    (when (and charges
+               (pos? charges))
+      [:charges])))
+
+(effects/register-options {:charges options-from-charges})
+
 (defn options-from-nemesis [_ _ _]
   [nil])
 

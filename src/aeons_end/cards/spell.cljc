@@ -67,6 +67,26 @@
                                       :min     1
                                       :max     1}]]})
 
+(defn phoenix-flame-damage [game {:keys [player-no choice] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :args      args
+                           :effects   [[:spend-charges 1]
+                                       [:deal-damage 4]]}))
+
+(effects/register {::phoenix-flame-damage phoenix-flame-damage})
+
+(def phoenix-flame {:name    :phoenix-flame
+                    :type    :spell
+                    :cost    3
+                    :text    "Cast: Deal 2 damage.\nYou may lose 1 charge to deal 2 additional damage."
+                    :effects [[:give-choice {:title     :phoenix-flame
+                                             :text      "You may lose 1 charge to deal 4 damage."
+                                             :choice    ::phoenix-flame-damage
+                                             :or-choice {:text    "Deal 2 damage"
+                                                         :effects [[:deal-damage 2]]}
+                                             :options   [:charges]
+                                             :max       1}]]})
+
 (def radiance {:name    :radiance
                :type    :spell
                :cost    8

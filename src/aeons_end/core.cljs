@@ -208,7 +208,7 @@
            (map #(assoc % :breach-no breach-no))
            (mapk (partial view-card max)))]]))
 
-(defn view-ability [{:keys [name-ui text type charges charge-cost interaction]}]
+(defn view-ability [{:keys [name-ui text type charges charge-cost interaction choice-value]}]
   (let [disabled (nil? interaction)]
     [:div
      [:button {:style    (button-style :disabled disabled
@@ -218,6 +218,7 @@
                :disabled disabled
                :on-click (when interaction
                            (fn [] (case interaction
+                                    :quick-choosable (swap! state assoc :game (cmd/choose choice-value))
                                     :chargeable (swap! state assoc :game (cmd/charge-ability))
                                     :activatable (swap! state assoc :game (cmd/activate-ability)))))}
       (str name-ui
