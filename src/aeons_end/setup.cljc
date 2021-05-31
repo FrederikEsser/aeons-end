@@ -1,5 +1,6 @@
 (ns aeons-end.setup
   (:require [aeons-end.operations :refer [push-effect-stack check-stack]]
+            [aeons-end.cards.common :refer [player-starting-life gravehold-starting-life]]
             [aeons-end.nemesis :as nemesis]
             [aeons-end.cards.gem :as gem]
             [aeons-end.cards.relic :as relic]
@@ -41,12 +42,6 @@
                                    shuffle)))
                     vec)})))
 
-(defn player-starting-life [difficulty]
-  (case difficulty
-    :beginner 12
-    :extinction 8
-    10))
-
 (defn create-player [{:keys [breaches ability] :as mage} & {:keys [difficulty]}]
   (-> mage
       (merge {:breaches (->> breaches
@@ -72,36 +67,30 @@
 
 (defn create-game [difficulty]
   (let [{:keys [setup] :as nemesis} umbra-titan]
-    (cond-> {:mode                 :swift
-             :real-game?           true
-             :difficulty           (or difficulty :normal)
-             :nemesis              (create-nemesis nemesis
-                                                   :number-of-players 2
-                                                   :difficulty difficulty)
-             :gravehold            (let [starting-life (case difficulty
-                                                         :beginner 35
-                                                         :extinction 25
-                                                         30)]
-                                     {:life          starting-life
-                                      :starting-life starting-life})
-             :supply               [{:card gem/jade :pile-size 7}
-                                    {:card gem/alien-element :pile-size 7}
-                                    {:card gem/pain-stone :pile-size 7}
-                                    {:card relic/unstable-prism :pile-size 5}
-                                    {:card relic/vortex-gauntlet :pile-size 5}
-                                    {:card spell/amplify-vision :pile-size 5}
-                                    {:card spell/ignite :pile-size 5}
-                                    {:card spell/dark-fire :pile-size 5}
-                                    {:card spell/radiance :pile-size 5}]
-             :players              [(create-player mages/brama :difficulty difficulty)
-                                    (create-player mages/mist :difficulty difficulty)]
-             :player-starting-life (player-starting-life difficulty)
-             :turn-order           {:deck (->> [turn-order/player-0
-                                                turn-order/player-0
-                                                turn-order/player-1
-                                                turn-order/player-1
-                                                turn-order/nemesis
-                                                turn-order/nemesis]
-                                               shuffle)}}
+    (cond-> {:mode       :swift
+             :real-game? true
+             :difficulty (or difficulty :normal)
+             :nemesis    (create-nemesis nemesis
+                                         :number-of-players 2
+                                         :difficulty difficulty)
+             :gravehold  {:life (gravehold-starting-life difficulty)}
+             :supply     [{:card gem/jade :pile-size 7}
+                          {:card gem/alien-element :pile-size 7}
+                          {:card gem/pain-stone :pile-size 7}
+                          {:card relic/unstable-prism :pile-size 5}
+                          {:card relic/vortex-gauntlet :pile-size 5}
+                          {:card spell/amplify-vision :pile-size 5}
+                          {:card spell/ignite :pile-size 5}
+                          {:card spell/dark-fire :pile-size 5}
+                          {:card spell/radiance :pile-size 5}]
+             :players    [(create-player mages/brama :difficulty difficulty)
+                          (create-player mages/mist :difficulty difficulty)]
+             :turn-order {:deck (->> [turn-order/player-0
+                                      turn-order/player-0
+                                      turn-order/player-1
+                                      turn-order/player-1
+                                      turn-order/nemesis
+                                      turn-order/nemesis]
+                                     shuffle)}}
             setup (-> (push-effect-stack {:effects setup})
                       check-stack))))

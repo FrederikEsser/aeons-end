@@ -9,6 +9,7 @@
 ;; Views
 
 (defonce state (r/atom {:setup-game? true
+                        :game-setup  {:difficulty :normal}
                         :selection   []
                         :num-players 2}))
 
@@ -351,12 +352,16 @@
                             (swap! state update :sets disj set-name)
                             (swap! state update :sets conj set-name))}]]))
 
+(defn option [_]
+  (fn [value]
+    [:option {:value value} (ut/format-name value)]))
+
 (defn create-game []
   (fn []
     [:div
      [:button {:style    (button-style)
                :on-click (fn [] (swap! state assoc
-                                       :game (cmd/start-game)
+                                       :game (cmd/start-game (-> @state :game-setup))
                                        :setup-game? false))}
       "Create game"]]))
 
@@ -398,6 +403,19 @@
                                                      :choosable (select! (or choice-value name))
                                                      :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
                        name-ui])]
+                   [:div
+                    (let [difficulty (-> @state :game-setup :difficulty)]
+                      [:<>
+                       "Diff: "
+                       (if setup-game?
+                         [:select {:value     difficulty
+                                   :on-change #(swap! state assoc-in [:game-setup :difficulty] (keyword (.. % -target -value)))}
+                          [:<>
+                           [option :beginner]
+                           [option :normal]
+                           [option :expert]
+                           [option :extinction]]]
+                         (ut/format-name difficulty))])]
                    [:div "Life: " life]
                    [:div "Tokens: " tokens]]
                   [:td [:div
