@@ -45,3 +45,11 @@
                                                             {:option :damage :text "Gain 2 Aether and deal 1 damage"}]
                                                   :min     1
                                                   :max     1}]]})
+
+(def searing-ruby {:name    :searing-ruby
+                   :type    :gem
+                   :cost    4
+                   :text    "Gain 2 Aether\nGain an additional 1 Aether that can only be used to gain a spell."
+                   :effects [[:gain-aether 2]
+                             [:gain-aether {:earmark #{:spell}
+                                            :arg     1}]]})

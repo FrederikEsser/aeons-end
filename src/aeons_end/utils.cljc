@@ -40,6 +40,15 @@
        (map format-name)
        (s/join "/")))
 
+(defn format-aether [{:keys [aether earmarked-aether]
+                      :or   {aether 0}}]
+  (let [extra-aether (->> earmarked-aether
+                          vals
+                          (apply +))]
+    (str aether
+         (when (pos? extra-aether)
+           (str "(+" extra-aether ")")))))
+
 (defn format-cost [cost]
   (str "$" cost))
 
@@ -342,6 +351,17 @@
                      {:coin-cost cost}
                      cost)]
     (merge-with + card-cost added-cost)))
+
+(defn can-afford? [{:keys [aether earmarked-aether]
+                    :or   {aether 0}}
+                   cost type]
+  (let [valid-aether (+ aether
+                        (->> earmarked-aether
+                             (keep (fn [[types aether]]
+                                     (when (contains? types type)
+                                       aether)))
+                             (apply +)))]
+    (>= valid-aether cost)))
 
 (defn options-from-player [game player-no card-id area &
                            [{:keys [last this id ids name names not-names type types not-type reacts-to min-cost max-cost leaves-play

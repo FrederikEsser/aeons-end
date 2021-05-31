@@ -2,7 +2,8 @@
   (:require [aeons-end.operations :refer [push-effect-stack move-card]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.attack]))
+            [aeons-end.cards.attack]
+            [aeons-end.cards.power :as power]))
 
 (defn lose-nemesis-tokens [game {:keys [arg]}]
   (update-in game [:nemesis :tokens] - arg))
@@ -131,8 +132,7 @@
            :effects [[::maul-give-choice]]})
 
 (defn seismic-roar-can-discard? [game {:keys [player-no]}]
-  (let [aether (or (get-in game [:players player-no :aether]) 0)]
-    (>= aether 6)))
+  (power/can-afford? game {:player-no player-no :amount 6}))
 
 (effects/register-predicates {::seismic-roar-can-discard? seismic-roar-can-discard?})
 
@@ -141,7 +141,8 @@
                    :tier       1
                    :to-discard {:text      "Spend 6 Aether."
                                 :predicate ::seismic-roar-can-discard?
-                                :effects   [[:pay 6]]}
+                                :effects   [[:pay {:amount 6
+                                                   :type   :discard-power-card}]]}
                    :power      {:power   3
                                 :text    "Umbra Titan loses two nemesis tokens."
                                 :effects [[:lose-nemesis-tokens 2]]}
@@ -194,8 +195,7 @@
                    :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' Mazahaedron, Henge Mystic"})
 
 (defn yawning-black-can-discard? [game {:keys [player-no]}]
-  (let [aether (or (get-in game [:players player-no :aether]) 0)]
-    (>= aether 8)))
+  (power/can-afford? game {:player-no player-no :amount 8}))
 
 (effects/register-predicates {::yawning-black-can-discard? yawning-black-can-discard?})
 
@@ -204,7 +204,8 @@
                     :tier       3
                     :to-discard {:text      "Spend 8 Aether."
                                  :predicate ::yawning-black-can-discard?
-                                 :effects   [[:pay 8]]}
+                                 :effects   [[:pay {:amount 8
+                                                    :type   :discard-power-card}]]}
                     :power      {:power   2
                                  :text    ["Any player suffers 6 damage."
                                            "OR"

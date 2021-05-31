@@ -181,7 +181,47 @@
                             (-> {:supply  [{:card jade :pile-size 0}]
                                  :players [{:aether 2
                                             :phase  :main}]}
-                                (buy-card 0 :jade)))))))
+                                (buy-card 0 :jade))))
+      (testing "Earmarked aether"
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether           0
+                               :earmarked-aether {#{:gem} 2}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard [jade]
+                           :aether  0}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether           1
+                               :earmarked-aether {#{:gem} 1}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard [jade]
+                           :aether  0}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether           2
+                               :earmarked-aether {#{:gem} 3}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard          [jade]
+                           :aether           2
+                           :earmarked-aether {#{:gem} 1}}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether           2
+                               :earmarked-aether {#{:spell} 3}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard          [jade]
+                           :aether           0
+                           :earmarked-aether {#{:spell} 3}}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether           1
+                               :earmarked-aether [[#{:gem :relic :spell} 3]
+                                                  [#{:gem} 1]]}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard          [jade]
+                           :aether           1
+                           :earmarked-aether {#{:gem :relic :spell} 2}}]}))))))
 
 (deftest ability-test
   (testing "Ability"
@@ -419,6 +459,10 @@
                                    :prepped-spells [spark]
                                    :stage          2}]
                        :phase    :out-of-turn}]}))
+    (is (= (-> {:players [{:earmarked-aether {#{:spell} 2}
+                           :phase            :draw}]}
+               (end-turn 0))
+           {:players [{:phase :out-of-turn}]}))
     (is (= (-> {:current-player 0
                 :turn-order     {:deck    [turn-order/player-1
                                            turn-order/player-2]

@@ -75,7 +75,7 @@
                                          :difficulty difficulty)
              :gravehold  {:life (gravehold-starting-life difficulty)}
              :supply     [{:card gem/jade :pile-size 7}
-                          {:card gem/alien-element :pile-size 7}
+                          {:card gem/searing-ruby :pile-size 7}
                           {:card gem/pain-stone :pile-size 7}
                           {:card relic/unstable-prism :pile-size 5}
                           {:card relic/vortex-gauntlet :pile-size 5}

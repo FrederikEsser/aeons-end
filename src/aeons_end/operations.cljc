@@ -440,10 +440,26 @@
                    :gain           gain
                    :overpay-choice overpay-choice})
 
-(defn pay [game {:keys [player-no arg]}]
-  (let [{:keys [aether]} (get-in game [:players player-no])]
-    (assert (and aether arg (>= aether arg)) (str "Pay error: You can't pay " arg " aether, when you only have " aether "."))
-    (update-in game [:players player-no :aether] - arg)))
+(defn pay [game {:keys [player-no amount type]}]
+  (let [{:keys [earmarked-aether] :as player} (get-in game [:players player-no])
+        {:keys [amount earmarked]} (->> earmarked-aether
+                                        (sort-by (comp count first))
+                                        (reduce (fn [{:keys [amount earmarked]}
+                                                     [types aether]]
+                                                  (if (contains? types type)
+                                                    (merge {:amount (max 0 (- amount aether))}
+                                                           (when (> aether amount)
+                                                             {:earmarked (assoc earmarked types (- aether amount))}))
+                                                    {:amount    amount
+                                                     :earmarked (assoc earmarked types aether)}))
+                                                {:amount amount}))]
+    (assert (ut/can-afford? player amount type) (str "Pay error: You can't pay " amount " aether, when you only have " (ut/format-aether player) "."))
+    (-> game
+        (update-in [:players player-no :aether] - amount)
+        (as-> game
+              (if earmarked
+                (assoc-in game [:players player-no :earmarked-aether] earmarked)
+                (update-in game [:players player-no] dissoc :earmarked-aether))))))
 
 (effects/register {:pay pay})
 
@@ -793,7 +809,7 @@
 (defn clear-player [game {:keys [player-no]}]
   (-> game
       (dissoc :current-player)
-      (update-in [:players player-no] dissoc :aether)
+      (update-in [:players player-no] dissoc :aether :earmarked-aether)
       (ut/update-in-if-present [:players player-no :breaches]
                                (partial mapv (fn [{:keys [status] :as breach}]
                                                (cond-> breach

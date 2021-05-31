@@ -41,10 +41,9 @@
       (merge interaction
              {:choice-value choice-value}))))
 
-(defn view-supply-card [{{:keys [aether phase]
-                          :or   {aether 0}} :player
-                         choice             :choice
-                         :as                game}
+(defn view-supply-card [{{:keys [phase] :as player} :player
+                         choice                     :choice
+                         :as                        game}
                         {{:keys [name text type cost] :as card} :card
                          :keys                                  [pile-size total-pile-size]
                          :or                                    {pile-size 0}}]
@@ -60,7 +59,7 @@
          (when (and (#{:casting :main} phase)
                     (not choice)
                     (pos? pile-size)
-                    aether (>= aether cost))
+                    (ut/can-afford? player cost type))
            {:interaction :buyable})
          (choice-interaction {:area      :supply
                               :card-name name} choice)))
@@ -184,11 +183,10 @@
 
 (defn view-breaches [{{:keys [player-no
                               breaches
-                              phase
-                              aether] :as player} :player
-                      choice                      :choice
-                      active?                     :active-player?
-                      :as                         game}]
+                              phase] :as player} :player
+                      choice                     :choice
+                      active?                    :active-player?
+                      :as                        game}]
   (->> breaches
        (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage]}]
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
@@ -227,22 +225,19 @@
                                (when (and active?
                                           (not choice)
                                           (#{:casting :main} phase)
-                                          aether
                                           focus-cost
                                           open-cost)
                                  {:interactions (cond-> #{}
-                                                        (>= aether focus-cost) (conj :focusable)
-                                                        (>= aether open-cost) (conj :openable))})
+                                                        (ut/can-afford? player focus-cost :focus-breach) (conj :focusable)
+                                                        (ut/can-afford? player open-cost :open-breach) (conj :openable))})
                                (choice-interaction-player {:area      :breaches
                                                            :breach-no idx} choice)))))))
 
 (defn view-ability [{{:keys [ability
-                             phase
-                             aether]
-                      :or   {aether 0} :as player} :player
-                     choice                        :choice
-                     active?                       :active-player?
-                     :as                           game}]
+                             phase] :as player} :player
+                     choice                     :choice
+                     active?                    :active-player?
+                     :as                        game}]
   (let [{:keys [name
                 text
                 charges
@@ -255,18 +250,18 @@
              (and active?
                   (not choice)
                   (#{:casting :main} phase)
-                  (>= aether 2)
+                  (ut/can-afford? player 2 :charge-ability)
                   (not (>= charges charge-cost))) {:interaction :chargeable}
              (and active?
                   (not choice)
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable}))))
 
-(defn view-player [{{:keys [player-no name title life aether]
-                     :or   {aether 0}} :player
-                    :keys              [choice
-                                        active-player?]
-                    :as                data}]
+(defn view-player [{{:keys [player-no name title life]
+                     :as   player} :player
+                    :keys          [choice
+                                    active-player?]
+                    :as            data}]
   (merge {:active?   active-player?
           :name      name
           :name-ui   (ut/format-name name)
@@ -279,7 +274,7 @@
           :deck      (view-deck data)
           :discard   (view-discard data)
           :life      life
-          :aether    aether}
+          :aether    (ut/format-aether player)}
          (when (and (:player-no choice)
                     (or (not (#{:players :prepped-spells} (:source choice)))
                         active-player?))

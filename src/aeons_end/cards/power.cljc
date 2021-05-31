@@ -3,9 +3,14 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
+(defn can-afford? [game {:keys [player-no amount]}]
+  (let [player (get-in game [:players player-no])]
+    (ut/can-afford? player amount :discard-power-card)))
+
+(effects/register {::can-afford? can-afford?})
+
 (defn apocalypse-ritual-can-discard? [game {:keys [player-no]}]
-  (let [aether (or (get-in game [:players player-no :aether]) 0)]
-    (>= aether 8)))
+  (can-afford? game {:player-no player-no :amount 8}))
 
 (effects/register-predicates {::apocalypse-ritual-can-discard? apocalypse-ritual-can-discard?})
 
@@ -22,14 +27,14 @@
                         :tier       3
                         :to-discard {:text      "Spend 8 Aether."
                                      :predicate ::apocalypse-ritual-can-discard?
-                                     :effects   [[:pay 8]]}
+                                     :effects   [[:pay {:amount 8
+                                                        :type   :discard-power-card}]]}
                         :power      {:power   2
                                      :text    "Gravehold suffers 5 damage for each nemesis turn order card in the turn order discard pile."
                                      :effects [[::apocalypse-ritual-damage]]}})
 
 (defn aphotic-sun-can-discard? [game {:keys [player-no]}]
-  (let [aether (or (get-in game [:players player-no :aether]) 0)]
-    (>= aether 7)))
+  (can-afford? game {:player-no player-no :amount 7}))
 
 (effects/register-predicates {::aphotic-sun-can-discard? aphotic-sun-can-discard?})
 
@@ -45,7 +50,8 @@
                   :tier       2
                   :to-discard {:text      "Spend 7 Aether."
                                :predicate ::aphotic-sun-can-discard?
-                               :effects   [[:pay 7]]}
+                               :effects   [[:pay {:amount 7
+                                                  :type   :discard-power-card}]]}
                   :power      {:power   2
                                :text    "Unleash. The player with the most charges suffers 3 damage and loses all of their charges."
                                :effects [[:unleash]
@@ -129,7 +135,8 @@
                   :tier       2
                   :to-discard {:text      "Spend 7 Aether."
                                :predicate ::aphotic-sun-can-discard?
-                               :effects   [[:pay 7]]}
+                               :effects   [[:pay {:amount 7
+                                                  :type   :discard-power-card}]]}
                   :power      {:power   1
                                :text    ["Unleash twice."
                                          "The players collectively discard three cards in hand."]

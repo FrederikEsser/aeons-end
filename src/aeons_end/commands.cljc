@@ -77,13 +77,14 @@
 (defn buy-card [game player-no card-name]
   (check-command "Buy" game player-no)
   (let [{:keys [card pile-size] :as supply-pile} (ut/get-pile-idx game card-name)
-        {:keys [cost]} card]
+        {:keys [cost type]} card]
     (assert supply-pile (str "Buy error: The supply doesn't have a " (ut/format-name card-name) " pile."))
     (assert (and pile-size (pos? pile-size)) (str "Buy error: " (ut/format-name card-name) " supply is empty."))
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
-                                           [:pay cost]
+                                           [:pay {:amount cost
+                                                  :type   type}]
                                            [:gain {:card-name card-name}]]})
         op/check-stack)))
 
@@ -95,7 +96,8 @@
   (-> game
       (op/push-effect-stack {:player-no player-no
                              :effects   [[:set-phase {:phase :main}]
-                                         [:pay 2]
+                                         [:pay {:amount 2
+                                                :type   :charge-ability}]
                                          [:gain-charge]]})
       op/check-stack))
 
@@ -117,7 +119,8 @@
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
-                                           [:pay focus-cost]
+                                           [:pay {:amount focus-cost
+                                                  :type   :focus-breach}]
                                            [:focus-breach {:breach-no breach-no}]]})
         op/check-stack)))
 
@@ -128,7 +131,8 @@
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
-                                           [:pay open-cost]
+                                           [:pay {:amount open-cost
+                                                  :type   :open-breach}]
                                            [:open-breach {:breach-no breach-no}]]})
         op/check-stack)))
 

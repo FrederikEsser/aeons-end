@@ -16,12 +16,16 @@
     :extinction 25
     30))
 
-(defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg]}]
+(defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg earmark]}]
   (let [current-player? (or (nil? current-player)
                             (= current-player player-no))]
-    (cond-> game
-            (and (pos? arg)
-                 current-player?) (update-in [:players player-no :aether] ut/plus arg))))
+    (if earmark
+      (cond-> game
+              (and (pos? arg)
+                   current-player?) (update-in [:players player-no :earmarked-aether earmark] ut/plus arg))
+      (cond-> game
+              (and (pos? arg)
+                   current-player?) (update-in [:players player-no :aether] ut/plus arg)))))
 
 (effects/register {:gain-aether gain-aether})
 
