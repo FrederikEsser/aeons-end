@@ -53,3 +53,8 @@
                    :effects [[:gain-aether 2]
                              [:gain-aether {:earmark #{:spell}
                                             :arg     1}]]})
+
+(def cards [alien-element
+            jade
+            pain-stone
+            searing-ruby])

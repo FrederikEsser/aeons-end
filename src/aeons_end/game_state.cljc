@@ -25,8 +25,8 @@
   (swap! game-state update :game (partial take-last 1))
   (view))
 
-(defn start-game [{:keys [difficulty] :as game-setup}]
-  (let [game (setup/create-game difficulty)]
+(defn start-game [game-setup]
+  (let [game (setup/create-game game-setup)]
     (swap! game-state assoc :game (-> game
                                       (commands/start-game)
                                       list))

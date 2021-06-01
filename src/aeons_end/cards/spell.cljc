@@ -93,3 +93,9 @@
                :text    "Cast: Deal 5 damage.\nEach ally draws a card."
                :effects [[:deal-damage 5]
                          [:other-players {:effects [[:draw 1]]}]]})
+
+(def cards [amplify-vision
+            dark-fire
+            ignite
+            phoenix-flame
+            radiance])

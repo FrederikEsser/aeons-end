@@ -51,3 +51,6 @@
                                                           :effects [[:gain-aether 2]]}
                                               :options   [:player :hand {:type :gem}]
                                               :max       1}]]})
+
+(def cards [vortex-gauntlet
+            unstable-prism])

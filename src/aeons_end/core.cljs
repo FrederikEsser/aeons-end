@@ -9,7 +9,10 @@
 ;; Views
 
 (defonce state (r/atom {:setup-game? true
-                        :game-setup  {:difficulty :normal}
+                        :game-setup  {:difficulty :normal
+                                      :supply     [{:card-name :searing-ruby} {:type :gem} {:type :gem}
+                                                   {:type :relic} {:type :relic} {:card-name :phoenix-flame}
+                                                   {:type :spell} {:type :spell} {:type :spell}]}
                         :selection   []
                         :num-players 2}))
 
@@ -530,7 +533,7 @@
                               (view-choice choice))]))))]]])
 
        (when-let [supply (-> (:game @state) :supply)]
-         [:div "Supply"
+         [:div "Market"
           (let [
                 [row1 supply] (split-at 3 supply)
                 [row2 row3] (split-at 3 supply)]
@@ -539,9 +542,10 @@
               (view-row row1)
               (view-row row2)
               (view-row row3)]])])
-       (when-let [trash (get-in @state [:game :trash])]
-         [:div (str "Destroyed")
-          [view-expandable-pile :trash trash]])])))
+       (let [{:keys [number-of-cards] :as trash} (get-in @state [:game :trash])]
+         (when (pos? number-of-cards)
+           [:div (str "Destroyed")
+            [view-expandable-pile :trash trash]]))])))
 
 ;; -------------------------
 ;; Initialize app

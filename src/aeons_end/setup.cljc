@@ -42,6 +42,34 @@
                                    shuffle)))
                     vec)})))
 
+(def supply-cards (concat gem/cards
+                          relic/cards
+                          spell/cards))
+
+(defn create-supply [supply]
+  (->> supply
+       (map (fn [{:keys [type card-name cost min-cost max-cost]}]
+              {:possible-cards (cond->> supply-cards
+                                        type (filter (comp #{type} :type))
+                                        card-name (filter (comp #{card-name} :name))
+                                        cost (filter (comp #{cost} :cost))
+                                        min-cost (filter (comp #(<= min-cost %) :cost))
+                                        max-cost (filter (comp #(<= % max-cost) :cost)))}))
+       (sort-by (comp count :possible-cards))
+       (reduce (fn [supply {:keys [possible-cards]}]
+                 (let [chosen-card-names (->> supply
+                                              (map :card)
+                                              (map :name)
+                                              set)
+                       {:keys [type] :as card} (->> possible-cards
+                                                    (remove (comp chosen-card-names :name))
+                                                    shuffle
+                                                    first)]
+                   (conj supply {:card      card
+                                 :pile-size (if (= :gem type) 7 5)}))) [])
+       (sort-by (comp (juxt :type :cost :name) :card))
+       vec))
+
 (defn create-player [{:keys [breaches ability] :as mage} & {:keys [difficulty]}]
   (-> mage
       (merge {:breaches (->> breaches
@@ -65,7 +93,7 @@
       (update :hand #(map ut/give-id! %))
       (update :deck #(map ut/give-id! %))))
 
-(defn create-game [difficulty]
+(defn create-game [{:keys [difficulty supply]}]
   (let [{:keys [setup] :as nemesis} umbra-titan]
     (cond-> {:mode       :swift
              :real-game? true
@@ -74,15 +102,7 @@
                                          :number-of-players 2
                                          :difficulty difficulty)
              :gravehold  {:life (gravehold-starting-life difficulty)}
-             :supply     [{:card gem/jade :pile-size 7}
-                          {:card gem/searing-ruby :pile-size 7}
-                          {:card gem/pain-stone :pile-size 7}
-                          {:card relic/unstable-prism :pile-size 5}
-                          {:card relic/vortex-gauntlet :pile-size 5}
-                          {:card spell/phoenix-flame :pile-size 5}
-                          {:card spell/ignite :pile-size 5}
-                          {:card spell/dark-fire :pile-size 5}
-                          {:card spell/radiance :pile-size 5}]
+             :supply     (create-supply supply)
              :players    [(create-player mages/brama :difficulty difficulty)
                           (create-player mages/mist :difficulty difficulty)]
              :turn-order {:deck (->> [turn-order/player-0
