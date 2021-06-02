@@ -4,6 +4,18 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
+(def cairn-compass {:name    :cairn-compass
+                    :type    :relic
+                    :cost    4
+                    :text    "Any ally may prep a spell in their discard pile to their opened or closed breach(es)."
+                    :effects [[:give-choice {:title   :cairn-compass
+                                             :text    "Any ally may prep a spell in their discard pile to their opened or closed breach(es)."
+                                             :choice  [:prep-from-discard {:closed-breaches? true}]
+                                             :options [:players :discard {:ally               true
+                                                                          :type               :spell
+                                                                          :empty-breach-stati #{:opened :closed}}]
+                                             :max     1}]]})
+
 (defn vortex-gauntlet-cast [game {:keys [player-no breach-no card-name] :as args}]
   (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
     (cond-> game
@@ -52,5 +64,6 @@
                                               :options   [:player :hand {:type :gem}]
                                               :max       1}]]})
 
-(def cards [vortex-gauntlet
+(def cards [cairn-compass
+            vortex-gauntlet
             unstable-prism])

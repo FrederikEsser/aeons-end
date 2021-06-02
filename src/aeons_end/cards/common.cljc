@@ -125,3 +125,25 @@
 
 (effects/register {:play-twice play-twice})
 
+(defn prep-from-discard [game {:keys [player-no card-name closed-breaches?]}]
+  (let [breaches     (->> (get-in game [:players player-no :breaches])
+                          (map-indexed (fn [breach-no breach]
+                                         (assoc breach :breach-no breach-no))))
+        breach-stati (cond-> #{:opened :focused}
+                             closed-breaches? (conj :closed))
+        breach-no    (->> breaches
+                          (filter (comp breach-stati :status))
+                          (filter (comp empty? :prepped-spells))
+                          (sort-by (juxt :status :bonus-damage))
+                          last
+                          :breach-no)]
+    (cond-> game
+            (and card-name
+                 breach-no) (push-effect-stack {:player-no player-no
+                                                :effects   [[:move-card {:card-name card-name
+                                                                         :from      :discard
+                                                                         :to        :breach
+                                                                         :breach-no breach-no}]]}))))
+
+(effects/register {:prep-from-discard prep-from-discard})
+

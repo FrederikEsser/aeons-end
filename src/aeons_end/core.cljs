@@ -11,7 +11,7 @@
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty :normal
                                       :supply     [{:card-name :searing-ruby} {:type :gem} {:type :gem}
-                                                   {:type :relic} {:type :relic} {:card-name :phoenix-flame}
+                                                   {:card-name :cairn-compass} {:type :relic} {:card-name :phoenix-flame}
                                                    {:type :spell} {:type :spell} {:type :spell}]}
                         :selection   []
                         :num-players 2}))
