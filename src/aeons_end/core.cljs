@@ -11,7 +11,7 @@
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty :normal
                                       :supply     [{:card-name :breach-ore} {:type :gem} {:type :gem}
-                                                   {:card-name :cairn-compass} {:type :relic} {:card-name :phoenix-flame}
+                                                   {:card-name :cairn-compass} {:type :relic} {:card-name :planar-insight}
                                                    {:type :spell} {:type :spell} {:type :spell}]}
                         :selection   []
                         :num-players 2}))

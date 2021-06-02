@@ -293,3 +293,31 @@
                       {:hand [crystal]}
                       {}]
             :nemesis {:life 45}}))))
+
+(deftest planar-insight-test
+  (testing "Planar Insight"
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [planar-insight]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :planar-insight))
+           {:players [{:breaches [{:status :opened}]
+                       :discard  [planar-insight]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:players [{:breaches [{:status         :closed
+                                       :prepped-spells [planar-insight]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :planar-insight))
+           {:players [{:breaches [{:status :closed}]
+                       :discard  [planar-insight]}]
+            :nemesis {:life 48}}))
+    (is (= (-> {:players [{:breaches [{:status :opened}
+                                      {:status         :opened
+                                       :bonus-damage   1
+                                       :prepped-spells [planar-insight]}]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 1 :planar-insight))
+           {:players [{:breaches [{:status :opened}
+                                  {:status       :opened
+                                   :bonus-damage 1}]
+                       :discard  [planar-insight]}]
+            :nemesis {:life 45}}))))

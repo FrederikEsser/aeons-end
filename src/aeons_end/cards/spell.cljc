@@ -53,9 +53,9 @@
                                       :min     1
                                       :max     1}]]})
 
-(defn phoenix-flame-damage [game {:keys [player-no choice] :as args}]
+(defn phoenix-flame-damage [game {:keys [player-no] :as args}]
   (push-effect-stack game {:player-no player-no
-                           :args      args
+                           :args      args                  ; bonus-damage
                            :effects   [[:spend-charges 1]
                                        [:deal-damage 4]]}))
 
@@ -73,6 +73,22 @@
                                              :options   [:player :charges]
                                              :max       1}]]})
 
+(defn planar-insight-damage [game {:keys [player-no] :as args}]
+  (let [opened-breaches (->> (get-in game [:players player-no :breaches])
+                             (filter (comp #{:opened} :status))
+                             count)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (+ 2 opened-breaches)]]})))
+
+(effects/register {::planar-insight-damage planar-insight-damage})
+
+(def planar-insight {:name    :planar-insight
+                     :type    :spell
+                     :cost    6
+                     :text    "Cast: Deal 2 damage\nDeal 1 additional damage for each of your opened breaches."
+                     :effects [[::planar-insight-damage]]})
+
 (def radiance {:name    :radiance
                :type    :spell
                :cost    8
@@ -84,4 +100,5 @@
             dark-fire
             ignite
             phoenix-flame
+            planar-insight
             radiance])
