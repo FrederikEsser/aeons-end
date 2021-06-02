@@ -595,21 +595,25 @@
 (effects/register {:other-players affect-other-players
                    :all-players   affect-all-players})
 
-(defn cast-spell [game {:keys [player-no breach-no card-name caster]}]
+(defn spell-effect [game {:keys [player-no breach-no card-name caster]}]
   (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
         {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])]
-    (-> game
-        (push-effect-stack {:player-no (or caster player-no)
-                            :args      {:bonus-damage (when (= :opened status)
-                                                        bonus-damage)}
-                            :effects   effects})
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:move-card {:card-name card-name
-                                                     :from      :breach
-                                                     :breach-no breach-no
-                                                     :to        :discard}]]}))))
+    (push-effect-stack game {:player-no (or caster player-no)
+                             :args      {:bonus-damage (when (= :opened status)
+                                                         bonus-damage)}
+                             :effects   effects})))
 
-(effects/register {:cast-spell cast-spell})
+(defn cast-spell [game {:keys [player-no breach-no card-name] :as args}]
+  (-> game
+      (spell-effect args)
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:move-card {:card-name card-name
+                                                   :from      :breach
+                                                   :breach-no breach-no
+                                                   :to        :discard}]]})))
+
+(effects/register {:spell-effect spell-effect
+                   :cast-spell   cast-spell})
 
 (defn discard-power-card [game {:keys [player-no card-name]}]
   (let [{:keys [predicate effects text]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name}) :card :to-discard)

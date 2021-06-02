@@ -16,6 +16,23 @@
                                                                           :empty-breach-stati #{:opened :closed}}]
                                              :max     1}]]})
 
+(defn temporal-helix-choice [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :temporal-helix
+                                                      :text    "Cast any player's prepped spell without discarding it."
+                                                      :choice  [:spell-effect {:caster player-no}]
+                                                      :options [:players :prepped-spells]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::temporal-helix-choice temporal-helix-choice})
+
+(def temporal-helix {:name    :temporal-helix
+                     :type    :relic
+                     :cost    7
+                     :text    "Cast any player's prepped spell without discarding it."
+                     :effects [[::temporal-helix-choice]]})
+
 (defn vortex-gauntlet-cast [game {:keys [player-no breach-no card-name] :as args}]
   (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
     (cond-> game
@@ -65,5 +82,6 @@
                                               :max       1}]]})
 
 (def cards [cairn-compass
+            temporal-helix
             vortex-gauntlet
             unstable-prism])

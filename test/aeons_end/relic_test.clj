@@ -123,6 +123,38 @@
                               (play 0 :cairn-compass)
                               (choose {:player-no 0 :card-name :spark}))))))
 
+(deftest temporal-helix-test
+  (testing "Temporal Helix"
+    (let [spark (assoc spark :id 1)]
+      (is (= (-> {:nemesis {:life 50}
+                  :players [{:breaches [{:prepped-spells [spark]}]
+                             :hand     [temporal-helix]}]}
+                 (play 0 :temporal-helix)
+                 (choose {:player-no 0
+                          :breach-no 0
+                          :card-name :spark}))
+             {:nemesis {:life 49}
+              :players [{:breaches  [{:prepped-spells [spark]}]
+                         :play-area [temporal-helix]}]}))
+      (is (= (-> {:nemesis {:life 50}
+                  :players [{:hand [temporal-helix]}]}
+                 (play 0 :temporal-helix))
+             {:nemesis {:life 50}
+              :players [{:play-area [temporal-helix]}]})))
+    (let [radiance (assoc radiance :id 1)]
+      (is (= (-> {:nemesis {:life 50}
+                  :players [{:hand [temporal-helix]}
+                            {:breaches [{:prepped-spells [radiance]}]
+                             :discard  [crystal]}]}
+                 (play 0 :temporal-helix)
+                 (choose {:player-no 1
+                          :breach-no 0
+                          :card-name :radiance}))
+             {:nemesis {:life 45}
+              :players [{:play-area [temporal-helix]}
+                        {:breaches [{:prepped-spells [radiance]}]
+                         :hand     [crystal]}]})))))
+
 (deftest unstable-prism-test
   (testing "Unstable Prism"
     (is (= (-> {:players [{:hand [unstable-prism]}]}
