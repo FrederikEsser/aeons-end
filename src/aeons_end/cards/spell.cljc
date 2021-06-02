@@ -1,20 +1,7 @@
 (ns aeons-end.cards.spell
   (:require [aeons-end.nemesis]
-            [aeons-end.operations :refer [push-effect-stack focus-breach]]
+            [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]))
-
-(defn amplify-vision-focus [game {:keys [player-no]}]
-  (let [breach-no (->> (get-in game [:players player-no :breaches])
-                       (keep-indexed (fn [idx {:keys [status focus-cost]}]
-                                       (when (#{:closed :focused} status)
-                                         {:breach-no  idx
-                                          :focus-cost focus-cost})))
-                       (sort-by :focus-cost)
-                       (map :breach-no)
-                       first)]
-    (cond-> game
-            breach-no (focus-breach {:player-no player-no
-                                     :breach-no breach-no}))))
 
 (defn amplify-vision-damage [game {:keys [player-no] :as args}]
   (let [all-breaches-opened? (->> (get-in game [:players player-no :breaches])
@@ -24,14 +11,13 @@
                              :args      args                ; bonus-damage
                              :effects   [[:deal-damage (if all-breaches-opened? 3 2)]]})))
 
-(effects/register {::amplify-vision-focus  amplify-vision-focus
-                   ::amplify-vision-damage amplify-vision-damage})
+(effects/register {::amplify-vision-damage amplify-vision-damage})
 
 (def amplify-vision {:name    :amplify-vision
                      :type    :spell
                      :cost    4
                      :text    "Cast: Focus your closed breach with the lowest focus cost.\nDeal 2 damage. If all of your breaches are opened, deal 1 additional damage."
-                     :effects [[::amplify-vision-focus]
+                     :effects [[:focus-lowest-cost-breach]
                                [::amplify-vision-damage]]})
 
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]

@@ -1,7 +1,8 @@
 (ns aeons-end.cards.gem
   (:require [aeons-end.cards.common :refer [gain-aether]]
             [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (defn alien-element-gain-aether [game {:keys [player-no]}]
   (let [breaches-with-prepped-spells (->> (get-in game [:players player-no :breaches])
@@ -17,6 +18,19 @@
                     :cost    4
                     :text    "Gain 1 Aether.\nFor each of your breaches with a spell prepped to it, gain an additional 1 Aether."
                     :effects [[::alien-element-gain-aether]]})
+
+(def breach-ore {:name            :breach-ore
+                 :type            :gem
+                 :cost            4
+                 :auto-play-index 1
+                 :text            "Focus your closed breach with the lowest focus cost.\nOR\nGain 2 Aether."
+                 :effects         [[:give-choice {:title     :breach-ore
+                                                  :text      "Focus your closed breach with the lowest focus cost."
+                                                  :choice    :focus-lowest-cost-breach
+                                                  :options   [:player :breaches {:lowest-focus-cost true}]
+                                                  :or-choice {:text    "Gain 2 Aether"
+                                                              :effects [[:gain-aether 2]]}
+                                                  :max       1}]]})
 
 (def jade {:name    :jade
            :type    :gem
@@ -55,6 +69,7 @@
                                             :arg     1}]]})
 
 (def cards [alien-element
+            breach-ore
             jade
             pain-stone
             searing-ruby])

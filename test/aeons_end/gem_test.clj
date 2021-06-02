@@ -31,6 +31,63 @@
                        :play-area [alien-element]
                        :aether    3}]}))))
 
+(deftest breach-ore-test
+  (testing "Breach Ore"
+    (is (= (-> {:players [{:hand     [breach-ore]
+                           :breaches [{:status :opened}
+                                      {:status     :closed
+                                       :focus-cost 2
+                                       :stage      0}]}]}
+               (play 0 :breach-ore)
+               (choose nil))
+           {:players [{:play-area [breach-ore]
+                       :aether    2
+                       :breaches  [{:status :opened}
+                                   {:status     :closed
+                                    :focus-cost 2
+                                    :stage      0}]}]}))
+    (is (= (-> {:players [{:hand     [breach-ore]
+                           :breaches [{:status :opened}
+                                      {:status     :closed
+                                       :focus-cost 2
+                                       :stage      0}]}]}
+               (play 0 :breach-ore)
+               (choose {:breach-no 1}))
+           {:players [{:play-area [breach-ore]
+                       :breaches  [{:status :opened}
+                                   {:status     :focused
+                                    :focus-cost 2
+                                    :stage      1}]}]}))
+    (is (= (-> {:players [{:hand     [breach-ore]
+                           :breaches [{:status :opened}
+                                      {:status     :closed
+                                       :focus-cost 2
+                                       :stage      3}]}]}
+               (play 0 :breach-ore)
+               (choose {:breach-no 1}))
+           {:players [{:play-area [breach-ore]
+                       :breaches  [{:status :opened}
+                                   {:status :opened}]}]}))
+    (is (= (-> {:players [{:hand     [breach-ore]
+                           :breaches [{:status :opened}
+                                      {:status :opened}]}]}
+               (play 0 :breach-ore))
+           {:players [{:play-area [breach-ore]
+                       :breaches  [{:status :opened}
+                                   {:status :opened}]
+                       :aether    2}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error"
+                          (-> {:players [{:hand     [breach-ore]
+                                          :breaches [{:status :opened}
+                                                     {:status     :closed
+                                                      :focus-cost 2
+                                                      :stage      0}
+                                                     {:status     :closed
+                                                      :focus-cost 3
+                                                      :stage      3}]}]}
+                              (play 0 :breach-ore)
+                              (choose {:breach-no 2}))))))
+
 (deftest pain-stone-test
   (testing "Pain Stone"
     (is (= (-> {:players [{:hand [pain-stone]}]

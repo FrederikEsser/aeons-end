@@ -194,11 +194,7 @@
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
                         (merge {:name-ui   (if (= :destroyed status)
                                              "X"
-                                             (case idx
-                                               0 "I"
-                                               1 "II"
-                                               2 "III"
-                                               3 "IV"))
+                                             (ut/format-breach-no idx))
                                 :breach-no idx
                                 :status    status}
                                (when (not-empty prepped-spells)

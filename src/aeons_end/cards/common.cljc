@@ -147,3 +147,17 @@
 
 (effects/register {:prep-from-discard prep-from-discard})
 
+(defn focus-lowest-cost-breach [game {:keys [player-no]}]
+  (let [breach-no (->> (get-in game [:players player-no :breaches])
+                       (keep-indexed (fn [idx {:keys [status focus-cost]}]
+                                       (when (#{:closed :focused} status)
+                                         {:breach-no  idx
+                                          :focus-cost focus-cost})))
+                       (sort-by :focus-cost)
+                       (map :breach-no)
+                       first)]
+    (cond-> game
+            breach-no (push-effect-stack {:player-no player-no
+                                          :effects   [[:focus-breach {:breach-no breach-no}]]}))))
+
+(effects/register {:focus-lowest-cost-breach focus-lowest-cost-breach})
