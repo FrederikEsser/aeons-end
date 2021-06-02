@@ -469,7 +469,7 @@
                                breach-no     (->> breaches
                                                   (filter (comp #{:opened :focused} :status))
                                                   (filter (comp empty? :prepped-spells))
-                                                  (sort-by (juxt :bonus-damage :status))
+                                                  (sort-by (juxt :status :bonus-damage))
                                                   last
                                                   :breach-no)
                                add-breach-no (fn [{:keys [type] :as card}]

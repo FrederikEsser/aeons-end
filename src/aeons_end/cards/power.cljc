@@ -86,7 +86,7 @@
                                     :effects   [[:give-choice {:title   :cataclysmic-fate
                                                                :text    "Destroy a prepped spell that costs 5 Aether or more and a breach in which it was prepped."
                                                                :choice  ::cataclysmic-fate-destroy-breach
-                                                               :options [:prepped-spells {:min-cost 5}]
+                                                               :options [:players :prepped-spells {:min-cost 5}]
                                                                :min     1
                                                                :max     1}]]}
                        :power      {:power   1
@@ -145,7 +145,7 @@
                                          [:give-choice {:title   :morbid-gyre
                                                         :text    "The players collectively discard three cards in hand."
                                                         :choice  :collective-discard-from-hand
-                                                        :options [:collective-hands]
+                                                        :options [:players :hand]
                                                         :min     3
                                                         :max     3}]]}
                   :quote      "'It churned and rolled, a maelstrom of malign power. The void was upon me and yet I felt only the throes of freedom from my prison of sleep.' Yan Magda, Enlightened Exile"})
@@ -183,7 +183,7 @@
                                     :effects   [[:give-choice {:title   :planar-collision
                                                                :text    "Discard two prepped spells."
                                                                :choice  :discard-prepped-spells
-                                                               :options [:prepped-spells {:own true}]
+                                                               :options [:player :prepped-spells]
                                                                :min     2
                                                                :max     2}]]}
                        :power      {:power   2
@@ -227,7 +227,7 @@
                                                                           "s")
                                                                         ".")
                                                           :choice  :destroy-prepped-spells
-                                                          :options [:prepped-spells {:min-cost cost-2}]
+                                                          :options [:players :prepped-spells {:min-cost cost-2}]
                                                           :min     manual-destroy-count
                                                           :max     manual-destroy-count}]]))})))
 

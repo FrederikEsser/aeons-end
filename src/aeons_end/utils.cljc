@@ -107,88 +107,18 @@
 (defn count-as-coll [data]
   (-> data ensure-coll count))
 
-(defn access-top-card [{:keys [split-pile hidden?] :as pile}]
-  (if split-pile
-    (let [total-pile-size (->> split-pile
-                               (keep :pile-size)
-                               (apply +))]
-      (merge (or (->> split-pile
-                      (filter (fn [{:keys [pile-size]}]
-                                (and pile-size
-                                     (pos? pile-size))))
-                      first)
-                 (last split-pile))
-             (if hidden?
-               {:pile-size total-pile-size}
-               {:total-pile-size total-pile-size})
-             (select-keys pile [:tokens])))
-    pile))
+(defn remove-top-card [pile]
+  (update pile :pile-size dec))
 
-(defn access-pile [{:keys [split-pile] :as pile}]
-  (or split-pile
-      [pile]))
+(defn add-top-card [pile card]
+  (update pile :pile-size inc))
 
-(defn access-card [card-name {:keys [split-pile] :as pile}]
-  (if split-pile
-    (merge (or (->> split-pile
-                    (filter (comp #{card-name} :name :card))
-                    first)
-               (last split-pile))
-           (select-keys pile [:tokens]))
-    pile))
-
-(defn remove-top-card [{:keys [split-pile] :as pile}]
-  (if split-pile
-    (let [{:keys [idx name pile-size]} (->> split-pile
-                                            (keep-indexed (fn [idx {:keys [card pile-size]}]
-                                                            (when (pos? pile-size)
-                                                              {:idx       idx
-                                                               :name      (:name card)
-                                                               :pile-size pile-size})))
-                                            first)
-          delete-sub-pile? (and (= 1 pile-size)
-                                (= 0 idx)
-                                (->> split-pile
-                                     (drop 1)
-                                     (some (comp #{name} :name :card))))]
-      (if delete-sub-pile?
-        (update pile :split-pile (comp vec (partial drop 1)))
-        (update-in pile [:split-pile idx :pile-size] dec)))
-    (update pile :pile-size dec)))
-
-(defn add-top-card [{:keys [split-pile] :as pile} {:keys [name] :as card}]
-  (if split-pile
-    (let [idx               (->> split-pile
-                                 (keep-indexed (fn [idx sub-pile]
-                                                 (when (= name (get-in sub-pile [:card :name]))
-                                                   idx)))
-                                 first)
-          sub-pile-blocked? (->> split-pile
-                                 (take idx)
-                                 (some (comp pos? :pile-size)))]
-      (if sub-pile-blocked?
-        (update pile :split-pile (fn [split-pile]
-                                   (vec (concat [{:card      (dissoc card :id)
-                                                  :pile-size 1}]
-                                                split-pile))))
-        (update-in pile [:split-pile idx :pile-size] inc)))
-    (update pile :pile-size inc)))
-
-(defn get-pile-idx
-  ([game card-name]
-   (get-pile-idx game :supply card-name))
-  ([game from card-name]
-   (get-pile-idx game from card-name #{}))
-  ([game from card-name flags]
-   (let [handle-split-piles (if (flags :include-empty-split-piles)
-                              (partial access-card card-name)
-                              access-top-card)]
-     (->> game
-          from
-          (map handle-split-piles)
-          (keep-indexed (fn [idx pile]
-                          (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
-          first))))
+(defn get-pile-idx [game card-name]
+  (->> game
+       :supply
+       (keep-indexed (fn [idx pile]
+                       (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
+       first))
 
 (defn get-card-idx [game path criteria]
   (let [select-fn (if (= :discard (last path))
@@ -332,19 +262,12 @@
 (defn costs-at-least [min-cost card-cost]
   (costs-up-to card-cost min-cost))
 
-(defn costs-between [min-cost max-cost card-cost]
-  (and (costs-at-least min-cost card-cost)
-       (costs-up-to max-cost card-cost)))
-
 (defn costs-exactly [cost card-cost]
   (= (normalize-cost cost) (normalize-cost card-cost)))
 
 (defn costs-less [max-cost+ card-cost]
   (and (costs-up-to max-cost+ card-cost)
        (not (costs-exactly max-cost+ card-cost))))
-
-(defn costs-more [min-cost- card-cost]
-  (costs-less card-cost min-cost-))
 
 (defn add-to-cost [card-cost cost]
   (let [added-cost (if (int? cost)
@@ -363,193 +286,144 @@
                              (apply +)))]
     (>= valid-aether cost)))
 
-(defn options-from-player [game player-no card-id area &
-                           [{:keys [last this id ids name names not-names type types not-type reacts-to min-cost max-cost leaves-play
-                                    most-expensive]}]]
-  (let [cards        (get-in game [:players player-no area])
-        highest-cost (->> cards
-                          (map :cost)
-                          (apply max 0))]
-    (cond->> cards
-             last (take-last 1)                             ; it's important that 'last' is evaluated first
-             this (filter (comp #{card-id} :id))
-             id (filter (comp #{id} :id))
-             name (filter (comp #{name} :name))
-             names (filter (comp names :name))
-             not-names (remove (comp not-names :name))
-             type (filter (comp #{type} :type))
-             types (filter (partial types-match game types))
-             not-type (remove (comp not-type (partial get-types game)))
-             reacts-to (filter (every-pred (comp #{reacts-to} :reacts-to)
-                                           (partial can-react? game player-no)))
-             min-cost (filter (comp #(>= % min-cost) :cost))
-             max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game)))
-             leaves-play (remove (partial stay-in-play game player-no))
-             most-expensive (filter (comp #{highest-cost} :cost))
-             ids (filter (comp ids :id))
-             :always (map :name))))
+(defn options-from-player [game {:keys [player-no area]}
+                           & [{:keys [type min-cost max-cost most-expensive]}]]
+  (case area
+    :breaches (->> (get-in game [:players player-no :breaches])
+                   (keep-indexed (fn [breach-no {:keys [status]}]
+                                   (when (not= :destroyed status)
+                                     {:breach-no breach-no}))))
+    :charges (let [charges (get-in game [:players player-no :ability :charges])]
+               (when (and charges
+                          (pos? charges))
+                 [:charges]))
+    :prepped-spells (->> (get-in game [:players player-no :breaches])
+                         (map-indexed (fn [breach-no {:keys [prepped-spells]}]
+                                        (->> prepped-spells
+                                             (map (fn [{:keys [name]}]
+                                                    {:player-no player-no
+                                                     :breach-no breach-no
+                                                     :card-name name})))))
+                         (apply concat))
+    (let [cards        (get-in game [:players player-no area])
+          highest-cost (->> cards
+                            (map :cost)
+                            (apply max 0))]
+      (cond->> cards
+               type (filter (comp #{type} :type))
+               min-cost (filter (comp #(>= % min-cost) :cost))
+               max-cost (filter (comp #(<= % max-cost) :cost))
+               most-expensive (filter (comp #{highest-cost} :cost))
+               :always (map :name)))))
 
 (effects/register-options {:player options-from-player})
-
-(defn options-from-collective-hands [{:keys [players] :as game} _ _ & [{:keys []}]]
-  (->> players
-       (map-indexed (fn [player-no {:keys [hand]}]
-                      (->> hand
-                           (map (fn [{:keys [name] :as card}]
-                                  (assoc card :option {:player-no player-no
-                                                       :card-name name}))))))
-       (apply concat)
-       (map :option)))
-
-(effects/register-options {:collective-hands options-from-collective-hands})
 
 (defn count-prepped-spells [{:keys [breaches]}]
   (->> breaches
        (mapcat :prepped-spells)
        count))
 
-(defn options-from-players [{:keys [players] :as game} player-no _ & [{:keys [ally most-charges prepped-spells lowest-life not-exhausted]}]]
+(defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
+                            & [{:keys [ally most-charges number-of-prepped-spells lowest-life not-exhausted empty-breach-stati
+                                       type min-cost max-cost most-expensive]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
                             (apply max 0))
         low-life       (->> players
                             (keep :life)
                             (filter pos?)                   ; Exhausted players are spared
-                            (apply min 20))]
-    (cond->> (map-indexed (fn [player-no player]
-                            (assoc player :option {:player-no player-no})) players)
-             ally (remove (comp #{player-no} :player-no :option))
-             most-charges (filter (comp #{highest-charge} :charges :ability))
-             prepped-spells (filter (comp #{prepped-spells} count-prepped-spells))
-             lowest-life (filter (comp #{low-life} :life))
-             not-exhausted (filter (comp pos? :life))
-             :always (map :option))))
+                            (apply min 20))
+        valid-players  (cond->> (map-indexed (fn [player-no player]
+                                               (assoc player :player-no player-no)) players)
+                                ally (remove (comp #{player-no} :player-no))
+                                most-charges (filter (comp #{highest-charge} :charges :ability))
+                                number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))
+                                lowest-life (filter (comp #{low-life} :life))
+                                not-exhausted (filter (comp pos? :life))
+                                empty-breach-stati (filter (fn [{:keys [breaches]}]
+                                                             (->> breaches
+                                                                  (filter (comp empty? :prepped-spells))
+                                                                  (filter (comp empty-breach-stati :status))
+                                                                  not-empty))))]
+    (if (= :players area)
+      (->> valid-players
+           (map #(select-keys % [:player-no])))
+      (let [options      (case area
+                           :discard (->> valid-players
+                                         (mapcat (fn [{:keys [player-no discard]}]
+                                                   (->> discard
+                                                        (map (fn [{:keys [name] :as card}]
+                                                               (assoc card :option {:player-no player-no
+                                                                                    :card-name name})))))))
+                           :hand (->> valid-players
+                                      (mapcat (fn [{:keys [player-no hand]}]
+                                                (->> hand
+                                                     (map (fn [{:keys [name] :as card}]
+                                                            (assoc card :option {:player-no player-no
+                                                                                 :card-name name})))))))
+                           :prepped-spells (->> valid-players
+                                                (mapcat (fn [{:keys [player-no breaches]}]
+                                                          (->> breaches
+                                                               (map-indexed (fn [breach-no breach]
+                                                                              (->> (:prepped-spells breach)
+                                                                                   (map (fn [{:keys [name] :as card}]
+                                                                                          (assoc card :option {:player-no player-no
+                                                                                                               :breach-no breach-no
+                                                                                                               :card-name name}))))))
+                                                               (apply concat))))))
+            highest-cost (->> options
+                              (map :cost)
+                              (apply max 0))]
+        (cond->> options
+                 type (filter (comp #{type} :type))
+                 min-cost (filter (comp #(>= % min-cost) :cost))
+                 max-cost (filter (comp #(<= % max-cost) :cost))
+                 most-expensive (filter (comp #{highest-cost} :cost))
+                 :always (map :option))))))
 
 (effects/register-options {:players options-from-players})
 
-(defn options-from-breaches [game player-no _ & [{:keys []}]]
-  (->> (get-in game [:players player-no :breaches])
-       (keep-indexed (fn [breach-no {:keys [status]}]
-                       (when (not= :destroyed status)
-                         {:breach-no breach-no})))))
+(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent type]}]]
+  (case area
+    :minions (->> (get-in game [:nemesis :play-area])
+                  (filter (comp #{:minion} :type))
+                  (map :name))
+    :discard (cond->> (get-in game [:nemesis :discard])
+                      type (filter (comp #{type} :type))
+                      most-recent (take-last 1)             ; it's important that 'most-recent' is evaluated last
+                      :always (map :name))
 
-(effects/register-options {:breaches options-from-breaches})
-
-(defn options-from-prepped-spells [{:keys [players] :as game} player-no _ & [{:keys [own most-expensive min-cost]}]]
-  (let [options      (->> players
-                          (map-indexed (fn [player-no {:keys [breaches]}]
-                                         (->> breaches
-                                              (map-indexed (fn [breach-no breach]
-                                                             (->> (:prepped-spells breach)
-                                                                  (map (fn [{:keys [name] :as card}]
-                                                                         (assoc card :option {:player-no player-no
-                                                                                              :breach-no breach-no
-                                                                                              :card-name name}))))))
-                                              (apply concat))))
-                          (apply concat))
-        highest-cost (->> options
-                          (map :cost)
-                          (apply max 0))]
-    (cond->> options
-             own (filter (comp #{player-no} :player-no :option))
-             most-expensive (filter (comp #{highest-cost} :cost))
-             min-cost (filter (comp #(>= % min-cost) :cost))
-             :always (map :option))))
-
-(effects/register-options {:prepped-spells options-from-prepped-spells})
-
-(defn options-from-charges [game player-no _ & [{:keys []}]]
-  (let [charges (get-in game [:players player-no :ability :charges])]
-    (when (and charges
-               (pos? charges))
-      [:charges])))
-
-(effects/register-options {:charges options-from-charges})
-
-(defn options-from-nemesis [_ _ _]
-  [nil])
+    :nemesis [nil]))
 
 (effects/register-options {:nemesis options-from-nemesis})
 
-(defn options-from-nemesis-discard [game _ _ & [{:keys [type most-recent]}]]
-  (cond->> (get-in game [:nemesis :discard])
-           type (filter (comp #{type} :type))
-           most-recent (take-last 1)                        ; it's important that 'most-recent' is evaluated last
-           :always (map :name)))
-
-(effects/register-options {:nemesis-discard options-from-nemesis-discard})
-
-(defn options-from-minions [game _ _]
-  (->> (get-in game [:nemesis :play-area])
-       (filter (comp #{:minion} :type))
-       (map :name)))
-
-(effects/register-options {:minions options-from-minions})
-
-(defn options-from-supply [{:keys [supply] :as game} player-no card-id & [{:keys [max-cost costs-less-than cost type types not-type names not-names all]}]]
-  (let [supply-piles (if all
-                       (mapcat access-pile supply)
-                       (map access-top-card supply))]
-    (cond->> supply-piles
-             max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
-             costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
-             cost (filter (comp (partial costs-exactly cost) (partial get-cost game) :card))
-             type (filter (comp type (partial get-types game) :card))
-             types (filter (comp (partial types-match game types) :card))
-             not-type (remove (comp not-type (partial get-types game) :card))
-             names (filter (comp names :name :card))
-             not-names (remove (comp not-names :name :card))
-             (not all) (filter (comp pos? :pile-size))
-             :always (map (comp :name :card)))))
+(defn options-from-supply [{:keys [supply] :as game} _
+                           & [{:keys [type max-cost]}]]
+  (cond->> supply
+           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
+           type (filter (comp type (partial get-types game) :card))
+           :always (map (comp :name :card))))
 
 (effects/register-options {:supply options-from-supply})
 
-(defn options-from-extra-cards [{:keys [extra-cards] :as game} player-no card-id & [{:keys [max-cost costs-less-than type all]}]]
-  (cond->> extra-cards
-           max-cost (filter (comp (partial costs-up-to max-cost) (partial get-cost game) :card))
-           costs-less-than (filter (comp (partial costs-less costs-less-than) (partial get-cost game) :card))
-           type (filter (comp type (partial get-types game) :card))
-           (not all) (filter (comp pos? :pile-size))
-           :always (map (comp :name :card))))
-
-(effects/register-options {:extra-cards options-from-extra-cards})
-
-(defn options-from-non-pile-cards [{:keys [non-pile-cards]} player-no card-id opts]
-  (map :name non-pile-cards))
-
-(effects/register-options {:non-pile-cards options-from-non-pile-cards})
-
-(defn options-from-deck-position [game player-no & args]
-  (let [deck (get-in game [:players player-no :deck])]
-    (-> deck count inc range)))
-
-(effects/register-options {:deck-position options-from-deck-position})
-
-(defn special-options [game player-no card-id & options]
+(defn special-options [_ _ & options]
   options)
 
 (effects/register-options {:special special-options})
 
-(defn get-source [[name & args]]
-  (cond
-    (= :player name) (let [[arg & [{:keys [id last]}]] args]
-                       (merge {:source arg}
-                              (when (and (= :discard arg)
-                                         (not (or id last)))
-                                {:reveal-discard? true})))
-    (= :mixed name) (merge {:source :mixed}
-                           (when (some (comp #{[:player :discard]} (partial take 2)) args)
-                             {:reveal-discard? true}))
-    :else {:source name}))
+(defn get-opt-args [[opt-name & opt-args]]
+  (if (-> opt-args first keyword?)
+    opt-args
+    (conj opt-args opt-name)))
 
-(defn mixed-options [game player-no card-id & options]
+(defn mixed-options [game {:keys [player-no card-id]} & options]
   (->> options
-       (mapcat (fn [[opt-name & opt-args :as option]]
+       (mapcat (fn [[opt-name :as option]]
                  (let [opt-fn (effects/get-option opt-name)
-                       {:keys [source]} (get-source option)]
-                   (->> (apply opt-fn game player-no card-id opt-args)
+                       [area & opt-args] (get-opt-args option)]
+                   (->> (apply opt-fn game {:player-no player-no :card-id card-id :area area} opt-args)
                         (map (fn [card-name]
-                               (merge {:area source}
+                               (merge {:area area}
                                       (when card-name
                                         {:card-name card-name}))))))))))
 
@@ -557,7 +431,6 @@
 
 (defn empty-supply-piles [{:keys [supply] :as game}]
   (->> supply
-       (map access-top-card)
        (filter (comp zero? :pile-size))
        count))
 

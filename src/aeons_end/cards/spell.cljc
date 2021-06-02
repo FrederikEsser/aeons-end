@@ -84,7 +84,7 @@
                                              :choice    ::phoenix-flame-damage
                                              :or-choice {:text    "Deal 2 damage"
                                                          :effects [[:deal-damage 2]]}
-                                             :options   [:charges]
+                                             :options   [:player :charges]
                                              :max       1}]]})
 
 (def radiance {:name    :radiance

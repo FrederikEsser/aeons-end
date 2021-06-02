@@ -39,11 +39,10 @@
                                                               (- life damage)))
         (cond-> killed? (discard-nemesis-card {:card-name card-name})))))
 
-(defn deal-damage-to-target [game {:keys [damage choice]}]
-  (let [{:keys [area card-name]} choice]
-    (push-effect-stack game {:effects (case area
-                                        :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
-                                        :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])})))
+(defn deal-damage-to-target [game {:keys [damage area card-name]}]
+  (push-effect-stack game {:effects (case area
+                                      :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
+                                      :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])}))
 
 (defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage]}]
   (let [{:keys [name play-area]} nemesis
@@ -56,7 +55,7 @@
                                                         :choice  [:deal-damage-to-target {:damage damage}]
                                                         :options [:mixed
                                                                   [:nemesis]
-                                                                  [:minions]]
+                                                                  [:nemesis :minions]]
                                                         :min     1
                                                         :max     1}]]
                                         [[:deal-damage-to-nemesis {:damage damage}]])})))
@@ -80,7 +79,7 @@
                                          [:give-choice {:title   resolve-text
                                                         :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
                                                         :choice  :destroy-breach
-                                                        :options [:breaches]
+                                                        :options [:player :breaches]
                                                         :min     1
                                                         :max     1}]
                                          [:spend-charges]]})))

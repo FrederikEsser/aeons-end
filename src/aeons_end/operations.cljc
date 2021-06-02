@@ -3,31 +3,6 @@
             [aeons-end.effects :as effects]
             [clojure.string :as string]))
 
-(defn get-game-status [{:keys [players game-ending?] :as game}]
-  (let [{province-pile-size :pile-size} (ut/get-pile-idx game :province)
-        {colony-pile-size :pile-size} (ut/get-pile-idx game :colony)
-        extra-turns? (->> players
-                          (mapcat :triggers)
-                          (some (comp #{:at-end-game} :event)))]
-    (if (or (and province-pile-size (zero? province-pile-size))
-            (and colony-pile-size (zero? colony-pile-size))
-            (>= (ut/empty-supply-piles game) 3)
-            game-ending?)
-      (if extra-turns?
-        :ending
-        :finished)
-      :active)))
-
-(defn game-won? [{:keys [nemesis]}]
-  (or (<= (:life nemesis) 0)
-      (and (empty? (:deck nemesis))
-           (empty? (:play-area nemesis)))))
-
-(defn game-lost? [{:keys [players gravehold nemesis]}]
-  (or (every? (comp zero? :life) players)
-      (<= (:life gravehold) 0)
-      (<= (:tokens nemesis) 0)))
-
 (defn game-over? [{:keys                              [real-game? players]
                    {gravehold-life :life}             :gravehold
                    {nemesis-life :life
@@ -303,8 +278,8 @@
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (when (= :breach from)
     (assert breach-no (str "Can't move card from breach without breach-no: " args)))
-  (if (#{:supply :extra-cards} from)
-    (let [{:keys [card idx pile-size]} (ut/get-pile-idx game from card-name)]
+  (if (#{:supply} from)
+    (let [{:keys [card idx pile-size]} (ut/get-pile-idx game card-name)]
       (when (and pile-size (pos? pile-size))
         {:card      (ut/give-id! card)
          :from-path from
@@ -325,7 +300,7 @@
                  :else {:idx 0 :card (first (get-in game from-path))}))))))
 
 (defn- remove-card [game from-path idx]
-  (if (#{:supply :extra-cards} from-path)
+  (if (#{:supply} from-path)
     (update-in game [from-path idx] ut/remove-top-card)
     (update-in game from-path ut/vec-remove idx)))
 
@@ -340,13 +315,13 @@
                                                                 [card]
                                                                 (subvec coll to-position (count coll)))
                                  :else (vec (concat coll [card]))))))]
-    (if (#{:supply :extra-cards} to-path)
-      (let [{:keys [idx]} (ut/get-pile-idx game to-path name #{:include-empty-split-piles})]
+    (if (#{:supply} to-path)
+      (let [{:keys [idx]} (ut/get-pile-idx game name)]
         (update-in game [to-path idx] ut/add-top-card card))
       (update-in game to-path add-card-to-coll card))))
 
 (defn get-on-gain-effects [game player-no {:keys [name on-gain] :as card}]
-  (let [{:keys [tokens]} (ut/get-pile-idx game :supply name #{:include-empty-split-piles})
+  (let [{:keys [tokens]} (ut/get-pile-idx game name)
         types                 (ut/get-types game card)
         token-effects         (->> tokens
                                    vals
@@ -528,7 +503,6 @@
                     :breach [:players (or to-player player-no) :breaches breach-no :prepped-spells]
                     :trash [:trash]
                     :supply :supply
-                    :extra-cards :extra-cards
                     [:players (or to-player player-no) to])
                   [:nemesis to])]
     (when card-name
@@ -663,11 +637,8 @@
   (let [[{:keys [player-no card-id choice or-choice source min optional? bonus-damage]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
         arg-name         (case source
-                           :deck-position :position
-                           :overpay :amount
                            :special :choice
                            :mixed :choice
-                           :collective-hands :player-card-name
                            :card-name)
         single-selection (if (sequential? selection)
                            (first selection)
@@ -689,22 +660,19 @@
                                        {:player-no player-no}
                                        (when bonus-damage
                                          {:bonus-damage bonus-damage})
-                                       (if (#{:players :breaches :prepped-spells} source)
+                                       (if (map? single-selection)
                                          single-selection
                                          {:card-id card-id
                                           arg-name single-selection}))))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no card-id choice or-choice source min max optional? choice-opts bonus-damage]}] (get game :effect-stack)
+  (let [[{:keys [player-no card-id choice or-choice source area min max optional? choice-opts bonus-damage]}] (get game :effect-stack)
         {:keys [choice-fn args]} (get-choice-fn choice)
-        arg-name        (case source
-                          :deck-position :position
-                          :overpay :amount
-                          :special :choices
-                          :mixed :choices
-                          :prepped-spells :spells
-                          :collective-hands :player-card-names
-                          :card-names)
+        arg-name        (cond
+                          (#{:special :mixed} source) :choices
+                          (= :prepped-spells area) :spells
+                          (= :players source) :player-card-names
+                          :else :card-names)
         multi-selection (if (sequential? selection)
                           selection
                           (if selection
@@ -760,17 +728,20 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                            [player-no card-id min max optional? choice-opts bonus-damage]
-                                            [opt-name & opt-args :as option] :options
-                                            {:keys [effects]}                :or-choice
-                                            :as                              choice}]
+(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? choice-opts bonus-damage]
+                                            [opt-name :as option] :options
+                                            {:keys [effects]}     :or-choice
+                                            :as                   choice}]
   (let [opt-fn    (effects/get-option opt-name)
-        options   (cond->> (apply opt-fn game player-no card-id opt-args)
+        [area & opt-args] (ut/get-opt-args option)
+        options   (cond->> (apply opt-fn game {:player-no player-no
+                                               :card-id   card-id
+                                               :area      area} opt-args)
                            (:unique choice-opts) distinct)
-        {:keys [source]} (ut/get-source option)
         {:keys [min max] :as choice} (-> choice
                                          (assoc :options options
-                                                :source source)
+                                                :source opt-name
+                                                :area area)
                                          (cond-> min (update :min clojure.core/min (count options))
                                                  max (update :max clojure.core/min (count options))))
         swiftable (and (= :swift mode)

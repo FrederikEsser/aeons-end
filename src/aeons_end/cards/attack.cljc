@@ -36,7 +36,7 @@
             (pos? most-prepped-spells) (push-effect-stack {:effects [[:give-choice {:title   :banish
                                                                                     :text    "The player with the most prepped spells suffers 1 damage for each of their prepped spells."
                                                                                     :choice  [:damage-player {:arg most-prepped-spells}]
-                                                                                    :options [:players {:prepped-spells most-prepped-spells}]
+                                                                                    :options [:players {:number-of-prepped-spells most-prepped-spells}]
                                                                                     :min     1
                                                                                     :max     1}]]}))))
 
@@ -61,7 +61,7 @@
                          [:give-choice {:title   :mutilate
                                         :text    "The players collectively discard two prepped spells."
                                         :choice  :collective-discard-prepped-spells
-                                        :options [:prepped-spells]
+                                        :options [:players :prepped-spells]
                                         :min     2
                                         :max     2}]
                          [:give-choice {:title   :mutilate
@@ -141,7 +141,7 @@
                        [:give-choice {:title   :thrash
                                       :text    "The players collectively discard two cards in hand."
                                       :choice  :collective-discard-from-hand
-                                      :options [:collective-hands]
+                                      :options [:players :hand]
                                       :min     2
                                       :max     2}]]
              :quote   "'The creature thrashed as it burned, its massive body crashing into the South Wall like a hot blade through cloth.' Garu, Oathsworn Keeper"})

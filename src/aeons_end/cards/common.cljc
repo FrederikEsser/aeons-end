@@ -46,10 +46,11 @@
 
 (effects/register {:discard-from-hand discard-from-hand})
 
-(defn collective-discard-from-hand [game {:keys [player-card-name player-card-names]}]
+(defn collective-discard-from-hand [game {:keys [player-no card-name player-card-names]}]
   (->> (or player-card-names
-           (when player-card-name
-             [player-card-name]))
+           (when (and player-no card-name)
+             [{:player-no player-no
+               :card-name card-name}]))
        (group-by :player-no)
        (medley/map-vals #(map :card-name %))
        (reduce (fn [game [player-no card-names]]

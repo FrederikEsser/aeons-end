@@ -18,7 +18,7 @@
                            :effects   [[:give-choice {:title   :vortex-gauntlet
                                                       :text    "Cast any player's prepped spell. Return that spell to that player's hand."
                                                       :choice  [::vortex-gauntlet-cast {:caster player-no}]
-                                                      :options [:prepped-spells]
+                                                      :options [:players :prepped-spells]
                                                       :min     1
                                                       :max     1}]]}))
 

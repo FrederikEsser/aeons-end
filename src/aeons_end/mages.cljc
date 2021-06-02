@@ -38,7 +38,7 @@
                                                       :choice    [:cast-spell {:caster player-no}]
                                                       :or-choice {:text    "Gain 1 Aether"
                                                                   :effects [[:gain-aether 1]]}
-                                                      :options   [:prepped-spells]
+                                                      :options   [:players :prepped-spells]
                                                       :max       1}]]}))
 
 (effects/register {::garnet-shard-choice garnet-shard-choice})

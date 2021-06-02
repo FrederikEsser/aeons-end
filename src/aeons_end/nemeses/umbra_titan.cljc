@@ -30,7 +30,7 @@
                                        :choice    ::crumble-revive-minion
                                        :or-choice {:text    "Umbra Titan loses three nemesis tokens."
                                                    :effects [[:lose-nemesis-tokens 3]]}
-                                       :options   [:nemesis-discard {:type :minion :most-recent true}]
+                                       :options   [:nemesis :discard {:type :minion :most-recent true}]
                                        :max       1}]]})
 
 (def cryptid {:name       :cryptid
@@ -45,7 +45,7 @@
                                                     :choice    :discard-prepped-spells
                                                     :or-choice {:text    "Umbra titan loses one nemesis token"
                                                                 :effects [[:lose-nemesis-tokens 1]]}
-                                                    :options   [:prepped-spells {:most-expensive true}]
+                                                    :options   [:players :prepped-spells {:most-expensive true}]
                                                     :max       1}]]}
               :quote      "'The beasts of this cave seem to revere the Titan as though it were some ancient god.' Mazhaedron, Henge Mystic"})
 
@@ -90,7 +90,7 @@
                                                     [:give-choice {:title   :maul
                                                                    :text    "The players collectively destroy the most expensive prepped spell."
                                                                    :choice  :destroy-prepped-spells
-                                                                   :options [:prepped-spells {:min-cost cost-2}]
+                                                                   :options [:players :prepped-spells {:min-cost cost-2}]
                                                                    :min     1
                                                                    :max     1}]])}))))
 
@@ -108,7 +108,7 @@
                                                                                   :choice    :destroy-prepped-spells
                                                                                   :or-choice {:text    "Umbra Titan loses two nemesis tokens"
                                                                                               :effects [[:lose-nemesis-tokens 2]]}
-                                                                                  :options   [:prepped-spells {:min-cost cost-2}]
+                                                                                  :options   [:players :prepped-spells {:min-cost cost-2}]
                                                                                   :min       2
                                                                                   :max       2
                                                                                   :optional? true}]]
