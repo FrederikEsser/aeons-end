@@ -590,22 +590,39 @@
 (effects/register {:other-players affect-other-players
                    :all-players   affect-all-players})
 
-(defn spell-effect [game {:keys [player-no breach-no card-name caster]}]
+(defn prep-spell [{:keys [real-game?] :as game} {:keys [player-no breach-no card-name]}]
+  (let [{{:keys [id type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
+    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
+    (-> game
+        (cond-> real-game? (update-in [:players player-no :this-turn] concat [{:prep card-name :id id}]))
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:move-card {:card-name card-name
+                                                     :from      :hand
+                                                     :to        :breach
+                                                     :breach-no breach-no}]]}))))
+
+(effects/register {:prep-spell prep-spell})
+
+(defn spell-effect [game {:keys [player-no breach-no card-name caster additional-damage]}]
   (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
-        {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])]
+        {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])
+        bonus-damage (cond-> 0
+                             additional-damage (+ additional-damage)
+                             (and (= :opened status)
+                                  bonus-damage) (+ bonus-damage))]
     (push-effect-stack game {:player-no (or caster player-no)
-                             :args      {:bonus-damage (when (= :opened status)
-                                                         bonus-damage)}
+                             :args      {:bonus-damage bonus-damage}
                              :effects   effects})))
 
 (defn cast-spell [game {:keys [player-no breach-no card-name] :as args}]
-  (-> game
-      (spell-effect args)
-      (push-effect-stack {:player-no player-no
-                          :effects   [[:move-card {:card-name card-name
-                                                   :from      :breach
-                                                   :breach-no breach-no
-                                                   :to        :discard}]]})))
+  (cond-> game
+          card-name (-> (spell-effect args)
+                        (push-effect-stack {:player-no player-no
+                                            :effects   [[:move-card {:card-name card-name
+                                                                     :from      :breach
+                                                                     :breach-no breach-no
+                                                                     :to        :discard}]]}))))
 
 (effects/register {:spell-effect spell-effect
                    :cast-spell   cast-spell})

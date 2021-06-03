@@ -59,14 +59,14 @@
       (is (= (-> {:players [{:hand     [spark]
                              :breaches [{:status :opened}]
                              :phase    :main}]}
-                 (prep-spell 0 :spark 0))
+                 (prep-spell 0 0 :spark))
              {:players [{:breaches [{:status         :opened
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
       (is (= (-> {:players [{:hand     [spark]
                              :breaches [{:status :opened}]
                              :phase    :casting}]}
-                 (prep-spell 0 :spark 0))
+                 (prep-spell 0 0 :spark))
              {:players [{:breaches [{:status         :opened
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
@@ -74,27 +74,27 @@
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status :opened}]
                                             :phase    :draw}]}
-                                (prep-spell 0 :spark 0))))
+                                (prep-spell 0 0 :spark))))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Crystal, which has type Gem"
                             (-> {:players [{:hand     [crystal]
                                             :breaches [{:status :opened}]}]}
-                                (prep-spell 0 :crystal 0))))
+                                (prep-spell 0 0 :crystal))))
       (is (= (-> {:players [{:hand     [spark]
                              :breaches [{:status :focused}]
                              :phase    :main}]}
-                 (prep-spell 0 :spark 0))
+                 (prep-spell 0 0 :spark))
              {:players [{:breaches [{:status         :focused
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 with status Closed"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status :closed}]}]}
-                                (prep-spell 0 :spark 0))))
+                                (prep-spell 0 0 :spark))))
       (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 which already has prepped spells"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status         :opened
                                                         :prepped-spells [spark]}]}]}
-                                (prep-spell 0 :spark 0)))))
+                                (prep-spell 0 0 :spark)))))
     (testing "Casting"
       (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
                              :phase    :casting}]
@@ -489,7 +489,7 @@
                              :discard [turn-order/player-2]}
             :players        [{} {} {} {}]}))
     (is (= (-> {:players [{:this-turn [{:gain :jade}]
-                           :phase            :draw}]}
+                           :phase     :draw}]}
                (end-turn 0))
            {:players [{:phase :out-of-turn}]}))))
 
@@ -837,4 +837,13 @@
               :supply     [{:card jade :pile-size 6}]
               :players    [{:aether    0
                             :discard   [jade]
-                            :this-turn [{:gain :jade}]}]})))))
+                            :this-turn [{:gain :jade}]}]})))
+    (let [spark (assoc spark :id 1)]
+      (is (= (-> {:real-game? true
+                  :players    [{:hand     [spark]
+                                :breaches [{:status :opened}]}]}
+                 (prep-spell 0 0 :spark))
+             {:real-game? true
+              :players    [{:breaches  [{:status         :opened
+                                         :prepped-spells [spark]}]
+                            :this-turn [{:prep :spark :id 1}]}]})))))

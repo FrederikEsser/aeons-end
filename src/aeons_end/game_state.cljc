@@ -80,13 +80,13 @@
                                             (commands/open-breach current-player breach-no)))
     (view)))
 
-(defn prep-spell [card-name breach-no]
+(defn prep-spell [breach-no card-name]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (commands/prep-spell current-player card-name breach-no)))
+                                            (commands/prep-spell current-player breach-no card-name)))
     (view)))
 
-(defn cast-spell [card-name breach-no]
+(defn cast-spell [breach-no card-name]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game
                                             (commands/cast-spell current-player breach-no card-name)))

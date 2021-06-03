@@ -4,6 +4,16 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
+(def blasting-staff {:name    :blasting-staff
+                     :type    :relic
+                     :cost    4
+                     :text    "You may cast a prepped spell that you prepped this turn. If you do, that spell deals 2 additional damage."
+                     :effects [[:give-choice {:title   :blasting-staff
+                                              :text    "You may cast a prepped spell that you prepped this turn. If you do, that spell deals 2 additional damage."
+                                              :choice  [:cast-spell {:additional-damage 2}]
+                                              :options [:player :prepped-spells {:prepped-this-turn true}]
+                                              :max     1}]]})
+
 (def cairn-compass {:name    :cairn-compass
                     :type    :relic
                     :cost    4
@@ -81,7 +91,8 @@
                                               :options   [:player :hand {:type :gem}]
                                               :max       1}]]})
 
-(def cards [cairn-compass
+(def cards [blasting-staff
+            cairn-compass
             temporal-helix
             vortex-gauntlet
             unstable-prism])

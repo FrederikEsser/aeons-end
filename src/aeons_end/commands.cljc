@@ -47,22 +47,17 @@
           op/check-stack)
       game)))
 
-(defn prep-spell [game player-no card-name breach-no]
+(defn prep-spell [game player-no breach-no card-name]
   (check-command "Prep" game player-no)
-  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
-        {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
-    (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
-    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
+  (let [{:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
     (assert (#{:opened :focused} status) (str "Prep error: You can't prep " (ut/format-name card-name) " to breach " breach-no " with status " (ut/format-name status) "."))
     (assert (empty? prepped-spells) (str "Prep error: You can't prep " (ut/format-name card-name) " to breach " breach-no " which already has prepped spells [" (ut/format-types (map :name prepped-spells)) "]."))
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
-                                           [:move-card {:player-no player-no
-                                                        :card-name card-name
-                                                        :from      :hand
-                                                        :to        :breach
-                                                        :breach-no breach-no}]]})
+                                           [:prep-spell {:player-no player-no
+                                                         :breach-no breach-no
+                                                         :card-name card-name}]]})
         op/check-stack)))
 
 (defn cast-spell [game player-no breach-no card-name]

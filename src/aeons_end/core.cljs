@@ -128,8 +128,8 @@
                                          :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                          :buyable (swap! state assoc :game (cmd/buy name))
                                          :discardable (swap! state assoc :game (cmd/discard name))
-                                         :prepable (swap! state assoc :game (cmd/prep-spell name breach-no))
-                                         :castable (swap! state assoc :game (cmd/cast-spell name breach-no)))))}
+                                         :prepable (swap! state assoc :game (cmd/prep-spell breach-no name))
+                                         :castable (swap! state assoc :game (cmd/cast-spell breach-no name)))))}
            (str name-ui
                 (when cost (str " (" (ut/format-cost cost) ")"))
                 (when number-of-cards (str " x" number-of-cards)))]]))

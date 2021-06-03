@@ -294,7 +294,7 @@
     (>= valid-aether cost)))
 
 (defn options-from-player [game {:keys [player-no area]}
-                           & [{:keys [type min-cost max-cost most-expensive lowest-focus-cost]}]]
+                           & [{:keys [type min-cost max-cost most-expensive lowest-focus-cost prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
                                   (keep-indexed (fn [breach-no {:keys [status] :as breach}]
@@ -312,14 +312,23 @@
                (when (and charges
                           (pos? charges))
                  [:charges]))
-    :prepped-spells (->> (get-in game [:players player-no :breaches])
-                         (map-indexed (fn [breach-no {:keys [prepped-spells]}]
-                                        (->> prepped-spells
-                                             (map (fn [{:keys [name]}]
-                                                    {:player-no player-no
-                                                     :breach-no breach-no
-                                                     :card-name name})))))
-                         (apply concat))
+    :prepped-spells (let [prepped-this-turn? (fn prepped-this-turn? [{:keys [id]}]
+                                               (->> (get-in game [:players player-no :this-turn])
+                                                    (filter :prep)
+                                                    (filter (comp #{id} :id))
+                                                    not-empty
+                                                    boolean))
+                          options            (->> (get-in game [:players player-no :breaches])
+                                                  (map-indexed (fn [breach-no {:keys [prepped-spells]}]
+                                                                 (->> prepped-spells
+                                                                      (map (fn [{:keys [name] :as card}]
+                                                                             (assoc card :option {:player-no player-no
+                                                                                                  :breach-no breach-no
+                                                                                                  :card-name name}))))))
+                                                  (apply concat))]
+                      (cond->> options
+                               prepped-this-turn (filter prepped-this-turn?)
+                               :always (map :option)))
     (let [cards        (get-in game [:players player-no area])
           highest-cost (->> cards
                             (map :cost)

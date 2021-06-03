@@ -7,6 +7,62 @@
             [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.spell :refer [dark-fire radiance]]))
 
+(deftest blasting-staff-test
+  (let [spark (assoc spark :id 1)]
+    (testing "Blasting Staff"
+      (is (= (-> {:players [{:hand     [blasting-staff]
+                             :breaches [{:prepped-spells [spark]}]}]}
+                 (play 0 :blasting-staff))
+             {:players [{:play-area [blasting-staff]
+                         :breaches  [{:prepped-spells [spark]}]}]}))
+      (is (= (-> {:players [{:hand      [blasting-staff]
+                             :breaches  [{:prepped-spells [spark]}]
+                             :this-turn [{:gain :spark :id 1}]}]}
+                 (play 0 :blasting-staff))
+             {:players [{:play-area [blasting-staff]
+                         :breaches  [{:prepped-spells [spark]}]
+                         :this-turn [{:gain :spark :id 1}]}]}))
+      (is (= (-> {:players [{:hand      [blasting-staff]
+                             :breaches  [{:prepped-spells [spark]}]
+                             :this-turn [{:gain :spark :id 2}]}]}
+                 (play 0 :blasting-staff))
+             {:players [{:play-area [blasting-staff]
+                         :breaches  [{:prepped-spells [spark]}]
+                         :this-turn [{:gain :spark :id 2}]}]}))
+      (is (= (-> {:players [{:hand      [blasting-staff]
+                             :breaches  [{:prepped-spells [spark]}]
+                             :this-turn [{:prep :spark :id 1}]}]}
+                 (play 0 :blasting-staff)
+                 (choose nil))
+             {:players [{:play-area [blasting-staff]
+                         :breaches  [{:prepped-spells [spark]}]
+                         :this-turn [{:prep :spark :id 1}]}]}))
+      (is (= (-> {:players [{:hand      [blasting-staff]
+                             :breaches  [{:prepped-spells [spark]}]
+                             :this-turn [{:prep :spark :id 1}]}]
+                  :nemesis {:life 50}}
+                 (play 0 :blasting-staff)
+                 (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+             {:players [{:play-area [blasting-staff]
+                         :discard   [spark]
+                         :breaches  [{}]
+                         :this-turn [{:prep :spark :id 1}]}]
+              :nemesis {:life 47}}))
+      (is (= (-> {:players [{:hand      [blasting-staff]
+                             :breaches  [{:status         :opened
+                                          :bonus-damage   1
+                                          :prepped-spells [spark]}]
+                             :this-turn [{:prep :spark :id 1}]}]
+                  :nemesis {:life 50}}
+                 (play 0 :blasting-staff)
+                 (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+             {:players [{:play-area [blasting-staff]
+                         :discard   [spark]
+                         :breaches  [{:status       :opened
+                                      :bonus-damage 1}]
+                         :this-turn [{:prep :spark :id 1}]}]
+              :nemesis {:life 46}})))))
+
 (deftest cairn-compass-test
   (testing "Cairn Compass"
     (is (= (-> {:players [{:hand [cairn-compass]}
