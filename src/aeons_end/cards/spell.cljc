@@ -53,6 +53,13 @@
                                       :min     1
                                       :max     1}]]})
 
+(def nova-forge {:name          :nova-forge
+                 :type          :spell
+                 :cost          6
+                 :text          "While prepped, once per turn during your main phase you may gain 2 Aether that can only be used to gain a spell.\nCast: Deal 4 damage."
+                 :while-prepped {:at-start-main [[:gain-aether {:arg 2 :earmark #{:spell}}]]}
+                 :effects       [[:deal-damage 4]]})
+
 (defn phoenix-flame-damage [game {:keys [player-no] :as args}]
   (push-effect-stack game {:player-no player-no
                            :args      args                  ; bonus-damage
@@ -99,6 +106,7 @@
 (def cards [amplify-vision
             dark-fire
             ignite
+            nova-forge
             phoenix-flame
             planar-insight
             radiance])

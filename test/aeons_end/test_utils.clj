@@ -68,6 +68,12 @@
                           :effects   [[:heal {:life life}]]})
       check-stack))
 
+(defn set-phase [game player-no phase]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:set-phase {:phase phase}]]})
+      check-stack))
+
 (defn get-trigger [{:keys [id name trigger]} & [trigger-id]]
   (merge {:id (or trigger-id 1)}
          (when id {:card-id id})

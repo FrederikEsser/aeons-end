@@ -80,8 +80,7 @@
                    :cost    4
                    :text    "Gain 2 Aether\nGain an additional 1 Aether that can only be used to gain a spell."
                    :effects [[:gain-aether 2]
-                             [:gain-aether {:earmark #{:spell}
-                                            :arg     1}]]})
+                             [:gain-aether {:arg 1 :earmark #{:spell}}]]})
 
 (def cards [alien-element
             bloodstone-jewel

@@ -132,49 +132,11 @@
 
 (effects/register {:simultaneous-effects-choice simultaneous-effects-choice})
 
-(defn sync-repeated-play [game {:keys [player-no]}]
-  (let [trigger-card-ids (->> (get-in game [:players player-no :triggers])
-                              (keep :card-id)
-                              set)]
-    (-> game
-        (update-in [:players player-no :repeated-play] (partial filter (comp trigger-card-ids :target)))
-        (update-in [:players player-no] ut/dissoc-if-empty :repeated-play))))
-
-(effects/register {:sync-repeated-play sync-repeated-play})
-
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
-  (let [card-triggers (->> (get-in game [:players player-no :play-area])
-                           (keep (fn [{:keys [id name trigger-condition trigger-mode] :as card}]
-                                   (let [condition-fn         (if trigger-condition
-                                                                (effects/get-effect trigger-condition)
-                                                                (constantly true))
-                                         phase-change-effects (get card phase-change)]
-                                     (when (and phase-change-effects
-                                                (condition-fn game player-no))
-                                       (merge {:event   phase-change
-                                               :name    name
-                                               :card-id id
-                                               :effects phase-change-effects}
-                                              (if trigger-mode
-                                                {:mode trigger-mode}
-                                                {:mode      :manual
-                                                 :optional? true})))))))
-        triggers      (->> (get-in game [:players player-no :triggers])
-                           (filter (comp #{phase-change} :event))
-                           (filter (fn [{:keys [condition]}]
-                                     (if condition
-                                       (let [condition-fn (effects/get-effect condition)]
-                                         (condition-fn game player-no))
-                                       true)))
-                           (concat card-triggers))]
-    #_(assert (every? :name triggers) (str "Trigger error. All triggers need a name. \n" (->> triggers
-                                                                                              (remove :name)
-                                                                                              (#?(:clj  clojure.pprint/pprint
-                                                                                                  :cljs cljs.pprint/pprint))
-                                                                                              with-out-str)))
-    (concat
-      (get-trigger-effects triggers)
-      [[:sync-repeated-play]])))
+  (when phase-change
+    (->> (get-in game [:players player-no :breaches])
+         (mapcat :prepped-spells)
+         (mapcat (comp phase-change :while-prepped)))))
 
 (def phase-order [:out-of-turn
                   :casting
@@ -195,7 +157,7 @@
     (if (and current-phase (not= current-phase phase))
       (let [next-phase                (next-phase current-phase)
             phase-change              (cond (#{:casting} next-phase) :at-start-casting
-                                            (#{:casting} current-phase) :at-end-casting
+                                            (#{:main} next-phase) :at-start-main
                                             (#{:draw} current-phase) :at-end-draw)
             spells-in-closed-breaches (->> (get-in game [:players player-no :breaches])
                                            (remove (comp #{:opened} :status))
@@ -591,16 +553,20 @@
                    :all-players   affect-all-players})
 
 (defn prep-spell [{:keys [real-game?] :as game} {:keys [player-no breach-no card-name]}]
-  (let [{{:keys [id type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+  (let [{{:keys [id type while-prepped] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        phase                 (get-in game [:players player-no :phase])
+        while-prepped-effects (when (= :main phase)
+                                (:at-start-main while-prepped))]
     (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
     (-> game
         (cond-> real-game? (update-in [:players player-no :this-turn] concat [{:prep card-name :id id}]))
         (push-effect-stack {:player-no player-no
-                            :effects   [[:move-card {:card-name card-name
-                                                     :from      :hand
-                                                     :to        :breach
-                                                     :breach-no breach-no}]]}))))
+                            :effects   (concat [[:move-card {:card-name card-name
+                                                             :from      :hand
+                                                             :to        :breach
+                                                             :breach-no breach-no}]]
+                                               while-prepped-effects)}))))
 
 (effects/register {:prep-spell prep-spell})
 

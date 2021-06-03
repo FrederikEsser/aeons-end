@@ -1,8 +1,10 @@
 (ns aeons-end.spell-test
   (:require [clojure.test :refer :all]
+            [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.spell :refer :all]
+            [aeons-end.cards.relic :refer [cairn-compass]]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.mages :refer [garnet-shard]]))
 
@@ -217,6 +219,44 @@
                                   :charge-cost 4}
                        :discard  [ignite]}]
             :nemesis {:life 48}}))))
+
+(deftest nova-forge-test
+  (testing "Nova Forge"
+    (testing "While prepped"
+      (is (= (-> {:players [{:breaches [{:status         :opened
+                                         :prepped-spells [nova-forge]}]
+                             :phase    :casting}]}
+                 (set-phase 0 :main))
+             {:players [{:breaches         [{:status         :opened
+                                             :prepped-spells [nova-forge]}]
+                         :earmarked-aether {#{:spell} 2}
+                         :phase            :main}]}))
+      (is (= (-> {:players [{:hand     [nova-forge]
+                             :breaches [{:status :opened}]
+                             :phase    :main}]}
+                 (prep-spell 0 0 :nova-forge))
+             {:players [{:breaches         [{:status         :opened
+                                             :prepped-spells [nova-forge]}]
+                         :earmarked-aether {#{:spell} 2}
+                         :phase            :main}]}))
+      (is (= (-> {:players [{:hand     [nova-forge]
+                             :breaches [{:status :opened}]
+                             :phase    :casting}]}
+                 (prep-spell 0 0 :nova-forge))
+             {:players [{:breaches         [{:status         :opened
+                                             :prepped-spells [nova-forge]}]
+                         :earmarked-aether {#{:spell} 2}
+                         :phase            :main}]}))
+      (is (= (-> {:players [{:hand [cairn-compass]}
+                            {:discard  [nova-forge]
+                             :breaches [{:status :opened}]
+                             :phase    :out-of-turn}]}
+                 (play 0 :cairn-compass)
+                 (choose {:player-no 1 :card-name :nova-forge}))
+             {:players [{:play-area [cairn-compass]}
+                        {:breaches [{:status         :opened
+                                     :prepped-spells [nova-forge]}]
+                         :phase    :out-of-turn}]})))))
 
 (deftest phoenix-flame-test
   (testing "Phoenix Flame"
