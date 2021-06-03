@@ -5,6 +5,9 @@
             [aeons-end.cards.gem :as gem]
             [aeons-end.cards.relic :as relic]
             [aeons-end.cards.spell :as spell]
+            [aeons-end.cards.attack :as attack]
+            [aeons-end.cards.minion :as minion]
+            [aeons-end.cards.power :as power]
             [aeons-end.mages :as mages]
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.turn-order :as turn-order]
@@ -40,6 +43,7 @@
                                    (concat (->> cards
                                                 (filter (comp #{tier} :tier))))
                                    shuffle)))
+                    (concat [])
                     vec)})))
 
 (def supply-cards (concat gem/cards

@@ -17,6 +17,51 @@
            {:nemesis {:play-area [howling-spinners]}
             :players [{:life 8}]}))))
 
+(deftest mage-ender-test
+  (testing "Mage Ender"
+    (is (= (-> {:nemesis {:play-area [mage-ender]}
+                :players [{:breaches [{:status :opened}]
+                           :life     10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [mage-ender]}
+            :players [{:breaches [{:status :opened}]
+                       :life     8}]}))
+    (is (= (-> {:nemesis {:play-area [mage-ender]}
+                :players [{:breaches [{:status :opened}]
+                           :life     10}
+                          {:breaches [{:status :opened}]
+                           :life     10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [mage-ender]}
+            :players [{:breaches [{:status :opened}]
+                       :life     8}
+                      {:breaches [{:status :opened}]
+                       :life     10}]}))
+    (is (= (-> {:nemesis {:play-area [mage-ender]}
+                :players [{:breaches [{:status :opened}]
+                           :life     10}
+                          {:breaches [{:status :opened}]
+                           :life     10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 1}))
+           {:nemesis {:play-area [mage-ender]}
+            :players [{:breaches [{:status :opened}]
+                       :life     10}
+                      {:breaches [{:status :opened}]
+                       :life     8}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [mage-ender]}
+                               :players [{:breaches [{:status :opened}
+                                                     {:status :opened}]
+                                          :life     10}
+                                         {:breaches [{:status :opened}
+                                                     {:status :closed}]
+                                          :life     10}]}
+                              (resolve-nemesis-cards-in-play)
+                              (choose {:player-no 1}))))))
+
 (deftest mangleroot-test
   (testing "Mangleroot"
     (is (= (-> {:nemesis   {:play-area [mangleroot]}

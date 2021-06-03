@@ -26,6 +26,19 @@
                                                              :max     1}]]}
                        :quote      "'The sound they make as they weave echoes through the cave is like the otherworldly throes of our lost companions.' Ges, Breach Mage Adviser"})
 
+(def mage-ender {:name       :mage-ender
+                 :type       :minion
+                 :tier       2
+                 :life       9
+                 :persistent {:text    "The player with the most opened breaches suffers 2 damage."
+                              :effects [[:give-choice {:title   :mage-ender
+                                                       :text    "The player with the most opened breaches suffers 2 damage."
+                                                       :choice  [:damage-player {:arg 2}]
+                                                       :options [:players {:most-opened-breaches true}]
+                                                       :min     1
+                                                       :max     1}]]}
+                 :quote      "'It sneered as it lunged at us, an awful maw of jagged teeth eager to end one of us, if not all.' Ohat, Dirt Merchant"})
+
 (def mangleroot {:name       :mangleroot
                  :type       :minion
                  :tier       2

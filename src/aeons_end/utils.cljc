@@ -338,11 +338,19 @@
        (mapcat :prepped-spells)
        count))
 
+(defn count-opened-breaches [{:keys [breaches]}]
+  (->> breaches
+       (filter (comp #{:opened} :status))
+       count))
+
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges number-of-prepped-spells lowest-life not-exhausted empty-breach-stati
-                                       type min-cost max-cost most-expensive]}]]
+                                       type min-cost max-cost most-expensive most-opened-breaches]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
+                            (apply max 0))
+        highest-opened (->> players
+                            (map count-opened-breaches)
                             (apply max 0))
         low-life       (->> players
                             (keep :life)
@@ -352,6 +360,7 @@
                                                (assoc player :player-no player-no)) players)
                                 ally (remove (comp #{player-no} :player-no))
                                 most-charges (filter (comp #{highest-charge} :charges :ability))
+                                most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
                                 number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))
                                 lowest-life (filter (comp #{low-life} :life))
                                 not-exhausted (filter (comp pos? :life))

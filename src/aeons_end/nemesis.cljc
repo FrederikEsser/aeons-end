@@ -122,6 +122,7 @@
                     attack/thrash]
                    ; WE Tier 2
                    [power/aphotic-sun
+                    minion/mage-ender
                     minion/mangleroot
                     power/morbid-gyre
                     attack/mutilate
