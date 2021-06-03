@@ -487,7 +487,11 @@
                                        turn-order/player-1
                                        turn-order/player-3]
                              :discard [turn-order/player-2]}
-            :players        [{} {} {} {}]}))))
+            :players        [{} {} {} {}]}))
+    (is (= (-> {:players [{:this-turn [{:gain :jade}]
+                           :phase            :draw}]}
+               (end-turn 0))
+           {:players [{:phase :out-of-turn}]}))))
 
 (deftest draw-nemesis-card-test
   (testing "Draw nemesis card"
@@ -821,3 +825,16 @@
               :players    [{:life 0}
                            {:life 0}]
               :game-over  {:conclusion :defeat}})))))
+
+(deftest this-turn-test
+  (testing "This turn"
+    (let [jade (assoc jade :id 1)]
+      (is (= (-> {:real-game? true
+                  :supply     [{:card jade :pile-size 7}]
+                  :players    [{:aether 2}]}
+                 (buy-card 0 :jade))
+             {:real-game? true
+              :supply     [{:card jade :pile-size 6}]
+              :players    [{:aether    0
+                            :discard   [jade]
+                            :this-turn [{:gain :jade}]}]})))))

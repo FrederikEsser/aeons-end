@@ -31,6 +31,32 @@
                        :play-area [alien-element]
                        :aether    3}]}))))
 
+(deftest bloodstone-jewel-test
+  (testing "Bloodstone Jewel"
+    (let [bloodstone-jewel (assoc bloodstone-jewel :id 1)]
+      (is (= (-> {:real-game? true
+                  :players    [{:aether 6}]
+                  :supply     [{:card bloodstone-jewel :pile-size 7}]}
+                 (buy-card 0 :bloodstone-jewel))
+             {:real-game? true
+              :players    [{:aether    3
+                            :discard   [bloodstone-jewel]
+                            :this-turn [{:gain :bloodstone-jewel}]}]
+              :supply     [{:card bloodstone-jewel :pile-size 6}]}))
+      (is (= (-> {:real-game? true
+                  :players    [{:aether    6
+                                :discard   [bloodstone-jewel]
+                                :this-turn [{:gain :bloodstone-jewel}]}]
+                  :supply     [{:card bloodstone-jewel :pile-size 6}]}
+                 (buy-card 0 :bloodstone-jewel))
+             {:real-game? true
+              :players    [{:discard   [bloodstone-jewel
+                                        bloodstone-jewel]
+                            :aether    0
+                            :this-turn [{:gain :bloodstone-jewel}
+                                        {:gain :bloodstone-jewel}]}]
+              :supply     [{:card bloodstone-jewel :pile-size 5}]})))))
+
 (deftest breach-ore-test
   (testing "Breach Ore"
     (is (= (-> {:players [{:hand     [breach-ore]

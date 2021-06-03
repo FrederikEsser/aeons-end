@@ -3,14 +3,15 @@
             [aeons-end.effects :as effects]
             [clojure.string :as string]))
 
-(defn game-over? [{:keys                              [real-game? players]
-                   {gravehold-life :life}             :gravehold
+(defn game-over? [{:keys                  [real-game? players]
+                   {gravehold-life :life} :gravehold
                    {nemesis-life :life
                     :keys        [name
                                   deck
                                   play-area
-                                  victory-condition]} :nemesis
-                   :as                                game}]
+                                  victory-condition]
+                    :as          nemesis} :nemesis
+                   :as                    game}]
   (when real-game?
     (let [nemesis-victory-fn (when victory-condition
                                (effects/get-predicate victory-condition))]
@@ -19,7 +20,8 @@
              (<= nemesis-life 0)) {:conclusion :victory
                                    :text       [(str (ut/format-name name) " has been defeated and all its minions retreat.")
                                                 "Gravehold is safe - for now."]}
-        (and (empty? deck)
+        (and nemesis
+             (empty? deck)
              (empty? play-area)) {:conclusion :victory
                                   :text       [(str (ut/format-name name) " is exhausted and all its minions defeated.")
                                                "Gravehold is safe - for now."]}
@@ -27,6 +29,7 @@
              (<= gravehold-life 0)) {:conclusion :defeat
                                      :text       ["The last defenses are destroyed and Gravehold is overrun."]}
         (and (not-empty players)
+             (every? :life players)
              (every? (comp zero? :life) players)) {:conclusion :defeat
                                                    :text       ["All breach mages are defeated and Gravehold is defenseless."]}
         nemesis-victory-fn (nemesis-victory-fn game)))))
@@ -342,31 +345,23 @@
                                                                                                 :card-id    card-id}))))))]
     (concat on-gain while-in-play-effects trigger-effects token-effects)))
 
-(defn track-gain [{:keys [track-gained-cards? current-player] :as game} {:keys [player-no card bought]}]
+(defn track-gain [{:keys [real-game? current-player] :as game} {:keys [player-no card bought]}]
   (cond-> game
-          (and track-gained-cards?
+          (and real-game?
                (or (nil? current-player)
-                   (= current-player player-no))) (update-in [:players player-no :gained-cards]
-                                                             concat [(merge {:name  (:name card)
-                                                                             :cost  (:cost card)
-                                                                             :types (ut/get-types game card)}
-                                                                            (when bought {:bought true}))])))
+                   (= current-player player-no))) (update-in [:players player-no :this-turn]
+                                                             concat [{:gain (:name card)}])))
 
 (defn handle-on-gain [game {:keys [player-no gained-card-id from bought]
                             :or   {from :supply}
                             :as   args}]
   (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
-        {:keys [hand]} (get-in game [:players player-no])
-        reaction-effects (->> hand
-                              (mapcat (comp :on-gain :reaction))
-                              (map (partial ut/add-effect-args {:gained-card-id gained-card-id})))
-        on-gain-effects  (->> (get-on-gain-effects game player-no card)
-                              (map (partial ut/add-effect-args (merge args
-                                                                      {:card-name      name
-                                                                       :gained-card-id gained-card-id}))))]
+        on-gain-effects (->> (get-on-gain-effects game player-no card)
+                             (map (partial ut/add-effect-args (merge args
+                                                                     {:card-name      name
+                                                                      :gained-card-id gained-card-id}))))]
     (cond-> game
-            card (push-effect-stack (merge args {:effects (concat reaction-effects
-                                                                  on-gain-effects
+            card (push-effect-stack (merge args {:effects (concat on-gain-effects
                                                                   [[:remove-triggers {:event :on-gain}]
                                                                    [:track-gain {:card   card
                                                                                  :bought (boolean bought)}]])})))))
@@ -787,7 +782,7 @@
 (defn clear-player [game {:keys [player-no]}]
   (-> game
       (dissoc :current-player)
-      (update-in [:players player-no] dissoc :aether :earmarked-aether)
+      (update-in [:players player-no] dissoc :aether :earmarked-aether :this-turn)
       (ut/update-in-if-present [:players player-no :breaches]
                                (partial mapv (fn [{:keys [status] :as breach}]
                                                (cond-> breach

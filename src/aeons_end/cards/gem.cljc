@@ -19,6 +19,21 @@
                     :text    "Gain 1 Aether.\nFor each of your breaches with a spell prepped to it, gain an additional 1 Aether."
                     :effects [[::alien-element-gain-aether]]})
 
+(defn bloodstone-jewel-on-gain [game {:keys [player-no] :as args}]
+  (let [this-turn (get-in game [:players player-no :this-turn])]
+    (cond-> game
+            (not (some #{{:gain :bloodstone-jewel}} this-turn)) (push-effect-stack {:player-no player-no
+                                                                                    :effects   [[:gain-aether 3]]}))))
+
+(effects/register {::bloodstone-jewel-on-gain bloodstone-jewel-on-gain})
+
+(def bloodstone-jewel {:name    :bloodstone-jewel
+                       :type    :gem
+                       :cost    6
+                       :text    "When you gain a Bloodstone Jewel for the first time on you turn, gain 3 Aether.png.\nGain 3 Aether."
+                       :on-gain [[::bloodstone-jewel-on-gain]]
+                       :effects [[:gain-aether 3]]})
+
 (def breach-ore {:name            :breach-ore
                  :type            :gem
                  :cost            4
@@ -69,6 +84,7 @@
                                             :arg     1}]]})
 
 (def cards [alien-element
+            bloodstone-jewel
             breach-ore
             jade
             pain-stone
