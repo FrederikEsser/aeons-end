@@ -1,4 +1,4 @@
-(ns aeons-end.cards.base)
+(ns aeons-end.cards.starter)
 
 (def spark {:name    :spark
             :type    :spell

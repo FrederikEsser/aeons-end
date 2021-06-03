@@ -113,26 +113,26 @@
 (def basic-cards (concat
                    ; WE Tier 1
                    [attack/afflict
-                    minion/catacomb-drone
-                    power/heart-of-nothing
-                    minion/howling-spinners
-                    power/night-unending
                     attack/nix
-                    power/planar-collision
-                    attack/thrash]
+                    attack/thrash
+                    minion/catacomb-drone
+                    minion/howling-spinners
+                    power/heart-of-nothing
+                    power/night-unending
+                    power/planar-collision]
                    ; WE Tier 2
-                   [power/aphotic-sun
+                   [attack/mutilate
+                    attack/smite
                     minion/mage-ender
                     minion/mangleroot
-                    power/morbid-gyre
-                    attack/mutilate
                     minion/null-scion
-                    attack/smite]
+                    power/aphotic-sun
+                    power/morbid-gyre]
                    ; WE Tier 3
-                   [power/apocalypse-ritual
-                    attack/banish
-                    power/cataclysmic-fate
-                    minion/monstrosity-of-omens
+                   [attack/banish
                     attack/quell
                     attack/throttle
+                    minion/monstrosity-of-omens
+                    power/apocalypse-ritual
+                    power/cataclysmic-fate
                     power/withering-beam]))

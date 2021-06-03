@@ -4,7 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.gem :refer :all]
-            [aeons-end.cards.base :refer [crystal spark]]))
+            [aeons-end.cards.starter :refer [crystal spark]]))
 
 (deftest alien-element-test
   (testing "Alien Element"

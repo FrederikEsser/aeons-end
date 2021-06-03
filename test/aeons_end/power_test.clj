@@ -4,7 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.power :refer :all]
-            [aeons-end.cards.base :refer :all]
+            [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]))
 

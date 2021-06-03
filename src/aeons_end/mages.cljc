@@ -1,5 +1,5 @@
 (ns aeons-end.mages
-  (:require [aeons-end.cards.base :refer [crystal spark]]
+  (:require [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]))
 

@@ -3,7 +3,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.relic :refer :all]
-            [aeons-end.cards.base :refer :all]
+            [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.spell :refer [dark-fire radiance]]))
 
