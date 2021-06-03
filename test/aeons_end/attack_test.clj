@@ -3,6 +3,7 @@
             [aeons-end.test-utils :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.attack :refer :all]
+            [aeons-end.cards.minion :refer [mangleroot]]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]))
@@ -45,6 +46,41 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
+
+(deftest engulf-test
+  (testing "Engulf"
+    (is (= (-> {:nemesis   {:deck    [engulf]
+                            :discard [smite]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [smite engulf]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 26}}))
+    (is (= (-> {:nemesis   {:deck    [engulf]
+                            :discard [banish smite]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [banish smite engulf]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 26}}))
+    (is (= (-> {:nemesis   {:deck    [engulf]
+                            :discard [smite mangleroot]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [mangleroot smite engulf]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 26}}))
+    (is (= (-> {:nemesis   {:deck    [engulf]
+                            :discard [mangleroot]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [mangleroot engulf]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 30}}))))
 
 (deftest banish-test
   (testing "Banish"

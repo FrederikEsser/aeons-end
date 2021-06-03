@@ -184,7 +184,7 @@
                                                            :min     1
                                                            :max     1}]
                                             [::vault-behemoth-lose-token]]}
-                     :quote      "'The air rasping in its massive lungs in enough to burst your eardrums.'"})
+                     :quote      "'The air rasping in its massive lungs is enough to burst your eardrums.'"})
 
 (def demi-ancient {:name       :demi-ancient
                    :type       :minion
@@ -256,7 +256,7 @@
 (effects/register {::unleash-choice unleash-choice
                    ::unleash        do-unleash})
 
-(defn victory-condition [{:keys [real-game? nemesis] :as game}]
+(defn victory-condition [{:keys [real-game?] :as game}]
   (let [tokens (get-in game [:nemesis :tokens])]
     (when (and real-game?
                tokens

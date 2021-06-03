@@ -52,6 +52,26 @@
                        [::banish-damage]]
              :quote   "'Get down! It's ejecting back at us!' Ohat, Dirt Merchant"})
 
+(defn engulf-attack [game _]
+  (let [{:keys [name effects] :as card} (->> (get-in game [:nemesis :discard])
+                                             (filter (comp #{:attack} :type))
+                                             last)]
+    (cond-> game
+            card (push-effect-stack {:effects (concat [[:set-resolving {:card-name name}]
+                                                       [:move-card {:card-name name
+                                                                    :from      :discard
+                                                                    :to        :discard}]]
+                                                      effects)}))))
+
+(effects/register {::engulf-attack engulf-attack})
+
+(def engulf {:name    :engulf
+             :type    :attack
+             :tier    3
+             :text    "Resolve the most recently discarded attack card in the nemesis discard pile."
+             :effects [[::engulf-attack]]
+             :quote   "'The Nameless rarely attack in the same fashion twice. It would seem today is an exception.' Dezmodia, Voidborn Prodigy"})
+
 (def mutilate {:name    :mutilate
                :type    :attack
                :tier    2

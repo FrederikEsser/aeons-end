@@ -130,6 +130,7 @@
                     power/morbid-gyre]
                    ; WE Tier 3
                    [attack/banish
+                    attack/engulf
                     attack/quell
                     attack/throttle
                     minion/monstrosity-of-omens

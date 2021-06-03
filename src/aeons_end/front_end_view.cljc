@@ -344,6 +344,8 @@
                                         :text    text
                                         :quote   quote
                                         :type    type}
+                                       (when (= resolving name)
+                                         {:status :resolving})
                                        (when to-discard
                                          {:to-discard-text (:text to-discard)})
                                        (when power
