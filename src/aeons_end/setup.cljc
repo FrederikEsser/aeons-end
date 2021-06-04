@@ -77,7 +77,10 @@
 (defn create-player [{:keys [breaches ability] :as mage} & {:keys [difficulty]}]
   (-> mage
       (merge {:breaches (->> breaches
-                             (mapv merge
+                             (mapv (fn [breach1 {:keys [status] :as breach2}]
+                                     (if (= :opened status)
+                                       breach2
+                                       (merge breach1 breach2)))
                                    [{:status :opened}
                                     {:status     :closed
                                      :focus-cost 2
@@ -108,7 +111,7 @@
              :gravehold  {:life (gravehold-starting-life difficulty)}
              :supply     (create-supply supply)
              :players    [(create-player mages/brama :difficulty difficulty)
-                          (create-player mages/mist :difficulty difficulty)]
+                          (create-player mages/jian :difficulty difficulty)]
              :turn-order {:deck (->> [turn-order/player-0
                                       turn-order/player-0
                                       turn-order/player-1

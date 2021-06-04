@@ -31,6 +31,46 @@
             :deck     [crystal crystal crystal spark spark]
             :ability  brink-siphon})
 
+(def moonstone-shard {:name    :moonstone-shard
+                      :type    :gem
+                      :cost    0
+                      :text    "Gain 1 Aether\nGain an additional 1 Aether that can only be used to gain a gem."
+                      :effects [[:gain-aether 1]
+                                [:gain-aether {:arg 1 :earmark #{:gem}}]]})
+
+(defn black-mirror-cast [game {:keys [player-no] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:spell-effect args]
+                                       [:cast-spell args]]}))
+
+(defn black-mirror-choice [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :black-mirror
+                                                      :text    "Cast any player's prepped spell without discarding it.\nThen cast that prepped spell again.\n(Discard it afterward)"
+                                                      :choice  [::black-mirror-cast {:caster player-no}]
+                                                      :options [:players :prepped-spells]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::black-mirror-cast   black-mirror-cast
+                   ::black-mirror-choice black-mirror-choice})
+
+(def black-mirror {:name        :black-mirror
+                   :activation  :your-main-phase
+                   :charge-cost 4
+                   :text        "Cast any player's prepped spell without discarding it.\nThen cast that prepped spell again.\n(Discard it afterward)"
+                   :effects     [[::black-mirror-choice]]})
+
+(def jian {:name     :jian
+           :title    "Breach Mage Orphan"
+           :breaches [{}
+                      {:status :opened}
+                      {:stage 0}
+                      {:stage 1}]
+           :hand     [moonstone-shard crystal crystal spark spark]
+           :deck     [crystal crystal crystal spark spark]
+           :ability  black-mirror})
+
 (defn garnet-shard-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title     :garnet-shard
