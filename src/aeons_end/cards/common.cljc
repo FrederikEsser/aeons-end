@@ -113,6 +113,20 @@
 
 (effects/register {:destroy-breach destroy-breach})
 
+(defn destroy-from-discard [game {:keys [player-no card-id card-ids] :as args}]
+  (let [card-ids (if card-id
+                   [{:player-no player-no :card-id card-id}]
+                   card-ids)]
+    (cond-> game
+            (not-empty card-ids) (push-effect-stack {:player-no player-no
+                                                     :effects   (->> card-ids
+                                                                     (mapv (fn [{:keys [card-id]}]
+                                                                             [:move-card {:card-id card-id
+                                                                                          :from    :discard
+                                                                                          :to      :trash}])))}))))
+
+(effects/register {:destroy-from-discard destroy-from-discard})
+
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game
@@ -125,8 +139,8 @@
 
 (effects/register {:play-twice play-twice})
 
-(defn prep-from-discard [game {:keys [player-no card-name closed-breaches?]}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:name card-name})
+(defn prep-from-discard [game {:keys [player-no card-id closed-breaches?]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:id card-id})
         breaches     (->> (get-in game [:players player-no :breaches])
                           (map-indexed (fn [breach-no breach]
                                          (assoc breach :breach-no breach-no))))
@@ -139,9 +153,9 @@
                           last
                           :breach-no)]
     (cond-> game
-            (and card-name
+            (and card-id
                  breach-no) (push-effect-stack {:player-no player-no
-                                                :effects   [[:move-card {:card-name card-name
+                                                :effects   [[:move-card {:card-id   card-id
                                                                          :from      :discard
                                                                          :to        :breach
                                                                          :breach-no breach-no}]

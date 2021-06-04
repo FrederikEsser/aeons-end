@@ -239,8 +239,8 @@
                                                                                               (empty? prepped-spells) (dissoc :prepped-spells)))))))
             (empty? (:trash game)) (dissoc :trash))))
 
-(defn- get-card [game {:keys [player-no card-name move-card-id from from-position breach-no] :as args}]
-  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
+(defn- get-card [game {:keys [player-no card-name card-id from from-position breach-no] :as args}]
+  (assert (or card-name card-id from-position) (str "Can't move unspecified card: " args))
   (when (= :breach from)
     (assert breach-no (str "Can't move card from breach without breach-no: " args)))
   (if (#{:supply} from)
@@ -260,7 +260,7 @@
                :bottom {:idx (dec (count (get-in game from-path))) :card (last (get-in game from-path))}
                :top {:idx 0 :card (first (get-in game from-path))}
                (cond
-                 move-card-id (ut/get-card-idx game from-path {:id move-card-id})
+                 card-id (ut/get-card-idx game from-path {:id card-id})
                  card-name (ut/get-card-idx game from-path {:name card-name})
                  :else {:idx 0 :card (first (get-in game from-path))}))))))
 
@@ -334,11 +334,11 @@
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         to (or to (:gain-to card) :discard)]
     (cond-> game
-            card (move-card {:player-no    player-no
-                             :move-card-id gained-card-id
-                             :from         :gaining
-                             :to           to
-                             :to-position  to-position}))))
+            card (move-card {:player-no   player-no
+                             :card-id     gained-card-id
+                             :from        :gaining
+                             :to          to
+                             :to-position to-position}))))
 
 (defn gain [game {:keys [player-no card-name from to]
                   :or   {from :supply
@@ -665,6 +665,7 @@
                           (#{:special :mixed} source) :choices
                           (= :prepped-spells area) :spells
                           (= :players source) :player-card-names
+                          (= :discard area) :card-ids
                           :else :card-names)
         multi-selection (if (sequential? selection)
                           selection

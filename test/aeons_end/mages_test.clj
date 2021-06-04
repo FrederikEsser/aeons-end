@@ -52,6 +52,132 @@
                                 (activate-ability 0)
                                 (choose {:player-no 1})))))))
 
+(deftest gex-test
+  (testing "Gex"
+    (testing "Shattered Geode"
+      (let [shattered-geode (assoc shattered-geode :id 1)
+            crystal         (assoc crystal :id 2)
+            spark           (assoc spark :id 3)]
+        (is (= (-> {:players [{:hand [shattered-geode]}
+                              {:discard [spark crystal]}]}
+                   (play 0 :shattered-geode)
+                   (choose nil))
+               {:players [{:play-area [shattered-geode]
+                           :aether    1}
+                          {:discard [spark crystal]}]}))
+        (is (= (-> {:players [{:hand [shattered-geode]}
+                              {}]}
+                   (play 0 :shattered-geode))
+               {:players [{:play-area [shattered-geode]
+                           :aether    1}
+                          {}]}))
+        (is (= (-> {:players [{:hand [shattered-geode]}
+                              {:discard [spark crystal]}
+                              {:discard [crystal]}]}
+                   (play 0 :shattered-geode)
+                   (choose {:player-no 1 :card-name :crystal :card-id 2}))
+               {:players [{:hand      [crystal]
+                           :play-area [shattered-geode]
+                           :aether    1}
+                          {:discard [spark]}
+                          {:discard [crystal]}]}))
+        (is (= (-> {:players [{:hand [shattered-geode]}
+                              {:discard [spark crystal]}
+                              {:discard [crystal]}]}
+                   (play 0 :shattered-geode)
+                   (choose {:player-no 2 :card-name :crystal :card-id 2}))
+               {:players [{:hand      [crystal]
+                           :play-area [shattered-geode]
+                           :aether    1}
+                          {:discard [spark crystal]}
+                          {}]}))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:players [{:hand [shattered-geode]}
+                                             {:discard [crystal spark]}]}
+                                  (play 0 :shattered-geode)
+                                  (choose {:player-no 1 :card-name :crystal :card-id 2}))))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:players [{:hand    [shattered-geode]
+                                              :discard [spark crystal]}
+                                             {}]}
+                                  (play 0 :shattered-geode)
+                                  (choose {:player-no 0 :card-id 2 :card-name :crystal}))))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:players [{:hand    [shattered-geode]
+                                              :discard [spark crystal]}
+                                             {:discard [spark crystal]}]}
+                                  (play 0 :shattered-geode)
+                                  (choose {:player-no 0 :card-id 2 :card-name :crystal}))))
+        (is (= (-> {:players [{:hand    [shattered-geode]
+                               :discard [spark crystal]}]}
+                   (play 0 :shattered-geode)
+                   (choose {:player-no 0 :card-id 2 :card-name :crystal}))
+               {:players [{:hand      [crystal]
+                           :play-area [shattered-geode]
+                           :discard   [spark]
+                           :aether    1}]}))))
+    (let [crystal (assoc crystal :id 1)
+          spark   (assoc spark :id 2)]
+      (testing "Vimcraft Oath"
+        (is (= (-> {:players [{:ability (assoc vimcraft-oath :charges 5)
+                               :discard [crystal spark]}
+                              {:deck [crystal crystal]
+                               :life 7}]}
+                   (activate-ability 0)
+                   (choose [{:player-no 0 :card-id 1 :card-name :crystal}
+                            {:player-no 0 :card-id 2 :card-name :spark}])
+                   (choose {:player-no 1}))
+               {:players [{:ability (assoc vimcraft-oath :charges 0)}
+                          {:hand [crystal]
+                           :deck [crystal]
+                           :life 9}]
+                :trash   [crystal spark]}))
+        (testing "Destroy starters"
+          (is (= (-> {:players [{:ability (assoc vimcraft-oath :charges 5)
+                                 :discard [crystal spark (assoc crystal :id 3)]}
+                                {:life 7}]}
+                     (activate-ability 0)
+                     (choose [{:player-no 0 :card-id 1 :card-name :crystal}])
+                     (choose {:player-no 1}))
+                 {:players [{:ability (assoc vimcraft-oath :charges 0)
+                             :discard [spark (assoc crystal :id 3)]}
+                            {:life 9}]
+                  :trash   [crystal]}))
+          (is (= (-> {:players [{:ability (assoc vimcraft-oath :charges 5)
+                                 :discard [crystal spark (assoc crystal :id 3)]}
+                                {:life 7}]}
+                     (activate-ability 0)
+                     (choose [{:player-no 0 :card-id 3 :card-name :crystal}])
+                     (choose {:player-no 1}))
+                 {:players [{:ability (assoc vimcraft-oath :charges 0)
+                             :discard [crystal spark]}
+                            {:life 9}]
+                  :trash   [(assoc crystal :id 3)]}))
+          (is (= (-> {:players [{:ability (assoc vimcraft-oath :charges 5)
+                                 :discard [crystal]}
+                                {:life 7}]}
+                     (activate-ability 0)
+                     (choose {:player-no 0 :card-id 1 :card-name :crystal})
+                     (choose {:player-no 1}))
+                 {:players [{:ability (assoc vimcraft-oath :charges 0)}
+                            {:life 9}]
+                  :trash   [crystal]}))
+          (is (= (-> {:players [{:ability (assoc vimcraft-oath :charges 5)
+                                 :discard [crystal]}
+                                {:life 7}]}
+                     (activate-ability 0)
+                     (choose nil)
+                     (choose {:player-no 1}))
+                 {:players [{:ability (assoc vimcraft-oath :charges 0)
+                             :discard [crystal]}
+                            {:life 9}]}))
+          (is (= (-> {:players [{:ability (assoc vimcraft-oath :charges 5)}
+                                {:life 7}]}
+                     (activate-ability 0)
+                     (choose {:player-no 1}))
+                 {:players [{:ability (assoc vimcraft-oath :charges 0)}
+                            {:life 9}]})))))))
+
 (deftest mist-test
   (testing "Mist"
     (testing "Garnet Shard"

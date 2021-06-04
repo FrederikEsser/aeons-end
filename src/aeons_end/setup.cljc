@@ -78,7 +78,7 @@
   (-> mage
       (merge {:breaches (->> breaches
                              (mapv (fn [breach1 {:keys [status] :as breach2}]
-                                     (if (= :opened status)
+                                     (if (#{:opened :destroyed} status)
                                        breach2
                                        (merge breach1 breach2)))
                                    [{:status :opened}

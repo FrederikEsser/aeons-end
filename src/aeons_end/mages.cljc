@@ -31,6 +31,70 @@
             :deck     [crystal crystal crystal spark spark]
             :ability  brink-siphon})
 
+(defn shattered-geode-take-card [game {:keys [player-no card-id to-player]}]
+  (cond-> game
+          card-id (push-effect-stack {:player-no player-no
+                                      :effects   [[:move-card {:card-id   card-id
+                                                               :from      :discard
+                                                               :to-player to-player
+                                                               :to        :hand}]]})))
+
+(defn shattered-geode-choice [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :shattered-geode
+                                                      :text    "You may place the top card of any ally's discard pile into your hand."
+                                                      :choice  [::shattered-geode-take-card {:to-player player-no}]
+                                                      #_[:move-card {:from      :discard
+                                                                     :to-player player-no
+                                                                     :to        :hand}]
+                                                      :options [:players :discard {:ally true :last true}]
+                                                      :max     1}]]}))
+
+(effects/register {::shattered-geode-take-card shattered-geode-take-card
+                   ::shattered-geode-choice    shattered-geode-choice})
+
+(def shattered-geode {:name    :shattered-geode
+                      :type    :gem
+                      :cost    0
+                      :text    "Gain 1 Aether.\nYou may place the top card of any ally's discard pile into your hand."
+                      :effects [[:gain-aether 1]
+                                [::shattered-geode-choice]]})
+
+(defn vimcraft-oath-aid-ally [game {:keys [player-no]}]
+  (let [exhausted? (zero? (get-in game [:players player-no :life]))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:draw 1]]
+                                                (when-not exhausted?
+                                                  [[:heal {:life 2}]]))})))
+
+(effects/register {::vimcraft-oath-aid-ally vimcraft-oath-aid-ally})
+
+(def vimcraft-oath {:name        :vimcraft-oath
+                    :activation  :your-main-phase
+                    :charge-cost 5
+                    :text        "Destroy up to two cards in your discard pile that cost 0 Aether.\nAny ally draws one card and gains 2 life."
+                    :effects     [[:give-choice {:title   :vimcraft-oath
+                                                 :text    "Destroy up to two cards in your discard pile that cost 0 Aether."
+                                                 :choice  :destroy-from-discard
+                                                 :options [:player :discard {:cost 0}]
+                                                 :max     2}]
+                                  [:give-choice {:title   :vimcraft-oath
+                                                 :text    "Any ally draws one card and gains 2 life."
+                                                 :choice  ::vimcraft-oath-aid-ally
+                                                 :options [:players {:ally true}]
+                                                 :min     1
+                                                 :max     1}]]})
+
+(def gex {:name     :gex
+          :title    :breach-mage-adviser
+          :breaches [{:status :destroyed}
+                     {:status :opened}
+                     {:stage 1}
+                     {:stage 1}]
+          :hand     [shattered-geode crystal crystal crystal spark]
+          :deck     [crystal crystal crystal crystal spark]
+          :ability  vimcraft-oath})
+
 (def moonstone-shard {:name    :moonstone-shard
                       :type    :gem
                       :cost    0
@@ -112,5 +176,6 @@
            :ability  divine-augury})
 
 (def mages [brama
+            gex
             jian
             mist])

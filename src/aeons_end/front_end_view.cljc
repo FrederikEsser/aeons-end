@@ -2,7 +2,7 @@
   (:require [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]))
 
-(defn- choice-interaction-simple [{:keys [area card-name]}
+(defn- choice-interaction-simple [{:keys [area card-name] :as args}
                                   {:keys [source options max choice-opts] :as choice}]
   (let [interaction (if (= 1 (or max (count options)))
                       {:interaction :quick-choosable}
@@ -24,7 +24,7 @@
                             (merge interaction
                                    {:choice-value {:area area}}))))))
 
-(defn- choice-interaction-multi [{:keys [area player-no breach-no card-name]}
+(defn- choice-interaction-multi [{:keys [area player-no breach-no card-name card-id] :as args}
                                  {:keys [options max choice-opts] :as choice}]
   (let [interaction  (if (= 1 (or max (count options)))
                        {:interaction :quick-choosable}
@@ -36,6 +36,7 @@
                                 player-no (filter (comp #{player-no} :player-no))
                                 breach-no (filter (comp #{breach-no} :breach-no))
                                 card-name (filter (comp #{card-name} :card-name))
+                                card-id (filter (comp #{card-id} :card-id))
                                 :always first))]
     (when choice-value
       (merge interaction
@@ -141,24 +142,24 @@
                      choice                      :choice}]
   (merge
     (when (not-empty discard)
-      {:card (let [{:keys [name text type]} (last discard)]
+      {:card (let [{:keys [id name text type]} (last discard)]
                (merge {:name    name
                        :name-ui (ut/format-name name)
                        :text    text
                        :type    type}
-                      (choice-interaction {:area      :discard
-                                           :card-name name} choice)))})
+                      (choice-interaction-multi {:area    :discard
+                                                 :card-id id} choice)))})
     {:cards           (if (empty? discard)
                         []
                         (->> discard
-                             (map (fn [{:keys [name text type]}]
+                             (map (fn [{:keys [id name text type]}]
                                     (merge {:name    name
                                             :name-ui (ut/format-name name)
                                             :text    text
                                             :type    type}
-                                           (choice-interaction {:area      :discard
-                                                                :player-no player-no
-                                                                :card-name name} choice))))))
+                                           (choice-interaction-multi {:area      :discard
+                                                                      :player-no player-no
+                                                                      :card-id   id} choice))))))
      :number-of-cards (count discard)}))
 
 (defn view-options [options]

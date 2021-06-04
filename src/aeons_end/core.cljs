@@ -10,7 +10,7 @@
 
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty :normal
-                                      :players    [{:jian} {} {}]
+                                      :players    [{} {} {}]
                                       :supply     [{:type :gem} {:type :gem} {:type :gem}
                                                    {:type :relic} {:type :relic} {:type :spell}
                                                    {:type :spell} {:type :spell} {:type :spell}]}
@@ -31,6 +31,7 @@
 
 (defn button-style [& {:keys [disabled type status number-of-cards min-width max-width]}]
   (let [inverse? (or (#{:nemesis} type)
+                     (<= 2 (:player-no type))
                      (#{:closed :focused :openable} status))]
     {:color            (cond
                          inverse? (cond disabled "#ccc"
@@ -234,11 +235,11 @@
    (when (:number-of-cards pile)
      (str (:number-of-cards pile) " Cards"))])
 
-(defn view-expandable-pile [key {:keys [card cards number-of-cards]} & [{:keys [deck split-after nemesis?]}]]
+(defn view-expandable-pile [key {:keys [card cards number-of-cards]} & [{:keys [deck split-after nemesis? max]}]]
   (let [expanded?    (get-in @state [:expanded? key])
         view-card-fn (if nemesis?
                        view-nemesis-card
-                       view-card)]
+                       (partial view-card max))]
     [:table
      [:tbody {:style {:border :none}}
       (when deck
@@ -262,7 +263,7 @@
                                     (->> cards
                                          (mapk view-card-fn))]))))
             (->> cards
-                 (mapk view-card)))
+                 (mapk (partial view-card max))))
           (view-card-fn card))]
        [:td {:style {:border         :none
                      :vertical-align :top}}
@@ -529,7 +530,8 @@
                                      [:hr]])
                                   (view-player-pile deck max)]]
                             [:td [view-expandable-pile (keyword "discard" (cljs.core/name name)) discard
-                                  {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))}]]
+                                  {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))
+                                   :max         max}]]
                             (when choice
                               (view-choice choice))]))))]]])
 
