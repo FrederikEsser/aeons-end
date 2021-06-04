@@ -4,6 +4,7 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.cards.common]
+            [aeons-end.nemesis]
             [aeons-end.mages :refer :all]
             [aeons-end.utils :as ut]))
 

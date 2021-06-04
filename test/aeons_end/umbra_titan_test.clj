@@ -334,13 +334,13 @@
               :players    [{:life 10}]}))
       (is (= (-> {:nemesis    {:tokens  8
                                :unleash [[::umbra-titan/unleash]]}
-                  :turn-order {:discard [turn-order/player-0 turn-order/nemesis]}
+                  :turn-order {:discard [turn-order/player-1 turn-order/nemesis]}
                   :players    [{:life 10}]}
                  unleash
                  (choose {:player-no 0}))
              {:nemesis    {:tokens  8
                            :unleash [[::umbra-titan/unleash]]}
-              :turn-order {:discard [turn-order/player-0 turn-order/nemesis]}
+              :turn-order {:discard [turn-order/player-1 turn-order/nemesis]}
               :players    [{:life 8}]}))
       (is (= (-> {:nemesis    {:tokens  8
                                :unleash [[::umbra-titan/unleash]]}

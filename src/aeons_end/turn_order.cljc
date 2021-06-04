@@ -3,21 +3,30 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
-(def player-0 {:name    "Player 1"
+(def player-1 {:name    :player-1
                :type    {:player-no 0}
                :effects [[:set-current-player {:player-no 0}]]})
 
-(def player-1 {:name    "Player 2"
+(def player-2 {:name    :player-2
                :type    {:player-no 1}
                :effects [[:set-current-player {:player-no 1}]]})
 
-(def player-2 {:name    "Player 3"
+(def player-3 {:name    :player-3
                :type    {:player-no 2}
                :effects [[:set-current-player {:player-no 2}]]})
 
-(def player-3 {:name    "Player 4"
+(def player-4 {:name    :player-4
                :type    {:player-no 3}
                :effects [[:set-current-player {:player-no 3}]]})
+
+(def wild {:name    :wild
+           :type    {:player-no -1}
+           :effects [[:give-choice {:title   :turn-order
+                                    :text    "Any player takes a turn."
+                                    :choice  :set-current-player
+                                    :options [:players]
+                                    :min     1
+                                    :max     1}]]})
 
 (defn set-resolving [game {:keys [card-name]}]
   (assoc game :resolving card-name))
@@ -79,7 +88,7 @@
 (effects/register {:set-minion-max-life set-minion-max-life
                    :draw-nemesis-card   draw-nemesis-card})
 
-(def nemesis {:name    "Nemesis"
+(def nemesis {:name    :nemesis
               :type    :nemesis
               :effects [[:resolve-nemesis-cards-in-play]
                         [:draw-nemesis-card]

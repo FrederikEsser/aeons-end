@@ -10,6 +10,7 @@
 
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty :normal
+                                      :players    [{} {} {}]
                                       :supply     [{:type :gem} {:type :gem} {:type :gem}
                                                    {:type :relic} {:type :relic} {:type :spell}
                                                    {:type :spell} {:type :spell} {:type :spell}]}

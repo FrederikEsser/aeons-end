@@ -100,24 +100,53 @@
       (update :hand #(map ut/give-id! %))
       (update :deck #(map ut/give-id! %))))
 
-(defn create-game [{:keys [difficulty supply]}]
+(defn select-mages [players]
+  (->> players
+       (map (fn [{:keys [name]}]
+              {:possible-mages (cond->> mages/mages
+                                        name (filter (comp #{name} :name)))}))
+       (sort-by (comp count :possible-mages))
+       (reduce (fn [mages {:keys [possible-mages]}]
+                 (let [chosen-mage-names (->> mages
+                                              (map :name)
+                                              set)
+                       mage              (->> possible-mages
+                                              (remove (comp chosen-mage-names :name))
+                                              shuffle
+                                              first)]
+                   (conj mages mage))) [])
+       (sort-by :name)
+       vec))
+
+(defn setup-turn-order [number-of-players]
+  {:deck (->> (concat [turn-order/nemesis
+                       turn-order/nemesis
+                       turn-order/player-1]
+                      (if (>= number-of-players 2)
+                        [turn-order/player-2]
+                        [turn-order/player-1])
+                      (if (>= number-of-players 3)
+                        [turn-order/player-3]
+                        [turn-order/player-1])
+                      (case number-of-players
+                        1 nil
+                        2 [turn-order/player-2]
+                        3 [turn-order/wild]
+                        4 [turn-order/player-4]))
+              shuffle)})
+
+(defn create-game [{:keys [difficulty players supply]}]
   (let [{:keys [setup] :as nemesis} umbra-titan]
     (cond-> {:mode       :swift
              :real-game? true
              :difficulty (or difficulty :normal)
              :nemesis    (create-nemesis nemesis
-                                         :number-of-players 2
+                                         :number-of-players (count players)
                                          :difficulty difficulty)
              :gravehold  {:life (gravehold-starting-life difficulty)}
              :supply     (create-supply supply)
-             :players    [(create-player mages/brama :difficulty difficulty)
-                          (create-player mages/jian :difficulty difficulty)]
-             :turn-order {:deck (->> [turn-order/player-0
-                                      turn-order/player-0
-                                      turn-order/player-1
-                                      turn-order/player-1
-                                      turn-order/nemesis
-                                      turn-order/nemesis]
-                                     shuffle)}}
+             :players    (->> (select-mages players)
+                              (mapv #(create-player % :difficulty difficulty)))
+             :turn-order (setup-turn-order (count players))}
             setup (-> (push-effect-stack {:effects setup})
                       check-stack))))

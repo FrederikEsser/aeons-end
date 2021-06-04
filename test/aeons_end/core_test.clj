@@ -464,29 +464,29 @@
                (end-turn 0))
            {:players [{:phase :out-of-turn}]}))
     (is (= (-> {:current-player 0
-                :turn-order     {:deck    [turn-order/player-1
-                                           turn-order/player-2]
-                                 :discard [turn-order/player-0]}
+                :turn-order     {:deck    [turn-order/player-2
+                                           turn-order/player-3]
+                                 :discard [turn-order/player-1]}
                 :players        [{} {} {}]}
                (end-turn 0))
            {:current-player 1
-            :turn-order     {:deck    [turn-order/player-2]
-                             :discard [turn-order/player-0
-                                       turn-order/player-1]}
+            :turn-order     {:deck    [turn-order/player-3]
+                             :discard [turn-order/player-1
+                                       turn-order/player-2]}
             :players        [{} {} {}]}))
     (is (= (-> {:current-player 1
                 :turn-order     {:deck    []
-                                 :discard [turn-order/player-2
-                                           turn-order/player-0
-                                           turn-order/player-3
-                                           turn-order/player-1]}
+                                 :discard [turn-order/player-3
+                                           turn-order/player-1
+                                           turn-order/player-4
+                                           turn-order/player-2]}
                 :players        [{} {} {} {}]}
                (end-turn 1))
            {:current-player 2
-            :turn-order     {:deck    [turn-order/player-0
-                                       turn-order/player-1
-                                       turn-order/player-3]
-                             :discard [turn-order/player-2]}
+            :turn-order     {:deck    [turn-order/player-1
+                                       turn-order/player-2
+                                       turn-order/player-4]
+                             :discard [turn-order/player-3]}
             :players        [{} {} {} {}]}))
     (is (= (-> {:players [{:this-turn [{:gain :jade}]
                            :phase     :draw}]}

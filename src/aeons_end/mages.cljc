@@ -110,3 +110,7 @@
            :hand     [garnet-shard crystal crystal crystal spark]
            :deck     [crystal crystal crystal spark spark]
            :ability  divine-augury})
+
+(def mages [brama
+            jian
+            mist])
