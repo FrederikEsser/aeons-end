@@ -126,7 +126,8 @@
 (effects/register {:play-twice play-twice})
 
 (defn prep-from-discard [game {:keys [player-no card-name closed-breaches?]}]
-  (let [breaches     (->> (get-in game [:players player-no :breaches])
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:name card-name})
+        breaches     (->> (get-in game [:players player-no :breaches])
                           (map-indexed (fn [breach-no breach]
                                          (assoc breach :breach-no breach-no))))
         breach-stati (cond-> #{:opened :focused}
@@ -143,7 +144,8 @@
                                                 :effects   [[:move-card {:card-name card-name
                                                                          :from      :discard
                                                                          :to        :breach
-                                                                         :breach-no breach-no}]]}))))
+                                                                         :breach-no breach-no}]
+                                                            [:on-prep-spell {:card card}]]}))))
 
 (effects/register {:prep-from-discard prep-from-discard})
 

@@ -221,7 +221,16 @@
                {:supply  [{:card jade :pile-size 6}]
                 :players [{:discard          [jade]
                            :aether           1
-                           :earmarked-aether {#{:gem :relic :spell} 2}}]}))))))
+                           :earmarked-aether {#{:gem :relic :spell} 2}}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether           1
+                               :earmarked-aether {#{:spell} 1
+                                                  #{:gem}   1}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard          [jade]
+                           :aether           0
+                           :earmarked-aether {#{:spell} 1}}]}))))))
 
 (deftest ability-test
   (testing "Ability"

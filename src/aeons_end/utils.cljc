@@ -367,7 +367,8 @@
                             (apply min 20))
         valid-players  (cond->> (map-indexed (fn [player-no player]
                                                (assoc player :player-no player-no)) players)
-                                ally (remove (comp #{player-no} :player-no))
+                                (and ally
+                                     (> (count players) 1)) (remove (comp #{player-no} :player-no))
                                 most-charges (filter (comp #{highest-charge} :charges :ability))
                                 most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
                                 number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))

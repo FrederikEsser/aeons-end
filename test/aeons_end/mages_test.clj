@@ -110,6 +110,17 @@
                  (choose {:player-no 1}))
              {:players [{:ability (assoc divine-augury :charges 0)}
                         {:hand [crystal crystal crystal crystal crystal spark spark spark]}]}))
-      (is (= (-> {:players [{:ability (assoc divine-augury :charges 5)}]}
-                 (activate-ability 0))
-             {:players [{:ability (assoc divine-augury :charges 0)}]})))))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:players [{:ability (assoc divine-augury :charges 5)}
+                                           {:hand [crystal crystal crystal crystal crystal]
+                                            :deck [spark spark spark spark spark]}]}
+                                (activate-ability 0)
+                                (choose {:player-no 0}))))
+      (is (= (-> {:players [{:ability (assoc divine-augury :charges 5)
+                             :hand    [crystal crystal crystal crystal crystal]
+                             :deck    [spark spark spark spark spark]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 0}))
+             {:players [{:ability (assoc divine-augury :charges 0)
+                         :hand    [crystal crystal crystal crystal crystal spark spark spark spark]
+                         :deck    [spark]}]})))))

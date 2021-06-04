@@ -256,7 +256,18 @@
              {:players [{:play-area [cairn-compass]}
                         {:breaches [{:status         :opened
                                      :prepped-spells [nova-forge]}]
-                         :phase    :out-of-turn}]})))))
+                         :phase    :out-of-turn}]}))
+      (is (= (-> {:players [{:hand     [cairn-compass]
+                             :discard  [nova-forge]
+                             :breaches [{:status :opened}]
+                             :phase    :main}]}
+                 (play 0 :cairn-compass)
+                 (choose {:player-no 0 :card-name :nova-forge}))
+             {:players [{:play-area        [cairn-compass]
+                         :breaches         [{:status         :opened
+                                             :prepped-spells [nova-forge]}]
+                         :earmarked-aether {#{:spell} 2}
+                         :phase            :main}]})))))
 
 (deftest phoenix-flame-test
   (testing "Phoenix Flame"

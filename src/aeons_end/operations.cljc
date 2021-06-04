@@ -28,7 +28,7 @@
         (and gravehold-life
              (<= gravehold-life 0)) {:conclusion :defeat
                                      :text       ["The last defenses are destroyed and Gravehold is overrun."]}
-        (and (not-empty players)
+        (and (> (count players) 1)
              (every? :life players)
              (every? (comp zero? :life) players)) {:conclusion :defeat
                                                    :text       ["All breach mages are defeated and Gravehold is defenseless."]}
@@ -379,9 +379,9 @@
                                         (reduce (fn [{:keys [amount earmarked]}
                                                      [types aether]]
                                                   (if (contains? types type)
-                                                    (merge {:amount (max 0 (- amount aether))}
-                                                           (when (> aether amount)
-                                                             {:earmarked (assoc earmarked types (- aether amount))}))
+                                                    {:amount    (max 0 (- amount aether))
+                                                     :earmarked (cond-> earmarked
+                                                                        (> aether amount) (assoc types (- aether amount)))}
                                                     {:amount    amount
                                                      :earmarked (assoc earmarked types aether)}))
                                                 {:amount amount}))]
@@ -534,17 +534,21 @@
 (effects/register {:draw draw})
 
 (defn affect-other-players [{:keys [players] :as game} {:keys [player-no card-id effects all at-once]}]
-  (let [player-no  (or player-no 0)
-        player-nos (cond-> (->> (range 1 (count players))
-                                (map (fn [n] (-> n (+ player-no) (mod (count players))))))
-                           (not at-once) reverse
-                           all (concat [player-no]))]
-    (reduce (fn [game other-player-no]
-              (push-effect-stack game {:player-no other-player-no
-                                       :effects   (cond->> effects
-                                                           card-id (map (partial ut/add-effect-args {:card-id card-id})))}))
-            game
-            player-nos)))
+  (if (= 1 (count players))
+    (push-effect-stack game {:player-no player-no
+                             :effects   (cond->> effects
+                                                 card-id (map (partial ut/add-effect-args {:card-id card-id})))})
+    (let [player-no  (or player-no 0)
+          player-nos (cond-> (->> (range 1 (count players))
+                                  (map (fn [n] (-> n (+ player-no) (mod (count players))))))
+                             (not at-once) reverse
+                             all (concat [player-no]))]
+      (reduce (fn [game other-player-no]
+                (push-effect-stack game {:player-no other-player-no
+                                         :effects   (cond->> effects
+                                                             card-id (map (partial ut/add-effect-args {:card-id card-id})))}))
+              game
+              player-nos))))
 
 (defn affect-all-players [game args]
   (affect-other-players game (assoc args :all true)))
@@ -552,23 +556,30 @@
 (effects/register {:other-players affect-other-players
                    :all-players   affect-all-players})
 
-(defn prep-spell [{:keys [real-game?] :as game} {:keys [player-no breach-no card-name]}]
-  (let [{{:keys [id type while-prepped] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+(defn on-prep-spell [{:keys [real-game?] :as game} {:keys [player-no card]}]
+  (let [{:keys [id name while-prepped]} card
         phase                 (get-in game [:players player-no :phase])
         while-prepped-effects (when (= :main phase)
                                 (:at-start-main while-prepped))]
+    (cond-> game
+            real-game? (update-in [:players player-no :this-turn] concat [{:prep name :id id}])
+            while-prepped-effects (push-effect-stack {:player-no player-no
+                                                      :effects   while-prepped-effects}))))
+
+(defn prep-spell [game {:keys [player-no breach-no card-name]}]
+  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
     (-> game
-        (cond-> real-game? (update-in [:players player-no :this-turn] concat [{:prep card-name :id id}]))
         (push-effect-stack {:player-no player-no
-                            :effects   (concat [[:move-card {:card-name card-name
-                                                             :from      :hand
-                                                             :to        :breach
-                                                             :breach-no breach-no}]]
-                                               while-prepped-effects)}))))
+                            :effects   [[:move-card {:card-name card-name
+                                                     :from      :hand
+                                                     :to        :breach
+                                                     :breach-no breach-no}]
+                                        [:on-prep-spell {:card card}]]}))))
 
-(effects/register {:prep-spell prep-spell})
+(effects/register {:on-prep-spell on-prep-spell
+                   :prep-spell    prep-spell})
 
 (defn spell-effect [game {:keys [player-no breach-no card-name caster additional-damage]}]
   (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
