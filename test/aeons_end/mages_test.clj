@@ -3,6 +3,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
+            [aeons-end.cards.relic :refer [blasting-staff]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
             [aeons-end.mages :refer :all]
@@ -250,3 +251,112 @@
              {:players [{:ability (assoc divine-augury :charges 0)
                          :hand    [crystal crystal crystal crystal crystal spark spark spark spark]
                          :deck    [spark]}]})))))
+
+(deftest quilius-test
+  (testing "Quilius"
+    (let [extinguish (assoc extinguish :id 1)]
+      (testing "Extinguish"
+        (is (= (-> {:players [{:breaches [{:prepped-spells [extinguish]}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :extinguish))
+               {:players [{:breaches [{}]
+                           :discard  [extinguish]}]
+                :nemesis {:life 49}}))
+        (is (= (-> {:players [{:breaches [{:prepped-spells [extinguish]}]}]
+                    :nemesis {:play-area [{:name :caterpillar
+                                           :type :minion
+                                           :life 2}]}}
+                   (cast-spell 0 0 :extinguish)
+                   (choose {:area :minions :card-name :caterpillar}))
+               {:players [{:breaches [{}]
+                           :discard  [extinguish]}]
+                :nemesis {:play-area [{:name :caterpillar
+                                       :type :minion
+                                       :life 1}]}}))
+        (is (= (-> {:players [{:name     :quilius
+                               :breaches [{:prepped-spells [extinguish]}]}]
+                    :nemesis {:play-area [{:name :caterpillar
+                                           :type :minion
+                                           :life 1}]}}
+                   (cast-spell 0 0 :extinguish)
+                   (choose {:area :minions :card-name :caterpillar}))
+               {:players [{:name     :quilius
+                           :breaches [{}]
+                           :discard  [extinguish]
+                           :trophies 1}]
+                :nemesis {:discard [{:name :caterpillar
+                                     :type :minion
+                                     :life 0}]}}))
+        (is (= (-> {:players [{:name     :quilius
+                               :breaches [{:status         :opened
+                                           :bonus-damage   1
+                                           :prepped-spells [extinguish]}]}]
+                    :nemesis {:play-area [{:name :caterpillar
+                                           :type :minion
+                                           :life 2}]}}
+                   (cast-spell 0 0 :extinguish)
+                   (choose {:area :minions :card-name :caterpillar}))
+               {:players [{:name     :quilius
+                           :breaches [{:status       :opened
+                                       :bonus-damage 1}]
+                           :discard  [extinguish]
+                           :trophies 1}]
+                :nemesis {:discard [{:name :caterpillar
+                                     :type :minion
+                                     :life 0}]}}))
+        (is (= (-> {:players [{:name      :quilius
+                               :breaches  [{:status         :opened
+                                            :bonus-damage   1
+                                            :prepped-spells [extinguish]}]
+                               :hand      [blasting-staff]
+                               :this-turn [{:prep :extinguish :id 1}]}]
+                    :nemesis {:play-area [{:name :caterpillar
+                                           :type :minion
+                                           :life 4}]}}
+                   (play 0 :blasting-staff)
+                   (choose {:player-no 0 :breach-no 0 :card-name :extinguish})
+                   (choose {:area :minions :card-name :caterpillar}))
+               {:players [{:name      :quilius
+                           :breaches  [{:status       :opened
+                                        :bonus-damage 1}]
+                           :play-area [blasting-staff]
+                           :discard   [extinguish]
+                           :trophies  1
+                           :this-turn [{:prep :extinguish :id 1}]}]
+                :nemesis {:discard [{:name :caterpillar
+                                     :type :minion
+                                     :life 0}]}}))
+        (is (= (-> {:players [{:breaches [{:prepped-spells [extinguish]}]}
+                              {:name :quilius}]
+                    :nemesis {:play-area [{:name :caterpillar
+                                           :type :minion
+                                           :life 1}]}}
+                   (cast-spell 0 0 :extinguish)
+                   (choose {:area :minions :card-name :caterpillar}))
+               {:players [{:breaches [{}]
+                           :discard  [extinguish]}
+                          {:name     :quilius
+                           :trophies 1}]
+                :nemesis {:discard [{:name :caterpillar
+                                     :type :minion
+                                     :life 0}]}}))))
+    (testing "Quietus Vow"
+      (is (= (-> {:players [{:ability (assoc quietus-vow :charges 5)}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0))
+             {:players [{:ability (assoc quietus-vow :charges 0)}]
+              :nemesis {:life 50}}))
+      (is (= (-> {:players [{:ability  (assoc quietus-vow :charges 5)
+                             :trophies 1}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0))
+             {:players [{:ability  (assoc quietus-vow :charges 0)
+                         :trophies 1}]
+              :nemesis {:life 48}}))
+      (is (= (-> {:players [{:ability  (assoc quietus-vow :charges 5)
+                             :trophies 4}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0))
+             {:players [{:ability  (assoc quietus-vow :charges 0)
+                         :trophies 4}]
+              :nemesis {:life 42}})))))

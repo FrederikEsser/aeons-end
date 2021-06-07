@@ -1,7 +1,8 @@
 (ns aeons-end.mages
   (:require [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (def buried-light {:name    :buried-light
                    :type    :spell
@@ -175,7 +176,46 @@
            :deck     [crystal crystal crystal spark spark]
            :ability  divine-augury})
 
+(defn quilius-gain-trophy [game _]
+  (let [{:keys [idx]} (ut/get-card-idx game [:players] {:name :quilius})]
+    (update-in game [:players idx :trophies] ut/plus 1)))
+
+(effects/register {::quilius-gain-trophy quilius-gain-trophy})
+
+(defn quietus-vow-damage [game {:keys [player-no]}]
+  (let [{:keys [trophies]} (get-in game [:players player-no])]
+    (cond-> game
+            trophies (push-effect-stack {:player-no player-no
+                                         :effects   [[:deal-damage (* 2 trophies)]]}))))
+
+(effects/register {::quietus-vow-damage quietus-vow-damage})
+
+(def quietus-vow {:name        :quietus-vow
+                  :activation  :your-main-phase
+                  :charge-cost 5
+                  :text        "Deal 2 damage for each Trophy token you have."
+                  :effects     [[::quietus-vow-damage]]})
+
+(def extinguish {:name    :extinguish
+                 :type    :spell
+                 :cost    0
+                 :text    "Cast: Deal 1 damage.\nIf this damage causes a minion from the nemesis deck to be discarded, Quilius gains a Trophy token."
+                 :effects [[:deal-damage {:arg          1
+                                          :kill-effects [[::quilius-gain-trophy]]}]]})
+
+(def quilius {:name     :quilius
+              :title    "Breach Mage Assassin"
+              :breaches [{}
+                         {:status :opened}
+                         {:stage 0}
+                         {:stage 1}]
+              :hand     [crystal crystal crystal extinguish spark]
+              :deck     [crystal crystal crystal extinguish spark]
+              :ability  quietus-vow
+              :trophies 0})
+
 (def mages [brama
             gex
             jian
-            mist])
+            mist
+            quilius])

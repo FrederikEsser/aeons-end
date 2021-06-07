@@ -263,7 +263,7 @@
              {:interaction  :quick-choosable
               :choice-value {:area :charges}}))))
 
-(defn view-player [{{:keys [player-no name title life]
+(defn view-player [{{:keys [player-no name title life trophies]
                      :as   player} :player
                     :keys          [choice
                                     active-player?]
@@ -281,6 +281,8 @@
           :discard   (view-discard data)
           :life      life
           :aether    (ut/format-aether player)}
+         (when trophies
+           {:trophies trophies})
          (when (and (:player-no choice)
                     (or active-player?
                         (not= :players (:source choice))))

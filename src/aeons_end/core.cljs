@@ -293,7 +293,7 @@
      (when choice-title
        [:div {:style {:font-weight :bold}}
         choice-title])
-       [:div (format-text text)]
+     [:div (format-text text)]
      [:div (mapk-indexed (fn [idx {:keys [option text]}]
                            (let [disabled (and (not quick-choice?)
                                                (or (= max (count selection))
@@ -465,7 +465,7 @@
            [:tbody
             [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
             (->> players
-                 (mapk (fn [{:keys                    [name name-ui title type life ability aether breaches hand play-area deck discard active? choice-value interaction]
+                 (mapk (fn [{:keys                    [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]
                              {:keys [max] :as choice} :choice}]
                          (let [max           (or max (get-in @state [:game :nemesis :choice :max]))
                                breach-no     (->> breaches
@@ -495,6 +495,8 @@
                                                  :paddingTop  "3px"}}
                                    title]]])]
                              (view-ability ability)
+                             (when trophies
+                               [:div "Trophies: " trophies])
                              [:div "Life: " life]
                              [:div "Aether: " aether]]
                             [:td [:table

@@ -25,7 +25,7 @@
   (let [life (get-in game [:nemesis :life])]
     (assoc-in game [:nemesis :life] (max (- life damage) 0))))
 
-(defn deal-damage-to-minion [game {:keys [card-name damage]}]
+(defn deal-damage-to-minion [game {:keys [card-name damage kill-effects]}]
   (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
         {:keys [life max-life modify-damage]} card
         modify-damage-fn (when modify-damage
@@ -37,14 +37,18 @@
     (-> game
         (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
                                                               (- life damage)))
-        (cond-> killed? (discard-nemesis-card {:card-name card-name})))))
+        (cond-> killed? (discard-nemesis-card {:card-name card-name}))
+        (cond-> (and killed?
+                     kill-effects) (push-effect-stack {:effects kill-effects})))))
 
-(defn deal-damage-to-target [game {:keys [damage area card-name]}]
+(defn deal-damage-to-target [game {:keys [damage area card-name kill-effects]}]
   (push-effect-stack game {:effects (case area
                                       :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
-                                      :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])}))
+                                      :minions [[:deal-damage-to-minion {:card-name    card-name
+                                                                         :damage       damage
+                                                                         :kill-effects kill-effects}]])}))
 
-(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage]
+(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage kill-effects]
                                                :or   {bonus-damage 0}}]
   (let [{:keys [name play-area]} nemesis
         minions (->> play-area
@@ -52,7 +56,8 @@
         damage  (+ arg bonus-damage)]
     (push-effect-stack game {:effects (if (not-empty minions)
                                         [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
-                                                        :choice  [:deal-damage-to-target {:damage damage}]
+                                                        :choice  [:deal-damage-to-target {:damage       damage
+                                                                                          :kill-effects kill-effects}]
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:nemesis :minions]]
