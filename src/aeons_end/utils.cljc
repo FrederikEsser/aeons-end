@@ -311,7 +311,7 @@
     :charges (let [charges (get-in game [:players player-no :ability :charges])]
                (when (and charges
                           (pos? charges))
-                 [:charges]))
+                 [nil]))
     :prepped-spells (let [prepped-this-turn? (fn prepped-this-turn? [{:keys [id]}]
                                                (->> (get-in game [:players player-no :this-turn])
                                                     (filter :prep)

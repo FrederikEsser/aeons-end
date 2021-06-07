@@ -1,7 +1,8 @@
 (ns aeons-end.cards.spell
   (:require [aeons-end.nemesis]
             [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (defn amplify-vision-damage [game {:keys [player-no] :as args}]
   (let [all-breaches-opened? (->> (get-in game [:players player-no :breaches])
@@ -60,25 +61,40 @@
                  :while-prepped {:at-start-main [[:gain-aether {:arg 2 :earmark #{:spell}}]]}
                  :effects       [[:deal-damage 4]]})
 
-(defn phoenix-flame-damage [game {:keys [player-no] :as args}]
+(defn phoenix-flame-damage [game {:keys [player-no area damage] :as args}]
   (push-effect-stack game {:player-no player-no
-                           :args      args                  ; bonus-damage
-                           :effects   [[:spend-charges 1]
-                                       [:deal-damage 4]]}))
+                           :effects   (if (= :charges area)
+                                        [[:spend-charges 1]
+                                         [:deal-damage (+ 2 damage)]]
+                                        [[:deal-damage-to-target args]])}))
 
-(effects/register {::phoenix-flame-damage phoenix-flame-damage})
+(defn phoenix-flame-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]
+                                                        :or   {bonus-damage 0}}]
+  (let [{:keys [name]} nemesis
+        damage  (+ 2 bonus-damage)
+        charges (get-in game [:players player-no :ability :charges])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title   :phoenix-flame
+                                                        :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
+                                                                         (when (and charges (pos? charges))
+                                                                           ["OR"
+                                                                            "Lose 1 charge to deal 2 additional damage."]))
+                                                        :choice  [::phoenix-flame-damage {:damage damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]
+                                                                  [:player :charges]]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::phoenix-flame-damage phoenix-flame-damage
+                   ::phoenix-flame-choice phoenix-flame-choice})
 
 (def phoenix-flame {:name    :phoenix-flame
                     :type    :spell
                     :cost    3
                     :text    "Cast: Deal 2 damage.\nYou may lose 1 charge to deal 2 additional damage."
-                    :effects [[:give-choice {:title     :phoenix-flame
-                                             :text      "You may lose 1 charge to deal 4 damage."
-                                             :choice    ::phoenix-flame-damage
-                                             :or-choice {:text    "Deal 2 damage"
-                                                         :effects [[:deal-damage 2]]}
-                                             :options   [:player :charges]
-                                             :max       1}]]})
+                    :effects [[::phoenix-flame-choice]]})
 
 (defn planar-insight-damage [game {:keys [player-no] :as args}]
   (let [opened-breaches (->> (get-in game [:players player-no :breaches])

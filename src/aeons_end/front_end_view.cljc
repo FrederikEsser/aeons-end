@@ -240,7 +240,8 @@
   (let [{:keys [name
                 text
                 charges
-                charge-cost]} ability]
+                charge-cost]} ability
+        {:keys [area options]} choice]
     (merge {:name-ui     (ut/format-name name)
             :text        text
             :charges     charges
@@ -255,9 +256,12 @@
                   (not choice)
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable})
-           (when (= :charges (:area choice))
+           (when (= :charges area)
              {:interaction  :quick-choosable
-              :choice-value :charges}))))
+              :choice-value :charges})
+           (when (some (comp #{:charges} :area) options)
+             {:interaction  :quick-choosable
+              :choice-value {:area :charges}}))))
 
 (defn view-player [{{:keys [player-no name title life]
                      :as   player} :player
@@ -387,7 +391,8 @@
                                                                                  :card-name name} choice))))))
                       :number-of-cards (count discard)})}
          (choice-interaction {:area :nemesis} choice)
-         (when choice
+         (when (and choice
+                    (nil? (:player-no choice)))
            {:choice (view-choice choice)})))
 
 (defn view-trash [{:keys [trash choice] :as game}]
@@ -457,8 +462,7 @@
                                           {:player (-> player
                                                        (assoc :player-no current-player)
                                                        (cond-> player-no (assoc :choice choice)))})
-                                        (when (nil? player-no)
-                                          {:choice choice})))
+                                        {:choice choice}))
        :gravehold  gravehold
        :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
                                              :choice choice}))

@@ -44,12 +44,12 @@
                                       :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
                                       :minions [[:deal-damage-to-minion {:card-name card-name :damage damage}]])}))
 
-(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage]}]
+(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage]
+                                               :or   {bonus-damage 0}}]
   (let [{:keys [name play-area]} nemesis
         minions (->> play-area
                      (filter (comp #{:minion} :type)))
-        damage  (cond-> arg
-                        bonus-damage (+ bonus-damage))]
+        damage  (+ arg bonus-damage)]
     (push-effect-stack game {:effects (if (not-empty minions)
                                         [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
                                                         :choice  [:deal-damage-to-target {:damage damage}]

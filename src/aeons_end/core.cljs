@@ -293,7 +293,7 @@
      (when choice-title
        [:div {:style {:font-weight :bold}}
         choice-title])
-     [:div text]
+       [:div (format-text text)]
      [:div (mapk-indexed (fn [idx {:keys [option text]}]
                            (let [disabled (and (not quick-choice?)
                                                (or (= max (count selection))
