@@ -246,7 +246,44 @@
                                             :life 10}]}
                               draw-nemesis-card
                               (choose {:player-no 0})
-                              (choose :crystal))))))
+                              (choose :crystal))))
+    (is (= (-> {:nemesis   {:deck    [nix]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal jade]
+                             :life 10}
+                            {:life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :jade))
+           {:nemesis   {:discard [nix]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:hand    [crystal]
+                         :discard [jade]
+                         :life    9}
+                        {:life 10}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [nix]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:hand [crystal jade]
+                                            :life 10}
+                                           {:life 10}]}
+                              draw-nemesis-card
+                              (choose {:player-no 1}))))
+    (is (= (-> {:nemesis   {:deck    [nix]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:life 10}
+                            {:life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [nix]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:life 10}
+                        {:life 9}]}))))
 
 (deftest throttle-test
   (testing "Throttle"
@@ -300,13 +337,15 @@
     (is (= (-> {:nemesis   {:deck    [throttle]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
-                :players   [{:hand [jade crystal ignite]}]}
+                :players   [{:hand [jade crystal ignite]}
+                            {:hand [ignite ignite spark jade]}]}
                draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [throttle]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
-            :players   [{}]
+            :players   [{}
+                        {:hand [ignite ignite spark jade]}]
             :trash     [ignite jade crystal]}))
     (is (= (-> {:nemesis   {:deck    [throttle]
                             :unleash [[:damage-gravehold 1]]}
@@ -338,4 +377,25 @@
                                :players   [{:hand [jade ignite ignite jade spark]}]}
                               draw-nemesis-card
                               (choose {:player-no 0})
-                              (choose :spark))))))
+                              (choose :spark))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [throttle]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:hand [crystal crystal crystal spark spark]}
+                                           {:hand [crystal crystal]}]}
+                              draw-nemesis-card
+                              (choose {:player-no 1}))))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal spark]}
+                            {:hand [crystal crystal]}]}
+               draw-nemesis-card
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [crystal spark]}
+                        {}]
+            :trash     [crystal crystal]}))))

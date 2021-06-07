@@ -102,7 +102,19 @@
                                                       :min     1
                                                       :max     1}]]}))
 
-(effects/register {::nix-damage-player nix-damage-player})
+(defn nix-choice [{:keys [players] :as game} _]
+  (let [largest-hand (->> players
+                          (map (comp count :hand))
+                          (apply max 0))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :nix
+                                                      :text    "Any player suffers 1 damage and discards their most expensive card in hand."
+                                                      :choice  ::nix-damage-player
+                                                      :options [:players {:min-hand (min 1 largest-hand)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::nix-damage-player nix-damage-player
+                   ::nix-choice        nix-choice})
 
 (def nix {:name    :nix
           :type    :attack
@@ -110,12 +122,7 @@
           :text    ["Unleash."
                     "Any player suffers 1 damage and discards their most expensive card in hand."]
           :effects [[:unleash]
-                    [:give-choice {:title   :nix
-                                   :text    "Any player suffers 1 damage and discards their most expensive card in hand."
-                                   :choice  ::nix-damage-player
-                                   :options [:players]
-                                   :min     1
-                                   :max     1}]]
+                    [::nix-choice]]
           :quote   "'It's as if the world itself is screaming.' Nerva, Survivor"})
 
 (defn quell-choice [game {:keys [choice]}]
@@ -198,7 +205,19 @@
                                                             :min     manual-destroy-count
                                                             :max     manual-destroy-count}]]))})))
 
-(effects/register {::throttle-destroy-cards throttle-destroy-cards})
+(defn throttle-choice [{:keys [players] :as game} _]
+  (let [largest-hand (->> players
+                          (map (comp count :hand))
+                          (apply max 0))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :throttle
+                                                      :text    "Any player destroys their three most expensive cards in hand."
+                                                      :choice  ::throttle-destroy-cards
+                                                      :options [:players {:min-hand (min 3 largest-hand)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::throttle-destroy-cards throttle-destroy-cards
+                   ::throttle-choice        throttle-choice})
 
 (def throttle {:name    :throttle
                :type    :attack
@@ -207,10 +226,5 @@
                          "Any player destroys their three most expensive cards in hand."]
                :effects [[:unleash]
                          [:unleash]
-                         [:give-choice {:title   :throttle
-                                        :text    "Any player destroys their three most expensive cards in hand."
-                                        :choice  ::throttle-destroy-cards
-                                        :options [:players]
-                                        :min     1
-                                        :max     1}]]
+                         [::throttle-choice]]
                :quote   "'Were I made of muscle and blood like the others, the impact would have surely ended me.' Remnant, Aetherial Entity"})
