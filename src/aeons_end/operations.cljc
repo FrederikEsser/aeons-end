@@ -224,20 +224,35 @@
                    :remove-triggers remove-triggers
                    :apply-triggers  apply-triggers})
 
+(defn increase-revealed-number-of-cards [game player-no]
+  (-> game
+      (update-in [:players player-no :revealed-cards] ut/plus 1)))
+
+(defn decrease-revealed-number-of-cards [game player-no]
+  (let [revealed-cards (get-in game [:players player-no :revealed-cards])]
+    (if (and revealed-cards
+             (< 1 revealed-cards))
+      (assoc-in game [:players player-no :revealed-cards] (dec revealed-cards))
+      (update-in game [:players player-no] dissoc :revealed-cards))))
+
 (defn state-maintenance [game player-no from to]
   (let [from-cards (if player-no
                      (get-in game [:players player-no from])
                      (get-in game [:nemesis from]))]
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
-            (and player-no (empty? from-cards)) (update-in [:players player-no] dissoc from)
-            (and (nil? player-no) (empty? from-cards)) (update :nemesis dissoc from)
-            (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
-                                                                         (->> breaches
-                                                                              (mapv (fn [{:keys [prepped-spells] :as breach}]
-                                                                                      (cond-> breach
-                                                                                              (empty? prepped-spells) (dissoc :prepped-spells)))))))
-            (empty? (:trash game)) (dissoc :trash))))
+            player-no (cond->
+                        (and (= from :revealed)
+                             (= to :deck)) (increase-revealed-number-of-cards player-no)
+                        (= from :deck) (decrease-revealed-number-of-cards player-no)
+                        (empty? from-cards) (update-in [:players player-no] dissoc from)
+                        (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
+                                                                                     (->> breaches
+                                                                                          (mapv (fn [{:keys [prepped-spells] :as breach}]
+                                                                                                  (cond-> breach
+                                                                                                          (empty? prepped-spells) (dissoc :prepped-spells))))))))
+            (nil? player-no) (cond->
+                               (empty? from-cards) (update :nemesis dissoc from)))))
 
 (defn- get-card [game {:keys [player-no card-name card-id from from-position breach-no] :as args}]
   (assert (or card-name card-id from-position) (str "Can't move unspecified card: " args))

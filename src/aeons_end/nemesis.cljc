@@ -132,6 +132,7 @@
                     minion/mangleroot
                     minion/null-scion
                     power/aphotic-sun
+                    power/chaos-flail
                     power/morbid-gyre]
                    ; WE Tier 3
                    [attack/banish

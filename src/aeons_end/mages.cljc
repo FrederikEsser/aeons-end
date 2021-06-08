@@ -45,9 +45,6 @@
                            :effects   [[:give-choice {:title   :shattered-geode
                                                       :text    "You may place the top card of any ally's discard pile into your hand."
                                                       :choice  [::shattered-geode-take-card {:to-player player-no}]
-                                                      #_[:move-card {:from      :discard
-                                                                     :to-player player-no
-                                                                     :to        :hand}]
                                                       :options [:players :discard {:ally true :last true}]
                                                       :max     1}]]}))
 
@@ -87,7 +84,7 @@
                                                  :max     1}]]})
 
 (def gex {:name     :gex
-          :title    :breach-mage-adviser
+          :title    "Breach Mage Adviser"
           :breaches [{:status :destroyed}
                      {:status :opened}
                      {:stage 1}

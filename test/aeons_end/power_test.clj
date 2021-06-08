@@ -8,6 +8,12 @@
             [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]))
 
+(defn fixture [f]
+  #_(ut/reset-ids!)
+  (with-rand-seed 42 (f)))
+
+(use-fixtures :each fixture)
+
 (deftest aphotic-sun-test
   (testing "Aphotic Sun"
     (is (= (-> {:nemesis {:play-area [aphotic-sun]}
@@ -111,6 +117,57 @@
                                          {:life 10}]}
                               resolve-nemesis-cards-in-play
                               (choose {:player-no 0}))))))
+
+(deftest chaos-flail-test
+  (testing "Chaos Flail"
+    (is (= (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:deck    [crystal crystal]
+                             :discard [spark spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose :spark))
+           {:nemesis   {:discard [(assoc-in chaos-flail [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:deck           [crystal spark crystal]
+                         :revealed-cards 1}]
+            :trash     [spark]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:deck    [jade crystal]
+                             :discard [spark spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose :jade))
+           {:nemesis   {:discard [(assoc-in chaos-flail [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:deck           [spark crystal spark]
+                         :revealed-cards 1}]
+            :trash     [jade]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                                           :unleash   [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:deck [crystal jade]}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 0})
+                              (choose :crystal))))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:discard [crystal]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose :crystal))
+           {:nemesis   {:discard [(assoc-in chaos-flail [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{}]
+            :trash     [crystal]}))))
 
 (deftest morbid-gyre-test
   (testing "Morbid Gyre"

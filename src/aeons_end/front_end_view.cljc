@@ -127,16 +127,15 @@
                           revealed
                           revealed-cards]} :player
                   :as                      data}]
-  (let [full-deck              (concat revealed deck)
-        revealed-cards-in-deck (:deck revealed-cards)]
+  (let [full-deck              (concat revealed deck)]
     (if (empty? full-deck)
       {}
       (merge {:number-of-cards (count full-deck)}
              (when (or (not-empty revealed)
-                       revealed-cards-in-deck)
+                       revealed-cards)
                {:visible-cards (concat (view-area :revealed data)
-                                       (when revealed-cards-in-deck
-                                         (view-area :deck data :top revealed-cards-in-deck)))})))))
+                                       (when revealed-cards
+                                         (view-area :deck data :top revealed-cards)))})))))
 
 (defn view-discard [{{:keys [player-no discard]} :player
                      choice                      :choice}]

@@ -14,8 +14,7 @@
                                       :supply     [{:type :gem} {:type :gem} {:type :gem}
                                                    {:type :relic} {:type :relic} {:type :spell}
                                                    {:type :spell} {:type :spell} {:type :spell}]}
-                        :selection   []
-                        :num-players 2}))
+                        :selection   []}))
 
 (defn select! [option]
   (swap! state update :selection conj option))
