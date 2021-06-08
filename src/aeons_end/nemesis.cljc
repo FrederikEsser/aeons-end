@@ -118,6 +118,7 @@
 (def basic-cards (concat
                    ; WE Tier 1
                    [attack/afflict
+                    attack/encroach
                     attack/nix
                     attack/thrash
                     minion/catacomb-drone

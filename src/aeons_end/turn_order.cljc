@@ -93,3 +93,33 @@
               :effects [[:resolve-nemesis-cards-in-play]
                         [:draw-nemesis-card]
                         [:next-turn]]})
+
+(defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
+  (if (empty? deck)
+    (let [[card & new-deck] (shuffle discard)]
+      (assoc game :turn-order {:deck    (vec new-deck)
+                               :discard [card]}))
+    (let [[card & new-deck] deck]
+      (assoc game :turn-order {:deck    (vec new-deck)
+                               :discard (concat discard [card])}))))
+
+(defn start-turn [{{:keys [discard]} :turn-order :as game} _]
+  (let [{:keys [effects]} (last discard)]
+    (push-effect-stack game {:effects effects})))
+
+(defn next-turn [{:keys [turn-order] :as game} _]
+  (if turn-order
+    (push-effect-stack game {:effects [[:draw-turn-order]
+                                       [:start-turn]]})
+    game))
+
+(effects/register {:draw-turn-order draw-turn-order
+                   :start-turn      start-turn
+                   :next-turn       next-turn})
+
+(defn reveal-top-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
+  (cond-> game
+          (empty? deck) (assoc :turn-order {:deck (shuffle discard)})
+          :always (assoc-in [:turn-order :revealed-cards] 1)))
+
+(effects/register {:reveal-top-turn-order reveal-top-turn-order})

@@ -28,6 +28,30 @@
                                        :max     1}]]
               :quote   "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
 
+(defn encroach-damage [game _]
+  (let [{:keys [player-no]} (-> game :turn-order :deck first :type)]
+    (cond
+      (= -1 player-no) (push-effect-stack game {:effects [[:give-choice {:title   :encroach
+                                                                         :text    "Any player suffers 2 damage."
+                                                                         :choice  [:damage-player {:arg 2}]
+                                                                         :options [:players]
+                                                                         :min     1
+                                                                         :max     1}]]})
+      player-no (push-effect-stack game {:player-no player-no
+                                         :effects   [[:damage-player 2]]})
+      :else (push-effect-stack game {:effects [[:damage-gravehold 3]]}))))
+
+(effects/register {::encroach-damage encroach-damage})
+
+(def encroach {:name    :encroach
+               :type    :attack
+               :tier    1
+               :text    ["Unleash."
+                         "Reveal the top card of the turn order deck. If a player turn order card was revealed, that player suffers 2 damage. Otherwise Gravehold suffers 3 damage."]
+               :effects [[:unleash]
+                         [:reveal-top-turn-order]
+                         [::encroach-damage]]})
+
 (defn banish-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
                                  (map ut/count-prepped-spells)

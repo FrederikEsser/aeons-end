@@ -6,7 +6,8 @@
             [aeons-end.cards.minion :refer [mangleroot]]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [jade]]
-            [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]))
+            [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]
+            [aeons-end.turn-order :as turn-order]))
 
 (deftest afflict-test
   (testing "Afflict"
@@ -47,6 +48,68 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
+
+(deftest encroach-test
+  (testing "Encroach"
+    (is (= (-> {:nemesis    {:deck    [encroach]
+                             :unleash [[:damage-gravehold 1]]}
+                :gravehold  {:life 30}
+                :turn-order {:deck [turn-order/player-1]}
+                :players    [{:life 10}
+                             {:life 10}]}
+               draw-nemesis-card)
+           {:nemesis    {:discard [encroach]
+                         :unleash [[:damage-gravehold 1]]}
+            :gravehold  {:life 29}
+            :turn-order {:deck           [turn-order/player-1]
+                         :revealed-cards 1}
+            :players    [{:life 8}
+                         {:life 10}]}))
+    (is (= (-> {:nemesis    {:deck    [encroach]
+                             :unleash [[:damage-gravehold 1]]}
+                :gravehold  {:life 30}
+                :turn-order {:discard [turn-order/player-2]}
+                :players    [{:life 10}
+                             {:life 10}]}
+               draw-nemesis-card)
+           {:nemesis    {:discard [encroach]
+                         :unleash [[:damage-gravehold 1]]}
+            :gravehold  {:life 29}
+            :turn-order {:deck           [turn-order/player-2]
+                         :revealed-cards 1}
+            :players    [{:life 10}
+                         {:life 8}]}))
+    (is (= (-> {:nemesis    {:deck    [encroach]
+                             :unleash [[:damage-gravehold 1]]}
+                :gravehold  {:life 30}
+                :turn-order {:deck [turn-order/nemesis]}
+                :players    [{:life 10}
+                             {:life 10}]}
+               draw-nemesis-card)
+           {:nemesis    {:discard [encroach]
+                         :unleash [[:damage-gravehold 1]]}
+            :gravehold  {:life 26}
+            :turn-order {:deck           [turn-order/nemesis]
+                         :revealed-cards 1}
+            :players    [{:life 10}
+                         {:life 10}]}))
+    (is (= (-> {:nemesis    {:deck    [encroach]
+                             :unleash [[:damage-gravehold 1]]}
+                :gravehold  {:life 30}
+                :turn-order {:deck [turn-order/wild]}
+                :players    [{:life 10}
+                             {:life 10}
+                             {:life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 2}))
+           {:nemesis    {:discard [encroach]
+                         :unleash [[:damage-gravehold 1]]}
+            :gravehold  {:life 29}
+            :turn-order {:deck           [turn-order/wild]
+                         :revealed-cards 1}
+            :players    [{:life 10}
+                         {:life 10}
+                         {:life 8}]}))))
 
 (deftest engulf-test
   (testing "Engulf"

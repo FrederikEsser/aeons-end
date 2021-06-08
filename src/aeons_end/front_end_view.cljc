@@ -127,7 +127,7 @@
                           revealed
                           revealed-cards]} :player
                   :as                      data}]
-  (let [full-deck              (concat revealed deck)]
+  (let [full-deck (concat revealed deck)]
     (if (empty? full-deck)
       {}
       (merge {:number-of-cards (count full-deck)}
@@ -435,10 +435,17 @@
                                (and (#{:casting :main} phase)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
-(defn view-turn-order [{:keys [deck discard]}]
+(defn view-turn-order [{:keys [deck discard revealed-cards]}]
   {:deck    (if (empty? deck)
               {}
-              {:number-of-cards (count deck)})
+              (merge {:number-of-cards (count deck)}
+                     (when revealed-cards
+                       {:visible-cards (->> deck
+                                            (take revealed-cards)
+                                            (map (fn [{:keys [name type]}]
+                                                   (merge {:name    name
+                                                           :name-ui (ut/format-name name)
+                                                           :type    type}))))})))
    :discard (merge
               (when (not-empty discard)
                 {:card (let [{:keys [name type]} (last discard)]

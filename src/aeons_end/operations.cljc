@@ -806,26 +806,3 @@
 
 (effects/register {:clear-player       clear-player
                    :set-current-player set-current-player})
-
-(defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
-  (if (empty? deck)
-    (let [[card & new-deck] (shuffle discard)]
-      (assoc game :turn-order {:deck    (vec new-deck)
-                               :discard [card]}))
-    (let [[card & new-deck] deck]
-      (assoc game :turn-order {:deck    (vec new-deck)
-                               :discard (concat discard [card])}))))
-
-(defn start-turn [{{:keys [discard]} :turn-order :as game} _]
-  (let [{:keys [effects]} (last discard)]
-    (push-effect-stack game {:effects effects})))
-
-(defn next-turn [{:keys [turn-order] :as game} _]
-  (if turn-order
-    (push-effect-stack game {:effects [[:draw-turn-order]
-                                       [:start-turn]]})
-    game))
-
-(effects/register {:draw-turn-order draw-turn-order
-                   :start-turn      start-turn
-                   :next-turn       next-turn})

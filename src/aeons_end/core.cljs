@@ -440,12 +440,23 @@
              [:td "Life: " (-> @state :game :gravehold :life)]
              [:td
               (let [number-of-cards (:number-of-cards deck)]
-                [view-expandable-pile :turn-order-discard discard
-                 {:deck [:button {:style    (button-style :disabled true)
-                                  :disabled true}
-                         (if (pos? number-of-cards)
-                           (str "Turn order x" number-of-cards)
-                           "(empty)")]}])]
+                [:div
+                 [view-expandable-pile :turn-order-discard discard
+                  {:deck [:button {:style    (button-style :disabled true)
+                                   :disabled true}
+                          (if (pos? number-of-cards)
+                            (str "Turn order x" number-of-cards)
+                            "(empty)")]}]
+                 (when (:visible-cards deck)
+                   (->> (:visible-cards deck)
+                        (mapk (fn [{:keys [name-ui type]}]
+                                [:div
+                                 "[ "
+                                 [:button {:style    (button-style :disabled true
+                                                                   :type type)
+                                           :disabled true}
+                                  name-ui]
+                                 " ]"]))))])]
              (when-let [{:keys [conclusion text]} (-> @state :game :game-over)]
                [:td
                 [:div {:style {:text-align :center}}
