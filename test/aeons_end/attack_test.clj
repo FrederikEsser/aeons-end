@@ -270,6 +270,26 @@
                         {:breaches [{}
                                     {}]
                          :discard  [spark spark]
+                         :life     8}]}))
+    (is (= (-> {:nemesis   {:deck    [mutilate]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{}
+                                        {}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [mutilate]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:breaches [{}]
+                         :discard  [spark]
+                         :life     10}
+                        {:breaches [{}
+                                    {}]
                          :life     8}]}))))
 
 (deftest nix-test

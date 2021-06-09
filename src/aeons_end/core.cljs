@@ -10,7 +10,8 @@
 
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty :normal
-                                      :players    [{} {} {}]
+                                      :nemesis    {:name :rageborne}
+                                      :players    [{} {}]
                                       :supply     [{:type :gem} {:type :gem} {:type :gem}
                                                    {:type :relic} {:type :relic} {:type :spell}
                                                    {:type :spell} {:type :spell} {:type :spell}]}
@@ -44,6 +45,7 @@
                          (#{:relic} type) "#c7dff5"
                          (#{:spell :power} type) "#f7e2b5"
                          (= :minion type) "#aadfef"
+                         (= :strike type) "#b79171"
                          (= :breach type) (cond
                                             (= :opened status) "#f8e238"
                                             (= :destroyed status) :white
@@ -63,6 +65,7 @@
                          (#{:relic} type) "#6bb6dc"
                          (#{:spell :power} type) "#f8c44e"
                          (= :minion type) "#49c4e9"
+                         (= :strike type) "#5e3628"
                          (= :breach type) (cond
                                             (#{:closed :openable} status) "#434f64"
                                             (#{:destroyed} status) "#ccc"
@@ -391,10 +394,12 @@
                     :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
            "Undo"])]
 
-       (when-let [{:keys [name name-ui life tokens deck play-area discard interaction choice-value choice]} (-> @state :game :nemesis)]
+       (when-let [{:keys [name name-ui life tokens deck play-area discard fury strike interaction choice-value choice]} (-> @state :game :nemesis)]
          [:div [:table
                 [:tbody
-                 [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
+                 [:tr (map-tag :th (concat ["Nemesis" "Play area" "Deck" "Discard"]
+                                           (when strike
+                                             ["Strikes"])))]
                  [:tr
                   [:td
                    [:div
@@ -422,13 +427,19 @@
                            [option :extinction]]]
                          (ut/format-name difficulty))])]
                    [:div "Life: " life]
-                   [:div "Tokens: " tokens]]
+                   (when tokens
+                     [:div "Tokens: " tokens])
+                   (when fury
+                     [:div "Fury: " fury])]
                   [:td [:div
                         (mapk view-nemesis-card play-area)]]
                   [:td [:div
                         (str (:number-of-cards deck) " Cards")]]
                   [:td [view-expandable-pile :discard/nemesis discard
                         {:nemesis? true}]]
+                  (when strike
+                    [:td [view-expandable-pile :discard/strike strike
+                          {:nemesis? true}]])
                   (when choice
                     (view-choice choice))]]]])
        (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]

@@ -77,8 +77,12 @@
 
 (effects/register {:collective-discard-from-hand collective-discard-from-hand})
 
-(defn collective-discard-prepped-spells [game {:keys [spells] :as args}]
-  (->> spells
+(defn collective-discard-prepped-spells [game {:keys [player-no breach-no card-name spells] :as args}]
+  (->> (or spells
+           (when (and player-no breach-no card-name)
+             [{:player-no player-no
+               :breach-no breach-no
+               :card-name card-name}]))
        (group-by :player-no)
        (reduce (fn [game [player-no spells]]
                  (push-effect-stack game {:player-no player-no

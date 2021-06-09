@@ -300,14 +300,14 @@
                  (str title ": "))
                text)]))
 
-(defn view-nemesis [{{:keys [name life tokens deck play-area discard]} :nemesis
-                     {:keys [player-no phase] :as player}              :player
-                     choice                                            :choice
-                     resolving                                         :resolving
-                     :as                                               game}]
+(defn view-nemesis [{{:keys [name life play-area deck discard
+                             tokens strike]}              :nemesis
+                     {:keys [player-no phase] :as player} :player
+                     choice                               :choice
+                     resolving                            :resolving
+                     :as                                  game}]
   (merge {:name-ui (ut/format-name name)
           :life    life
-          :tokens  tokens
           :deck    (if (empty? deck)
                      {}
                      {:number-of-cards (count deck)})}
@@ -391,6 +391,30 @@
                                                             (choice-interaction {:area      :discard
                                                                                  :card-name name} choice))))))
                       :number-of-cards (count discard)})}
+         (when tokens
+           {:tokens tokens})
+         (when-let [{:keys [fury discard]} strike]
+           {:fury   fury
+            :strike (merge
+                      (when (not-empty discard)
+                        {:card (let [{:keys [name text quote type]} (last discard)]
+                                 (merge {:name    name
+                                         :name-ui (ut/format-name name)
+                                         :text    text
+                                         :quote   quote
+                                         :type    type}
+                                        (when (= resolving name)
+                                          {:status :resolving})))})
+                      {:cards           (if (empty? discard)
+                                          []
+                                          (->> discard
+                                               (map (fn [{:keys [name text quote type]}]
+                                                      (merge {:name    name
+                                                              :name-ui (ut/format-name name)
+                                                              :text    (format-text text)
+                                                              :quote   quote
+                                                              :type    type})))))
+                       :number-of-cards (count discard)})})
          (choice-interaction {:area :nemesis} choice)
          (when (and choice
                     (nil? (:player-no choice)))

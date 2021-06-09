@@ -8,7 +8,7 @@
 (defn lose-nemesis-tokens [game {:keys [arg]}]
   (update-in game [:nemesis :tokens] - arg))
 
-(effects/register {:lose-nemesis-tokens lose-nemesis-tokens})
+(effects/register {::lose-nemesis-tokens lose-nemesis-tokens})
 
 (defn crumble-revive-minion [game {:keys [card-name]}]
   (-> game
@@ -29,7 +29,7 @@
                                        :text      "Place the most recently discarded minion in the nemesis discard pile back into play. Unleash."
                                        :choice    ::crumble-revive-minion
                                        :or-choice {:text    "Umbra Titan loses three nemesis tokens."
-                                                   :effects [[:lose-nemesis-tokens 3]]}
+                                                   :effects [[::lose-nemesis-tokens 3]]}
                                        :options   [:nemesis :discard {:type :minion :most-recent true}]
                                        :max       1}]]})
 
@@ -44,7 +44,7 @@
                                                     :text      "The player with the most expensive prepped spell discards that spell."
                                                     :choice    :discard-prepped-spells
                                                     :or-choice {:text    "Umbra titan loses one nemesis token"
-                                                                :effects [[:lose-nemesis-tokens 1]]}
+                                                                :effects [[::lose-nemesis-tokens 1]]}
                                                     :options   [:players :prepped-spells {:most-expensive true}]
                                                     :max       1}]]}
               :quote      "'The beasts of this cave seem to revere the Titan as though it were some ancient god.' Mazhaedron, Henge Mystic"})
@@ -54,7 +54,7 @@
                                      (filter (comp #{:nemesis} :type))
                                      count)]
     (push-effect-stack game {:effects (if (= 2 discarded-nemesis-cards)
-                                        [[:lose-nemesis-tokens 1]]
+                                        [[::lose-nemesis-tokens 1]]
                                         [[:damage-gravehold 2]])})))
 
 (effects/register {::grubber-persistent grubber-persistent})
@@ -70,7 +70,7 @@
 
 (defn maul-choice [{:keys [players] :as game} {:keys [choice]}]
   (case choice
-    :lose-tokens (push-effect-stack game {:effects [[:lose-nemesis-tokens 2]]})
+    :lose-tokens (push-effect-stack game {:effects [[::lose-nemesis-tokens 2]]})
     :destroy (let [sorted-spells (->> players
                                       (map-indexed (fn [player-no {:keys [breaches]}]
                                                      (->> breaches
@@ -101,13 +101,13 @@
                                     (map :cost)
                                     (sort >))]
     (push-effect-stack game {:effects (cond
-                                        (nil? cost-2) [[:lose-nemesis-tokens 2]]
+                                        (nil? cost-2) [[::lose-nemesis-tokens 2]]
                                         (or (= cost-1 cost-2)
                                             (not= cost-2 cost-3)) [[:give-choice {:title     :maul
                                                                                   :text      "The players collectively destroy the two most expensive prepped spells."
                                                                                   :choice    :destroy-prepped-spells
                                                                                   :or-choice {:text    "Umbra Titan loses two nemesis tokens"
-                                                                                              :effects [[:lose-nemesis-tokens 2]]}
+                                                                                              :effects [[::lose-nemesis-tokens 2]]}
                                                                                   :options   [:players :prepped-spells {:min-cost cost-2}]
                                                                                   :min       2
                                                                                   :max       2
@@ -145,13 +145,13 @@
                                                    :type   :discard-power-card}]]}
                    :power      {:power   3
                                 :text    "Umbra Titan loses two nemesis tokens."
-                                :effects [[:lose-nemesis-tokens 2]]}
+                                :effects [[::lose-nemesis-tokens 2]]}
                    :quote      "'I roared as it bore through the rock. And Gravehold shuddered like those within its walls.' Nerva, Survivor"})
 
 (defn tombfright-persistent [game _]
   (let [tokens (get-in game [:nemesis :tokens])]
     (push-effect-stack game {:effects (if (>= tokens 5)
-                                        [[:lose-nemesis-tokens 1]]
+                                        [[::lose-nemesis-tokens 1]]
                                         [[:damage-gravehold 3]])})))
 
 (effects/register {::tombfright-persistent tombfright-persistent})
@@ -168,7 +168,7 @@
 (defn vault-behemoth-lose-token [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :vault-behemoth})]
     (cond-> game
-            (<= life 8) (push-effect-stack {:effects [[:lose-nemesis-tokens 1]]}))))
+            (<= life 8) (push-effect-stack {:effects [[::lose-nemesis-tokens 1]]}))))
 
 (effects/register {::vault-behemoth-lose-token vault-behemoth-lose-token})
 
@@ -191,7 +191,7 @@
                    :tier       3
                    :life       18
                    :persistent {:text    "Umbra Titan loses one nemesis token."
-                                :effects [[:lose-nemesis-tokens 1]]}
+                                :effects [[::lose-nemesis-tokens 1]]}
                    :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' Mazahaedron, Henge Mystic"})
 
 (defn yawning-black-can-discard? [game {:keys [player-no]}]
@@ -214,7 +214,7 @@
                                                           :text      "Any player suffers 6 damage."
                                                           :choice    [:damage-player {:arg 6}]
                                                           :or-choice {:text    "Umbra Titan loses three nemesis tokens."
-                                                                      :effects [[:lose-nemesis-tokens 3]]}
+                                                                      :effects [[::lose-nemesis-tokens 3]]}
                                                           :options   [:players]
                                                           :max       1}]]}
                     :quote      "The Titan hides beneath the skin of the cave, emerging only to strike."})
@@ -227,7 +227,7 @@
 (defn unleash-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
                                       :damage [[:damage-gravehold 2]]
-                                      :token [[:lose-nemesis-tokens 1]])}))
+                                      :token [[::lose-nemesis-tokens 1]])}))
 
 (defn do-unleash [game args]
   (let [title                   (keyword (or (:resolving args)
@@ -242,7 +242,7 @@
                                                           :text      "Any player suffers 2 damage."
                                                           :choice    [:damage-player {:arg 2}]
                                                           :or-choice {:text    "Umbra titan loses one nemesis token"
-                                                                      :effects [[:lose-nemesis-tokens 1]]}
+                                                                      :effects [[::lose-nemesis-tokens 1]]}
                                                           :options   [:players]
                                                           :max       1}
                                                        2 {:title   title

@@ -2,6 +2,7 @@
   (:require [aeons-end.operations :refer [push-effect-stack move-card]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
+            [aeons-end.nemeses.rageborne :refer [rageborne]]
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
@@ -20,6 +21,73 @@
                    :to        :discard}))
 
 (effects/register {:discard-nemesis-card discard-nemesis-card})
+
+(defn set-resolving [game {:keys [card-name]}]
+  (assoc game :resolving card-name))
+
+(defn clear-resolving [game _]
+  (dissoc game :resolving))
+
+(effects/register {:set-resolving   set-resolving
+                   :clear-resolving clear-resolving})
+
+(defn resolve-power-card [game {:keys [card-name]}]
+  (let [{:keys [idx card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+        {{:keys [power effects]} :power} card]
+    (-> game
+        (update-in [:nemesis :play-area idx :power :power] dec)
+        (cond->
+          (= 1 power) (push-effect-stack {:effects (concat [[:set-resolving {:card-name card-name}]]
+                                                           effects
+                                                           [[:clear-resolving]
+                                                            [:discard-nemesis-card {:card-name card-name}]])})))))
+
+(defn resolve-minion-card [game {:keys [card-name]}]
+  (let [{:keys [effects]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+                              :card
+                              :persistent)]
+    (push-effect-stack game {:effects (concat [[:set-resolving {:card-name card-name}]]
+                                              effects
+                                              [[:clear-resolving]])})))
+
+(defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
+  (push-effect-stack game {:effects (->> (:play-area nemesis)
+                                         (map (fn [{:keys [type name]}]
+                                                (case type
+                                                  :power [:resolve-power-card {:card-name name}]
+                                                  :minion [:resolve-minion-card {:card-name name}]))))}))
+
+(effects/register {:resolve-power-card            resolve-power-card
+                   :resolve-minion-card           resolve-minion-card
+                   :resolve-nemesis-cards-in-play resolve-nemesis-cards-in-play})
+
+(defn set-minion-max-life [game {:keys [card-name life]}]
+  (ut/update-in-vec game [:nemesis :play-area] {:name card-name} assoc :max-life life))
+
+(defn draw-nemesis-card [game _]
+  (let [{:keys [name type life effects]} (get-in game [:nemesis :deck 0])]
+    (push-effect-stack game {:effects (concat [[:move-card {:from          :deck
+                                                            :from-position :top
+                                                            :to            :play-area}]]
+                                              (when (= :minion type)
+                                                [[:set-minion-max-life {:card-name name
+                                                                        :life      life}]])
+                                              (when (= :attack type)
+                                                (concat
+                                                  [[:set-resolving {:card-name name}]]
+                                                  effects
+                                                  [[:clear-resolving]]
+                                                  [[:discard-nemesis-card {:card-name name}]])))})))
+
+(effects/register {:set-minion-max-life set-minion-max-life
+                   :draw-nemesis-card   draw-nemesis-card})
+
+(defn after-effects [{:keys [nemesis] :as game} _]
+  (let [{:keys [after-effects]} nemesis]
+    (cond-> game
+            after-effects (push-effect-stack {:effects after-effects}))))
+
+(effects/register {:after-effects after-effects})
 
 (defn deal-damage-to-nemesis [game {:keys [damage]}]
   (let [life (get-in game [:nemesis :life])]
@@ -113,7 +181,8 @@
                                    attack/smite minion/null-scion power/aphotic-sun
                                    attack/throttle minion/monstrosity-of-omens power/apocalypse-ritual]})
 
-(def nemeses [umbra-titan])
+(def nemeses [rageborne
+              umbra-titan])
 
 (def basic-cards (concat
                    ; WE Tier 1

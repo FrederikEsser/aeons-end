@@ -9,7 +9,6 @@
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]
             [aeons-end.mages :as mages]
-            [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.turn-order :as turn-order]
             [aeons-end.utils :as ut]))
 
@@ -45,6 +44,15 @@
                                    shuffle)))
                     (concat [])
                     vec)})))
+
+(defn select-nemesis [{:keys [name min-difficulty max-difficulty]}]
+  (let [possible-nemeses (cond->> nemesis/nemeses
+                                  name (filter (comp #{name} :name))
+                                  min-difficulty (filter (comp #(<= min-difficulty %) :difficulty))
+                                  max-difficulty (filter (comp #(<= % max-difficulty) :difficulty)))]
+    (->> possible-nemeses
+         shuffle
+         first)))
 
 (def supply-cards (concat gem/cards
                           relic/cards
@@ -135,8 +143,8 @@
                         4 [turn-order/player-4]))
               shuffle)})
 
-(defn create-game [{:keys [difficulty players supply]}]
-  (let [{:keys [setup] :as nemesis} umbra-titan]
+(defn create-game [{:keys [difficulty nemesis players supply]}]
+  (let [{:keys [setup] :as nemesis} (select-nemesis nemesis)]
     (cond-> {:mode       :swift
              :real-game? true
              :difficulty (or difficulty :normal)
