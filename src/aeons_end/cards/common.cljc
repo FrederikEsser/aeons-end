@@ -151,6 +151,13 @@
 
 (effects/register {:destroy-breach destroy-breach})
 
+(defn destroy-from-hand [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name card-names) (move-cards (merge args {:from :hand
+                                                             :to   :trash}))))
+
+(effects/register {:destroy-from-hand destroy-from-hand})
+
 (defn destroy-from-discard [game {:keys [player-no card-id card-ids] :as args}]
   (let [card-ids (if card-id
                    [{:player-no player-no :card-id card-id}]

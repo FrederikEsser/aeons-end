@@ -112,6 +112,17 @@
                      :text    "Cast: Deal 2 damage\nDeal 1 additional damage for each of your opened breaches."
                      :effects [[::planar-insight-damage]]})
 
+(def spectral-echo {:name    :spectral-echo
+                    :type    :spell
+                    :cost    3
+                    :text    "Cast: Deal 2 damage.\nYou may destroy a card in hand."
+                    :effects [[:deal-damage 2]
+                              [:give-choice {:title   :spectral-echo
+                                             :text    "You may destroy a card in hand."
+                                             :choice  :destroy-from-hand
+                                             :options [:player :hand]
+                                             :max     1}]]})
+
 (def radiance {:name    :radiance
                :type    :spell
                :cost    8
@@ -125,4 +136,5 @@
             nova-forge
             phoenix-flame
             planar-insight
-            radiance])
+            radiance
+            spectral-echo])
