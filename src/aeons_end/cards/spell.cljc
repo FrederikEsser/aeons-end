@@ -42,6 +42,30 @@
                                          :options [:player :hand]
                                          :max     2}]]})
 
+(defn essence-theft-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:give-choice {:title   :essence-theft
+                                                                   :text    "Any player gains 1 life."
+                                                                   :choice  [:heal {:life 1}]
+                                                                   :options [:players {:not-exhausted true}]
+                                                                   :min     1
+                                                                   :max     1}]]})))
+
+(effects/register {::essence-theft-discard essence-theft-discard})
+
+(def essence-theft {:name    :essence-theft
+                    :type    :spell
+                    :cost    5
+                    :text    "Cast: Deal 3 damage.\nYou may discard a card in hand. If you do, any player gains 1 life."
+                    :effects [[:deal-damage 3]
+                              [:give-choice {:title   :essence-theft
+                                             :text    "You may discard a card in hand. If you do, any player gains 1 life."
+                                             :choice  ::essence-theft-discard
+                                             :options [:player :hand]
+                                             :max     1}]]})
+
 (def ignite {:name    :ignite
              :type    :spell
              :cost    4
@@ -132,6 +156,7 @@
 
 (def cards [amplify-vision
             dark-fire
+            essence-theft
             ignite
             nova-forge
             phoenix-flame
