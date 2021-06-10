@@ -275,8 +275,8 @@
                :bottom {:idx (dec (count (get-in game from-path))) :card (last (get-in game from-path))}
                :top {:idx 0 :card (first (get-in game from-path))}
                (cond
-                 card-id (ut/get-card-idx game from-path {:id card-id})
                  card-name (ut/get-card-idx game from-path {:name card-name})
+                 card-id (ut/get-card-idx game from-path {:id card-id})
                  :else {:idx 0 :card (first (get-in game from-path))}))))))
 
 (defn- remove-card [game from-path idx]

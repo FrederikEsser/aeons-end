@@ -144,3 +144,46 @@
            {:players [{:play-area        [searing-ruby searing-ruby]
                        :aether           4
                        :earmarked-aether {#{:spell} 2}}]}))))
+
+(deftest sifters-pearl-test
+  (testing "Sifter's Pearl"
+    (is (= (-> {:players [{:hand [sifters-pearl]
+                           :deck [crystal spark]}]}
+               (play 0 :sifter's-pearl)
+               (choose nil))
+           {:players [{:play-area      [sifters-pearl]
+                       :aether         2
+                       :deck           [crystal spark]
+                       :revealed-cards 1}]}))
+    (is (= (-> {:players [{:hand [sifters-pearl]
+                           :deck [crystal spark]}]}
+               (play 0 :sifter's-pearl)
+               (choose :crystal))
+           {:players [{:play-area [sifters-pearl]
+                       :aether    2
+                       :deck      [spark]
+                       :discard   [crystal]}]}))
+    (is (= (-> {:players [{:hand    [sifters-pearl]
+                           :discard [crystal crystal]}]}
+               (play 0 :sifter's-pearl)
+               (choose :crystal))
+           {:players [{:play-area [sifters-pearl]
+                       :aether    2
+                       :deck      [crystal]
+                       :discard   [crystal]}]}))
+    (is (= (-> {:players [{:hand [sifters-pearl]}]}
+               (play 0 :sifter's-pearl))
+           {:players [{:play-area [sifters-pearl]
+                       :aether    2}]}))
+    (is (= (-> {:players [{:hand [sifters-pearl]
+                           :deck [crystal spark]}
+                          {:deck [crystal spark]}]}
+               (play 0 :sifter's-pearl)
+               (choose nil)
+               (choose :crystal))
+           {:players [{:play-area      [sifters-pearl]
+                       :aether         2
+                       :deck           [crystal spark]
+                       :revealed-cards 1}
+                      {:deck    [spark]
+                       :discard [crystal]}]}))))

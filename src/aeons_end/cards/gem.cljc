@@ -82,9 +82,23 @@
                    :effects [[:gain-aether 2]
                              [:gain-aether {:arg 1 :earmark #{:spell}}]]})
 
+(def sifters-pearl {:name    :sifter's-pearl
+                    :type    :gem
+                    :cost    3
+                    :text    "Gain 2 Aether.\nEach player reveals the top card of their deck and either discards it or returns it to the top of their deck."
+                    :effects [[:gain-aether 2]
+                              [:all-players {:effects [[:reveal-from-deck 1]
+                                                       [:give-choice {:title   :sifter's-pearl
+                                                                      :text    "You may discard the top card of your deck."
+                                                                      :choice  :discard-from-revealed
+                                                                      :options [:player :revealed]
+                                                                      :max     1}]
+                                                       [:topdeck-all-revealed]]}]]})
+
 (def cards [alien-element
             bloodstone-jewel
             breach-ore
             jade
             pain-stone
-            searing-ruby])
+            searing-ruby
+            sifters-pearl])

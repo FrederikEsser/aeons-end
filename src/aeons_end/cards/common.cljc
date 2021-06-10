@@ -39,6 +39,23 @@
 
 (effects/register {:heal heal})
 
+(defn reveal-from-deck [game {:keys [player-no arg]}]
+  (move-cards game {:player-no       player-no
+                    :number-of-cards arg
+                    :from            :deck
+                    :from-position   :top
+                    :to              :revealed}))
+
+(effects/register {:reveal-from-deck reveal-from-deck})
+
+(defn discard-from-revealed [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name
+              (not-empty card-names)) (move-cards (merge args {:from :revealed
+                                                               :to   :discard}))))
+
+(effects/register {:discard-from-revealed discard-from-revealed})
+
 (defn trash-from-revealed [game {:keys [card-name card-names] :as args}]
   (cond-> game
           (or card-name card-names) (move-cards (merge args {:from :revealed
