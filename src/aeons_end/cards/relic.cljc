@@ -12,7 +12,8 @@
                                               :text    "You may cast a prepped spell that you prepped this turn. If you do, that spell deals 2 additional damage."
                                               :choice  [:cast-spell {:additional-damage 2}]
                                               :options [:player :prepped-spells {:prepped-this-turn true}]
-                                              :max     1}]]})
+                                              :max     1}]]
+                     :quote   "'While appearing to be crudely fashioned, these staffs contain within them the very essence of the void.'"})
 
 (def cairn-compass {:name    :cairn-compass
                     :type    :relic
@@ -24,7 +25,8 @@
                                              :options [:players :discard {:ally               true
                                                                           :type               :spell
                                                                           :empty-breach-stati #{:opened :closed}}]
-                                             :max     1}]]})
+                                             :max     1}]]
+                    :quote   "'Being lost down there once was more than enough.' Indira, Breach Apprentice"})
 
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -41,7 +43,8 @@
                      :type    :relic
                      :cost    7
                      :text    "Cast any player's prepped spell without discarding it."
-                     :effects [[::temporal-helix-choice]]})
+                     :effects [[::temporal-helix-choice]]
+                     :quote   "'Breach mages are never truly in possession of their own minds.' Brama, Breach Mage Elder"})
 
 (defn vortex-gauntlet-cast [game {:keys [player-no breach-no card-name] :as args}]
   (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
@@ -49,8 +52,8 @@
             card-name (push-effect-stack {:player-no player-no
                                           :effects   [[:cast-spell args]
                                                       [:move-card {:card-id id
-                                                                   :from         :discard
-                                                                   :to           :hand}]]}))))
+                                                                   :from    :discard
+                                                                   :to      :hand}]]}))))
 
 (defn vortex-gauntlet-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -68,7 +71,8 @@
                       :type    :relic
                       :cost    6
                       :text    "Cast any player's prepped spell. Return that spell to that player's hand."
-                      :effects [[::vortex-gauntlet-choice]]})
+                      :effects [[::vortex-gauntlet-choice]]
+                      :quote   "'One does not wield this glove. The glove wields the bearer.' Gex, Breach Mage Advisor"})
 
 (defn unstable-prism-play-gem [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
@@ -82,14 +86,17 @@
 (def unstable-prism {:name    :unstable-prism
                      :type    :relic
                      :cost    3
-                     :text    "Play a gem in hand twice and destroy it.\nOR\nGain 2 Aether."
+                     :text    ["Play a gem in hand twice and destroy it."
+                               "OR"
+                               "Gain 2 Aether."]
                      :effects [[:give-choice {:title     :unstable-prism
                                               :text      "Play a gem in hand twice and destroy it."
                                               :choice    ::unstable-prism-play-gem
                                               :or-choice {:text    "Gain 2 Aether"
                                                           :effects [[:gain-aether 2]]}
                                               :options   [:player :hand {:type :gem}]
-                                              :max       1}]]})
+                                              :max       1}]]
+                     :quote   "'Not every pretty rock is a means to wage war. Some must be cut and carved into more useful things.' Adelheim, Breach Mage Weaponsmith"})
 
 (def cards [blasting-staff
             cairn-compass

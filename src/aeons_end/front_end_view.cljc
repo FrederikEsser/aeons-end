@@ -47,17 +47,25 @@
     (choice-interaction-multi identifier choice)
     (choice-interaction-simple identifier choice)))
 
+(defn view-card [{:keys [name text cast type cost quote]}]
+  (merge {:name    name
+          :name-ui (ut/format-name name)
+          :type    type}
+         (when text
+           {:text text})
+         (when cast
+           {:cast-text cast})
+         (when quote
+           {:quote quote})))
+
 (defn view-supply-card [{{:keys [phase] :as player} :player
                          choice                     :choice
                          :as                        game}
-                        {{:keys [name text type cost] :as card} :card
-                         :keys                                  [pile-size total-pile-size]
-                         :or                                    {pile-size 0}}]
-  (merge {:name            name
-          :name-ui         (ut/format-name name)
-          :text            text
-          :type            type
-          :cost            cost
+                        {{:keys [name type cost] :as card} :card
+                         :keys                             [pile-size total-pile-size]
+                         :or                               {pile-size 0}}]
+  (merge (view-card card)
+         {:cost            cost
           :number-of-cards pile-size}
          (when (and total-pile-size
                     (> total-pile-size pile-size))
@@ -94,11 +102,8 @@
                           (some (comp empty? :prepped-spells)))]
     (-> cards
         (->>
-          (map (fn [{:keys [id name text type] :as card}]
-                 (merge {:name    name
-                         :name-ui (ut/format-name name)
-                         :text    text
-                         :type    type}
+          (map (fn [{:keys [name type] :as card}]
+                 (merge (view-card card)
                         (when (ut/stay-in-play game player-no card)
                           {:stay-in-play true})
                         (when (and active?
@@ -141,21 +146,15 @@
                      choice                      :choice}]
   (merge
     (when (not-empty discard)
-      {:card (let [{:keys [id name text type]} (last discard)]
-               (merge {:name    name
-                       :name-ui (ut/format-name name)
-                       :text    text
-                       :type    type}
+      {:card (let [{:keys [id] :as card} (last discard)]
+               (merge (view-card card)
                       (choice-interaction-multi {:area    :discard
                                                  :card-id id} choice)))})
     {:cards           (if (empty? discard)
                         []
                         (->> discard
-                             (map (fn [{:keys [id name text type]}]
-                                    (merge {:name    name
-                                            :name-ui (ut/format-name name)
-                                            :text    text
-                                            :type    type}
+                             (map (fn [{:keys [id] :as card}]
+                                    (merge (view-card card)
                                            (choice-interaction-multi {:area      :discard
                                                                       :player-no player-no
                                                                       :card-id   id} choice))))))
@@ -199,11 +198,8 @@
                                 :status    status}
                                (when (not-empty prepped-spells)
                                  {:prepped-spells (->> prepped-spells
-                                                       (map (fn [{:keys [id name text type] :as card}]
-                                                              (merge {:name    name
-                                                                      :name-ui (ut/format-name name)
-                                                                      :text    text
-                                                                      :type    type}
+                                                       (map (fn [{:keys [name type] :as card}]
+                                                              (merge (view-card card)
                                                                      (when (and active?
                                                                                 (not choice)
                                                                                 (#{:casting} phase)
@@ -313,17 +309,13 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name text quote type to-discard power persistent life]}]
+                            (map (fn [{:keys [name to-discard power persistent life] :as card}]
                                    (let [can-discard-fn (when (and to-discard
                                                                    (:predicate to-discard))
                                                           (effects/get-predicate (:predicate to-discard)))
                                          can-discard?   (and can-discard-fn
                                                              (can-discard-fn game {:player-no player-no}))]
-                                     (merge {:name    name
-                                             :name-ui (ut/format-name name)
-                                             :text    text
-                                             :quote   quote
-                                             :type    type}
+                                     (merge (view-card card)
                                             (when (= resolving name)
                                               {:status :resolving})
                                             (when to-discard
@@ -344,12 +336,8 @@
                                                                  :card-name name} choice))))))})
          {:discard (merge
                      (when (not-empty discard)
-                       {:card (let [{:keys [name text quote type to-discard power persistent life]} (last discard)]
-                                (merge {:name    name
-                                        :name-ui (ut/format-name name)
-                                        :text    text
-                                        :quote   quote
-                                        :type    type}
+                       {:card (let [{:keys [name to-discard power persistent life] :as card} (last discard)]
+                                (merge (view-card card)
                                        (when (= resolving name)
                                          {:status :resolving})
                                        (when to-discard
@@ -365,21 +353,18 @@
                      {:cards           (if (empty? discard)
                                          []
                                          (->> discard
-                                              (map (fn [{:keys [name text quote type to-discard power persistent life]}]
-                                                     (merge {:name    name
-                                                             :name-ui (ut/format-name name)
-                                                             :text    (concat (when life
-                                                                                [(str "Life: " life)])
-                                                                              (when text
-                                                                                (format-text text))
-                                                                              (when to-discard
-                                                                                (format-text (:text to-discard) "TO DISCARD"))
-                                                                              (when power
-                                                                                (format-text (:text power) "POWER"))
-                                                                              (when persistent
-                                                                                (format-text (:text persistent) "PERSISTENT")))
-                                                             :quote   quote
-                                                             :type    type}
+                                              (map (fn [{:keys [name text to-discard power persistent life] :as card}]
+                                                     (merge (view-card card)
+                                                            {:text (concat (when life
+                                                                             [(str "Life: " life)])
+                                                                           (when text
+                                                                             (format-text text))
+                                                                           (when to-discard
+                                                                             (format-text (:text to-discard) "TO DISCARD"))
+                                                                           (when power
+                                                                             (format-text (:text power) "POWER"))
+                                                                           (when persistent
+                                                                             (format-text (:text persistent) "PERSISTENT")))}
                                                             (when to-discard
                                                               {:to-discard-text (:text to-discard)})
                                                             (when power
@@ -397,23 +382,14 @@
            {:fury   fury
             :strike (merge
                       (when (not-empty discard)
-                        {:card (let [{:keys [name text quote type]} (last discard)]
-                                 (merge {:name    name
-                                         :name-ui (ut/format-name name)
-                                         :text    text
-                                         :quote   quote
-                                         :type    type}
+                        {:card (let [{:keys [name] :as card} (last discard)]
+                                 (merge (view-card card)
                                         (when (= resolving name)
                                           {:status :resolving})))})
                       {:cards           (if (empty? discard)
                                           []
                                           (->> discard
-                                               (map (fn [{:keys [name text quote type]}]
-                                                      (merge {:name    name
-                                                              :name-ui (ut/format-name name)
-                                                              :text    (format-text text)
-                                                              :quote   quote
-                                                              :type    type})))))
+                                               (map view-card)))
                        :number-of-cards (count discard)})})
          (choice-interaction {:area :nemesis} choice)
          (when (and choice

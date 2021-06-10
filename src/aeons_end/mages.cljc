@@ -7,7 +7,7 @@
 (def buried-light {:name    :buried-light
                    :type    :spell
                    :cost    0
-                   :text    "Cast: Deal 1 damage. Gain 1 Aether."
+                   :cast    "Deal 1 damage. Gain 1 Aether."
                    :effects [[:deal-damage 1]
                              [:gain-aether 1]]})
 
@@ -54,7 +54,8 @@
 (def shattered-geode {:name    :shattered-geode
                       :type    :gem
                       :cost    0
-                      :text    "Gain 1 Aether.\nYou may place the top card of any ally's discard pile into your hand."
+                      :text    ["Gain 1 Aether."
+                                "You may place the top card of any ally's discard pile into your hand."]
                       :effects [[:gain-aether 1]
                                 [::shattered-geode-choice]]})
 
@@ -96,7 +97,8 @@
 (def moonstone-shard {:name    :moonstone-shard
                       :type    :gem
                       :cost    0
-                      :text    "Gain 1 Aether\nGain an additional 1 Aether that can only be used to gain a gem."
+                      :text    ["Gain 1 Aether."
+                                "Gain an additional 1 Aether that can only be used to gain a gem."]
                       :effects [[:gain-aether 1]
                                 [:gain-aether {:arg 1 :earmark #{:gem}}]]})
 
@@ -196,7 +198,8 @@
 (def extinguish {:name    :extinguish
                  :type    :spell
                  :cost    0
-                 :text    "Cast: Deal 1 damage.\nIf this damage causes a minion from the nemesis deck to be discarded, Quilius gains a Trophy token."
+                 :cast    ["Deal 1 damage."
+                           "If this damage causes a minion from the nemesis deck to be discarded, Quilius gains a Trophy token."]
                  :effects [[:deal-damage {:arg          1
                                           :kill-effects [[::quilius-gain-trophy]]}]]})
 
