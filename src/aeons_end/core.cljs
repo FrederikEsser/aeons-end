@@ -38,6 +38,7 @@
                                         (= :openable status) "#f8e238"
                                         :else :white)
                          (= :destroyed status) "#d66"
+                         (= :strike type) "#444"
                          :else (if disabled "#666" :black))
      :font-weight      :bold
      :background-color (cond
