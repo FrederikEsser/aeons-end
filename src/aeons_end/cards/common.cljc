@@ -172,6 +172,23 @@
 
 (effects/register {:destroy-from-discard destroy-from-discard})
 
+(defn destroy-from-area [game {:keys [player-no area card-name card-id choices] :as args}]
+  (let [choices (or choices
+                    (when (and area card-name)
+                      [{:area      area
+                        :card-name card-name
+                        :card-id   card-id}]))]
+    (cond-> game
+            (not-empty choices) (push-effect-stack {:player-no player-no
+                                                    :effects   (->> choices
+                                                                    (map (fn [{:keys [area card-name card-id]}]
+                                                                           [:move-card (medley/assoc-some {:from area
+                                                                                                           :to   :trash}
+                                                                                                          :card-name card-name
+                                                                                                          :card-id card-id)])))}))))
+
+(effects/register {:destroy-from-area destroy-from-area})
+
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (cond-> game

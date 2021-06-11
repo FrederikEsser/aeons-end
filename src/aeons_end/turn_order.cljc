@@ -64,3 +64,11 @@
           :always (assoc-in [:turn-order :revealed-cards] 1)))
 
 (effects/register {:reveal-top-turn-order reveal-top-turn-order})
+
+(defn put-turn-order-top-to-bottom [game _]
+  (let [[top & deck] (get-in game [:turn-order :deck])]
+    (-> game
+        (cond-> top (assoc-in [:turn-order :deck] (concat deck [top])))
+        (update :turn-order dissoc :revealed-cards))))
+
+(effects/register {:put-turn-order-top-to-bottom put-turn-order-top-to-bottom})

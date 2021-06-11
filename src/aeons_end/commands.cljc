@@ -151,7 +151,7 @@
 (defn discard-all [game player-no]
   (check-command "Discard all" game player-no)
   (let [card-names (->> (get-in game [:players player-no :play-area])
-                        (sort-by (juxt :cost (comp count :text)))
+                        (sort-by (juxt :cost ut/get-card-strength))
                         reverse
                         (map :name))]
     (-> game

@@ -31,8 +31,9 @@
                        (merge {:interaction :choosable}
                               (when choice-opts
                                 {:choice-opts choice-opts})))
-        choice-value (when (= area (:area choice))
+        choice-value (when (#{area :mixed} (:area choice))
                        (cond->> options
+                                (= :mixed (:area choice)) (filter (comp #{area} :area))
                                 player-no (filter (comp #{player-no} :player-no))
                                 breach-no (filter (comp #{breach-no} :breach-no))
                                 card-name (filter (comp #{card-name} :card-name))
@@ -148,8 +149,9 @@
     (when (not-empty discard)
       {:card (let [{:keys [id] :as card} (last discard)]
                (merge (view-card card)
-                      (choice-interaction-multi {:area    :discard
-                                                 :card-id id} choice)))})
+                      (choice-interaction-multi {:area      :discard
+                                                 :player-no player-no
+                                                 :card-id   id} choice)))})
     {:cards           (if (empty? discard)
                         []
                         (->> discard
@@ -435,7 +437,7 @@
                                (and (#{:casting :main} phase)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
-(defn view-turn-order [{:keys [deck discard revealed-cards]}]
+(defn view-turn-order [{:keys [deck discard revealed-cards]} {:keys [source area options] :as choice}]
   {:deck    (if (empty? deck)
               {}
               (merge {:number-of-cards (count deck)}
@@ -445,7 +447,11 @@
                                             (map (fn [{:keys [name type]}]
                                                    (merge {:name    name
                                                            :name-ui (ut/format-name name)
-                                                           :type    type}))))})))
+                                                           :type    type}
+                                                          (when (and (= :turn-order source)
+                                                                     (= :revealed area)
+                                                                     (some #{name} options))
+                                                            {:interaction :quick-choosable})))))})))
    :discard (merge
               (when (not-empty discard)
                 {:card (let [{:keys [name type]} (last discard)]
@@ -474,7 +480,7 @@
        :gravehold  gravehold
        :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
                                              :choice choice}))
-       :turn-order (view-turn-order turn-order)
+       :turn-order (view-turn-order turn-order choice)
        :players    (->> players
                         (map-indexed (fn [idx player]
                                        (let [active-player? (and (= idx current-player)

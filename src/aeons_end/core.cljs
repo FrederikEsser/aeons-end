@@ -486,14 +486,18 @@
                                "(empty)")]}]
                     (when (:visible-cards deck)
                       (->> (:visible-cards deck)
-                           (mapk (fn [{:keys [name-ui type]}]
+                           (mapk (fn [{:keys [name name-ui type interaction]}]
+                                   (let [disabled (nil? interaction)]
                                    [:div
                                     "[ "
-                                    [:button {:style    (button-style :disabled true
+                                      [:button {:style    (button-style :disabled disabled
                                                                       :type type)
-                                              :disabled true}
+                                                :disabled disabled
+                                                :on-click (when interaction
+                                                            (fn [] (case interaction
+                                                                     :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
                                      name-ui]
-                                    " ]"]))))])]
+                                      " ]"])))))])]
                 (when-let [{:keys [conclusion text]} (-> @state :game :game-over)]
                   [:td
                    [:div {:style {:text-align :center}}

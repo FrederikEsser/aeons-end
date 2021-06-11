@@ -5,7 +5,8 @@
             [aeons-end.cards.relic :refer :all]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [jade]]
-            [aeons-end.cards.spell :refer [dark-fire radiance]]))
+            [aeons-end.cards.spell :refer [dark-fire radiance]]
+            [aeons-end.turn-order :as turn-order]))
 
 (deftest blasting-staff-test
   (let [spark (assoc spark :id 1)]
@@ -180,6 +181,58 @@
                                             :breaches [{:status :opened}]}]}
                                 (play 0 :cairn-compass)
                                 (choose {:player-no 0 :card-name :spark :card-id 2})))))))
+
+(deftest fiend-catcher-test
+  (testing "Fiend Catcher"
+    (let [fiend-catcher (assoc fiend-catcher :id 1)
+          spark         (assoc spark :id 2)]
+      (is (= (-> {:players    [{:hand    [fiend-catcher crystal]
+                                :discard [spark]}]
+                  :turn-order {:deck [turn-order/player-1]}}
+                 (play 0 :fiend-catcher)
+                 (choose {:area :discard :player-no 0 :card-name :spark :card-id 2}))
+             {:players    [{:hand      [crystal]
+                            :play-area [fiend-catcher]}]
+              :turn-order {:deck           [turn-order/player-1]
+                           :revealed-cards 1}
+              :trash      [spark]}))
+      (is (= (-> {:players    [{:hand    [fiend-catcher crystal]
+                                :discard [spark]}]
+                  :turn-order {:deck [turn-order/player-1]}}
+                 (play 0 :fiend-catcher)
+                 (choose {:area :hand :card-name :crystal}))
+             {:players    [{:discard   [spark]
+                            :play-area [fiend-catcher]}]
+              :turn-order {:deck           [turn-order/player-1]
+                           :revealed-cards 1}
+              :trash      [crystal]}))
+      (is (= (-> {:players    [{:hand    [fiend-catcher crystal]
+                                :discard [spark]}]
+                  :turn-order {:deck [turn-order/player-1]}}
+                 (play 0 :fiend-catcher)
+                 (choose nil))
+             {:players    [{:hand      [crystal]
+                            :discard   [spark]
+                            :play-area [fiend-catcher]}]
+              :turn-order {:deck           [turn-order/player-1]
+                           :revealed-cards 1}}))
+      (is (= (-> {:players    [{:hand [fiend-catcher]}]
+                  :turn-order {:deck [turn-order/nemesis
+                                      turn-order/player-1]}}
+                 (play 0 :fiend-catcher)
+                 (choose :nemesis))
+             {:players    [{:play-area [fiend-catcher]}]
+              :turn-order {:deck [turn-order/player-1
+                                  turn-order/nemesis]}}))
+      (is (= (-> {:players    [{:hand [fiend-catcher]}]
+                  :turn-order {:deck [turn-order/nemesis
+                                      turn-order/player-1]}}
+                 (play 0 :fiend-catcher)
+                 (choose nil))
+             {:players    [{:play-area [fiend-catcher]}]
+              :turn-order {:deck           [turn-order/nemesis
+                                            turn-order/player-1]
+                           :revealed-cards 1}})))))
 
 (deftest temporal-helix-test
   (testing "Temporal Helix"

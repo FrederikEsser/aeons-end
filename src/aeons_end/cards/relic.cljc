@@ -28,6 +28,39 @@
                                              :max     1}]]
                     :quote   "'Being lost down there once was more than enough.' Indira, Breach Apprentice"})
 
+(defn fiend-catcher-move-nemesis-card [game {:keys [card-name] :as args}]
+  (cond-> game
+          (= :nemesis card-name) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
+
+(defn fiend-catcher-choice [game {:keys [player-no]}]
+  (let [{:keys [type]} (-> game :turn-order :deck first)]
+    (cond-> game
+            (= :nemesis type) (push-effect-stack {:player-no player-no
+                                                  :effects   [[:give-choice {:title   :fiend-catcher
+                                                                             :text    "You may place the nemesis turn order card on the bottom of the turn order deck."
+                                                                             :choice  ::fiend-catcher-move-nemesis-card
+                                                                             :options [:turn-order :revealed]
+                                                                             :max     1}]]}))))
+
+(effects/register {::fiend-catcher-move-nemesis-card fiend-catcher-move-nemesis-card
+                   ::fiend-catcher-choice            fiend-catcher-choice})
+
+(def fiend-catcher {:name    :fiend-catcher
+                    :type    :relic
+                    :cost    3
+                    :text    ["You may destroy a card in your hand or discard pile."
+                              "Reveal the top card of the turn order deck. If you revealed a nemesis turn order card, you may place that card on the bottom of the turn order deck."]
+                    :effects [[:give-choice {:title   :fiend-catcher
+                                             :text    "You may destroy a card in your hand or discard pile."
+                                             :choice  :destroy-from-area
+                                             :options [:mixed
+                                                       [:player :hand]
+                                                       [:player :discard]]
+                                             :max     1}]
+                              [:reveal-top-turn-order]
+                              [::fiend-catcher-choice]]
+                    :quote   "'It's as good a place as any for a world-swallowing beast.' Garu, Oathsworn Protector"})
+
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :temporal-helix
@@ -100,6 +133,7 @@
 
 (def cards [blasting-staff
             cairn-compass
+            fiend-catcher
             temporal-helix
             vortex-gauntlet
             unstable-prism])

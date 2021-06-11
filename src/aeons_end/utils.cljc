@@ -1,7 +1,8 @@
 (ns aeons-end.utils
   (:require [clojure.string :as s]
             [clojure.set :refer [intersection]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [clojure.string :as string]))
 
 (defonce id-state (atom 0))
 
@@ -299,6 +300,12 @@
                              (apply +)))]
     (>= valid-aether cost)))
 
+(defn get-card-strength [{:keys [text cast]}]
+  (let [all-text (->> (ensure-coll text)
+                      (concat (ensure-coll cast))
+                      (string/join))]
+    (count all-text)))
+
 (defn options-from-player [game {:keys [player-no area]}
                            & [{:keys [type cost min-cost max-cost most-expensive lowest-focus-cost prepped-this-turn]}]]
   (case area
@@ -449,6 +456,15 @@
 
 (effects/register-options {:nemesis options-from-nemesis})
 
+(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]}]
+  (let [{:keys [deck revealed-cards]} turn-order
+        cards (when (and (= :revealed area)
+                         revealed-cards)
+                (take revealed-cards deck))]
+    (map :name cards)))
+
+(effects/register-options {:turn-order options-from-turn-order})
+
 (defn options-from-supply [{:keys [supply] :as game} _
                            & [{:keys [type max-cost]}]]
   (cond->> supply
@@ -476,8 +492,9 @@
                    (->> (apply opt-fn game {:player-no player-no :card-id card-id :area area} opt-args)
                         (map (fn [card-name]
                                (merge {:area area}
-                                      (when card-name
-                                        {:card-name card-name}))))))))))
+                                      (cond
+                                        (map? card-name) card-name
+                                        card-name {:card-name card-name}))))))))))
 
 (effects/register-options {:mixed mixed-options})
 
