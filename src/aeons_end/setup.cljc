@@ -45,14 +45,26 @@
                     (concat [])
                     vec)})))
 
-(defn select-nemesis [{:keys [name min-difficulty max-difficulty]}]
-  (let [possible-nemeses (cond->> nemesis/nemeses
+(defn select-nemesis [{:keys [name min-level max-level]} difficulty]
+  (let [fit?             (= :fit difficulty)
+        possible-nemeses (cond->> nemesis/nemeses
                                   name (filter (comp #{name} :name))
-                                  min-difficulty (filter (comp #(<= min-difficulty %) :difficulty))
-                                  max-difficulty (filter (comp #(<= % max-difficulty) :difficulty)))]
-    (->> possible-nemeses
-         shuffle
-         first)))
+                                  min-level (filter (comp #(<= (cond-> min-level fit? (- 4)) %) :level))
+                                  max-level (filter (comp #(>= (cond-> max-level fit? (+ 2)) %) :level)))
+        {:keys [level] :as nemesis} (->> possible-nemeses
+                                         shuffle
+                                         first)]
+    {:nemesis    nemesis
+     :difficulty (if fit?
+                   (cond
+                     (and max-level
+                          (< max-level level)) :beginner
+                     (or (nil? min-level)
+                         (<= min-level level)) :normal
+                     (<= (- min-level 2) level) :expert
+                     (<= (- min-level 4) level) :extinction)
+                   (or difficulty
+                       :normal))}))
 
 (def supply-cards (concat gem/cards
                           relic/cards
@@ -144,10 +156,11 @@
               shuffle)})
 
 (defn create-game [{:keys [difficulty nemesis players supply]}]
-  (let [{:keys [setup] :as nemesis} (select-nemesis nemesis)]
+  (let [{:keys [difficulty nemesis]} (select-nemesis nemesis difficulty)
+        {:keys [setup]} nemesis]
     (cond-> {:mode       :swift
              :real-game? true
-             :difficulty (or difficulty :normal)
+             :difficulty difficulty
              :nemesis    (create-nemesis nemesis
                                          :number-of-players (count players)
                                          :difficulty difficulty)

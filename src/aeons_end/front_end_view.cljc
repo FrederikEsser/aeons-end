@@ -467,7 +467,7 @@
                                                       :type    type})))))
                :number-of-cards (count discard)})})
 
-(defn view-game [{:keys [gravehold turn-order players effect-stack current-player game-over] :as game}]
+(defn view-game [{:keys [difficulty gravehold turn-order players effect-stack current-player game-over] :as game}]
   (let [[{:keys [player-no source] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (merge
@@ -477,6 +477,7 @@
                                                        (assoc :player-no current-player)
                                                        (cond-> player-no (assoc :choice choice)))})
                                         {:choice choice}))
+       :difficulty difficulty
        :gravehold  gravehold
        :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
                                              :choice choice}))

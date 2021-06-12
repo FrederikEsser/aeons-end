@@ -294,7 +294,7 @@
             :quote   "'How this cave has not long ago collapsed is a wonder and a mercy.' Nerva, Survivor"})
 
 (def rageborne {:name          :rageborne
-                :difficulty    2
+                :level         2
                 :life          70
                 :unleash       [[::gain-fury]]
                 :after-effects [[::after-effects]]

@@ -267,7 +267,7 @@
 (effects/register-predicates {::victory-condition victory-condition})
 
 (def umbra-titan {:name              :umbra-titan
-                  :difficulty        3
+                  :level             3
                   :life              70
                   :setup             [[::setup]]
                   :unleash           [[::unleash]]
