@@ -596,16 +596,26 @@
 (effects/register {:on-prep-spell on-prep-spell
                    :prep-spell    prep-spell})
 
-(defn spell-effect [game {:keys [player-no breach-no card-name caster additional-damage]}]
-  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
+(defn track-this-turn [game {:keys [player-no cast]}]
+  (update-in game [:players player-no :this-turn] concat [(cond
+                                                            cast {:cast cast})]))
+
+(effects/register {:track-this-turn track-this-turn})
+
+(defn spell-effect [{:keys [:real-game?] :as game} {:keys [player-no breach-no card-name caster additional-damage]}]
+  (let [{{:keys [id effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
         {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])
         bonus-damage (cond-> 0
                              additional-damage (+ additional-damage)
                              (and (= :opened status)
                                   bonus-damage) (+ bonus-damage))]
-    (push-effect-stack game {:player-no (or caster player-no)
-                             :args      {:bonus-damage bonus-damage}
-                             :effects   effects})))
+    (-> game
+        (push-effect-stack {:player-no (or caster player-no)
+                            :card-id   id
+                            :args      {:bonus-damage bonus-damage}
+                            :effects   (concat effects
+                                               (when real-game?
+                                                 [[:track-this-turn {:cast card-name}]]))}))))
 
 (defn cast-spell [game {:keys [player-no breach-no card-name] :as args}]
   (cond-> game

@@ -23,6 +23,49 @@
                                [::amplify-vision-damage]]
                      :quote   "'The breaches are merely a mirror through which worlds whisper.' Phaedraxa, Breach Mage Seer"})
 
+(defn blaze-move-card [game {:keys [from-player card-id player-no] :as args}]
+  (push-effect-stack game {:player-no from-player
+                           :effects   [[:move-card {:card-id   card-id
+                                                    :from      :gaining
+                                                    :to-player player-no
+                                                    :to        :discard}]]}))
+
+(defn blaze-on-gain [game {:keys [player-no gained-card-id] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :blaze
+                                                      :text    "You may place the gained Blaze on top of any player's discard pile."
+                                                      :choice  [::blaze-move-card {:card-id     gained-card-id
+                                                                                   :from-player player-no}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(defn blaze-damage [game {:keys [player-no card-id] :as args}]
+  (let [additional-damage (+ (->> (get-in game [:players player-no :this-turn])
+                                  (filter (comp #{:blaze} :cast))
+                                  count)
+                             (->> (get-in game [:players player-no :breaches])
+                                  (mapcat :prepped-spells)
+                                  (filter (comp #{:blaze} :name))
+                                  (remove (comp #{card-id} :id))
+                                  count))]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (+ 2 additional-damage)]]})))
+
+(effects/register {::blaze-move-card blaze-move-card
+                   ::blaze-on-gain   blaze-on-gain
+                   ::blaze-damage    blaze-damage})
+
+(def blaze {:name    :blaze
+            :type    :spell
+            :cost    4
+            :text    "When you gain this, you may place it on top of any player's discard pile."
+            :cast    ["Deal 2 damage."
+                      "Deal 1 additional damage for each other time you have cast Blaze this turn and for each other Blaze you currently have prepped."]
+            :on-gain [[::blaze-on-gain]]
+            :effects [[::blaze-damage]]})
+
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
   (let [card-count (cond card-name 1
                          card-names (count card-names)
@@ -173,6 +216,7 @@
                :quote   "'All of us, together. For apart we are doomed.' Brama, Breach Mage Elder"})
 
 (def cards [amplify-vision
+            blaze
             dark-fire
             essence-theft
             ignite

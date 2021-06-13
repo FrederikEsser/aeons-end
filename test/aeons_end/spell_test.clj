@@ -3,8 +3,9 @@
             [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
+            [aeons-end.mages :refer [black-mirror]]
             [aeons-end.cards.spell :refer :all]
-            [aeons-end.cards.relic :refer [cairn-compass]]
+            [aeons-end.cards.relic :refer [cairn-compass temporal-helix]]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.mages :refer [garnet-shard]]))
 
@@ -109,6 +110,112 @@
                                   {:status :opened}]
                        :discard  [amplify-vision]}]
             :nemesis {:life 46}}))))
+
+(deftest blaze-test
+  (let [blaze (assoc blaze :id 1)]
+    (testing "Blaze"
+      (testing "Cast"
+        (is (= (-> {:real-game? true
+                    :players    [{:breaches [{:prepped-spells [blaze]}]}]
+                    :nemesis    {:life 50
+                                 :deck [{}]}}
+                   (cast-spell 0 0 :blaze))
+               {:real-game? true
+                :players    [{:breaches  [{}]
+                              :discard   [blaze]
+                              :this-turn [{:cast :blaze}]}]
+                :nemesis    {:life 48
+                             :deck [{}]}}))
+        (is (= (-> {:real-game? true
+                    :players    [{:breaches  [{:prepped-spells [blaze]}]
+                                  :this-turn [{:cast :blaze}]}]
+                    :nemesis    {:life 50
+                                 :deck [{}]}}
+                   (cast-spell 0 0 :blaze))
+               {:real-game? true
+                :players    [{:breaches  [{}]
+                              :discard   [blaze]
+                              :this-turn [{:cast :blaze}
+                                          {:cast :blaze}]}]
+                :nemesis    {:life 47
+                             :deck [{}]}}))
+        (is (= (-> {:real-game? true
+                    :players    [{:breaches [{:prepped-spells [blaze]}
+                                             {:prepped-spells [(assoc blaze :id 2)]}]}]
+                    :nemesis    {:life 50
+                                 :deck [{}]}}
+                   (cast-spell 0 0 :blaze))
+               {:real-game? true
+                :players    [{:breaches  [{}
+                                          {:prepped-spells [(assoc blaze :id 2)]}]
+                              :discard   [blaze]
+                              :this-turn [{:cast :blaze}]}]
+                :nemesis    {:life 47
+                             :deck [{}]}}))
+        (is (= (-> {:real-game? true
+                    :players    [{:breaches [{:prepped-spells [blaze]}]
+                                  :hand     [temporal-helix]}]
+                    :nemesis    {:life 50
+                                 :deck [{}]}}
+                   (play 0 :temporal-helix)
+                   (choose {:player-no 0 :breach-no 0 :card-name :blaze}))
+               {:real-game? true
+                :players    [{:breaches  [{:prepped-spells [blaze]}]
+                              :play-area [temporal-helix]
+                              :this-turn [{:cast :blaze}]}]
+                :nemesis    {:life 48
+                             :deck [{}]}}))
+        (is (= (-> {:real-game? true
+                    :players    [{:ability  (assoc black-mirror :charges 4)
+                                  :breaches [{:prepped-spells [blaze]}]}]
+                    :nemesis    {:life 50
+                                 :deck [{}]}}
+                   (activate-ability 0)
+                   (choose {:player-no 0 :breach-no 0 :card-name :blaze}))
+               {:real-game? true
+                :players    [{:ability   (assoc black-mirror :charges 0)
+                              :breaches  [{}]
+                              :discard   [blaze]
+                              :this-turn [{:cast :blaze}
+                                          {:cast :blaze}]}]
+                :nemesis    {:life 45
+                             :deck [{}]}}))
+        (is (= (-> {:real-game? true
+                    :players    [{:breaches  [{:status         :opened
+                                               :bonus-damage   1
+                                               :prepped-spells [blaze]}
+                                              {:prepped-spells [(assoc blaze :id 2)]}]
+                                  :this-turn [{:cast :blaze}]}]
+                    :nemesis    {:life 50
+                                 :deck [{}]}}
+                   (cast-spell 0 0 :blaze))
+               {:real-game? true
+                :players    [{:breaches  [{:status       :opened
+                                           :bonus-damage 1}
+                                          {:prepped-spells [(assoc blaze :id 2)]}]
+                              :discard   [blaze]
+                              :this-turn [{:cast :blaze}
+                                          {:cast :blaze}]}]
+                :nemesis    {:life 45
+                             :deck [{}]}})))
+      (testing "On gain"
+        (is (= (-> {:players [{:aether 4}
+                              {}]
+                    :supply  [{:card blaze :pile-size 5}]}
+                   (buy-card 0 :blaze)
+                   (choose {:player-no 0}))
+               {:players [{:aether  0
+                           :discard [blaze]}
+                          {}]
+                :supply  [{:card blaze :pile-size 4}]}))
+        (is (= (-> {:players [{:aether 4}
+                              {}]
+                    :supply  [{:card blaze :pile-size 5}]}
+                   (buy-card 0 :blaze)
+                   (choose {:player-no 1}))
+               {:players [{:aether 0}
+                          {:discard [blaze]}]
+                :supply  [{:card blaze :pile-size 4}]}))))))
 
 (deftest dark-fire-test
   (testing "Dark Fire"
