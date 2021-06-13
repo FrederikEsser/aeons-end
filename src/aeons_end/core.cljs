@@ -7,7 +7,8 @@
     [aeons-end.nemesis :as nemesis]
     [aeons-end.cards.gem :as gem]
     [aeons-end.cards.relic :as relic]
-    [aeons-end.cards.spell :as spell]))
+    [aeons-end.cards.spell :as spell]
+    [aeons-end.mages :as mages]))
 
 ;; -------------------------
 ;; Views
@@ -568,83 +569,115 @@
                       (ut/format-name conclusion)]
                      [:div
                       (format-text text)]]])]]]])
-           (when-let [players (get-in @state [:game :players])]
+
+           (if setup-game?
+             (let [players          (get-in @state [:game-setup :players])
+                   selected-players (->> players
+                                         (keep :name)
+                                         set)]
+               [:div
+                [:div "Players " [:select {:value     (count players)
+                                           :on-change (fn [event]
+                                                        (let [value (js/parseInt (.. event -target -value))
+                                                              diff  (- value (count players))]
+                                                          (swap! state assoc-in [:game-setup :players] (vec (if (pos? diff)
+                                                                                                              (concat players (repeat diff {}))
+                                                                                                              (take value players))))))}
+                                  [:<> (->> (range 1 5)
+                                            (mapk (fn [n]
+                                                    [:option {:value n} n])))]]]
+                (->> players
+                     (mapk-indexed (fn [player-no {:keys [name]}]
+                                     [:div [:select {:value     (or name :random)
+                                                     :on-change (fn [event]
+                                                                  (let [value (keyword (.. event -target -value))]
+                                                                    (if (= :random value)
+                                                                      (swap! state update-in [:game-setup :players player-no] dissoc :name)
+                                                                      (swap! state assoc-in [:game-setup :players player-no :name] value))))}
+                                            [:<>
+                                             [:option {:value :random} "Random mage"]
+                                             (->> mages/mages
+                                                  (remove (comp (clojure.set/difference selected-players #{name}) :name))
+                                                  (sort-by :name)
+                                                  (mapk (fn [{:keys [name]}]
+                                                          [:option {:value name} (ut/format-name name)])))]]])))])
              [:div
               [:table
                [:tbody
                 [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
-                (->> players
-                     (mapk (fn [{:keys                    [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]
-                                 {:keys [max] :as choice} :choice}]
-                             (let [max           (or max (get-in @state [:game :nemesis :choice :max]))
-                                   breach-no     (->> breaches
-                                                      (filter (comp #{:opened :focused} :status))
-                                                      (filter (comp empty? :prepped-spells))
-                                                      (sort-by (juxt :status :bonus-damage))
-                                                      last
-                                                      :breach-no)
-                                   add-breach-no (fn [{:keys [type] :as card}]
-                                                   (cond-> card
-                                                           (= :spell type) (assoc :breach-no breach-no)))]
-                               [:tr
-                                [:td
-                                 [:div
-                                  (let [disabled (nil? interaction)]
-                                    [:button {:style    (button-style :type type
-                                                                      :disabled disabled)
-                                              :disabled disabled
-                                              :on-click (when interaction
-                                                          (fn [] (case interaction
-                                                                   :choosable (select! (or choice-value name))
-                                                                   :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
-                                     [:div
-                                      [:div {:style {:font-size "1.3em"}} name-ui]
-                                      [:div {:style {:font-size   "0.9em"
-                                                     :font-weight :normal
-                                                     :paddingTop  "3px"}}
-                                       title]]])]
-                                 (view-ability ability)
-                                 (when trophies
-                                   [:div "Trophies: " trophies])
-                                 [:div "Life: " life]
-                                 [:div "Aether: " aether]]
-                                [:td [:table
-                                      [:tbody {:style {:border :none}}
-                                       (mapk (partial view-breach max) breaches)]]]
-                                [:td [:div
-                                      (when (and active? (-> @state :game :commands :can-play-all-gems?))
-                                        [:div [:button {:style    (button-style)
-                                                        :on-click (fn [] (swap! state assoc :game (cmd/play-all-gems)))}
-                                               "Play all Gems"]
-                                         [:hr]])
-                                      (->> hand
-                                           (map add-breach-no)
-                                           (mapk (partial view-card max)))]]
-                                [:td [:div
-                                      (when (and active? (get-in @state [:game :commands :can-discard-all?]))
-                                        [:div
-                                         [:button {:style    (button-style)
-                                                   :on-click (fn [] (swap! state assoc :game (cmd/discard-all)))}
-                                          "Discard all"]
-                                         [:hr]])
-                                      (mapk (partial view-card max) play-area)]]
-                                [:td [:div
-                                      (when (and active? (get-in @state [:game :commands :can-end-turn?]))
-                                        [:div
-                                         (let [confirm-text (-> @state :game :commands :confirm-end-turn)]
+                (let [players (get-in @state [:game :players])]
+                  (->> players
+                       (mapk (fn [{:keys                    [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]
+                                   {:keys [max] :as choice} :choice}]
+                               (let [max           (or max (get-in @state [:game :nemesis :choice :max]))
+                                     breach-no     (->> breaches
+                                                        (filter (comp #{:opened :focused} :status))
+                                                        (filter (comp empty? :prepped-spells))
+                                                        (sort-by (juxt :status :bonus-damage))
+                                                        last
+                                                        :breach-no)
+                                     add-breach-no (fn [{:keys [type] :as card}]
+                                                     (cond-> card
+                                                             (= :spell type) (assoc :breach-no breach-no)))]
+                                 [:tr
+                                  [:td
+                                   [:div
+                                    (let [disabled (nil? interaction)]
+                                      [:button {:style    (button-style :type type
+                                                                        :disabled disabled)
+                                                :disabled disabled
+                                                :on-click (when interaction
+                                                            (fn [] (case interaction
+                                                                     :choosable (select! (or choice-value name))
+                                                                     :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
+                                       [:div
+                                        [:div {:style {:font-size "1.3em"}} name-ui]
+                                        [:div {:style {:font-size   "0.9em"
+                                                       :font-weight :normal
+                                                       :paddingTop  "3px"}}
+                                         title]]])]
+                                   (view-ability ability)
+                                   (when trophies
+                                     [:div "Trophies: " trophies])
+                                   [:div "Life: " life]
+                                   [:div "Aether: " aether]]
+                                  [:td [:table
+                                        [:tbody {:style {:border :none}}
+                                         (mapk (partial view-breach max) breaches)]]]
+                                  [:td [:div
+                                        (when (and active? (-> @state :game :commands :can-play-all-gems?))
+                                          [:div [:button {:style    (button-style)
+                                                          :on-click (fn [] (swap! state assoc :game (cmd/play-all-gems)))}
+                                                 "Play all Gems"]
+                                           [:hr]])
+                                        (->> hand
+                                             (map add-breach-no)
+                                             (mapk (partial view-card max)))]]
+                                  [:td [:div
+                                        (when (and active? (get-in @state [:game :commands :can-discard-all?]))
+                                          [:div
                                            [:button {:style    (button-style)
-                                                     :on-click (fn [] (if (or (not confirm-text)
-                                                                              (js/confirm (str confirm-text
-                                                                                               "\nAre you sure you want to end your turn?")))
-                                                                        (swap! state assoc :game (cmd/end-turn))))}
-                                            "End Turn"])
-                                         [:hr]])
-                                      (view-player-pile deck max)]]
-                                [:td [view-expandable-pile (keyword "discard" (cljs.core/name name)) discard
-                                      {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))
-                                       :max         max}]]
-                                (when choice
-                                  (view-choice choice))]))))]]])]
+                                                     :on-click (fn [] (swap! state assoc :game (cmd/discard-all)))}
+                                            "Discard all"]
+                                           [:hr]])
+                                        (mapk (partial view-card max) play-area)]]
+                                  [:td [:div
+                                        (when (and active? (get-in @state [:game :commands :can-end-turn?]))
+                                          [:div
+                                           (let [confirm-text (-> @state :game :commands :confirm-end-turn)]
+                                             [:button {:style    (button-style)
+                                                       :on-click (fn [] (if (or (not confirm-text)
+                                                                                (js/confirm (str confirm-text
+                                                                                                 "\nAre you sure you want to end your turn?")))
+                                                                          (swap! state assoc :game (cmd/end-turn))))}
+                                              "End Turn"])
+                                           [:hr]])
+                                        (view-player-pile deck max)]]
+                                  [:td [view-expandable-pile (keyword "discard" (cljs.core/name name)) discard
+                                        {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))
+                                         :max         max}]]
+                                  (when choice
+                                    (view-choice choice))])))))]]])]
           [:td
            (if setup-game?
              (let [supply         (get-in @state [:game-setup :supply])
