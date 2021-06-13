@@ -96,27 +96,28 @@
 
 (defn create-player [{:keys [breaches ability] :as mage} & {:keys [difficulty]}]
   (-> mage
-      (merge {:breaches (->> breaches
-                             (mapv (fn [breach1 {:keys [status] :as breach2}]
-                                     (if (#{:opened :destroyed} status)
-                                       breach2
-                                       (merge breach1 breach2)))
-                                   [{:status :opened}
-                                    {:status     :closed
-                                     :focus-cost 2
-                                     :open-costs [5 4 3 2]}
-                                    {:status       :closed
-                                     :focus-cost   3
-                                     :open-costs   [9 7 5 3]
-                                     :bonus-damage 1}
-                                    {:status       :closed
-                                     :focus-cost   4
-                                     :open-costs   [13 10 7 4]
-                                     :bonus-damage 1}]))
-              :ability  (merge ability
-                               {:charges 0})
-              :life     (player-starting-life difficulty)
-              :phase    :out-of-turn})
+      (merge {:breaches       (->> breaches
+                                   (mapv (fn [breach1 {:keys [status] :as breach2}]
+                                           (if (#{:opened :destroyed} status)
+                                             breach2
+                                             (merge breach1 breach2)))
+                                         [{:status :opened}
+                                          {:status     :closed
+                                           :focus-cost 2
+                                           :open-costs [5 4 3 2]}
+                                          {:status       :closed
+                                           :focus-cost   3
+                                           :open-costs   [9 7 5 3]
+                                           :bonus-damage 1}
+                                          {:status       :closed
+                                           :focus-cost   4
+                                           :open-costs   [13 10 7 4]
+                                           :bonus-damage 1}]))
+              :ability        (merge ability
+                                     {:charges 0})
+              :life           (player-starting-life difficulty)
+              :phase          :out-of-turn
+              :revealed-cards 5})
       (update :hand #(map ut/give-id! %))
       (update :deck #(map ut/give-id! %))))
 
