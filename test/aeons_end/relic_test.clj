@@ -8,6 +8,84 @@
             [aeons-end.cards.spell :refer [dark-fire radiance]]
             [aeons-end.turn-order :as turn-order]))
 
+(deftest astral-cube-test
+  (testing "Astral Cube"
+    (is (= (-> {:players    [{:hand      [astral-cube]
+                              :play-area [crystal]
+                              :life      8}]
+                :turn-order {:deck [turn-order/player-1]}}
+               (play 0 :astral-cube)
+               (choose :crystal))
+           {:players    [{:hand      [crystal]
+                          :play-area [astral-cube]
+                          :life      9}]
+            :turn-order {:deck           [turn-order/player-1]
+                         :revealed-cards 1}}))
+    (is (= (-> {:players    [{:hand      [astral-cube]
+                              :play-area [astral-cube]
+                              :life      8}]
+                :turn-order {:deck [turn-order/nemesis]}}
+               (play 0 :astral-cube))
+           {:players    [{:play-area [astral-cube astral-cube]
+                          :life      8}]
+            :turn-order {:deck           [turn-order/nemesis]
+                         :revealed-cards 1}}))
+    (is (= (-> {:players    [{:hand      [astral-cube]
+                              :play-area [jade]
+                              :life      10}]
+                :turn-order {:deck [turn-order/player-1]}}
+               (play 0 :astral-cube)
+               (choose :jade))
+           {:players    [{:hand      [jade]
+                          :play-area [astral-cube]
+                          :life      10}]
+            :turn-order {:deck           [turn-order/player-1]
+                         :revealed-cards 1}}))
+    (is (= (-> {:players    [{:hand      [astral-cube]
+                              :play-area [jade]
+                              :life      8}
+                             {:life 5}]
+                :turn-order {:deck [turn-order/player-2]}}
+               (play 0 :astral-cube)
+               (choose :jade))
+           {:players    [{:hand      [jade]
+                          :play-area [astral-cube]
+                          :life      8}
+                         {:life 6}]
+            :turn-order {:deck           [turn-order/player-2]
+                         :revealed-cards 1}}))
+    (is (= (-> {:players    [{:hand [astral-cube]
+                              :life 8}
+                             {:life 0}]
+                :turn-order {:deck [turn-order/player-2]}}
+               (play 0 :astral-cube))
+           {:players    [{:play-area [astral-cube]
+                          :life      8}
+                         {:life 0}]
+            :turn-order {:deck           [turn-order/player-2]
+                         :revealed-cards 1}}))
+    (is (= (-> {:players    [{:hand [astral-cube]
+                              :life 8}
+                             {:life 0}
+                             {:life 1}]
+                :turn-order {:deck [turn-order/wild]}}
+               (play 0 :astral-cube)
+               (choose {:player-no 2}))
+           {:players    [{:play-area [astral-cube]
+                          :life      8}
+                         {:life 0}
+                         {:life 2}]
+            :turn-order {:deck           [turn-order/wild]
+                         :revealed-cards 1}}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:players    [{:hand [astral-cube]
+                                             :life 8}
+                                            {:life 0}
+                                            {:life 1}]
+                               :turn-order {:deck [turn-order/wild]}}
+                              (play 0 :astral-cube)
+                              (choose {:player-no 1}))))))
+
 (deftest blasting-staff-test
   (let [spark (assoc spark :id 1)]
     (testing "Blasting Staff"

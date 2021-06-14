@@ -4,6 +4,41 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
+(defn astral-cube-heal [game _]
+  (let [{:keys [player-no]} (-> game :turn-order :deck first :type)
+        exhausted? (when (and player-no
+                              (pos? player-no))
+                     (zero? (get-in game [:players player-no :life])))]
+    (cond
+      (= -1 player-no) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
+                                                                         :text    "Any player gains 1 life."
+                                                                         :choice  [:heal {:life 1}]
+                                                                         :options [:players {:not-exhausted true}]
+                                                                         :min     1
+                                                                         :max     1}]]})
+      (and player-no
+           (not exhausted?)) (push-effect-stack game {:player-no player-no
+                                                      :effects   [[:heal {:life 1}]]})
+      :else game)))
+
+(effects/register {::astral-cube-heal astral-cube-heal})
+
+(def astral-cube {:name    :astral-cube
+                  :type    :relic
+                  :cost    5
+                  :text    ["Return a gem you played this turn to your hand."
+                            "Reveal the top card of the turn order deck. If you revealed a player's turn order card, that player gains 1 life."]
+                  :effects [[:give-choice {:title   :astral-cube
+                                           :text    "Return a gem you played this turn to your hand."
+                                           :choice  [:move-card {:from :play-area
+                                                                 :to   :hand}]
+                                           :options [:player :play-area {:type :gem}]
+                                           :min     1
+                                           :max     1}]
+                            [:reveal-top-turn-order]
+                            [::astral-cube-heal]]
+                  :quote   "'Riddles within riddles within shapes within black. There is a power here the other refuse to taste.' Xaxos, Voidbringer"})
+
 (def blasting-staff {:name    :blasting-staff
                      :type    :relic
                      :cost    4
@@ -131,7 +166,8 @@
                                               :max       1}]]
                      :quote   "'Not every pretty rock is a means to wage war. Some must be cut and carved into more useful things.' Adelheim, Breach Mage Weaponsmith"})
 
-(def cards [blasting-staff
+(def cards [astral-cube
+            blasting-staff
             cairn-compass
             fiend-catcher
             temporal-helix
