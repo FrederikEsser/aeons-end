@@ -116,7 +116,14 @@
                {:players [{:hand      [crystal]
                            :play-area [shattered-geode]
                            :discard   [spark]
-                           :aether    1}]}))))
+                           :aether    1}]}))
+        (is (= (-> {:players [{:hand    [shattered-geode]
+                               :discard [spark crystal]}]}
+                   (play-all-gems 0)
+                   (choose {:player-no 0 :card-id 2 :card-name :crystal}))
+               {:players [{:play-area [shattered-geode crystal]
+                           :discard   [spark]
+                           :aether    2}]}))))
     (let [crystal (assoc crystal :id 1)
           spark   (assoc spark :id 2)]
       (testing "Vimcraft Oath"

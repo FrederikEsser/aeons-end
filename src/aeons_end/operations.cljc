@@ -642,6 +642,21 @@
 
 (effects/register {:discard-power-card discard-power-card})
 
+(defn play-all-gems [game {:keys [player-no]}]
+  (let [{:keys [name] :as card} (->> (get-in game [:players player-no :hand])
+                                     (filter (comp #{:gem} :type))
+                                     (sort-by (fn [{:keys [auto-play-index]}] (or auto-play-index 0)))
+                                     first)]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   (concat [[:move-card {:card-name name
+                                                                      :from      :hand
+                                                                      :to        :play-area}]
+                                                         [:card-effect {:card card}]
+                                                         [:play-all-gems]])}))))
+
+(effects/register {:play-all-gems play-all-gems})
+
 (defn- get-choice-fn [data]
   (let [{:keys [choice] :as result} (if (vector? data)
                                       {:choice (first data)

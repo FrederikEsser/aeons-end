@@ -42,16 +42,28 @@
            {:players [{:play-area [crystal]
                        :aether    1
                        :phase     :main}]}))
-    (is (= (-> {:players [{:hand  [crystal crystal]
+    (is (= (-> {:players [{:hand  [jade crystal]
                            :phase :casting}]}
                (play-all-gems 0))
-           {:players [{:play-area [crystal crystal]
-                       :aether    2
+           {:players [{:play-area [jade crystal]
+                       :aether    3
                        :phase     :main}]}))
     (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
                           (-> {:players [{:hand  [crystal]
                                           :phase :draw}]}
-                              (play-all-gems 0))))))
+                              (play-all-gems 0))))
+    (is (= (-> {:players [{:hand  [(assoc jade :auto-play-index 1) crystal]
+                           :phase :casting}]}
+               (play-all-gems 0))
+           {:players [{:play-area [crystal (assoc jade :auto-play-index 1)]
+                       :aether    3
+                       :phase     :main}]}))
+    (is (= (-> {:players [{:hand  [(assoc jade :auto-play-index -1) crystal]
+                           :phase :casting}]}
+               (play-all-gems 0))
+           {:players [{:play-area [(assoc jade :auto-play-index -1) crystal]
+                       :aether    3
+                       :phase     :main}]}))))
 
 (deftest spell-test
   (testing "Spell"

@@ -114,6 +114,18 @@
                               (play 0 :breach-ore)
                               (choose {:breach-no 2}))))))
 
+(deftest burning-opal-test
+  (testing "Burning Opal"
+    (is (= (-> {:players [{:hand [burning-opal crystal]}
+                          {:deck [crystal]}]}
+               (play-all-gems 0)
+               (choose :crystal)
+               (choose {:player-no 1}))
+           {:players [{:play-area [burning-opal]
+                       :discard   [crystal]
+                       :aether    3}
+                      {:hand [crystal]}]}))))
+
 (deftest pain-stone-test
   (testing "Pain Stone"
     (is (= (-> {:players [{:hand [pain-stone]}]

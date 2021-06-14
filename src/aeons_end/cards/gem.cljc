@@ -53,6 +53,33 @@
                                                   :max       1}]]
                  :quote           "'If you want to make those wretched things scream, try this.' Sparrow, Breach Mage Soldier"})
 
+(defn burning-opal-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:give-choice {:title   :burning-opal
+                                                                   :text    "Any ally draws a card."
+                                                                   :choice  [:draw {:arg 1}]
+                                                                   :options [:players {:ally true}]
+                                                                   :min     1
+                                                                   :max     1}]]})))
+
+(effects/register {::burning-opal-discard burning-opal-discard})
+
+(def burning-opal {:name            :burning-opal
+                   :type            :gem
+                   :cost            5
+                   :auto-play-index -1
+                   :text            ["Gain 3 Aether."
+                                     "You may discard a card in hand. If you do, any ally draws a card."]
+                   :effects         [[:gain-aether 3]
+                                     [:give-choice {:title   :burning-opal
+                                                    :text    "You may discard a card in hand. If you do, any ally draws a card."
+                                                    :choice  ::burning-opal-discard
+                                                    :options [:player :hand]
+                                                    :max     1}]]
+                   :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
+
 (def jade {:name    :jade
            :type    :gem
            :cost    2
@@ -121,6 +148,7 @@
 (def cards [alien-element
             bloodstone-jewel
             breach-ore
+            burning-opal
             jade
             leeching-agate
             pain-stone

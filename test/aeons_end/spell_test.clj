@@ -215,6 +215,15 @@
                    (choose {:player-no 1}))
                {:players [{:aether 0}
                           {:discard [blaze]}]
+                :supply  [{:card blaze :pile-size 4}]}))
+        (is (= (-> {:players [{:aether 4}
+                              {}]
+                    :supply  [{:card blaze :pile-size 5}]}
+                   (buy-card 0 :blaze)
+                   (choose nil))
+               {:players [{:aether  0
+                           :discard [blaze]}
+                          {}]
                 :supply  [{:card blaze :pile-size 4}]}))))))
 
 (deftest dark-fire-test
