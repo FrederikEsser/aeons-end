@@ -28,7 +28,7 @@
                                              :max     1}]]
                     :quote   "'Being lost down there once was more than enough.' Indira, Breach Apprentice"})
 
-(defn fiend-catcher-move-nemesis-card [game {:keys [card-name] :as args}]
+(defn fiend-catcher-move-nemesis-card [game {:keys [card-name]}]
   (cond-> game
           (= :nemesis card-name) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
 

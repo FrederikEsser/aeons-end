@@ -60,6 +60,15 @@
            :effects [[:gain-aether 2]]
            :quote   "'Jade is as common as bone at the mouth of the cave.'"})
 
+(def leeching-agate {:name    :leeching-agate
+                     :type    :gem
+                     :cost    3
+                     :text    ["When you gain this, gain 1 charge."
+                               "Gain 2 Aether."]
+                     :on-gain [[:gain-charge]]
+                     :effects [[:gain-aether 2]]
+                     :quote   "'These stones are among the most powerful in the labyrinth of lost caves. They are also the most corrupted.' Kadir, Breach Mage Delver"})
+
 (defn pain-stone-choices [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case choice
@@ -113,6 +122,7 @@
             bloodstone-jewel
             breach-ore
             jade
+            leeching-agate
             pain-stone
             searing-ruby
             sifters-pearl])
