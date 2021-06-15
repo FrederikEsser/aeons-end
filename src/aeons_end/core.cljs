@@ -209,7 +209,7 @@
           [:div {:paddingTop "3px"}
            (str " x" number-of-cards)])]])))
 
-(defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value choice-opts interaction interactions]}]
+(defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value interaction interactions]}]
   (let [interactions (if interaction
                        #{interaction}
                        interactions)
@@ -318,9 +318,11 @@
                            quick-choice?
                            optional?] :as choice}]
   (let [selection (:selection @state)]
-    [:td
+    [:td {:style {:font-weight :bold
+                  :padding     "20px"}}
      (when choice-title
-       [:div {:style {:font-weight :bold}}
+       [:div {:style {:font-size   "2em"
+                      :font-weight :bold}}
         choice-title])
      [:div (format-text text)]
      [:div (mapk-indexed (fn [idx {:keys [option text]}]
@@ -522,9 +524,7 @@
                             {:nemesis? true}]]
                       (when strike
                         [:td [view-expandable-pile :discard/strike strike
-                              {:nemesis? true}]])
-                      (when choice
-                        (view-choice choice))]]]])]]
+                              {:nemesis? true}]])]]]])]]
          [:tr
           [:td
            (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]
@@ -568,7 +568,9 @@
                                                    :victory :green)}}
                       (ut/format-name conclusion)]
                      [:div
-                      (format-text text)]]])]]]])
+                      (format-text text)]]])
+                 (when-let [choice (-> @state :game :choice)]
+                   (view-choice choice))]]]])
 
            (if setup-game?
              (let [players          (get-in @state [:game-setup :players])
@@ -607,9 +609,8 @@
                 [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
                 (let [players (get-in @state [:game :players])]
                   (->> players
-                       (mapk (fn [{:keys                    [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]
-                                   {:keys [max] :as choice} :choice}]
-                               (let [max           (or max (get-in @state [:game :nemesis :choice :max]))
+                       (mapk (fn [{:keys [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]}]
+                               (let [max           (get-in @state [:game :choice :max])
                                      breach-no     (->> breaches
                                                         (filter (comp #{:opened :focused} :status))
                                                         (filter (comp empty? :prepped-spells))
@@ -675,9 +676,7 @@
                                         (view-player-pile deck max)]]
                                   [:td [view-expandable-pile (keyword "discard" (cljs.core/name name)) discard
                                         {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))
-                                         :max         max}]]
-                                  (when choice
-                                    (view-choice choice))])))))]]])]
+                                         :max         max}]]])))))]]])]
           [:td
            (if setup-game?
              (let [supply         (get-in @state [:game-setup :supply])

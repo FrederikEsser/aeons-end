@@ -79,7 +79,7 @@
          (choice-interaction {:area      :supply
                               :card-name name} choice)))
 
-(defn view-supply [{:keys [supply choice] :as game}]
+(defn view-supply [{:keys [supply] :as game}]
   (->> supply
        (map (fn [pile]
               (let [top-card (view-supply-card game pile)]
@@ -280,10 +280,6 @@
           :aether    (ut/format-aether player)}
          (when trophies
            {:trophies trophies})
-         (when (and (:player-no choice)
-                    (or active-player?
-                        (not= :players (:source choice))))
-           {:choice (view-choice choice)})
          (choice-interaction {:area      :players
                               :player-no player-no} choice)))
 
@@ -299,11 +295,11 @@
                text)]))
 
 (defn view-nemesis [{{:keys [name life play-area deck discard
-                             tokens strike]}              :nemesis
-                     {:keys [player-no phase] :as player} :player
-                     choice                               :choice
-                     resolving                            :resolving
-                     :as                                  game}]
+                             tokens strike]}   :nemesis
+                     {:keys [player-no phase]} :player
+                     choice                    :choice
+                     resolving                 :resolving
+                     :as                       game}]
   (merge {:name-ui (ut/format-name name)
           :life    life
           :deck    (if (empty? deck)
@@ -331,7 +327,6 @@
                                               {:life life})
                                             (when (and can-discard?
                                                        (not choice)
-                                                       (not (:choice player))
                                                        (#{:casting :main} phase))
                                               {:interaction :discardable})
                                             (choice-interaction {:area      :minions
@@ -393,12 +388,9 @@
                                           (->> discard
                                                (map view-card)))
                        :number-of-cards (count discard)})})
-         (choice-interaction {:area :nemesis} choice)
-         (when (and choice
-                    (nil? (:player-no choice)))
-           {:choice (view-choice choice)})))
+         (choice-interaction {:area :nemesis} choice)))
 
-(defn view-trash [{:keys [trash choice] :as game}]
+(defn view-trash [{:keys [trash]}]
   (merge
     (when (not-empty trash)
       {:card (let [{:keys [name type]} (last trash)]
@@ -411,9 +403,7 @@
                              (map (fn [{:keys [name type]}]
                                     (merge {:name    name
                                             :name-ui (ut/format-name name)
-                                            :type    type}
-                                           (choice-interaction {:area      :trash
-                                                                :card-name name} choice))))
+                                            :type    type})))
                              frequencies
                              (map (fn [[card number-of-cards]]
                                     (cond-> card
@@ -474,8 +464,7 @@
       {:nemesis    (view-nemesis (merge game
                                         (when player
                                           {:player (-> player
-                                                       (assoc :player-no current-player)
-                                                       (cond-> player-no (assoc :choice choice)))})
+                                                       (assoc :player-no current-player))})
                                         {:choice choice}))
        :difficulty difficulty
        :gravehold  gravehold
@@ -494,7 +483,9 @@
                                                              (when (or (= idx player-no)
                                                                        (= :players source))
                                                                {:choice choice})))))))
-       :trash      (view-trash (merge game {:choice choice}))
+       :trash      (view-trash game)
        :commands   (view-commands game)}
+      (when choice
+        {:choice (view-choice choice)})
       (when game-over
         {:game-over game-over}))))
