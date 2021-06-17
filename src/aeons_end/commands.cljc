@@ -36,6 +36,13 @@
                                                  [:play-all-gems]])})
       op/check-stack))
 
+(defn play-nemesis-card [{:keys [current-player effect-stack] :as game} card-name]
+  (assert (nil? current-player) (str "Nemesis error: It's not the nemesis' turn. Current player: " current-player "."))
+  (assert (empty? effect-stack) "Nemesis error: You have a choice to make.")
+  (-> game
+      (op/push-effect-stack {:effects [[:play-nemesis-card {:card-name card-name}]]})
+      op/check-stack))
+
 (defn prep-spell [game player-no breach-no card-name]
   (check-command "Prep" game player-no)
   (let [{:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])]

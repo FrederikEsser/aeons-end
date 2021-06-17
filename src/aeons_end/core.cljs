@@ -187,6 +187,7 @@
                 :disabled disabled
                 :on-click (when interaction
                             (fn [] (case interaction
+                                     :playable (swap! state assoc :game (cmd/play-nemesis-card name))
                                      :discardable (swap! state assoc :game (cmd/discard-power-card name))
                                      :choosable (select! (or choice-value name))
                                      :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
@@ -442,7 +443,7 @@
         [:tbody
          [:tr
           [:td {:col-span 2}
-           (let [{:keys [name name-ui life tokens deck play-area discard fury interaction choice-value]} (-> @state :game :nemesis)]
+           (let [{:keys [name name-ui life tokens deck play-area hand discard fury interaction choice-value]} (-> @state :game :nemesis)]
              [:div [:table
                     [:tbody
                      [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
@@ -515,7 +516,7 @@
                        (when fury
                          [:div "Fury: " fury])]
                       [:td [:div
-                            (mapk view-nemesis-card play-area)]]
+                            (mapk view-nemesis-card (concat play-area hand))]]
                       [:td [:div
                             (when deck
                               (str (:number-of-cards deck) " Cards"))]]

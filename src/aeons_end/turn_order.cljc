@@ -31,9 +31,7 @@
 (def nemesis {:name    :nemesis
               :type    :nemesis
               :effects [[:resolve-nemesis-cards-in-play]
-                        [:draw-nemesis-card]
-                        [:after-effects]
-                        [:next-turn]]})
+                        [:draw-nemesis-card]]})
 
 (defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
   (if (empty? deck)

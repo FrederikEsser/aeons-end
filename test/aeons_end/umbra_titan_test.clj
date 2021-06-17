@@ -15,7 +15,7 @@
                             :unleash [[:damage-gravehold 1]]
                             :tokens  8}
                 :gravehold {:life 30}}
-               draw-nemesis-card)
+               resolve-next-nemesis-card)
            {:nemesis   {:discard [crumble]
                         :unleash [[:damage-gravehold 1]]
                         :tokens  5}
@@ -25,7 +25,7 @@
                             :unleash [[:damage-gravehold 1]]
                             :tokens  8}
                 :gravehold {:life 30}}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose nil))
            {:nemesis   {:discard [cryptid crumble]
                         :unleash [[:damage-gravehold 1]]
@@ -36,7 +36,7 @@
                             :unleash [[:damage-gravehold 1]]
                             :tokens  8}
                 :gravehold {:life 30}}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose :cryptid))
            {:nemesis   {:play-area [cryptid]
                         :discard   [crumble]
@@ -48,7 +48,7 @@
                             :unleash [[:damage-gravehold 1]]
                             :tokens  8}
                 :gravehold {:life 30}}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose :grubber))
            {:nemesis   {:play-area [grubber]
                         :discard   [cryptid crumble]
@@ -61,7 +61,7 @@
                                            :unleash [[:damage-gravehold 1]]
                                            :tokens  8}
                                :gravehold {:life 30}}
-                              draw-nemesis-card
+                              resolve-next-nemesis-card
                               (choose :cryptid))))))
 
 (deftest cryptid-test
@@ -146,14 +146,14 @@
     (is (= (-> {:nemesis {:deck   [maul]
                           :tokens 8}
                 :players [{:breaches [{}]}]}
-               draw-nemesis-card)
+               resolve-next-nemesis-card)
            {:nemesis {:discard [maul]
                       :tokens  6}
             :players [{:breaches [{}]}]}))
     (is (= (-> {:nemesis {:deck   [maul]
                           :tokens 8}
                 :players [{:breaches [{:prepped-spells [spark]}]}]}
-               draw-nemesis-card)
+               resolve-next-nemesis-card)
            {:nemesis {:discard [maul]
                       :tokens  6}
             :players [{:breaches [{:prepped-spells [spark]}]}]}))
@@ -161,7 +161,7 @@
                           :tokens 8}
                 :players [{:breaches [{:prepped-spells [spark]}
                                       {:prepped-spells [spark]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose nil))
            {:nemesis {:discard [maul]
                       :tokens  6}
@@ -171,7 +171,7 @@
                           :tokens 8}
                 :players [{:breaches [{:prepped-spells [spark]}
                                       {:prepped-spells [spark]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 0 :breach-no 1 :card-name :spark}]))
            {:nemesis {:discard [maul]
@@ -184,13 +184,13 @@
                                          :tokens 8}
                                :players [{:breaches [{:prepped-spells [spark]}
                                                      {:prepped-spells [spark]}]}]}
-                              draw-nemesis-card
+                              resolve-next-nemesis-card
                               (choose [{:player-no 0 :breach-no 0 :card-name :spark}]))))
     (is (= (-> {:nemesis {:deck   [maul]
                           :tokens 8}
                 :players [{:breaches [{:prepped-spells [spark]}]}
                           {:breaches [{:prepped-spells [ignite]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 1 :breach-no 0 :card-name :ignite}]))
            {:nemesis {:discard [maul]
@@ -203,7 +203,7 @@
                 :players [{:breaches [{:prepped-spells [spark]}
                                       {:prepped-spells [spark]}
                                       {:prepped-spells [spark]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 0 :breach-no 1 :card-name :spark}]))
            {:nemesis {:discard [maul]
@@ -217,7 +217,7 @@
                 :players [{:breaches [{:prepped-spells [ignite]}
                                       {:prepped-spells [spark]}
                                       {:prepped-spells [ignite]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
                         {:player-no 0 :breach-no 2 :card-name :ignite}]))
            {:nemesis {:discard [maul]
@@ -232,7 +232,7 @@
                                :players [{:breaches [{:prepped-spells [ignite]}
                                                      {:prepped-spells [spark]}
                                                      {:prepped-spells [ignite]}]}]}
-                              draw-nemesis-card
+                              resolve-next-nemesis-card
                               (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
                                        {:player-no 0 :breach-no 1 :card-name :spark}]))))
     (is (= (-> {:nemesis {:deck   [maul]
@@ -240,7 +240,7 @@
                 :players [{:breaches [{:prepped-spells [dark-fire]}
                                       {:prepped-spells [spark]}
                                       {:prepped-spells [ignite]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :dark-fire}
                         {:player-no 0 :breach-no 2 :card-name :ignite}]))
            {:nemesis {:discard [maul]
@@ -254,7 +254,7 @@
                 :players [{:breaches [{:prepped-spells [spark]}
                                       {:prepped-spells [spark]}
                                       {:prepped-spells [ignite]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose :lose-tokens))
            {:nemesis {:discard [maul]
                       :tokens  6}
@@ -266,7 +266,7 @@
                 :players [{:breaches [{:prepped-spells [spark]}
                                       {:prepped-spells [spark]}
                                       {:prepped-spells [ignite]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose :destroy)
                (choose {:player-no 0 :breach-no 1 :card-name :spark}))
            {:nemesis {:discard [maul]
@@ -281,7 +281,7 @@
                                       {:prepped-spells [ignite]}
                                       {:prepped-spells [ignite]}
                                       {:prepped-spells [dark-fire]}]}]}
-               draw-nemesis-card
+               resolve-next-nemesis-card
                (choose :destroy)
                (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
            {:nemesis {:discard [maul]
@@ -298,7 +298,7 @@
                                                      {:prepped-spells [ignite]}
                                                      {:prepped-spells [ignite]}
                                                      {:prepped-spells [dark-fire]}]}]}
-                              draw-nemesis-card
+                              resolve-next-nemesis-card
                               (choose :destroy)
                               (choose {:player-no 0 :breach-no 0 :card-name :spark}))))))
 

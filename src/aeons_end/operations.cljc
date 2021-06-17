@@ -8,6 +8,7 @@
                    {nemesis-life :life
                     :keys        [name
                                   deck
+                                  hand
                                   play-area
                                   victory-condition]
                     :as          nemesis} :nemesis
@@ -22,6 +23,7 @@
                                                 "Gravehold is safe - for now."]}
         (and nemesis
              (empty? deck)
+             (empty? hand)
              (empty? play-area)) {:conclusion :victory
                                   :text       [(str (ut/format-name name) " is exhausted and all its minions defeated.")
                                                "Gravehold is safe - for now."]}
