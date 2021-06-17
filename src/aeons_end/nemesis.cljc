@@ -52,10 +52,19 @@
 
 (defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
   (push-effect-stack game {:effects (->> (:play-area nemesis)
-                                         (map (fn [{:keys [type name]}]
-                                                (case type
-                                                  :power [:resolve-power-card {:card-name name}]
-                                                  :minion [:resolve-minion-card {:card-name name}]))))}))
+                                         (map (fn [{:keys [type name power]}]
+                                                [:give-choice {:title   (ut/format-name (:name nemesis))
+                                                               :text    (case type
+                                                                          :power (if (< 1 (:power power))
+                                                                                   (str (ut/format-name name) " powers up.") #_(str (ut/format-name (:name nemesis)) " powers up " (ut/format-name name) ".")
+                                                                                   (str (ut/format-name name) " is fully powered!") #_(str (ut/format-name (:name nemesis)) " activates the fully powered " (ut/format-name name) "."))
+                                                                          :minion (str (ut/format-name name) " attacks!") #_"Minion attacks.")
+                                                               :choice  (case type
+                                                                          :power :resolve-power-card
+                                                                          :minion :resolve-minion-card)
+                                                               :options [:nemesis :play-area {:name name}]
+                                                               :min     1
+                                                               :max     1}])))}))
 
 (effects/register {:resolve-power-card            resolve-power-card
                    :resolve-minion-card           resolve-minion-card

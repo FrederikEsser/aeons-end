@@ -329,6 +329,8 @@
                                                        (not choice)
                                                        (#{:casting :main} phase))
                                               {:interaction :discardable})
+                                            (choice-interaction {:area      :play-area
+                                                                 :card-name name} choice)
                                             (choice-interaction {:area      :minions
                                                                  :card-name name} choice))))))})
          {:discard (merge

@@ -443,11 +443,14 @@
 
 (effects/register-options {:players options-from-players})
 
-(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent type]}]]
+(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name type]}]]
   (case area
     :minions (->> (get-in game [:nemesis :play-area])
                   (filter (comp #{:minion} :type))
                   (map :name))
+    :play-area (cond->> (get-in game [:nemesis :play-area])
+                        name (filter (comp #{name} :name))
+                        :always (map :name))
     :discard (cond->> (get-in game [:nemesis :discard])
                       type (filter (comp #{type} :type))
                       most-recent (take-last 1)             ; it's important that 'most-recent' is evaluated last

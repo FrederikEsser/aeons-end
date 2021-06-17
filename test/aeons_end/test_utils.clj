@@ -1,6 +1,6 @@
 (ns aeons-end.test-utils
   (:require [clojure.test :refer :all]
-            [aeons-end.operations :refer [push-effect-stack check-stack]]
+            [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
             [aeons-end.turn-order]))
@@ -47,9 +47,11 @@
       check-stack))
 
 (defn resolve-nemesis-cards-in-play [game]
+  (let [{:keys [name]} (-> game :nemesis :play-area first)]
   (-> game
       (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
-      check-stack))
+        check-stack
+        (choose name))))
 
 (defn deal-damage [game damage]
   (-> game

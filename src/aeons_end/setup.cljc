@@ -159,7 +159,7 @@
 (defn create-game [{:keys [difficulty nemesis players supply]}]
   (let [{:keys [difficulty nemesis]} (select-nemesis nemesis difficulty)
         {:keys [setup]} nemesis]
-    (cond-> {:mode       :swift
+    (cond-> {:mode       :slow
              :real-game? true
              :difficulty difficulty
              :nemesis    (create-nemesis nemesis
