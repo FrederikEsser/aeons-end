@@ -341,6 +341,7 @@
                                                   (apply concat))]
                       (cond->> options
                                prepped-this-turn (filter prepped-this-turn?)
+                               min-cost (filter (comp #(>= % min-cost) :cost))
                                :always (map :option)))
     (let [cards        (get-in game [:players player-no area])
           highest-cost (->> cards

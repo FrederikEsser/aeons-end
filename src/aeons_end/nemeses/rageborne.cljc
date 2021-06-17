@@ -203,7 +203,7 @@
                                        :options [:players]
                                        :min     1
                                        :max     1}]]
-              :quote   "'No other thing, in our world or theirs, has been so violent as this beast.' Brama, Breach Mage Elder\n\n"})
+              :quote   "'No other thing, in our world or theirs, has been so violent as this beast.' Brama, Breach Mage Elder"})
 
 (def devastate {:name    :devastate
                 :type    :strike

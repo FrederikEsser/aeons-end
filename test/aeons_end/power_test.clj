@@ -83,6 +83,13 @@
                                                      {:prepped-spells [dark-fire]}]}]}
                               (discard-power-card 0 :cataclysmic-fate)
                               (choose {:player-no 0 :breach-no 0 :card-name :ignite}))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [cataclysmic-fate]}
+                               :players [{:breaches [{:prepped-spells [ignite]}
+                                                     {:prepped-spells [dark-fire]}]}
+                                         {:breaches [{:prepped-spells [dark-fire]}]}]}
+                              (discard-power-card 0 :cataclysmic-fate)
+                              (choose {:player-no 1 :breach-no 0 :card-name :dark-fire}))))
     (is (= (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
                 :players [{:life 10}]}
                resolve-nemesis-cards-in-play

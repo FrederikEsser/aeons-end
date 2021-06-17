@@ -86,7 +86,7 @@
                                     :effects   [[:give-choice {:title   :cataclysmic-fate
                                                                :text    "Destroy a prepped spell that costs 5 Aether or more and a breach in which it was prepped."
                                                                :choice  ::cataclysmic-fate-destroy-breach
-                                                               :options [:players :prepped-spells {:min-cost 5}]
+                                                               :options [:player :prepped-spells {:min-cost 5}]
                                                                :min     1
                                                                :max     1}]]}
                        :power      {:power   1

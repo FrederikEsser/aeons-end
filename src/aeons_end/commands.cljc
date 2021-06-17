@@ -5,7 +5,7 @@
 (defn- check-command [command {:keys [current-player effect-stack]} player-no]
   (when current-player
     (assert (= player-no current-player) (str command " error: " player-no " is not the current player " current-player ".")))
-  (assert (empty? effect-stack) "End turn error: You have a choice to make."))
+  (assert (empty? effect-stack) (str command " error: You have a choice to make.")))
 
 (defn start-game [game]
   (-> game
