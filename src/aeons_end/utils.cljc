@@ -44,10 +44,15 @@
 (defn format-aether [{:keys [aether earmarked-aether]
                       :or   {aether 0}}]
   (let [extra-aether (->> earmarked-aether
-                          vals
-                          (apply +))]
+                          (map (fn [[types val]]
+                                 (str val (->> types
+                                               (map (comp first name))
+                                               sort
+                                               (clojure.string/join)))))
+                          sort
+                          (clojure.string/join ","))]
     (str aether
-         (when (pos? extra-aether)
+         (when (not-empty extra-aether)
            (str "(+" extra-aether ")")))))
 
 (defn format-cost [cost]
