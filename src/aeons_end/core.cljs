@@ -169,7 +169,7 @@
                          :font-weight (if (= "OR" text)
                                         :bold
                                         :normal)
-                         :paddingTop  "3px"}}
+                         :padding-top "3px"}}
            (when title
              [:strong (str title (when text ": "))])
            text]))
@@ -179,10 +179,11 @@
                                  cast-text interaction] :as card}]
   (when card
     (let [disabled (nil? interaction)]
-      [:button {:style    (button-style :disabled disabled
-                                        :max-width "150px"
-                                        :type type
-                                        :status status)
+      [:button {:style    (merge (button-style :disabled disabled
+                                               :type type
+                                               :status status)
+                                 {:width      "150px"
+                                  :min-height "170px"})
                 :title    quote
                 :disabled disabled
                 :on-click (when interaction
@@ -208,7 +209,7 @@
          (when cast-text
            (format-text cast-text "Cast"))]
         (when number-of-cards
-          [:div {:paddingTop "3px"}
+          [:div {:padding-top "3px"}
            (str " x" number-of-cards)])]])))
 
 (defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value interaction interactions]}]
@@ -632,7 +633,7 @@
                                         [:div {:style {:font-size "1.3em"}} name-ui]
                                         [:div {:style {:font-size   "0.9em"
                                                        :font-weight :normal
-                                                       :paddingTop  "3px"}}
+                                                       :padding-top "3px"}}
                                          title]]])]
                                    (view-ability ability)
                                    (when trophies
