@@ -295,7 +295,7 @@
                text)]))
 
 (defn view-nemesis [{{:keys [name life play-area deck discard
-                             tokens strike]}   :nemesis
+                             tokens fury]}     :nemesis
                      {:keys [player-no phase]} :player
                      choice                    :choice
                      resolving                 :resolving
@@ -377,19 +377,8 @@
                       :number-of-cards (count discard)})}
          (when tokens
            {:tokens tokens})
-         (when-let [{:keys [fury discard]} strike]
-           {:fury   fury
-            :strike (merge
-                      (when (not-empty discard)
-                        {:card (let [{:keys [name] :as card} (last discard)]
-                                 (merge (view-card card)
-                                        (when (= resolving name)
-                                          {:status :resolving})))})
-                      {:cards           (if (empty? discard)
-                                          []
-                                          (->> discard
-                                               (map view-card)))
-                       :number-of-cards (count discard)})})
+         (when fury
+           {:fury fury})
          (choice-interaction {:area :nemesis} choice)))
 
 (defn view-trash [{:keys [trash]}]

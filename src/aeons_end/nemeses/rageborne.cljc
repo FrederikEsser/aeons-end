@@ -5,32 +5,46 @@
             [aeons-end.cards.power :as power]))
 
 (defn gain-fury [game _]
-  (update-in game [:nemesis :strike :fury] ut/plus 1))
+  (update-in game [:nemesis :fury] ut/plus 1))
 
 (defn lose-fury [game {:keys [arg]}]
-  (let [fury (get-in game [:nemesis :strike :fury])]
-    (assoc-in game [:nemesis :strike :fury] (max (- fury arg) 0))))
+  (let [fury (get-in game [:nemesis :fury])]
+    (assoc-in game [:nemesis :fury] (max (- fury arg) 0))))
 
-(defn strike [{:keys [nemesis difficulty] :as game} _]
-  (let [{:keys [name effects] :as card} (->> nemesis :strike :deck shuffle first)]
+(defn resolve-strike [{:keys [difficulty] :as game} {:keys [card-name]}]
+  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
     (-> game
-        (update-in [:nemesis :strike :discard] (comp vec concat) [card])
-        (update-in [:nemesis :strike :deck] shuffle)
         (push-effect-stack {:effects (concat
-                                       [[:set-resolving {:card-name name}]]
+                                       [[:set-resolving {:card-name card-name}]]
                                        effects
                                        [[:clear-resolving]
-                                        [::lose-fury (if (#{:expert :extinction} difficulty) 1 3)]])}))))
+                                        [::lose-fury (if (#{:expert :extinction} difficulty) 1 3)]
+                                        [:move-card {:card-name card-name
+                                                     :from      :play-area
+                                                     :to        :discard}]])}))))
+
+(defn strike [{:keys [nemesis] :as game} _]
+  (let [{:keys [name] :as card} (->> nemesis :strike-deck first)]
+    (-> game
+        (update-in [:nemesis :play-area] (comp vec concat) [card])
+        (update-in [:nemesis :strike-deck] shuffle)
+        (push-effect-stack {:effects [[:give-choice {:title   "Rageborne strikes!"
+                                                     :text    (str "Resolve " (ut/format-name name) ".")
+                                                     :choice  ::resolve-strike
+                                                     :options [:nemesis :play-area {:name name}]
+                                                     :min     1
+                                                     :max     1}]]}))))
 
 (defn after-effects [game _]
-  (let [fury (get-in game [:nemesis :strike :fury])]
+  (let [fury (get-in game [:nemesis :fury])]
     (cond-> game
             (<= 4 fury) (strike {}))))
 
-(effects/register {::gain-fury     gain-fury
-                   ::lose-fury     lose-fury
-                   ::strike        strike
-                   ::after-effects after-effects})
+(effects/register {::gain-fury      gain-fury
+                   ::lose-fury      lose-fury
+                   ::resolve-strike resolve-strike
+                   ::strike         strike
+                   ::after-effects  after-effects})
 
 (def avatar-of-wrath {:name       :avatar-of-wrath
                       :type       :minion
@@ -73,7 +87,7 @@
 (effects/register-predicates {::invoke-carnage-can-discard? invoke-carnage-can-discard?})
 
 (defn invoke-carnage-damage [game _]
-  (let [damage (inc (get-in game [:nemesis :strike :fury]))]
+  (let [damage (inc (get-in game [:nemesis :fury]))]
     (push-effect-stack game {:effects [[:give-choice {:title   :invoke-carnage
                                                       :text    (str "Any player suffers " damage " damage.")
                                                       :choice  [:damage-player {:arg damage}]
@@ -98,7 +112,7 @@
                      :quote      "'There is but a single power among The Nameless that can shatter Gravehold.' Brama, Breach Mage Elder"})
 
 (defn onslaught-discard [game _]
-  (let [fury (get-in game [:nemesis :strike :fury])]
+  (let [fury (get-in game [:nemesis :fury])]
     (push-effect-stack game {:effects [[:give-choice {:title   :invoke-carnage
                                                       :text    (str "The players collectively discard " (ut/number->text fury) " cards in hand.")
                                                       :choice  :collective-discard-from-hand
@@ -120,7 +134,7 @@
                 :quote   "'Even its shadow leaves a wake of carnage, smoke, and screams.'"})
 
 (defn provoker-damage [game _]
-  (let [fury (get-in game [:nemesis :strike :fury])]
+  (let [fury (get-in game [:nemesis :fury])]
     (push-effect-stack game {:effects [[:damage-gravehold fury]]})))
 
 (effects/register {::provoker-damage provoker-damage})
@@ -301,10 +315,10 @@
                 :cards         [cleave provoker unrelenting-ire
                                 blood-cry invoke-carnage scorn
                                 avatar-of-wrath onslaught rolling-death]
-                :strike        {:fury 0
-                                :deck [convoke
-                                       devastate
-                                       eviscerate
-                                       frenzy
-                                       raze
-                                       seize]}})
+                :fury          0
+                :strike-deck   [convoke
+                                devastate
+                                eviscerate
+                                frenzy
+                                raze
+                                seize]})

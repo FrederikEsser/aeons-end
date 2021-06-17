@@ -20,89 +20,92 @@
 (deftest rageborne-test
   (testing "Rageborne"
     (testing "Unleash"
-      (is (= (-> {:nemesis {:strike  {:fury 0}
+      (is (= (-> {:nemesis {:fury    0
                             :unleash [[::rageborne/gain-fury]]}}
                  unleash)
-             {:nemesis {:strike  {:fury 1}
+             {:nemesis {:fury    1
                         :unleash [[::rageborne/gain-fury]]}})))
     (testing "Strike"
-      (is (= (-> {:nemesis   {:strike {:fury 4
-                                       :deck [devastate]}}
+      (is (= (-> {:nemesis   {:fury        4
+                              :strike-deck [devastate]}
                   :gravehold {:life 30}}
-                 do-strike)
-             {:nemesis   {:strike {:fury    1
-                                   :deck    [devastate]
-                                   :discard [devastate]}}
+                 do-strike
+                 (choose :devastate))
+             {:nemesis   {:fury        1
+                          :strike-deck [devastate]
+                          :discard     [devastate]}
               :gravehold {:life 25}}))
-      (is (= (-> {:nemesis   {:strike {:fury 3
-                                       :deck [devastate]}}
+      (is (= (-> {:nemesis   {:fury        3
+                              :strike-deck [devastate]}
                   :gravehold {:life 30}}
                  do-after-effects)
-             {:nemesis   {:strike {:fury 3
-                                   :deck [devastate]}}
+             {:nemesis   {:fury        3
+                          :strike-deck [devastate]}
               :gravehold {:life 30}}))
-      (is (= (-> {:nemesis   {:strike {:fury 4
-                                       :deck [devastate]}}
+      (is (= (-> {:nemesis   {:fury        4
+                              :strike-deck [devastate]}
                   :gravehold {:life 30}}
-                 do-after-effects)
-             {:nemesis   {:strike {:fury    1
-                                   :deck    [devastate]
-                                   :discard [devastate]}}
+                 do-after-effects
+                 (choose :devastate))
+             {:nemesis   {:fury        1
+                          :strike-deck [devastate]
+                          :discard     [devastate]}
               :gravehold {:life 25}}))
       (is (= (-> {:difficulty :expert
-                  :nemesis    {:strike {:fury 4
-                                        :deck [devastate]}}
+                  :nemesis    {:fury        4
+                               :strike-deck [devastate]}
                   :gravehold  {:life 30}}
-                 do-after-effects)
+                 do-after-effects
+                 (choose :devastate))
              {:difficulty :expert
-              :nemesis    {:strike {:fury    3
-                                    :deck    [devastate]
-                                    :discard [devastate]}}
+              :nemesis    {:fury        3
+                           :strike-deck [devastate]
+                           :discard     [devastate]}
               :gravehold  {:life 25}})))
     (testing "Provoker"
-      (is (= (-> {:nemesis   {:strike    {:fury 0}
+      (is (= (-> {:nemesis   {:fury      0
                               :play-area [provoker]}
                   :gravehold {:life 30}}
                  (resolve-nemesis-cards-in-play))
-             {:nemesis   {:strike    {:fury 0}
+             {:nemesis   {:fury      0
                           :play-area [provoker]}
               :gravehold {:life 30}}))
-      (is (= (-> {:nemesis   {:strike    {:fury 1}
+      (is (= (-> {:nemesis   {:fury      1
                               :play-area [provoker]}
                   :gravehold {:life 30}}
                  (resolve-nemesis-cards-in-play))
-             {:nemesis   {:strike    {:fury 1}
+             {:nemesis   {:fury      1
                           :play-area [provoker]}
               :gravehold {:life 29}}))
-      (is (= (-> {:nemesis   {:strike    {:fury 4}
+      (is (= (-> {:nemesis   {:fury      4
                               :play-area [provoker]}
                   :gravehold {:life 30}}
                  (resolve-nemesis-cards-in-play))
-             {:nemesis   {:strike    {:fury 4}
+             {:nemesis   {:fury      4
                           :play-area [provoker]}
               :gravehold {:life 26}})))
     (testing "Invoke Carnage"
-      (is (= (-> {:nemesis {:strike    {:fury 0}
+      (is (= (-> {:nemesis {:fury      0
                             :play-area [(assoc-in invoke-carnage [:power :power] 1)]}
                   :players [{:life 10}]}
                  (resolve-nemesis-cards-in-play)
                  (choose {:player-no 0}))
-             {:nemesis {:strike  {:fury 0}
+             {:nemesis {:fury    0
                         :discard [(assoc-in invoke-carnage [:power :power] 0)]}
               :players [{:life 9}]}))
-      (is (= (-> {:nemesis {:strike    {:fury 1}
+      (is (= (-> {:nemesis {:fury      1
                             :play-area [(assoc-in invoke-carnage [:power :power] 1)]}
                   :players [{:life 10}]}
                  (resolve-nemesis-cards-in-play)
                  (choose {:player-no 0}))
-             {:nemesis {:strike  {:fury 1}
+             {:nemesis {:fury    1
                         :discard [(assoc-in invoke-carnage [:power :power] 0)]}
               :players [{:life 8}]}))
-      (is (= (-> {:nemesis {:strike    {:fury 4}
+      (is (= (-> {:nemesis {:fury      4
                             :play-area [(assoc-in invoke-carnage [:power :power] 1)]}
                   :players [{:life 10}]}
                  (resolve-nemesis-cards-in-play)
                  (choose {:player-no 0}))
-             {:nemesis {:strike  {:fury 4}
+             {:nemesis {:fury    4
                         :discard [(assoc-in invoke-carnage [:power :power] 0)]}
               :players [{:life 5}]})))))

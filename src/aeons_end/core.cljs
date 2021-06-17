@@ -44,8 +44,9 @@
                                         (= :openable status) "#f8e238"
                                         :else :white)
                          (= :destroyed status) "#d66"
+                         (not disabled) :black
                          (= :strike type) "#444"
-                         :else (if disabled "#666" :black))
+                         disabled "#666")
      :font-weight      :bold
      :background-color (cond
                          (#{:gem :attack} type) "#cfbede"
@@ -441,12 +442,10 @@
         [:tbody
          [:tr
           [:td {:col-span 2}
-           (let [{:keys [name name-ui life tokens deck play-area discard fury strike interaction choice-value choice]} (-> @state :game :nemesis)]
+           (let [{:keys [name name-ui life tokens deck play-area discard fury interaction choice-value]} (-> @state :game :nemesis)]
              [:div [:table
                     [:tbody
-                     [:tr (map-tag :th (concat ["Nemesis" "Play area" "Deck" "Discard"]
-                                               (when strike
-                                                 ["Strikes"])))]
+                     [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
                      [:tr
                       [:td
                        (if setup-game?
@@ -521,10 +520,7 @@
                             (when deck
                               (str (:number-of-cards deck) " Cards"))]]
                       [:td [view-expandable-pile :discard/nemesis discard
-                            {:nemesis? true}]]
-                      (when strike
-                        [:td [view-expandable-pile :discard/strike strike
-                              {:nemesis? true}]])]]]])]]
+                            {:nemesis? true}]]]]]])]]
          [:tr
           [:td
            (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]
