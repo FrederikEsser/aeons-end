@@ -278,7 +278,7 @@
                                 :discard [spark]}]
                   :turn-order {:deck [turn-order/player-1]}}
                  (play 0 :fiend-catcher)
-                 (choose {:area :hand :card-name :crystal}))
+                 (choose {:area :hand :player-no 0 :card-name :crystal}))
              {:players    [{:discard   [spark]
                             :play-area [fiend-catcher]}]
               :turn-order {:deck           [turn-order/player-1]

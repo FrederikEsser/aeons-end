@@ -392,7 +392,9 @@
     (is (= (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area :nemesis}))
+               (choose {:area      :nemesis
+                        :player-no 0
+                        :card-name :nemesis}))
            {:players [{:breaches [{}]
                        :discard  [phoenix-flame]}]
             :nemesis {:life 48}}))
@@ -400,7 +402,8 @@
                            :ability  {:charges 1}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area :charges}))
+               (choose {:area      :charges
+                        :player-no 0}))
            {:players [{:breaches [{}]
                        :ability  {:charges 0}
                        :discard  [phoenix-flame]}]
@@ -409,7 +412,9 @@
                            :ability  {:charges 1}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area :nemesis}))
+               (choose {:area      :nemesis
+                        :player-no 0
+                        :card-name :nemesis}))
            {:players [{:breaches [{}]
                        :ability  {:charges 1}
                        :discard  [phoenix-flame]}]
@@ -418,7 +423,8 @@
                            :ability  {:charges 2}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area :charges}))
+               (choose {:area      :charges
+                        :player-no 0}))
            {:players [{:breaches [{}]
                        :ability  {:charges 1}
                        :discard  [phoenix-flame]}]
@@ -428,7 +434,9 @@
                                        :prepped-spells [phoenix-flame]}]}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area :nemesis}))
+               (choose {:area      :nemesis
+                        :player-no 0
+                        :card-name :nemesis}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
                        :discard  [phoenix-flame]}]
@@ -439,7 +447,8 @@
                            :ability  {:charges 1}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area :charges}))
+               (choose {:area      :charges
+                        :player-no 0}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1
                                    }]

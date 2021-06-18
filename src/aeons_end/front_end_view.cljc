@@ -2,53 +2,30 @@
   (:require [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]))
 
-(defn- choice-interaction-simple [{:keys [area card-name] :as args}
-                                  {:keys [source options max choice-opts] :as choice}]
-  (let [interaction (if (= 1 (or max (count options)))
-                      {:interaction :quick-choosable}
-                      (merge {:interaction :choosable}
-                             (when choice-opts
-                               {:choice-opts choice-opts})))]
-    (cond
-      (and (= area (:area choice))
-           (contains? (set options) card-name)) interaction
-      (= :mixed source) (if card-name
-                          (let [card-names (->> options
-                                                (filter (comp #{area} :area))
-                                                (map :card-name)
-                                                set)]
-                            (when (contains? card-names card-name)
-                              (merge interaction
-                                     {:choice-value {:area area :card-name card-name}})))
-                          (when (contains? (set options) {:area area})
-                            (merge interaction
-                                   {:choice-value {:area area}}))))))
-
-(defn- choice-interaction-multi [{:keys [area player-no breach-no card-name card-id] :as args}
-                                 {:keys [options max choice-opts] :as choice}]
-  (let [interaction  (if (= 1 (or max (count options)))
-                       {:interaction :quick-choosable}
-                       (merge {:interaction :choosable}
-                              (when choice-opts
-                                {:choice-opts choice-opts})))
-        choice-value (when (#{area :mixed} (:area choice))
-                       (cond->> options
-                                (= :mixed (:area choice)) (filter (comp #{area} :area))
-                                player-no (filter (comp #{player-no} :player-no))
-                                breach-no (filter (comp #{breach-no} :breach-no))
-                                card-name (filter (comp #{card-name} :card-name))
-                                card-id (filter (comp #{card-id} :card-id))
-                                :always first))]
+(defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
+                          {:keys [options max choice-opts] :as choice}]
+  (let [choice-value (cond->> options
+                              (not= area (:area choice)) (filter (comp #{area} :area))
+                              player-no (filter (fn [option]
+                                                  (if (keyword? option)
+                                                    (= player-no (:player-no choice))
+                                                    (= player-no (:player-no option)))))
+                              breach-no (filter (comp #{breach-no} :breach-no))
+                              card-id (filter (comp #{card-id} :card-id))
+                              card-name (filter (fn [option]
+                                                  (= card-name (or (:card-name option)
+                                                                   option))))
+                              :always first)]
     (when choice-value
-      (merge interaction
-             {:choice-value choice-value}))))
+      (merge (if (= 1 (or max (count options)))
+               {:interaction :quick-choosable}
+               (merge {:interaction :choosable}
+                      (when choice-opts
+                        {:choice-opts choice-opts})))
+             (when (map? choice-value)
+               {:choice-value choice-value})))))
 
-(defn- choice-interaction [identifier {:keys [source] :as choice}]
-  (if (= :players source)
-    (choice-interaction-multi identifier choice)
-    (choice-interaction-simple identifier choice)))
-
-(defn view-card [{:keys [name text cast type cost quote]}]
+(defn view-card [{:keys [name text cast type quote]}]
   (merge {:name    name
           :name-ui (ut/format-name name)
           :type    type}
@@ -149,17 +126,17 @@
     (when (not-empty discard)
       {:card (let [{:keys [id] :as card} (last discard)]
                (merge (view-card card)
-                      (choice-interaction-multi {:area      :discard
-                                                 :player-no player-no
-                                                 :card-id   id} choice)))})
+                      (choice-interaction {:area      :discard
+                                           :player-no player-no
+                                           :card-id   id} choice)))})
     {:cards           (if (empty? discard)
                         []
                         (->> discard
                              (map (fn [{:keys [id] :as card}]
                                     (merge (view-card card)
-                                           (choice-interaction-multi {:area      :discard
-                                                                      :player-no player-no
-                                                                      :card-id   id} choice))))))
+                                           (choice-interaction {:area      :discard
+                                                                :player-no player-no
+                                                                :card-id   id} choice))))))
      :number-of-cards (count discard)}))
 
 (defn view-options [options]
@@ -207,10 +184,10 @@
                                                                                 (#{:casting} phase)
                                                                                 (#{:spell} type))
                                                                        {:interaction :castable})
-                                                                     (choice-interaction-multi {:area      :prepped-spells
-                                                                                                :player-no player-no
-                                                                                                :breach-no idx
-                                                                                                :card-name name} choice)))))})
+                                                                     (choice-interaction {:area      :prepped-spells
+                                                                                          :player-no player-no
+                                                                                          :breach-no idx
+                                                                                          :card-name name} choice)))))})
                                (when (and (= :opened status)
                                           bonus-damage)
                                  {:bonus-damage bonus-damage})
@@ -226,19 +203,17 @@
                                  {:interactions (cond-> #{}
                                                         (ut/can-afford? player focus-cost :focus-breach) (conj :focusable)
                                                         (ut/can-afford? player open-cost :open-breach) (conj :openable))})
-                               (choice-interaction-multi {:area      :breaches
-                                                          :breach-no idx} choice)))))))
+                               (choice-interaction {:area      :breaches
+                                                    :player-no player-no
+                                                    :breach-no idx} choice)))))))
 
-(defn view-ability [{{:keys [ability
-                             phase] :as player} :player
-                     choice                     :choice
-                     active?                    :active-player?
-                     :as                        game}]
+(defn view-ability [{{:keys [player-no ability phase] :as player} :player
+                     choice                                       :choice
+                     active?                                      :active-player?}]
   (let [{:keys [name
                 text
                 charges
-                charge-cost]} ability
-        {:keys [area options]} choice]
+                charge-cost]} ability]
     (merge {:name-ui     (ut/format-name name)
             :text        text
             :charges     charges
@@ -253,12 +228,9 @@
                   (not choice)
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable})
-           (when (= :charges area)
-             {:interaction  :quick-choosable
-              :choice-value :charges})
-           (when (some (comp #{:charges} :area) options)
-             {:interaction  :quick-choosable
-              :choice-value {:area :charges}}))))
+           (choice-interaction {:area      :charges
+                                :player-no player-no}
+                               choice))))
 
 (defn view-player [{{:keys [player-no name title life trophies]
                      :as   player} :player
@@ -470,7 +442,7 @@
               :quick-choice? true}}))
 
 (defn view-game [{:keys [difficulty nemesis gravehold turn-order players effect-stack current-player game-over] :as game}]
-  (let [[{:keys [player-no source] :as choice}] effect-stack
+  (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (merge
       {:nemesis    (view-nemesis (merge game
@@ -480,8 +452,9 @@
                                         {:choice choice}))
        :difficulty difficulty
        :gravehold  gravehold
-       :supply     (view-supply (merge game {:player (assoc player :player-no current-player)
-                                             :choice choice}))
+       :supply     (view-supply (merge game
+                                       {:player (assoc player :player-no current-player)
+                                        :choice choice}))
        :turn-order (view-turn-order turn-order choice)
        :players    (->> players
                         (map-indexed (fn [idx player]
@@ -491,10 +464,8 @@
                                                                  (not= phase :end-of-game))]
                                          (view-player (merge game
                                                              {:active-player? active-player?
-                                                              :player         (assoc player :player-no idx)}
-                                                             (when (or (= idx player-no)
-                                                                       (= :players source))
-                                                               {:choice choice})))))))
+                                                              :player         (assoc player :player-no idx)
+                                                              :choice         choice}))))))
        :trash      (view-trash game)
        :commands   (view-commands game)}
       (if game-over

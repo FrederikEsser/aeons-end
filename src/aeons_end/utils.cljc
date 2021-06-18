@@ -317,7 +317,8 @@
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
                                   (keep-indexed (fn [breach-no {:keys [status] :as breach}]
                                                   (when (not= :destroyed status)
-                                                    (assoc breach :option {:breach-no breach-no})))))
+                                                    (assoc breach :option {:player-no player-no
+                                                                           :breach-no breach-no})))))
                     low-cost (->> options
                                   (filter (comp #{:closed :focused} :status))
                                   (keep :focus-cost)
@@ -329,7 +330,7 @@
     :charges (let [charges (get-in game [:players player-no :ability :charges])]
                (when (and charges
                           (pos? charges))
-                 [nil]))
+                 [{:player-no player-no}]))
     :prepped-spells (let [prepped-this-turn? (fn prepped-this-turn? [{:keys [id]}]
                                                (->> (get-in game [:players player-no :this-turn])
                                                     (filter :prep)
@@ -464,7 +465,7 @@
                       most-recent (take-last 1)             ; it's important that 'most-recent' is evaluated last
                       :always (map :name))
 
-    :nemesis [nil]))
+    :nemesis [:nemesis]))
 
 (effects/register-options {:nemesis options-from-nemesis})
 
@@ -502,11 +503,13 @@
                  (let [opt-fn (effects/get-option opt-name)
                        [area & opt-args] (get-opt-args option)]
                    (->> (apply opt-fn game {:player-no player-no :card-id card-id :area area} opt-args)
-                        (map (fn [card-name]
+                        (map (fn [option]
                                (merge {:area area}
+                                      (when player-no
+                                        {:player-no player-no})
                                       (cond
-                                        (map? card-name) card-name
-                                        card-name {:card-name card-name}))))))))))
+                                        (map? option) option
+                                        option {:card-name option}))))))))))
 
 (effects/register-options {:mixed mixed-options})
 

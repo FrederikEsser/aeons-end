@@ -592,7 +592,8 @@
                                        :type :minion
                                        :life 5}]}}
                (deal-damage 1)
-               (choose {:area :nemesis}))
+               (choose {:area      :nemesis
+                        :card-name :nemesis}))
            {:nemesis {:life      49
                       :play-area [{:name :bad-motherfucker
                                    :type :minion
@@ -630,7 +631,8 @@
                                        :type :minion
                                        :life 2}]}}
                (cast-spell 0 0 :spark)
-               (choose {:area :nemesis}))
+               (choose {:area      :nemesis
+                        :card-name :nemesis}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
                        :discard  [spark]
@@ -670,7 +672,8 @@
                 :nemesis   {:unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
                (damage-player 0 1)
-               (choose {:breach-no 0}))
+               (choose {:player-no 0
+                        :breach-no 0}))
            {:players   [{:breaches [{:status :destroyed}]
                          :ability  {:charges 0}
                          :life     0}]
@@ -683,7 +686,8 @@
                 :nemesis   {:unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
                (damage-player 0 1)
-               (choose {:breach-no 0}))
+               (choose {:player-no 0
+                        :breach-no 0}))
            {:players   [{:breaches [{:status :destroyed}]
                          :discard  [spark]
                          :ability  {:charges 0}
@@ -704,7 +708,8 @@
                 :nemesis   {:unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
                (damage-player 0 2)
-               (choose {:breach-no 0}))
+               (choose {:player-no 0
+                        :breach-no 0}))
            {:players   [{:breaches [{:status :destroyed}]
                          :ability  {:charges 0}
                          :life     0}]

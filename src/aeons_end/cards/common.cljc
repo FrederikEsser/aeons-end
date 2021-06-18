@@ -158,7 +158,7 @@
 
 (effects/register {:destroy-from-hand destroy-from-hand})
 
-(defn destroy-from-discard [game {:keys [player-no card-id card-ids] :as args}]
+(defn destroy-from-discard [game {:keys [player-no card-id card-ids]}]
   (let [card-ids (if card-id
                    [{:player-no player-no :card-id card-id}]
                    card-ids)]
@@ -172,7 +172,7 @@
 
 (effects/register {:destroy-from-discard destroy-from-discard})
 
-(defn destroy-from-area [game {:keys [player-no area card-name card-id choices] :as args}]
+(defn destroy-from-area [game {:keys [player-no area card-name card-id choices]}]
   (let [choices (or choices
                     (when (and area card-name)
                       [{:area      area

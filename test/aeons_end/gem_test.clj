@@ -78,7 +78,8 @@
                                        :focus-cost 2
                                        :stage      0}]}]}
                (play 0 :breach-ore)
-               (choose {:breach-no 1}))
+               (choose {:player-no 0
+                        :breach-no 1}))
            {:players [{:play-area [breach-ore]
                        :breaches  [{:status :opened}
                                    {:status     :focused
@@ -90,7 +91,8 @@
                                        :focus-cost 2
                                        :stage      3}]}]}
                (play 0 :breach-ore)
-               (choose {:breach-no 1}))
+               (choose {:player-no 0
+                        :breach-no 1}))
            {:players [{:play-area [breach-ore]
                        :breaches  [{:status :opened}
                                    {:status :opened}]}]}))

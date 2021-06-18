@@ -50,7 +50,8 @@
                                                                                                  {:args args})))))
                                                                                (remove nil?))
                                                                   choice [(merge choice
-                                                                                 {:player-no player-no}
+                                                                                 (when player-no
+                                                                                   {:player-no player-no})
                                                                                  (when card-id
                                                                                    {:card-id card-id}))])))))
 
