@@ -26,6 +26,33 @@
                                                              :max     1}]]}
                        :quote      "'The sound they make as they weave echoes through the cave is like the otherworldly throes of our lost companions.' Ges, Breach Mage Adviser"})
 
+(defn labyrinth-wisp-choice [game {:keys [player-no area breach-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :prepped-spells [[:discard-prepped-spells {:breach-no breach-no :card-name card-name}]]
+                                        :charges [[:spend-charges 1]])}))
+
+(effects/register {::labyrinth-wisp-choice labyrinth-wisp-choice})
+
+(def labyrinth-wisp {:name       :labyrinth-wisp
+                     :type       :minion
+                     :tier       1
+                     :life       5
+                     :persistent {:text    ["Any player discards a prepped spell."
+                                            "OR"
+                                            "Any player loses 1 charge."]
+                                  :effects [[:give-choice {:title   :labyrinth-wisp
+                                                           :text    ["Any player discards a prepped spell."
+                                                                     "OR"
+                                                                     "Any player loses 1 charge."]
+                                                           :choice  ::labyrinth-wisp-choice
+                                                           :options [:mixed
+                                                                     [:players :prepped-spells]
+                                                                     [:players :charges]]
+                                                           :min     1
+                                                           :max     1}]]}
+                     :quote      "'It is the very breath of the void.' Yan Magda, Enlightened Exile"})
+
 (def mage-ender {:name       :mage-ender
                  :type       :minion
                  :tier       2

@@ -235,4 +235,6 @@
                     minion/monstrosity-of-omens
                     power/apocalypse-ritual
                     power/cataclysmic-fate
-                    power/withering-beam]))
+                    power/withering-beam]
+                   ; The Outer Dark
+                   [minion/labyrinth-wisp]))

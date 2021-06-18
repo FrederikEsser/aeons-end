@@ -17,6 +17,55 @@
            {:nemesis {:play-area [howling-spinners]}
             :players [{:life 8}]}))))
 
+(deftest labyrinth-wisp-test
+  (testing "Labyrinth Wisp"
+    (is (= (-> {:nemesis {:play-area [labyrinth-wisp]}
+                :players [{:breaches [{:prepped-spells [spark]}]
+                           :ability  {:charges 2}}
+                          {:breaches [{:prepped-spells [ignite]}]
+                           :ability  {:charges 0}}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:area :prepped-spells :player-no 0 :breach-no 0 :card-name :spark}))
+           {:nemesis {:play-area [labyrinth-wisp]}
+            :players [{:breaches [{}]
+                       :discard  [spark]
+                       :ability  {:charges 2}}
+                      {:breaches [{:prepped-spells [ignite]}]
+                       :ability  {:charges 0}}]}))
+    (is (= (-> {:nemesis {:play-area [labyrinth-wisp]}
+                :players [{:breaches [{:prepped-spells [spark]}]
+                           :ability  {:charges 2}}
+                          {:breaches [{:prepped-spells [ignite]}]
+                           :ability  {:charges 0}}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:area :charges :player-no 0}))
+           {:nemesis {:play-area [labyrinth-wisp]}
+            :players [{:breaches [{:prepped-spells [spark]}]
+                       :ability  {:charges 1}}
+                      {:breaches [{:prepped-spells [ignite]}]
+                       :ability  {:charges 0}}]}))
+    (is (= (-> {:nemesis {:play-area [labyrinth-wisp]}
+                :players [{:breaches [{:prepped-spells [spark]}]
+                           :ability  {:charges 2}}
+                          {:breaches [{:prepped-spells [ignite]}]
+                           :ability  {:charges 0}}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:area :prepped-spells :player-no 1 :breach-no 0 :card-name :ignite}))
+           {:nemesis {:play-area [labyrinth-wisp]}
+            :players [{:breaches [{:prepped-spells [spark]}]
+                       :ability  {:charges 2}}
+                      {:breaches [{}]
+                       :discard  [ignite]
+                       :ability  {:charges 0}}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [labyrinth-wisp]}
+                               :players [{:breaches [{:prepped-spells [spark]}]
+                                          :ability  {:charges 2}}
+                                         {:breaches [{:prepped-spells [ignite]}]
+                                          :ability  {:charges 0}}]}
+                              (resolve-nemesis-cards-in-play)
+                              (choose {:area :charges :player-no 1}))))))
+
 (deftest mage-ender-test
   (testing "Mage Ender"
     (is (= (-> {:nemesis {:play-area [mage-ender]}

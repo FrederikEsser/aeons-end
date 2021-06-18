@@ -435,9 +435,15 @@
                                                                                           (assoc card :option {:player-no player-no
                                                                                                                :breach-no breach-no
                                                                                                                :card-name name}))))))
-                                                               (apply concat))))))
+                                                               (apply concat)))))
+                           :charges (->> valid-players
+                                         (keep (fn [{:keys [player-no] :as player}]
+                                                 (let [charges (get-in player [:ability :charges])]
+                                                   (when (and charges
+                                                              (pos? charges))
+                                                     {:option {:player-no player-no}}))))))
             highest-cost (->> options
-                              (map :cost)
+                              (keep :cost)
                               (apply max 0))]
         (cond->> options
                  type (filter (comp #{type} :type))
