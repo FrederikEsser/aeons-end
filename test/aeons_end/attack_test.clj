@@ -17,7 +17,7 @@
                   :gravehold {:life 30}
                   :players   [{:discard [crystal]
                                :life    10}]}
-                 resolve-next-nemesis-card
+                 draw-nemesis-card
                  (choose {:player-no 0})
                  (choose {:player-no 0 :card-name :crystal :card-id 1}))
              {:nemesis   {:discard [afflict]
@@ -30,7 +30,7 @@
                 :gravehold {:life 30}
                 :players   [{:discard [crystal]
                              :life    10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose nil))
            {:nemesis   {:discard [afflict]
@@ -42,7 +42,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:life 10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [afflict]
                         :unleash [[:damage-gravehold 1]]}
@@ -57,7 +57,7 @@
                 :turn-order {:deck [turn-order/player-1]}
                 :players    [{:life 10}
                              {:life 10}]}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis    {:discard [encroach]
                          :unleash [[:damage-gravehold 1]]}
             :gravehold  {:life 29}
@@ -71,7 +71,7 @@
                 :turn-order {:discard [turn-order/player-2]}
                 :players    [{:life 10}
                              {:life 10}]}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis    {:discard [encroach]
                          :unleash [[:damage-gravehold 1]]}
             :gravehold  {:life 29}
@@ -85,7 +85,7 @@
                 :turn-order {:deck [turn-order/nemesis]}
                 :players    [{:life 10}
                              {:life 10}]}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis    {:discard [encroach]
                          :unleash [[:damage-gravehold 1]]}
             :gravehold  {:life 26}
@@ -100,7 +100,7 @@
                 :players    [{:life 10}
                              {:life 10}
                              {:life 10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 2}))
            {:nemesis    {:discard [encroach]
                          :unleash [[:damage-gravehold 1]]}
@@ -117,7 +117,7 @@
                             :discard [smite]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis   {:discard [smite engulf]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 26}}))
@@ -125,7 +125,7 @@
                             :discard [banish smite]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis   {:discard [banish smite engulf]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 26}}))
@@ -133,7 +133,7 @@
                             :discard [smite mangleroot]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis   {:discard [mangleroot smite engulf]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 26}}))
@@ -141,7 +141,7 @@
                             :discard [mangleroot]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis   {:discard [mangleroot engulf]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 30}}))))
@@ -155,7 +155,7 @@
                              :life     10}
                             {:breaches [{}]
                              :life     10}]}
-               resolve-next-nemesis-card)
+               draw-nemesis-card)
            {:nemesis   {:discard [banish]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
@@ -170,7 +170,7 @@
                              :life     10}
                             {:breaches [{}]
                              :life     10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [banish]
                         :unleash [[:damage-gravehold 1]]}
@@ -187,7 +187,7 @@
                                             :life     10}
                                            {:breaches [{}]
                                             :life     10}]}
-                              resolve-next-nemesis-card
+                              draw-nemesis-card
                               (choose {:player-no 1}))))
     (is (= (-> {:nemesis   {:deck    [banish]
                             :unleash [[:damage-gravehold 1]]}
@@ -197,7 +197,7 @@
                             {:breaches [{:prepped-spells [spark]}
                                         {:prepped-spells [spark]}]
                              :life     10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [banish]
                         :unleash [[:damage-gravehold 1]]}
@@ -215,7 +215,7 @@
                             {:breaches [{:prepped-spells [spark]}
                                         {:prepped-spells [spark]}]
                              :life     10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 1}))
            {:nemesis   {:discard [banish]
                         :unleash [[:damage-gravehold 1]]}
@@ -236,7 +236,7 @@
                             {:breaches [{:prepped-spells [spark]}
                                         {:prepped-spells [spark]}]
                              :life     10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 1 :breach-no 1 :card-name :spark}])
                (choose {:player-no 1}))
@@ -258,7 +258,7 @@
                             {:breaches [{:prepped-spells [spark]}
                                         {:prepped-spells [spark]}]
                              :life     10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose [{:player-no 1 :breach-no 0 :card-name :spark}
                         {:player-no 1 :breach-no 1 :card-name :spark}])
                (choose {:player-no 1}))
@@ -279,7 +279,7 @@
                             {:breaches [{}
                                         {}]
                              :life     10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
                (choose {:player-no 1}))
            {:nemesis   {:discard [mutilate]
@@ -299,7 +299,7 @@
                 :gravehold {:life 30}
                 :players   [{:hand [crystal]
                              :life 10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose :crystal))
            {:nemesis   {:discard [nix]
@@ -312,7 +312,7 @@
                 :gravehold {:life 30}
                 :players   [{:hand [crystal jade]
                              :life 10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose :jade))
            {:nemesis   {:discard [nix]
@@ -327,7 +327,7 @@
                                :gravehold {:life 30}
                                :players   [{:hand [crystal jade]
                                             :life 10}]}
-                              resolve-next-nemesis-card
+                              draw-nemesis-card
                               (choose {:player-no 0})
                               (choose :crystal))))
     (is (= (-> {:nemesis   {:deck    [nix]
@@ -336,7 +336,7 @@
                 :players   [{:hand [crystal jade]
                              :life 10}
                             {:life 10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose :jade))
            {:nemesis   {:discard [nix]
@@ -353,14 +353,14 @@
                                :players   [{:hand [crystal jade]
                                             :life 10}
                                            {:life 10}]}
-                              resolve-next-nemesis-card
+                              draw-nemesis-card
                               (choose {:player-no 1}))))
     (is (= (-> {:nemesis   {:deck    [nix]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:life 10}
                             {:life 10}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 1}))
            {:nemesis   {:discard [nix]
                         :unleash [[:damage-gravehold 1]]}
@@ -374,7 +374,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [crystal crystal crystal spark spark]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose [:crystal :spark :spark]))
            {:nemesis   {:discard [throttle]
@@ -386,7 +386,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [jade crystal crystal spark spark]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose [:spark :spark]))
            {:nemesis   {:discard [throttle]
@@ -398,7 +398,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [jade crystal ignite spark spark]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose :spark))
            {:nemesis   {:discard [throttle]
@@ -410,7 +410,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [jade crystal ignite jade spark]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [throttle]
                         :unleash [[:damage-gravehold 1]]}
@@ -422,7 +422,7 @@
                 :gravehold {:life 30}
                 :players   [{:hand [jade crystal ignite]}
                             {:hand [ignite ignite spark jade]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [throttle]
                         :unleash [[:damage-gravehold 1]]}
@@ -434,7 +434,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [spark crystal]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0}))
            {:nemesis   {:discard [throttle]
                         :unleash [[:damage-gravehold 1]]}
@@ -445,7 +445,7 @@
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [jade ignite ignite jade spark]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 0})
                (choose :jade))
            {:nemesis   {:discard [throttle]
@@ -458,7 +458,7 @@
                                            :unleash [[:damage-gravehold 1]]}
                                :gravehold {:life 30}
                                :players   [{:hand [jade ignite ignite jade spark]}]}
-                              resolve-next-nemesis-card
+                              draw-nemesis-card
                               (choose {:player-no 0})
                               (choose :spark))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
@@ -467,14 +467,14 @@
                                :gravehold {:life 30}
                                :players   [{:hand [crystal crystal crystal spark spark]}
                                            {:hand [crystal crystal]}]}
-                              resolve-next-nemesis-card
+                              draw-nemesis-card
                               (choose {:player-no 1}))))
     (is (= (-> {:nemesis   {:deck    [throttle]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
                 :players   [{:hand [crystal spark]}
                             {:hand [crystal crystal]}]}
-               resolve-next-nemesis-card
+               draw-nemesis-card
                (choose {:player-no 1}))
            {:nemesis   {:discard [throttle]
                         :unleash [[:damage-gravehold 1]]}

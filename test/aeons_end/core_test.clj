@@ -514,33 +514,35 @@
                (end-turn 0))
            {:players [{:phase :out-of-turn}]}))))
 
+(deftest draw-nemesis-card-test
+  (testing "Draw nemesis card"
+    (is (= (-> {:nemesis   {:deck    [{:name    :fugazi
+                                       :type    :attack
+                                       :effects [[:unleash]]}]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [{:name    :fugazi
+                                   :type    :attack
+                                   :effects [[:unleash]]}]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}}))
+    (is (= (-> {:nemesis {:deck [{:name :iznogood
+                                  :type :power}]}}
+               draw-nemesis-card)
+           {:nemesis {:play-area [{:name :iznogood
+                                   :type :power}]}}))
+    (is (= (-> {:nemesis {:deck [{:name :bad-motherfucker
+                                  :type :minion
+                                  :life 2}]}}
+               draw-nemesis-card)
+           {:nemesis {:play-area [{:name     :bad-motherfucker
+                                   :type     :minion
+                                   :life     2
+                                   :max-life 2}]}}))))
+
 (deftest resolve-nemesis-card-test
   (testing "Resolve nemesis card"
-    (testing "Draw nemesis card"
-      (is (= (-> {:nemesis   {:deck    [{:name    :fugazi
-                                         :type    :attack
-                                         :effects [[:unleash]]}]
-                              :unleash [[:damage-gravehold 1]]}
-                  :gravehold {:life 30}}
-                 resolve-next-nemesis-card)
-             {:nemesis   {:discard [{:name    :fugazi
-                                     :type    :attack
-                                     :effects [[:unleash]]}]
-                          :unleash [[:damage-gravehold 1]]}
-              :gravehold {:life 29}}))
-      (is (= (-> {:nemesis {:deck [{:name :iznogood
-                                    :type :power}]}}
-                 resolve-next-nemesis-card)
-             {:nemesis {:play-area [{:name :iznogood
-                                     :type :power}]}}))
-      (is (= (-> {:nemesis {:deck [{:name :bad-motherfucker
-                                    :type :minion
-                                    :life 2}]}}
-                 resolve-next-nemesis-card)
-             {:nemesis {:play-area [{:name     :bad-motherfucker
-                                     :type     :minion
-                                     :life     2
-                                     :max-life 2}]}})))
     (testing "Power"
       (is (= (-> {:nemesis {:play-area [{:name  :iznogood
                                          :type  :power
@@ -754,12 +756,12 @@
               :game-over  {:conclusion :victory}})))
     (testing "Nemesis exhausted"
       (is (= (-> {:real-game? true
-                  :nemesis    {:hand [{:name    :last-attack
+                  :nemesis    {:deck [{:name    :last-attack
                                        :type    :attack
-                                       :effects [[:damage-gravehold 1]]}]
-                               :deck [{}]}
+                                       :effects [[:damage-gravehold 1]]}
+                                      {}]}
                   :gravehold  {:life 30}}
-                 (play-nemesis-card :last-attack))
+                 draw-nemesis-card)
              {:real-game? true
               :nemesis    {:deck    [{}]
                            :discard [{:name    :last-attack
@@ -767,12 +769,12 @@
                                       :effects [[:damage-gravehold 1]]}]}
               :gravehold  {:life 29}}))
       (is (= (-> {:real-game? true
-                  :nemesis    {:hand      [{:name    :last-attack
+                  :nemesis    {:deck      [{:name    :last-attack
                                             :type    :attack
                                             :effects [[:damage-gravehold 1]]}]
                                :play-area [{}]}
                   :gravehold  {:life 30}}
-                 (play-nemesis-card :last-attack))
+                 draw-nemesis-card)
              {:real-game? true
               :nemesis    {:play-area [{}]
                            :discard   [{:name    :last-attack
@@ -784,7 +786,7 @@
                                        :type    :attack
                                        :effects [[:damage-gravehold 1]]}]}
                   :gravehold  {:life 30}}
-                 resolve-next-nemesis-card
+                 draw-nemesis-card
                  (update :game-over dissoc :text))
              {:real-game? true
               :nemesis    {:discard [{:name    :last-attack
@@ -815,17 +817,17 @@
               :game-over  {:conclusion :defeat}}))
       (testing "before nemesis exhausted"
         (is (= (-> {:real-game? true
-                    :nemesis    {:hand [{:name    :last-attack
+                    :nemesis    {:deck [{:name    :last-attack
                                          :type    :attack
                                          :effects [[:damage-gravehold 1]]}]}
                     :gravehold  {:life 1}}
-                   (play-nemesis-card :last-attack)
+                   draw-nemesis-card
                    (update :game-over dissoc :text))
                {:real-game? true
                 :resolving  :last-attack
-                :nemesis    {:hand [{:name    :last-attack
-                                     :type    :attack
-                                     :effects [[:damage-gravehold 1]]}]}
+                :nemesis    {:play-area [{:name    :last-attack
+                                          :type    :attack
+                                          :effects [[:damage-gravehold 1]]}]}
                 :gravehold  {:life 0}
                 :game-over  {:conclusion :defeat}}))))
     (testing "Players exhausted"

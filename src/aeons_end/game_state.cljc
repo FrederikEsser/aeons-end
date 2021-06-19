@@ -98,11 +98,6 @@
                                             (commands/discard-power-card current-player card-name)))
     (view)))
 
-(defn play-nemesis-card [card-name]
-  (swap! game-state update :game conj (-> (get-game)
-                                          (commands/play-nemesis-card card-name)))
-  (view))
-
 (defn discard [card-name]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game

@@ -266,21 +266,7 @@
                  (str title ": "))
                text)]))
 
-(defn view-nemesis-card [{:keys [resolving]} {:keys [name to-discard power persistent life] :as card}]
-  (merge (view-card card)
-         (when (= resolving name)
-           {:status :resolving})
-         (when to-discard
-           {:to-discard-text (:text to-discard)})
-         (when power
-           {:power      (:power power)
-            :power-text (:text power)})
-         (when persistent
-           {:persistent-text (:text persistent)})
-         (when life
-           {:life life})))
-
-(defn view-nemesis [{{:keys [name life play-area hand deck discard
+(defn view-nemesis [{{:keys [name life play-area deck discard
                              tokens fury]}     :nemesis
                      {:keys [player-no phase]} :player
                      choice                    :choice
@@ -293,13 +279,24 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name to-discard] :as card}]
+                            (map (fn [{:keys [name to-discard power persistent life] :as card}]
                                    (let [can-discard-fn (when (and to-discard
                                                                    (:predicate to-discard))
                                                           (effects/get-predicate (:predicate to-discard)))
                                          can-discard?   (and can-discard-fn
                                                              (can-discard-fn game {:player-no player-no}))]
-                                     (merge (view-nemesis-card game card)
+                                     (merge (view-card card)
+                                            (when (= resolving name)
+                                              {:status :resolving})
+                                            (when to-discard
+                                              {:to-discard-text (:text to-discard)})
+                                            (when power
+                                              {:power      (:power power)
+                                               :power-text (:text power)})
+                                            (when persistent
+                                              {:persistent-text (:text persistent)})
+                                            (when life
+                                              {:life life})
                                             (when (and can-discard?
                                                        (not choice)
                                                        (#{:casting :main} phase))
@@ -308,14 +305,6 @@
                                                                  :card-name name} choice)
                                             (choice-interaction {:area      :minions
                                                                  :card-name name} choice))))))})
-         (when (not-empty hand)
-           {:hand (->> hand
-                       (map (fn [{:keys [name] :as card}]
-                              (merge (view-nemesis-card game card)
-                                     (when (not choice)
-                                       {:interaction :playable})
-                                     (choice-interaction {:area      :hand
-                                                          :card-name name} choice)))))})
          {:discard (merge
                      (when (not-empty discard)
                        {:card (let [{:keys [name to-discard power persistent life] :as card} (last discard)]
@@ -431,17 +420,7 @@
                                                       :type    type})))))
                :number-of-cards (count discard)})})
 
-(defn nemesis-turn [{:keys [hand] :as nemesis}]
-  (let [{:keys [name type]} (first hand)]
-    {:choice {:choice-title  (ut/format-name (:name nemesis))
-              :text          (str "Nemesis "
-                                  (case type
-                                    :attack (str "attacks with " (ut/format-name name) ".")
-                                    :power (str "initiates " (ut/format-name name) ".")
-                                    :minion (str "deploys its " (ut/format-name name) ".")))
-              :quick-choice? true}}))
-
-(defn view-game [{:keys [difficulty nemesis gravehold turn-order players effect-stack current-player game-over] :as game}]
+(defn view-game [{:keys [difficulty gravehold turn-order players effect-stack current-player game-over] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (merge
@@ -468,9 +447,6 @@
                                                               :choice         choice}))))))
        :trash      (view-trash game)
        :commands   (view-commands game)}
-      (if game-over
-        {:game-over game-over}
-        (if choice
-          {:choice (view-choice choice)}
-          (when (not-empty (:hand nemesis))
-            (nemesis-turn nemesis)))))))
+      (cond
+        game-over {:game-over game-over}
+        choice {:choice (view-choice choice)}))))

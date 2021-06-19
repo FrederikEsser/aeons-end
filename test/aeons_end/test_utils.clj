@@ -41,17 +41,15 @@
       (push-effect-stack {:effects [[:unleash]]})
       check-stack))
 
-(defn resolve-next-nemesis-card [game]
-  (let [{:keys [name]} (-> game :nemesis :deck first)]
-    (-> game
-        (push-effect-stack {:effects [[:draw-nemesis-card]
-                                      [:resolve-nemesis-card {:card-name name}]]})
-        check-stack)))
+(defn draw-nemesis-card [game]
+  (-> game
+      (push-effect-stack {:effects [[:draw-nemesis-card]]})
+      check-stack))
 
 (defn resolve-nemesis-cards-in-play [game]
   (let [{:keys [name]} (-> game :nemesis :play-area first)]
-    (-> game
-        (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
+  (-> game
+      (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
         check-stack
         (choose name))))
 

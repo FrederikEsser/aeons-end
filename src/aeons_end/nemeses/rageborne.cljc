@@ -12,7 +12,7 @@
     (assoc-in game [:nemesis :fury] (max (- fury arg) 0))))
 
 (defn resolve-strike [{:keys [difficulty] :as game} {:keys [card-name]}]
-  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:nemesis :hand] {:name card-name})]
+  (let [{{:keys [effects]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
     (-> game
         (push-effect-stack {:effects (concat
                                        [[:set-resolving {:card-name card-name}]]
@@ -20,18 +20,18 @@
                                        [[:clear-resolving]
                                         [::lose-fury (if (#{:expert :extinction} difficulty) 1 3)]
                                         [:move-card {:card-name card-name
-                                                     :from      :hand
+                                                     :from      :play-area
                                                      :to        :discard}]])}))))
 
 (defn strike [{:keys [nemesis] :as game} _]
   (let [{:keys [name] :as card} (->> nemesis :strike-deck first)]
     (-> game
-        (update-in [:nemesis :hand] (comp vec concat) [card])
+        (update-in [:nemesis :play-area] (comp vec concat) [card])
         (update-in [:nemesis :strike-deck] shuffle)
         (push-effect-stack {:effects [[:give-choice {:title   "Rageborne strikes!"
                                                      :text    (str "Resolve " (ut/format-name name) ".")
                                                      :choice  ::resolve-strike
-                                                     :options [:nemesis :hand {:name name}]
+                                                     :options [:nemesis :play-area {:name name}]
                                                      :min     1
                                                      :max     1}]]}))))
 
@@ -113,7 +113,7 @@
 
 (defn onslaught-discard [game _]
   (let [fury (get-in game [:nemesis :fury])]
-    (push-effect-stack game {:effects [[:give-choice {:title   :onslaught
+    (push-effect-stack game {:effects [[:give-choice {:title   :invoke-carnage
                                                       :text    (str "The players collectively discard " (ut/number->text fury) " cards in hand.")
                                                       :choice  :collective-discard-from-hand
                                                       :options [:players :hand]
