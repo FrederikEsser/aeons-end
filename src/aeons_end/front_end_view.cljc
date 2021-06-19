@@ -228,7 +228,7 @@
                   (not choice)
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable})
-           (choice-interaction {:area      :charges
+           (choice-interaction {:area      :ability
                                 :player-no player-no}
                                choice))))
 

@@ -140,7 +140,7 @@
 
 (defn phoenix-flame-damage [game {:keys [player-no area damage] :as args}]
   (push-effect-stack game {:player-no player-no
-                           :effects   (if (= :charges area)
+                           :effects   (if (= :ability area)
                                         [[:spend-charges 1]
                                          [:deal-damage (+ 2 damage)]]
                                         [[:deal-damage-to-target args]])}))
@@ -160,7 +160,7 @@
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:nemesis :minions]
-                                                                  [:player :charges]]
+                                                                  [:player :ability {:min-charges 1}]]
                                                         :min     1
                                                         :max     1}]]})))
 

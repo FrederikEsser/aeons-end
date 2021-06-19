@@ -312,7 +312,7 @@
     (count all-text)))
 
 (defn options-from-player [game {:keys [player-no area]}
-                           & [{:keys [type cost min-cost max-cost most-expensive lowest-focus-cost prepped-this-turn]}]]
+                           & [{:keys [type cost min-cost max-cost most-expensive lowest-focus-cost min-charges prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
                                   (keep-indexed (fn [breach-no {:keys [status] :as breach}]
@@ -326,10 +326,10 @@
                 (cond->> options
                          lowest-focus-cost (filter (comp #{low-cost} :focus-cost))
                          :always (map :option)))
-
-    :charges (let [charges (get-in game [:players player-no :ability :charges])]
-               (when (and charges
-                          (pos? charges))
+    :ability (let [charges (get-in game [:players player-no :ability :charges])]
+               (when (or (nil? min-charges)
+                         (and charges
+                              (>= charges min-charges)))
                  [{:player-no player-no}]))
     :prepped-spells (let [prepped-this-turn? (fn prepped-this-turn? [{:keys [id]}]
                                                (->> (get-in game [:players player-no :this-turn])
@@ -381,7 +381,7 @@
   (count hand))
 
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
-                            & [{:keys [ally most-charges number-of-prepped-spells min-hand lowest-life not-exhausted empty-breach-stati
+                            & [{:keys [ally most-charges min-charges number-of-prepped-spells min-hand lowest-life not-exhausted empty-breach-stati
                                        last type cost min-cost max-cost most-expensive most-opened-breaches]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
@@ -397,6 +397,7 @@
                                                (assoc player :player-no player-no)) players)
                                 (and ally
                                      (> (count players) 1)) (remove (comp #{player-no} :player-no))
+                                min-charges (filter (comp #(>= % min-charges) :charges :ability))
                                 most-charges (filter (comp #{highest-charge} :charges :ability))
                                 most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
                                 number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))
@@ -408,7 +409,7 @@
                                                                   (filter (comp empty? :prepped-spells))
                                                                   (filter (comp empty-breach-stati :status))
                                                                   not-empty))))]
-    (if (= :players area)
+    (if (#{:players :ability} area)
       (->> valid-players
            (map #(select-keys % [:player-no])))
       (let [options      (case area
@@ -435,13 +436,7 @@
                                                                                           (assoc card :option {:player-no player-no
                                                                                                                :breach-no breach-no
                                                                                                                :card-name name}))))))
-                                                               (apply concat)))))
-                           :charges (->> valid-players
-                                         (keep (fn [{:keys [player-no] :as player}]
-                                                 (let [charges (get-in player [:ability :charges])]
-                                                   (when (and charges
-                                                              (pos? charges))
-                                                     {:option {:player-no player-no}}))))))
+                                                               (apply concat))))))
             highest-cost (->> options
                               (keep :cost)
                               (apply max 0))]

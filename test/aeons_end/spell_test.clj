@@ -402,12 +402,19 @@
                            :ability  {:charges 1}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area      :charges
+               (choose {:area      :ability
                         :player-no 0}))
            {:players [{:breaches [{}]
                        :ability  {:charges 0}
                        :discard  [phoenix-flame]}]
             :nemesis {:life 46}}))
+    (is (thrown-with-msg? AssertionError #"Choose error"
+                          (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]
+                                          :ability  {:charges 0}}]
+                               :nemesis {:life 50}}
+                              (cast-spell 0 0 :phoenix-flame)
+                              (choose {:area      :ability
+                                       :player-no 0}))))
     (is (= (-> {:players [{:breaches [{:prepped-spells [phoenix-flame]}]
                            :ability  {:charges 1}}]
                 :nemesis {:life 50}}
@@ -423,7 +430,7 @@
                            :ability  {:charges 2}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area      :charges
+               (choose {:area      :ability
                         :player-no 0}))
            {:players [{:breaches [{}]
                        :ability  {:charges 1}
@@ -447,7 +454,7 @@
                            :ability  {:charges 1}}]
                 :nemesis {:life 50}}
                (cast-spell 0 0 :phoenix-flame)
-               (choose {:area      :charges
+               (choose {:area      :ability
                         :player-no 0}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1

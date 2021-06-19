@@ -38,7 +38,7 @@
                           {:breaches [{:prepped-spells [ignite]}]
                            :ability  {:charges 0}}]}
                (resolve-nemesis-cards-in-play)
-               (choose {:area :charges :player-no 0}))
+               (choose {:area :ability :player-no 0}))
            {:nemesis {:play-area [labyrinth-wisp]}
             :players [{:breaches [{:prepped-spells [spark]}]
                        :ability  {:charges 1}}
@@ -64,7 +64,7 @@
                                          {:breaches [{:prepped-spells [ignite]}]
                                           :ability  {:charges 0}}]}
                               (resolve-nemesis-cards-in-play)
-                              (choose {:area :charges :player-no 1}))))))
+                              (choose {:area :ability :player-no 1}))))))
 
 (deftest mage-ender-test
   (testing "Mage Ender"

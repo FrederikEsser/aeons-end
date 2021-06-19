@@ -30,7 +30,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   (case area
                                         :prepped-spells [[:discard-prepped-spells {:breach-no breach-no :card-name card-name}]]
-                                        :charges [[:spend-charges 1]])}))
+                                        :ability [[:spend-charges 1]])}))
 
 (effects/register {::labyrinth-wisp-choice labyrinth-wisp-choice})
 
@@ -48,7 +48,7 @@
                                                            :choice  ::labyrinth-wisp-choice
                                                            :options [:mixed
                                                                      [:players :prepped-spells]
-                                                                     [:players :charges]]
+                                                                     [:players :ability {:min-charges 1}]]
                                                            :min     1
                                                            :max     1}]]}
                      :quote      "'It is the very breath of the void.' Yan Magda, Enlightened Exile"})
