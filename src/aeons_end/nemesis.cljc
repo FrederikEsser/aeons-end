@@ -73,23 +73,37 @@
 (defn set-minion-max-life [game {:keys [card-name life]}]
   (ut/update-in-vec game [:nemesis :play-area] {:name card-name} assoc :max-life life))
 
-(defn draw-nemesis-card [game _]
-  (let [{:keys [name type life effects]} (get-in game [:nemesis :deck 0])]
-    (push-effect-stack game {:effects (concat [[:move-card {:from          :deck
-                                                            :from-position :top
-                                                            :to            :play-area}]]
+(defn resolve-nemesis-card [game {:keys [card-name]}]
+  (let [{{:keys [name type effects]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
+    (cond-> game
+            (= :attack type) (push-effect-stack {:effects (concat
+                                                            [[:set-resolving {:card-name name}]]
+                                                            effects
+                                                            [[:clear-resolving]]
+                                                            [[:discard-nemesis-card {:card-name name}]])}))))
+
+(defn draw-nemesis-card [{:keys [nemesis] :as game} _]
+  (let [{:keys [name type life]} (get-in game [:nemesis :deck 0])]
+    (push-effect-stack game {:effects (concat [[:move-card {:card-name name
+                                                            :from      :deck
+                                                            :to        :play-area}]]
                                               (when (= :minion type)
                                                 [[:set-minion-max-life {:card-name name
                                                                         :life      life}]])
-                                              (when (= :attack type)
-                                                (concat
-                                                  [[:set-resolving {:card-name name}]]
-                                                  effects
-                                                  [[:clear-resolving]]
-                                                  [[:discard-nemesis-card {:card-name name}]])))})))
+                                              [[:give-choice {:title   (ut/format-name (:name nemesis))
+                                                              :text    (str "Nemesis "
+                                                                            (case type
+                                                                              :attack (str "attacks with " (ut/format-name name) ".")
+                                                                              :power (str "initiates " (ut/format-name name) ".")
+                                                                              :minion (str "deploys its " (ut/format-name name) ".")))
+                                                              :choice  :resolve-nemesis-card
+                                                              :options [:nemesis :play-area {:name name}]
+                                                              :min     1
+                                                              :max     1}]])})))
 
-(effects/register {:set-minion-max-life set-minion-max-life
-                   :draw-nemesis-card   draw-nemesis-card})
+(effects/register {:set-minion-max-life  set-minion-max-life
+                   :resolve-nemesis-card resolve-nemesis-card
+                   :draw-nemesis-card    draw-nemesis-card})
 
 (defn after-effects [{:keys [nemesis] :as game} _]
   (let [{:keys [after-effects]} nemesis]

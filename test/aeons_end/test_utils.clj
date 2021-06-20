@@ -42,9 +42,11 @@
       check-stack))
 
 (defn draw-nemesis-card [game]
-  (-> game
-      (push-effect-stack {:effects [[:draw-nemesis-card]]})
-      check-stack))
+  (let [{:keys [name]} (-> game :nemesis :deck first)]
+   (-> game
+       (push-effect-stack {:effects [[:draw-nemesis-card]]})
+       check-stack
+       (choose name))))
 
 (defn resolve-nemesis-cards-in-play [game]
   (let [{:keys [name]} (-> game :nemesis :play-area first)]
