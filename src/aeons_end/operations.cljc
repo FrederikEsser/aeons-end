@@ -426,6 +426,22 @@
 
 (effects/register {:spend-charges spend-charges})
 
+(defn activate-ability [{:keys [nemesis] :as game} {:keys [player-no]}]
+  (let [{:keys [ability phase]} (get-in game [:players player-no])
+        {:keys [name activation charges charge-cost effects]
+         :or   {charges 0}} ability]
+    (when phase
+      (assert (case activation
+                :your-main-phase (= :main phase)
+                :nemesis-draw (= :draw (:phase nemesis)))
+              (str "Activate error: " (ut/format-name name) " can't be activated in the " (ut/format-name phase) " phase.")))
+    (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat [[:spend-charges]]
+                                                effects)})))
+
+(effects/register {:activate-ability activate-ability})
+
 (defn open-breach [game {:keys [player-no breach-no]}]
   (let [{:keys [status]} (get-in game [:players player-no :breaches breach-no])]
     (assert (#{:closed :focused} status) (str "Open error: Breach " breach-no " has status " status "."))
@@ -694,10 +710,11 @@
                                        {:player-no player-no}
                                        (when bonus-damage
                                          {:bonus-damage bonus-damage})
-                                       (if (map? single-selection)
-                                         single-selection
-                                         {:card-id card-id
-                                          arg-name single-selection}))))))))
+                                       (cond
+                                         (map? single-selection) single-selection
+                                         single-selection {:card-id card-id
+                                                           arg-name single-selection}
+                                         :else {:no-choice? true}))))))))
 
 (defn- choose-multi [game valid-choices selection]
   (let [[{:keys [player-no card-id choice or-choice source area min max optional? choice-opts bonus-damage]}] (get game :effect-stack)

@@ -41,17 +41,18 @@
       (push-effect-stack {:effects [[:unleash]]})
       check-stack))
 
-(defn draw-nemesis-card [game]
+(defn draw-nemesis-card [game & {:keys [auto-resolve?]
+                                 :or   {auto-resolve? true}}]
   (let [{:keys [name]} (-> game :nemesis :deck first)]
-   (-> game
-       (push-effect-stack {:effects [[:draw-nemesis-card]]})
-       check-stack
-       (choose name))))
+    (-> game
+        (push-effect-stack {:effects [[:draw-nemesis-card]]})
+        check-stack
+        (cond-> auto-resolve? (choose {:area :play-area :card-name name})))))
 
 (defn resolve-nemesis-cards-in-play [game]
   (let [{:keys [name]} (-> game :nemesis :play-area first)]
-  (-> game
-      (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
+    (-> game
+        (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
         check-stack
         (choose name))))
 

@@ -30,20 +30,20 @@
       (assoc :life (case difficulty
                      :beginner (- life 10)
                      :extinction (+ life 10)
-                     life))
-      (dissoc :cards)
-      (merge
-        {:deck (->> (range 1 4)
-                    (mapcat (fn [tier]
-                              (->> nemesis/basic-cards
-                                   (filter (comp #{tier} :tier))
-                                   shuffle
-                                   (take (get-in basic-nemesis-cards [number-of-players tier]))
-                                   (concat (->> cards
-                                                (filter (comp #{tier} :tier))))
-                                   shuffle)))
-                    (concat [])
-                    vec)})))
+                     life)
+             :deck (->> (range 1 4)
+                        (mapcat (fn [tier]
+                                  (->> nemesis/basic-cards
+                                       (filter (comp #{tier} :tier))
+                                       shuffle
+                                       (take (get-in basic-nemesis-cards [number-of-players tier]))
+                                       (concat (->> cards
+                                                    (filter (comp #{tier} :tier))))
+                                       shuffle)))
+                        (concat [])
+                        vec)
+             :phase :out-of-turn)
+      (dissoc :cards)))
 
 (defn select-nemesis [{:keys [name min-level max-level]} difficulty]
   (let [fit?             (= :fit difficulty)

@@ -4,7 +4,7 @@
 
 (defn- check-command [command {:keys [current-player effect-stack]} player-no]
   (when current-player
-    (assert (= player-no current-player) (str command " error: " player-no " is not the current player " current-player ".")))
+    (assert (= player-no current-player) (str command " error: It's not your turn.")))
   (assert (empty? effect-stack) (str command " error: You have a choice to make.")))
 
 (defn start-game [game]
@@ -87,15 +87,11 @@
 
 (defn activate-ability [game player-no]
   (check-command "Activate" game player-no)
-  (let [{:keys [name charges charge-cost effects]
-         :or   {charges 0}} (get-in game [:players player-no :ability])]
-    (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
-    (-> game
-        (op/push-effect-stack {:player-no player-no
-                               :effects   (concat [[:set-phase {:phase :main}]
-                                                   [:spend-charges]]
-                                                  effects)})
-        op/check-stack)))
+  (-> game
+      (op/push-effect-stack {:player-no player-no
+                             :effects   [[:set-phase {:phase :main}]
+                                         [:activate-ability]]})
+      op/check-stack))
 
 (defn focus-breach [game player-no breach-no]
   (check-command "Focus" game player-no)

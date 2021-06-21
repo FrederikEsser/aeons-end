@@ -1,13 +1,97 @@
 (ns aeons-end.mages-test
   (:require [clojure.test :refer :all]
+            [aeons-end.test-utils :refer :all]
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.cards.relic :refer [blasting-staff]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
-            [aeons-end.mages :refer :all]
-            [aeons-end.utils :as ut]))
+            [aeons-end.mages :refer :all]))
+
+(deftest adelheim-test
+  (testing "Adelheim"
+    (testing "Amethyst Shard"
+      (is (= (-> {:players [{:hand [amethyst-shard]}
+                            {:hand [spark]
+                             :deck [crystal crystal]}]}
+                 (play 0 :amethyst-shard)
+                 (choose {:player-no 1})
+                 (choose :spark))
+             {:players [{:play-area [amethyst-shard]
+                         :aether    1}
+                        {:hand    [crystal]
+                         :deck    [crystal]
+                         :discard [spark]}]}))
+      (is (= (-> {:players [{:hand [amethyst-shard]}
+                            {:hand    [spark]
+                             :discard [crystal crystal]}]}
+                 (play 0 :amethyst-shard)
+                 (choose {:player-no 1})
+                 (choose :spark))
+             {:players [{:play-area [amethyst-shard]
+                         :aether    1}
+                        {:hand    [crystal]
+                         :deck    [crystal]
+                         :discard [spark]}]}))
+      (is (= (-> {:players [{:hand [amethyst-shard]}
+                            {:hand [spark]}]}
+                 (play 0 :amethyst-shard)
+                 (choose {:player-no 1})
+                 (choose :spark))
+             {:players [{:play-area [amethyst-shard]
+                         :aether    1}
+                        {:discard [spark]}]}))
+      (is (= (-> {:players [{:hand [amethyst-shard]
+                             :deck [crystal]}
+                            {:hand [spark]
+                             :deck [crystal crystal]}]}
+                 (play 0 :amethyst-shard)
+                 (choose nil))
+             {:players [{:play-area [amethyst-shard]
+                         :deck      [crystal]
+                         :aether    1}
+                        {:hand [spark]
+                         :deck [crystal crystal]}]})))
+    (testing "Aetherial Ward"
+      (is (= (-> {:nemesis   {:deck [{:name    :fugazi
+                                      :type    :attack
+                                      :effects [[:damage-gravehold 5]]}]}
+                  :gravehold {:life 30}
+                  :players   [{:ability (assoc aethereal-ward :charges 5)}]}
+                 (draw-nemesis-card :auto-resolve? false)
+                 (choose {:area :ability :player-no 0}))
+             {:nemesis   {:discard [{:name    :fugazi
+                                     :type    :attack
+                                     :effects [[:damage-gravehold 5]]}]}
+              :gravehold {:life 30}
+              :players   [{:ability (assoc aethereal-ward :charges 0)}]}))
+      (is (= (-> {:nemesis   {:deck [{:name    :fugazi
+                                      :type    :attack
+                                      :effects [[:damage-gravehold 5]]}]}
+                  :gravehold {:life 30}
+                  :players   [{:ability (assoc aethereal-ward :charges 5)}]}
+                 (draw-nemesis-card :auto-resolve? true))
+             {:nemesis   {:discard [{:name    :fugazi
+                                     :type    :attack
+                                     :effects [[:damage-gravehold 5]]}]}
+              :gravehold {:life 25}
+              :players   [{:ability (assoc aethereal-ward :charges 5)}]}))
+      (is (= (-> {:nemesis {:deck [{:name :iznogood
+                                    :type :power}]}
+                  :players [{:ability (assoc aethereal-ward :charges 5)}]}
+                 (draw-nemesis-card :auto-resolve? false)
+                 (choose {:area :ability :player-no 0}))
+             {:nemesis {:discard [{:name :iznogood
+                                   :type :power}]}
+              :players [{:ability (assoc aethereal-ward :charges 0)}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:deck [{:name :bad-motherfucker
+                                                   :type :minion
+                                                   :life 2}]}
+                                 :players [{:ability (assoc aethereal-ward :charges 5)}]}
+                                (draw-nemesis-card :auto-resolve? false)
+                                (choose {:area :ability :player-no 0})))))))
 
 (deftest brama-test
   (testing "Brama"

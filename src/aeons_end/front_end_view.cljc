@@ -212,6 +212,7 @@
                      active?                                      :active-player?}]
   (let [{:keys [name
                 text
+                activation
                 charges
                 charge-cost]} ability]
     (merge {:name-ui     (ut/format-name name)
@@ -226,6 +227,7 @@
                   (not (>= charges charge-cost))) {:interaction :chargeable}
              (and active?
                   (not choice)
+                  (= :your-main-phase activation)
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable})
            (choice-interaction {:area      :ability

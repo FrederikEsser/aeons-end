@@ -247,29 +247,34 @@
 (deftest ability-test
   (testing "Ability"
     (testing "Charge"
-      (is (= (-> {:players [{:ability {:charges     0
-                                       :charge-cost 4}
-                             :aether  2
-                             :phase   :main}]}
+      (is (= (-> {:current-player 0
+                  :players        [{:ability {:charges     0
+                                              :charge-cost 4}
+                                    :aether  2
+                                    :phase   :main}]}
                  (charge-ability 0))
-             {:players [{:ability {:charges     1
-                                   :charge-cost 4}
-                         :aether  0
-                         :phase   :main}]}))
-      (is (= (-> {:players [{:ability {:charges     0
-                                       :charge-cost 4}
-                             :aether  2
-                             :phase   :casting}]}
+             {:current-player 0
+              :players        [{:ability {:charges     1
+                                          :charge-cost 4}
+                                :aether  0
+                                :phase   :main}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:ability {:charges     0
+                                              :charge-cost 4}
+                                    :aether  2
+                                    :phase   :casting}]}
                  (charge-ability 0))
-             {:players [{:ability {:charges     1
-                                   :charge-cost 4}
-                         :aether  0
-                         :phase   :main}]}))
+             {:current-player 0
+              :players        [{:ability {:charges     1
+                                          :charge-cost 4}
+                                :aether  0
+                                :phase   :main}]}))
       (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
-                            (-> {:players [{:ability {:charges     0
-                                                      :charge-cost 4}
-                                            :aether  2
-                                            :phase   :draw}]}
+                            (-> {:current-player 0
+                                 :players        [{:ability {:charges     0
+                                                             :charge-cost 4}
+                                                   :aether  2
+                                                   :phase   :draw}]}
                                 (charge-ability 0))))
       (is (= (-> {:players [{:ability {:charges     3
                                        :charge-cost 4}
@@ -287,7 +292,99 @@
                             (-> {:players [{:ability {:charges     4
                                                       :charge-cost 4}
                                             :aether  2}]}
-                                (charge-ability 0)))))))
+                                (charge-ability 0)))))
+    (testing "Activate"
+      (is (= (-> {:current-player 0
+                  :players        [{:ability {:activation  :your-main-phase
+                                              :charges     4
+                                              :charge-cost 4
+                                              :effects     [[:gain-aether 2]]}
+                                    :phase   :casting}]}
+                 (activate-ability 0))
+             {:current-player 0
+              :players        [{:ability {:activation  :your-main-phase
+                                          :charges     0
+                                          :charge-cost 4
+                                          :effects     [[:gain-aether 2]]}
+                                :phase   :main
+                                :aether  2}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:ability {:activation  :your-main-phase
+                                              :charges     4
+                                              :charge-cost 4
+                                              :effects     [[:gain-aether 2]]}
+                                    :phase   :main}]}
+                 (activate-ability 0))
+             {:current-player 0
+              :players        [{:ability {:activation  :your-main-phase
+                                          :charges     0
+                                          :charge-cost 4
+                                          :effects     [[:gain-aether 2]]}
+                                :phase   :main
+                                :aether  2}]}))
+      (is (thrown-with-msg? AssertionError #"Phase error: You can't go from the Draw phase to the Main phase"
+                            (-> {:current-player 0
+                                 :players        [{:ability {:activation  :your-main-phase
+                                                             :charges     4
+                                                             :charge-cost 4
+                                                             :effects     [[:gain-aether 2]]}
+                                                   :phase   :draw}]}
+                                (activate-ability 0))))
+      (is (thrown-with-msg? AssertionError #"Activate error: It's not your turn"
+                            (-> {:current-player :nemesis
+                                 :players        [{:ability {:name        :uberpower
+                                                             :activation  :your-main-phase
+                                                             :charges     4
+                                                             :charge-cost 4
+                                                             :effects     [[:gain-aether 2]]}
+                                                   :phase   :out-of-turn}]}
+                                (activate-ability 0))))
+      (is (thrown-with-msg? AssertionError #"Activate error: Uberpower is not fully charged"
+                            (-> {:current-player 0
+                                 :players        [{:ability {:name        :uberpower
+                                                             :activation  :your-main-phase
+                                                             :charges     3
+                                                             :charge-cost 4
+                                                             :effects     [[:gain-aether 2]]}
+                                                   :phase   :main}]}
+                                (activate-ability 0))))
+      (is (thrown-with-msg? AssertionError #"Activate error: Uberpower can't be activated in the Main phase"
+                            (-> {:current-player 0
+                                 :players        [{:ability {:name        :uberpower
+                                                             :activation  :nemesis-draw
+                                                             :charges     4
+                                                             :charge-cost 4
+                                                             :effects     [[:gain-aether 2]]}
+                                                   :phase   :main}]}
+                                (activate-ability 0))))
+      (is (= (-> {:current-player :nemesis
+                  :nemesis        {:deck    [{:name    :fugazi
+                                              :type    :attack
+                                              :effects [[:unleash]]}]
+                                   :unleash [[:damage-gravehold 1]]
+                                   :phase   :main}
+                  :gravehold      {:life 30}
+                  :players        [{:ability {:name        :uberpower
+                                              :activation  :nemesis-draw
+                                              :charges     4
+                                              :charge-cost 4
+                                              :effects     [[:discard-nemesis-card {:card-name :fugazi}]]}
+                                    :phase   :out-of-turn}]}
+                 (draw-nemesis-card :auto-resolve? false)
+                 (choose {:area :ability :player-no 0}))
+             {:current-player :nemesis
+              :nemesis        {:discard [{:name    :fugazi
+                                          :type    :attack
+                                          :effects [[:unleash]]}]
+                               :unleash [[:damage-gravehold 1]]
+                               :phase   :draw}
+              :gravehold      {:life 30}
+              :players        [{:ability {:name        :uberpower
+                                          :activation  :nemesis-draw
+                                          :charges     0
+                                          :charge-cost 4
+                                          :effects     [[:discard-nemesis-card {:card-name :fugazi}]]}
+                                :phase   :out-of-turn}]})))))
 
 (deftest breach-test
   (testing "Breaches"

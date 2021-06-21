@@ -124,7 +124,7 @@
                        [:give-choice {:title   :ignite
                                       :text    "Any ally gains 1 charge"
                                       :choice  :gain-charge
-                                      :options [:players {:ally true}]
+                                      :options [:players :ability {:ally true :fully-charged false}]
                                       :min     1
                                       :max     1}]]
              :quote   "'We are but one flickering flame against unimaginable dark.' Kadir, Breach Mage Delver"})

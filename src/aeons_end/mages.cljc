@@ -4,6 +4,55 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
+(defn amethyst-shard-sift [game {:keys [player-no no-choice?]}]
+  (cond-> game
+          (and player-no
+               (not no-choice?)) (push-effect-stack {:player-no player-no
+                                                     :effects   [[:draw 1]
+                                                                 [:give-choice {:title   :amethyst-shard
+                                                                                :text    "Discard a card in hand."
+                                                                                :choice  :discard-from-hand
+                                                                                :options [:player :hand]
+                                                                                :min     1
+                                                                                :max     1}]]})))
+
+(effects/register {::amethyst-shard-sift amethyst-shard-sift})
+
+(def amethyst-shard {:name    :amethyst-shard
+                     :type    :gem
+                     :cost    0
+                     :text    ["Gain 1 Aether."
+                               "Any ally may draw a card and then discard a card in hand."]
+                     :effects [[:gain-aether 1]
+                               [:give-choice {:title   :amethyst-shard
+                                              :text    "Any ally may draw a card and then discard a card in hand."
+                                              :choice  ::amethyst-shard-sift
+                                              :options [:players {:ally true}]
+                                              :max     1}]]})
+
+(defn aethereal-ward-discard [game _]
+  (let [{:keys [name]} (-> game :nemesis :play-area last)]
+    (push-effect-stack game {:effects [[:discard-nemesis-card {:card-name name}]]})))
+
+(effects/register {::aethereal-ward-discard aethereal-ward-discard})
+
+(def aethereal-ward {:name        :aethereal-ward
+                     :activation  :nemesis-draw
+                     :charge-cost 5
+                     :text        ["When a nemesis attack or power card is drawn but before it is resolved, you may discard it. It has no effect."
+                                   "(The nemesis does not draw a replacement card)"]
+                     :effects     [[::aethereal-ward-discard]]})
+
+(def adelheim {:name     :adelheim
+               :title    "Breach Mage Weaponsmith"
+               :breaches [{}
+                          {:stage 2}
+                          {:stage 0}
+                          {:stage 1}]
+               :hand     [amethyst-shard crystal crystal spark spark]
+               :deck     [crystal crystal crystal crystal crystal]
+               :ability  aethereal-ward})
+
 (def buried-light {:name    :buried-light
                    :type    :spell
                    :cost    0
@@ -214,7 +263,8 @@
               :ability  quietus-vow
               :trophies 0})
 
-(def mages [brama
+(def mages [adelheim
+            brama
             gex
             jian
             mist
