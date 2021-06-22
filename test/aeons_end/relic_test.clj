@@ -310,7 +310,21 @@
              {:players    [{:play-area [fiend-catcher]}]
               :turn-order {:deck           [turn-order/nemesis
                                             turn-order/player-1]
-                           :revealed-cards 1}})))))
+                           :revealed-cards 1}}))
+      (is (= (-> {:players    [{:hand    [fiend-catcher crystal]
+                                :discard [spark
+                                          crystal
+                                          (assoc spark :id 3)]}]
+                  :turn-order {:deck [turn-order/player-1]}}
+                 (play 0 :fiend-catcher)
+                 (choose {:area :discard :player-no 0 :card-name :spark :card-id 2}))
+             {:players    [{:hand      [crystal]
+                            :play-area [fiend-catcher]
+                            :discard   [crystal
+                                        (assoc spark :id 3)]}]
+              :turn-order {:deck           [turn-order/player-1]
+                           :revealed-cards 1}
+              :trash      [spark]})))))
 
 (deftest temporal-helix-test
   (testing "Temporal Helix"

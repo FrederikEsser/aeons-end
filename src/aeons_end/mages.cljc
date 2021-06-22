@@ -84,10 +84,10 @@
 (defn shattered-geode-take-card [game {:keys [player-no card-id to-player]}]
   (cond-> game
           card-id (push-effect-stack {:player-no player-no
-                                      :effects   [[:move-card {:card-id   card-id
-                                                               :from      :discard
-                                                               :to-player to-player
-                                                               :to        :hand}]]})))
+                                      :effects   [[:move-card {:move-card-id card-id
+                                                               :from         :discard
+                                                               :to-player    to-player
+                                                               :to           :hand}]]})))
 
 (defn shattered-geode-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no

@@ -26,10 +26,10 @@
 (defn blaze-move-card [game {:keys [from-player card-id player-no]}]
   (cond-> game
           card-id (push-effect-stack {:player-no from-player
-                                      :effects   [[:move-card {:card-id   card-id
-                                                               :from      :gaining
-                                                               :to-player player-no
-                                                               :to        :discard}]]})))
+                                      :effects   [[:move-card {:move-card-id card-id
+                                                               :from         :gaining
+                                                               :to-player    player-no
+                                                               :to           :discard}]]})))
 
 (defn blaze-on-gain [game {:keys [player-no gained-card-id]}]
   (push-effect-stack game {:player-no player-no

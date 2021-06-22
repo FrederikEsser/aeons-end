@@ -255,8 +255,8 @@
             (nil? player-no) (cond->
                                (empty? from-cards) (update :nemesis dissoc from)))))
 
-(defn- get-card [game {:keys [player-no card-name card-id from from-position breach-no] :as args}]
-  (assert (or card-name card-id from-position) (str "Can't move unspecified card: " args))
+(defn- get-card [game {:keys [player-no card-name move-card-id from from-position breach-no] :as args}]
+  (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (when (= :breach from)
     (assert breach-no (str "Can't move card from breach without breach-no: " args)))
   (if (#{:supply} from)
@@ -276,8 +276,8 @@
                :bottom {:idx (dec (count (get-in game from-path))) :card (last (get-in game from-path))}
                :top {:idx 0 :card (first (get-in game from-path))}
                (cond
+                 move-card-id (ut/get-card-idx game from-path {:id move-card-id})
                  card-name (ut/get-card-idx game from-path {:name card-name})
-                 card-id (ut/get-card-idx game from-path {:id card-id})
                  :else {:idx 0 :card (first (get-in game from-path))}))))))
 
 (defn- remove-card [game from-path idx]
@@ -323,14 +323,14 @@
                                                                                                 :card-id    card-id}))))))]
     (concat on-gain while-in-play-effects trigger-effects token-effects)))
 
-(defn track-gain [{:keys [real-game? current-player] :as game} {:keys [player-no card bought]}]
+(defn track-gain [{:keys [real-game? current-player] :as game} {:keys [player-no card]}]
   (cond-> game
           (and real-game?
                (or (nil? current-player)
                    (= current-player player-no))) (update-in [:players player-no :this-turn]
                                                              concat [{:gain (:name card)}])))
 
-(defn handle-on-gain [game {:keys [player-no gained-card-id from bought]
+(defn handle-on-gain [game {:keys [player-no gained-card-id from]
                             :or   {from :supply}
                             :as   args}]
   (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
@@ -341,8 +341,7 @@
     (cond-> game
             card (push-effect-stack (merge args {:effects (concat on-gain-effects
                                                                   [[:remove-triggers {:event :on-gain}]
-                                                                   [:track-gain {:card   card
-                                                                                 :bought (boolean bought)}]])})))))
+                                                                   [:track-gain {:card card}]])})))))
 
 (declare move-card)
 
@@ -350,11 +349,11 @@
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})
         to (or to (:gain-to card) :discard)]
     (cond-> game
-            card (move-card {:player-no   player-no
-                             :card-id     gained-card-id
-                             :from        :gaining
-                             :to          to
-                             :to-position to-position}))))
+            card (move-card {:player-no    player-no
+                             :move-card-id gained-card-id
+                             :from         :gaining
+                             :to           to
+                             :to-position  to-position}))))
 
 (defn gain [game {:keys [player-no card-name from to]
                   :or   {from :supply

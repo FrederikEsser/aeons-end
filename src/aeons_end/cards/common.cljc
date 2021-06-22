@@ -166,9 +166,9 @@
             (not-empty card-ids) (push-effect-stack {:player-no player-no
                                                      :effects   (->> card-ids
                                                                      (mapv (fn [{:keys [card-id]}]
-                                                                             [:move-card {:card-id card-id
-                                                                                          :from    :discard
-                                                                                          :to      :trash}])))}))))
+                                                                             [:move-card {:move-card-id card-id
+                                                                                          :from         :discard
+                                                                                          :to           :trash}])))}))))
 
 (effects/register {:destroy-from-discard destroy-from-discard})
 
@@ -185,7 +185,7 @@
                                                                            [:move-card (medley/assoc-some {:from area
                                                                                                            :to   :trash}
                                                                                                           :card-name card-name
-                                                                                                          :card-id card-id)])))}))))
+                                                                                                          :move-card-id card-id)])))}))))
 
 (effects/register {:destroy-from-area destroy-from-area})
 
@@ -217,10 +217,10 @@
     (cond-> game
             (and card-id
                  breach-no) (push-effect-stack {:player-no player-no
-                                                :effects   [[:move-card {:card-id   card-id
-                                                                         :from      :discard
-                                                                         :to        :breach
-                                                                         :breach-no breach-no}]
+                                                :effects   [[:move-card {:move-card-id card-id
+                                                                         :from         :discard
+                                                                         :to           :breach
+                                                                         :breach-no    breach-no}]
                                                             [:on-prep-spell {:card card}]]}))))
 
 (effects/register {:prep-from-discard prep-from-discard})

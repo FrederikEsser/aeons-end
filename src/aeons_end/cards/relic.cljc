@@ -119,9 +119,9 @@
     (cond-> game
             card-name (push-effect-stack {:player-no player-no
                                           :effects   [[:cast-spell args]
-                                                      [:move-card {:card-id id
-                                                                   :from    :discard
-                                                                   :to      :hand}]]}))))
+                                                      [:move-card {:move-card-id id
+                                                                   :from         :discard
+                                                                   :to           :hand}]]}))))
 
 (defn vortex-gauntlet-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
