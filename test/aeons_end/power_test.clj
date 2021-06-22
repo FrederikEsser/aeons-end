@@ -176,6 +176,29 @@
             :players   [{}]
             :trash     [crystal]}))))
 
+(deftest dire-abbatoir-test
+  (testing "Dire Abbatoir"
+    (is (= (-> {:nemesis {:play-area [(assoc-in dire-abbatoir [:power :power] 1)]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard [(assoc-in dire-abbatoir [:power :power] 0)]}
+            :players [{:life 0}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in dire-abbatoir [:power :power] 1)]}
+                :players [{:life 2}
+                          {:life 8}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 1}))
+           {:nemesis {:discard [(assoc-in dire-abbatoir [:power :power] 0)]}
+            :players [{:life 2}
+                      {:life 0}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [(assoc-in dire-abbatoir [:power :power] 1)]}
+                               :players [{:life 2}
+                                         {:life 8}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 0}))))))
+
 (deftest morbid-gyre-test
   (testing "Morbid Gyre"
     (is (= (-> {:nemesis   {:play-area [morbid-gyre]

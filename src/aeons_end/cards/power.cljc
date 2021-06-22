@@ -94,9 +94,30 @@
                                     :effects [[:give-choice {:title   :cataclysmic-fate
                                                              :text    "The player with the lowest life suffers 4 damage."
                                                              :choice  [:damage-player {:arg 4}]
-                                                             :options [:players {:lowest-life true}]
+                                                             :options [:players {:least-life true}]
                                                              :min     1
                                                              :max     1}]]}})
+
+(defn dire-abbatoir-can-discard? [game {:keys [player-no]}]
+  (can-afford? game {:player-no player-no :amount 7}))
+
+(effects/register-predicates {::dire-abbatoir-can-discard? dire-abbatoir-can-discard?})
+
+(def dire-abbatoir {:name       :dire-abbatoir
+                    :type       :power
+                    :tier       3
+                    :to-discard {:text      "Spend 8 Aether."
+                                 :predicate ::dire-abbatoir-can-discard?
+                                 :effects   [[:pay {:amount 8
+                                                    :type   :discard-power-card}]]}
+                    :power      {:power   2
+                                 :text    "The player with the most life suffers damage equal to their current life."
+                                 :effects [[:give-choice {:title   :dire-abbatoir
+                                                          :text    "The player with the most life suffers damage equal to their current life."
+                                                          :choice  :kill-player
+                                                          :options [:players {:most-life true}]
+                                                          :min     1
+                                                          :max     1}]]}})
 
 (defn chaos-flail-can-discard? [game {:keys [player-no]}]
   (can-afford? game {:player-no player-no :amount 7}))

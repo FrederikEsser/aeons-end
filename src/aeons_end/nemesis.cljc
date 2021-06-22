@@ -182,18 +182,19 @@
 (effects/register {:damage-gravehold damage-gravehold})
 
 (defn exhaust-player [game {:keys [player-no]}]
-  (let [{:keys [name]} (get-in game [:players player-no])
+  (let [{:keys [name ability]} (get-in game [:players player-no])
         resolve-text (str (ut/format-name name) " exhausted")]
     (push-effect-stack game {:player-no player-no
-                             :effects   [[:unleash {:resolving resolve-text}]
-                                         [:unleash {:resolving resolve-text}]
-                                         [:give-choice {:title   resolve-text
-                                                        :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
-                                                        :choice  :destroy-breach
-                                                        :options [:player :breaches]
-                                                        :min     1
-                                                        :max     1}]
-                                         [:spend-charges]]})))
+                             :effects   (concat [[:unleash {:resolving resolve-text}]
+                                                 [:unleash {:resolving resolve-text}]
+                                                 [:give-choice {:title   resolve-text
+                                                                :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
+                                                                :choice  :destroy-breach
+                                                                :options [:player :breaches]
+                                                                :min     1
+                                                                :max     1}]]
+                                                (when (:charges ability)
+                                                  [[:spend-charges]]))})))
 
 (defn damage-player [game {:keys [player-no arg]}]
   (let [{:keys [life]} (get-in game [:players player-no])]
@@ -253,4 +254,5 @@
                     power/withering-beam]
                    ; The Outer Dark
                    [minion/labyrinth-wisp
-                    attack/assail]))
+                    attack/assail
+                    power/dire-abbatoir]))

@@ -39,6 +39,13 @@
 
 (effects/register {:heal heal})
 
+(defn kill-player [game {:keys [player-no]}]
+  (let [{:keys [life]} (get-in game [:players player-no])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:damage-player life]]})))
+
+(effects/register {:kill-player kill-player})
+
 (defn reveal-from-deck [game {:keys [player-no arg]}]
   (move-cards game {:player-no       player-no
                     :number-of-cards arg
