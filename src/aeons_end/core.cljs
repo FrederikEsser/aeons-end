@@ -36,11 +36,11 @@
   (swap! state update :selection remove-idx idx))
 
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
-  (let [inverse? (or (#{:nemesis} type)
+  (let [inverse? (or (#{:nemesis :sigil} type)
                      (<= 2 (:player-no type))
                      (#{:closed :focused :openable} status))]
     {:color            (cond
-                         inverse? (cond disabled "#ccc"
+                         inverse? (cond disabled "#ddd"
                                         (= :openable status) "#f8e238"
                                         :else :white)
                          (= :destroyed status) "#d66"
@@ -58,6 +58,7 @@
                                             (= :opened status) "#f8e238"
                                             (= :destroyed status) :white
                                             :else "#506f9a")
+                         (= :sigil type) "#5d328a"
                          (= :ability type) (if (= :charged status)
                                              "#f5bb11" #_"#f9e395"
                                              "#f9e395" #_"#b4afa2")
@@ -74,10 +75,10 @@
                          (#{:spell :power} type) "#f8c44e"
                          (= :minion type) "#49c4e9"
                          (= :strike type) "#5e3628"
-                         (= :breach type) (cond
-                                            (#{:closed :openable} status) "#434f64"
-                                            (#{:destroyed} status) "#ccc"
-                                            :else "#f9cf23")
+                         (#{:breach :sigil} type) (cond
+                                                    (#{:closed :openable} status) "#434f64"
+                                                    (#{:destroyed} status) "#ccc"
+                                                    :else "#f9cf23")
                          (= :ability type) "#c0895e"
                          (= {:player-no 0} type) "#9d8c42"
                          (= {:player-no 1} type) "#a1642b"
@@ -211,7 +212,7 @@
           [:div {:padding-top "3px"}
            (str " x" number-of-cards)])]])))
 
-(defn view-breach [max {:keys [breach-no name-ui status focus-cost open-cost prepped-spells bonus-damage choice-value interaction interactions]}]
+(defn view-breach [max {:keys [breach-no name-ui status type focus-cost open-cost prepped-spells bonus-damage choice-value interaction interactions]}]
   (let [interactions (if interaction
                        #{interaction}
                        interactions)
@@ -219,7 +220,7 @@
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
       [:button {:style    (button-style :disabled disabled
-                                        :type :breach
+                                        :type (or type :breach)
                                         :status (or (get interactions :openable)
                                                     status)
                                         :min-width 88)

@@ -388,25 +388,40 @@
                    :overpay-choice overpay-choice})
 
 (defn pay [game {:keys [player-no amount type]}]
-  (let [{:keys [earmarked-aether] :as player} (get-in game [:players player-no])
-        {:keys [amount earmarked]} (->> earmarked-aether
-                                        (sort-by (comp count first))
-                                        (reduce (fn [{:keys [amount earmarked]}
-                                                     [types aether]]
-                                                  (if (contains? types type)
-                                                    {:amount    (max 0 (- amount aether))
-                                                     :earmarked (cond-> earmarked
-                                                                        (> aether amount) (assoc types (- aether amount)))}
-                                                    {:amount    amount
-                                                     :earmarked (assoc earmarked types aether)}))
-                                                {:amount amount}))]
+  (let [{:keys [earmarked-aether restricted-aether] :as player} (get-in game [:players player-no])]
     (assert (ut/can-afford? player amount type) (str "Pay error: You can't pay " amount " aether, when you only have " (ut/format-aether player) "."))
-    (-> game
-        (update-in [:players player-no :aether] - amount)
-        (as-> game
-              (if earmarked
-                (assoc-in game [:players player-no :earmarked-aether] earmarked)
-                (update-in game [:players player-no] dissoc :earmarked-aether))))))
+    (let [{:keys [amount earmarked]} (->> earmarked-aether
+                                          (sort-by (comp count first))
+                                          (reduce (fn [{:keys [amount earmarked]}
+                                                       [types aether]]
+                                                    (if (contains? types type)
+                                                      {:amount    (max 0 (- amount aether))
+                                                       :earmarked (cond-> earmarked
+                                                                          (> aether amount) (assoc types (- aether amount)))}
+                                                      {:amount    amount
+                                                       :earmarked (assoc earmarked types aether)}))
+                                                  {:amount amount}))
+          {:keys [amount restricted]} (->> restricted-aether
+                                           (sort-by (comp count first) >)
+                                           (reduce (fn [{:keys [amount restricted]}
+                                                        [types aether]]
+                                                     (if (contains? types type)
+                                                       {:amount     amount
+                                                        :restricted (assoc restricted types aether)}
+                                                       {:amount     (max 0 (- amount aether))
+                                                        :restricted (cond-> restricted
+                                                                            (> aether amount) (assoc types (- aether amount)))}))
+                                                   {:amount amount}))]
+      (-> game
+          (update-in [:players player-no :aether] - amount)
+          (as-> game
+                (if earmarked
+                  (assoc-in game [:players player-no :earmarked-aether] earmarked)
+                  (update-in game [:players player-no] dissoc :earmarked-aether)))
+          (as-> game
+                (if restricted
+                  (assoc-in game [:players player-no :restricted-aether] restricted)
+                  (update-in game [:players player-no] dissoc :restricted-aether)))))))
 
 (effects/register {:pay pay})
 
@@ -597,17 +612,19 @@
             while-prepped-effects (push-effect-stack {:player-no player-no
                                                       :effects   while-prepped-effects}))))
 
-(defn prep-spell [game {:keys [player-no breach-no card-name]}]
-  (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
-    (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
-    (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
-    (-> game
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:move-card {:card-name card-name
-                                                     :from      :hand
-                                                     :to        :breach
-                                                     :breach-no breach-no}]
-                                        [:on-prep-spell {:card card}]]}))))
+(defn prep-spell [game {:keys [player-no breach-no card-name] :as args}]
+  (if card-name
+    (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+      (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
+      (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
+      (-> game
+          (push-effect-stack {:player-no player-no
+                              :effects   [[:move-card {:card-name card-name
+                                                       :from      :hand
+                                                       :to        :breach
+                                                       :breach-no breach-no}]
+                                          [:on-prep-spell {:card card}]]})))
+    game))
 
 (effects/register {:on-prep-spell on-prep-spell
                    :prep-spell    prep-spell})
@@ -834,7 +851,7 @@
 (defn clear-player [game {:keys [player-no]}]
   (-> game
       (dissoc :current-player)
-      (update-in [:players player-no] dissoc :aether :earmarked-aether :this-turn)
+      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn)
       (ut/update-in-if-present [:players player-no :breaches]
                                (partial mapv (fn [{:keys [status] :as breach}]
                                                (cond-> breach

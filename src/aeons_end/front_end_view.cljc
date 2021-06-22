@@ -168,7 +168,7 @@
                       active?                    :active-player?
                       :as                        game}]
   (->> breaches
-       (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage]}]
+       (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage type]}]
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
                         (merge {:name-ui   (if (= :destroyed status)
                                              "X"
@@ -195,6 +195,8 @@
                                  {:focus-cost focus-cost})
                                (when (and open-costs stage)
                                  {:open-cost open-cost})
+                               (when type
+                                 {:type type})
                                (when (and active?
                                           (not choice)
                                           (#{:casting :main} phase)

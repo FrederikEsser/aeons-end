@@ -5,6 +5,7 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.cards.relic :refer [blasting-staff]]
+            [aeons-end.cards.spell :refer [ignite]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
             [aeons-end.mages :refer :all]))
@@ -136,6 +137,75 @@
                                            {:life 0}]}
                                 (activate-ability 0)
                                 (choose {:player-no 1})))))))
+
+(deftest dezmodia-test
+  (testing "Dezmodia"
+    (testing "Oblivion Shard"
+      (is (= (-> {:players [{:hand [oblivion-shard]}]}
+                 (play 0 :oblivion-shard))
+             {:players [{:play-area         [oblivion-shard]
+                         :restricted-aether {#{:relic :spell} 2}}]})))
+    (testing "Tempest Sigil"
+      (is (= (-> {:players [{:ability  (assoc tempest-sigil :charges 6)
+                             :breaches [{:status :opened}]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 0 :breach-no 0}))
+             {:players [{:ability  (assoc tempest-sigil :charges 0)
+                         :breaches [{:status       :opened
+                                     :type         :sigil
+                                     :bonus-damage 2}]}]}))
+      (is (= (-> {:players [{:ability  (assoc tempest-sigil :charges 6)
+                             :breaches [{:status :destroyed}
+                                        {:status :closed}
+                                        {:status :opened}]}]}
+                 (activate-ability 0))
+             {:players [{:ability  (assoc tempest-sigil :charges 0)
+                         :breaches [{:status :destroyed}
+                                    {:status :closed}
+                                    {:status :opened}]}]}))
+      (is (= (-> {:players [{:ability  (assoc tempest-sigil :charges 6)
+                             :breaches [{:status :destroyed}
+                                        {:status         :opened
+                                         :prepped-spells [spark]}
+                                        {:status :closed}]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 0 :breach-no 1})
+                 (choose :spark))
+             {:players [{:ability  (assoc tempest-sigil :charges 0)
+                         :breaches [{:status :destroyed}
+                                    {:status         :opened
+                                     :type           :sigil
+                                     :bonus-damage   2
+                                     :prepped-spells [spark]}
+                                    {:status :closed}]}]}))
+      (is (= (-> {:players [{:ability  (assoc tempest-sigil :charges 6)
+                             :breaches [{:status :destroyed}
+                                        {:status         :opened
+                                         :prepped-spells [spark]}
+                                        {:status :closed}]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 0 :breach-no 1})
+                 (choose nil))
+             {:players [{:ability  (assoc tempest-sigil :charges 0)
+                         :breaches [{:status :destroyed}
+                                    {:status       :opened
+                                     :type         :sigil
+                                     :bonus-damage 2}
+                                    {:status :closed}]
+                         :hand     [spark]}]}))
+      (is (= (-> {:players [{:ability (assoc tempest-sigil :charges 6)}
+                            {:breaches [{:status         :opened
+                                         :prepped-spells [spark]}]
+                             :hand     [ignite]}]}
+                 (activate-ability 0)
+                 (choose {:player-no 1 :breach-no 0})
+                 (choose :ignite))
+             {:players [{:ability (assoc tempest-sigil :charges 0)}
+                        {:breaches [{:status         :opened
+                                     :type           :sigil
+                                     :bonus-damage   2
+                                     :prepped-spells [ignite]}]
+                         :hand     [spark]}]})))))
 
 (deftest gex-test
   (testing "Gex"

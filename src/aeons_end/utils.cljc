@@ -41,7 +41,7 @@
        (map format-name)
        (s/join "/")))
 
-(defn format-aether [{:keys [aether earmarked-aether]
+(defn format-aether [{:keys [aether earmarked-aether restricted-aether]
                       :or   {aether 0}}]
   (let [extra-aether (->> earmarked-aether
                           (map (fn [[types val]]
@@ -50,10 +50,23 @@
                                                sort
                                                (clojure.string/join)))))
                           sort
-                          (clojure.string/join ","))]
+                          (clojure.string/join ","))
+        minus-aether (->> restricted-aether
+                          (map (fn [[types val]]
+                                 (str val (->> types
+                                               (map (comp first name))
+                                               sort
+                                               (clojure.string/join)))))
+                          sort
+                          (clojure.string/join ","))
+        aether       (->> restricted-aether
+                          vals
+                          (apply + aether))]
     (str aether
          (when (not-empty extra-aether)
-           (str "(+" extra-aether ")")))))
+           (str "(+" extra-aether ")"))
+         (when (not-empty minus-aether)
+           (str "(-" minus-aether ")")))))
 
 (defn format-cost [cost]
   (str "$" cost))
@@ -294,13 +307,18 @@
                      cost)]
     (merge-with + card-cost added-cost)))
 
-(defn can-afford? [{:keys [aether earmarked-aether]
+(defn can-afford? [{:keys [aether earmarked-aether restricted-aether]
                     :or   {aether 0}}
                    cost type]
   (let [valid-aether (+ aether
                         (->> earmarked-aether
                              (keep (fn [[types aether]]
                                      (when (contains? types type)
+                                       aether)))
+                             (apply +))
+                        (->> restricted-aether
+                             (keep (fn [[types aether]]
+                                     (when-not (contains? types type)
                                        aether)))
                              (apply +)))]
     (>= valid-aether cost)))
@@ -383,7 +401,8 @@
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati
-                                       last type cost min-cost max-cost most-expensive most-opened-breaches]}]]
+                                       last type cost min-cost max-cost most-expensive most-opened-breaches
+                                       status max-breach-no]}]]
   (let [highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
                             (apply max 0))
@@ -420,44 +439,55 @@
                                                                   (filter (comp empty? :prepped-spells))
                                                                   (filter (comp empty-breach-stati :status))
                                                                   not-empty))))]
-    (if (#{:players :ability} area)
-      (->> valid-players
-           (map #(select-keys % [:player-no])))
-      (let [options      (case area
-                           :discard (->> valid-players
-                                         (mapcat (fn [{:keys [player-no discard]}]
-                                                   (->> (cond->> discard
-                                                                 last (take-last 1)) ; it's important that 'last' is evaluated first
-                                                        (map (fn [{:keys [id name] :as card}]
-                                                               (assoc card :option {:player-no player-no
-                                                                                    :card-id   id
-                                                                                    :card-name name})))))))
-                           :hand (->> valid-players
-                                      (mapcat (fn [{:keys [player-no hand]}]
-                                                (->> hand
-                                                     (map (fn [{:keys [name] :as card}]
-                                                            (assoc card :option {:player-no player-no
-                                                                                 :card-name name})))))))
-                           :prepped-spells (->> valid-players
-                                                (mapcat (fn [{:keys [player-no breaches]}]
-                                                          (->> breaches
-                                                               (map-indexed (fn [breach-no breach]
-                                                                              (->> (:prepped-spells breach)
-                                                                                   (map (fn [{:keys [name] :as card}]
-                                                                                          (assoc card :option {:player-no player-no
-                                                                                                               :breach-no breach-no
-                                                                                                               :card-name name}))))))
-                                                               (apply concat))))))
-            highest-cost (->> options
-                              (keep :cost)
-                              (apply max 0))]
-        (cond->> options
-                 type (filter (comp #{type} :type))
-                 cost (filter (comp #{cost} :cost))
-                 min-cost (filter (comp #(>= % min-cost) :cost))
-                 max-cost (filter (comp #(<= % max-cost) :cost))
-                 most-expensive (filter (comp #{highest-cost} :cost))
-                 :always (map :option))))))
+    (cond
+      (#{:players :ability} area) (->> valid-players
+                                       (map #(select-keys % [:player-no])))
+      (= :breaches area) (let [options (->> valid-players
+                                            (mapcat (fn [{:keys [player-no breaches]}]
+                                                      (->> breaches
+                                                           (keep-indexed (fn do-breach [breach-no {:keys [status] :as breach}]
+                                                                           (when (not= :destroyed status)
+                                                                             (assoc breach :option {:player-no player-no
+                                                                                                    :breach-no breach-no}))))))))]
+                           (cond->> options
+                                    status (filter (comp #{status} :status))
+                                    max-breach-no (filter (comp #(<= % max-breach-no) :breach-no :option))
+                                    :always (map :option)))
+      :else (let [options      (case area
+                                 :discard (->> valid-players
+                                               (mapcat (fn [{:keys [player-no discard]}]
+                                                         (->> (cond->> discard
+                                                                       last (take-last 1)) ; it's important that 'last' is evaluated first
+                                                              (map (fn [{:keys [id name] :as card}]
+                                                                     (assoc card :option {:player-no player-no
+                                                                                          :card-id   id
+                                                                                          :card-name name})))))))
+                                 :hand (->> valid-players
+                                            (mapcat (fn [{:keys [player-no hand]}]
+                                                      (->> hand
+                                                           (map (fn [{:keys [name] :as card}]
+                                                                  (assoc card :option {:player-no player-no
+                                                                                       :card-name name})))))))
+                                 :prepped-spells (->> valid-players
+                                                      (mapcat (fn [{:keys [player-no breaches]}]
+                                                                (->> breaches
+                                                                     (map-indexed (fn [breach-no breach]
+                                                                                    (->> (:prepped-spells breach)
+                                                                                         (map (fn [{:keys [name] :as card}]
+                                                                                                (assoc card :option {:player-no player-no
+                                                                                                                     :breach-no breach-no
+                                                                                                                     :card-name name}))))))
+                                                                     (apply concat))))))
+                  highest-cost (->> options
+                                    (keep :cost)
+                                    (apply max 0))]
+              (cond->> options
+                       type (filter (comp #{type} :type))
+                       cost (filter (comp #{cost} :cost))
+                       min-cost (filter (comp #(>= % min-cost) :cost))
+                       max-cost (filter (comp #(<= % max-cost) :cost))
+                       most-expensive (filter (comp #{highest-cost} :cost))
+                       :always (map :option))))))
 
 (effects/register-options {:players options-from-players})
 

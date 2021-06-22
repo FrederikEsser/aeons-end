@@ -16,16 +16,19 @@
     :extinction 25
     30))
 
-(defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg earmark]}]
+(defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg earmark restrict]}]
   (let [current-player? (or (nil? current-player)
                             (= current-player player-no))]
-    (if earmark
-      (cond-> game
-              (and (pos? arg)
-                   current-player?) (update-in [:players player-no :earmarked-aether earmark] ut/plus arg))
-      (cond-> game
-              (and (pos? arg)
-                   current-player?) (update-in [:players player-no :aether] ut/plus arg)))))
+    (cond
+      earmark (cond-> game
+                      (and (pos? arg)
+                           current-player?) (update-in [:players player-no :earmarked-aether earmark] ut/plus arg))
+      restrict (cond-> game
+                       (and (pos? arg)
+                            current-player?) (update-in [:players player-no :restricted-aether restrict] ut/plus arg))
+      :else (cond-> game
+                    (and (pos? arg)
+                         current-player?) (update-in [:players player-no :aether] ut/plus arg)))))
 
 (effects/register {:gain-aether gain-aether})
 
@@ -166,13 +169,18 @@
 
 (effects/register {:destroy-prepped-spells destroy-prepped-spells})
 
-(defn destroy-breach [game {:keys [player-no breach-no]}]
+(defn destroy-breach [game {:keys [player-no breach-no put-prepped-spells-in]}]
   (let [{:keys [prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
     (-> game
         (assoc-in [:players player-no :breaches breach-no] {:status :destroyed})
-        (cond-> (not-empty prepped-spells) (update-in [:players player-no :discard] concat prepped-spells)))))
+        (cond-> (not-empty prepped-spells) (update-in [:players player-no put-prepped-spells-in] concat prepped-spells)))))
 
 (effects/register {:destroy-breach destroy-breach})
+
+(defn gain-breach [game {:keys [player-no breach-no breach]}]
+  (assoc-in game [:players player-no :breaches breach-no] breach))
+
+(effects/register {:gain-breach gain-breach})
 
 (defn destroy-from-hand [game {:keys [card-name card-names] :as args}]
   (cond-> game

@@ -242,7 +242,56 @@
                {:supply  [{:card jade :pile-size 6}]
                 :players [{:discard          [jade]
                            :aether           0
-                           :earmarked-aether {#{:spell} 1}}]}))))))
+                           :earmarked-aether {#{:spell} 1}}]})))
+      (testing "Restricted aether"
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether            0
+                               :restricted-aether {#{:spell} 2}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard [jade]
+                           :aether  0}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether            1
+                               :restricted-aether {#{:relic} 1}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard [jade]
+                           :aether  0}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether            2
+                               :restricted-aether {#{:spell} 3}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard           [jade]
+                           :aether            2
+                           :restricted-aether {#{:spell} 1}}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether            2
+                               :restricted-aether {#{:gem} 3}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard           [jade]
+                           :aether            0
+                           :restricted-aether {#{:gem} 3}}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether            1
+                               :restricted-aether [[#{:relic :spell} 1]
+                                                   [#{:spell} 3]]}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard           [jade]
+                           :aether            1
+                           :restricted-aether {#{:spell} 2}}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:aether            1
+                               :restricted-aether {#{:spell} 1
+                                                   #{:gem}   1}}]}
+                   (buy-card 0 :jade))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:discard           [jade]
+                           :aether            0
+                           :restricted-aether {#{:gem} 1}}]}))))))
 
 (deftest ability-test
   (testing "Ability"

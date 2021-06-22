@@ -189,7 +189,7 @@
                                                  [:unleash {:resolving resolve-text}]
                                                  [:give-choice {:title   resolve-text
                                                                 :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
-                                                                :choice  :destroy-breach
+                                                                :choice  [:destroy-breach {:put-prepped-spells-in :discard}]
                                                                 :options [:player :breaches]
                                                                 :min     1
                                                                 :max     1}]]

@@ -81,6 +81,50 @@
             :deck     [crystal crystal crystal spark spark]
             :ability  brink-siphon})
 
+(def oblivion-shard {:name    :oblivion-shard
+                     :type    :gem
+                     :cost    0
+                     :text    "Gain 2 Aether that cannot be used to gain a relic or spell."
+                     :effects [[:gain-aether {:arg 2 :restrict #{:relic :spell}}]]})
+
+(defn tempest-sigil-replace-breach [game {:keys [player-no breach-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:destroy-breach {:breach-no             breach-no
+                                                         :put-prepped-spells-in :hand}]
+                                       [:gain-breach {:breach-no breach-no
+                                                      :breach    {:status       :opened
+                                                                  :type         :sigil
+                                                                  :bonus-damage 2}}]
+                                       [:give-choice {:title   :tempest-sigil
+                                                      :text    "You may prep a spell from your hand to a breach."
+                                                      :choice  [:prep-spell {:breach-no breach-no}]
+                                                      :options [:player :hand {:type :spell}]
+                                                      :max     1}]]}))
+
+(effects/register {::tempest-sigil-replace-breach tempest-sigil-replace-breach})
+
+(def tempest-sigil {:name        :tempest-sigil
+                    :activation  :your-main-phase
+                    :charge-cost 6
+                    :text        ["Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."]
+                    :effects     [[:give-choice {:title   :tempest-sigil
+                                                 :text    "Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."
+                                                 :choice  ::tempest-sigil-replace-breach
+                                                 :options [:players :breaches {:status        :opened
+                                                                               :max-breach-no 1}]
+                                                 :min     1
+                                                 :max     1}]]})
+
+(def dezmodia {:name     :dezmodia
+               :title    "Voidborn Prodigy"
+               :breaches [{}
+                          {:stage 1}
+                          {:stage 0}
+                          {:stage 1}]
+               :hand     [oblivion-shard crystal crystal spark spark]
+               :deck     [crystal crystal crystal crystal spark]
+               :ability  tempest-sigil})
+
 (defn shattered-geode-take-card [game {:keys [player-no card-id to-player]}]
   (cond-> game
           card-id (push-effect-stack {:player-no player-no
@@ -265,6 +309,7 @@
 
 (def mages [adelheim
             brama
+            dezmodia
             gex
             jian
             mist

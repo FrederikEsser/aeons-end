@@ -74,7 +74,8 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:destroy-prepped-spells {:breach-no breach-no
                                                                  :card-name card-name}]
-                                       [:destroy-breach {:breach-no breach-no}]]}))
+                                       [:destroy-breach {:breach-no             breach-no
+                                                         :put-prepped-spells-in :discard}]]}))
 
 (effects/register {::cataclysmic-fate-destroy-breach cataclysmic-fate-destroy-breach})
 
