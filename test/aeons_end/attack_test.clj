@@ -49,6 +49,68 @@
             :gravehold {:life 29}
             :players   [{:life 7}]}))))
 
+(deftest assail-test
+  (testing "Assail"
+    (is (= (-> {:nemesis   {:deck    [assail]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]
+                             :deck     [crystal]}]}
+               draw-nemesis-card
+               (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+           {:nemesis   {:discard [assail]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]
+                         :deck     [spark crystal]}]}))
+    (is (= (-> {:nemesis   {:deck    [assail]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]
+                             :deck     [crystal]}
+                            {:breaches [{:prepped-spells [amplify-vision]}]
+                             :deck     [crystal]}]}
+               draw-nemesis-card
+               (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
+           {:nemesis   {:discard [assail]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {}]
+                         :deck     [ignite crystal]}
+                        {:breaches [{:prepped-spells [amplify-vision]}]
+                         :deck     [crystal]}]}))
+    (is (= (-> {:nemesis   {:deck    [assail]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]
+                             :deck     [crystal]}
+                            {:breaches [{:prepped-spells [amplify-vision]}]
+                             :deck     [crystal]}]}
+               draw-nemesis-card
+               (choose {:player-no 1 :breach-no 0 :card-name :amplify-vision}))
+           {:nemesis   {:discard [assail]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [ignite]}]
+                         :deck     [crystal]}
+                        {:breaches [{}]
+                         :deck     [amplify-vision crystal]}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [assail]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:breaches [{:prepped-spells [spark]}
+                                                       {:prepped-spells [ignite]}]
+                                            :deck     [crystal]}
+                                           {:breaches [{:prepped-spells [amplify-vision]}]
+                                            :deck     [crystal]}]}
+                              draw-nemesis-card
+                              (choose {:player-no 0 :breach-no 0 :card-name :spark}))))))
+
 (deftest encroach-test
   (testing "Encroach"
     (is (= (-> {:nemesis    {:deck    [encroach]

@@ -130,6 +130,22 @@
 
 (effects/register {:discard-prepped-spells discard-prepped-spells})
 
+(defn topdeck-prepped-spell [game {:keys [player-no spells] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (if spells
+                                        (->> spells
+                                             (map (fn [args]
+                                                    [:move-card (merge args
+                                                                       {:from        :breach
+                                                                        :to          :deck
+                                                                        :to-position :top})])))
+                                        [[:move-card (merge args
+                                                            {:from        :breach
+                                                             :to          :deck
+                                                             :to-position :top})]])}))
+
+(effects/register {:topdeck-prepped-spell topdeck-prepped-spell})
+
 (defn destroy-prepped-spells [game {:keys [spells] :as args}]
   (push-effect-stack game {:effects (if spells
                                       (->> spells

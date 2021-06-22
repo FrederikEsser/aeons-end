@@ -252,4 +252,5 @@
                     power/cataclysmic-fate
                     power/withering-beam]
                    ; The Outer Dark
-                   [minion/labyrinth-wisp]))
+                   [minion/labyrinth-wisp
+                    attack/assail]))

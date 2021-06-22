@@ -28,6 +28,21 @@
                                        :max     1}]]
               :quote   "'Such wisdom comes at a conciderable price.' Xaxos, Voidbringer"})
 
+(def assail {:name    :assail
+             :type    :attack
+             :tier    2
+             :text    ["Unleash twice."
+                       "The player with the most expensive prepped spell places that spell on the top of their deck."]
+             :effects [[:unleash]
+                       [:unleash]
+                       [:give-choice {:title   :assail
+                                      :text    "The player with the most expensive prepped spell places that spell on the top of their deck."
+                                      :choice  :topdeck-prepped-spell
+                                      :options [:players :prepped-spells {:most-expensive true}]
+                                      :min     1
+                                      :max     1}]]
+             :quote   "'For as massive as they are, they are quick.' Sparrow, Breach Mage Soldier"})
+
 (defn banish-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
                                  (map ut/count-prepped-spells)
