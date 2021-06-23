@@ -492,19 +492,24 @@
 (effects/register-options {:players options-from-players})
 
 (defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name type]}]]
-  (case area
-    :minions (->> (get-in game [:nemesis :play-area])
-                  (filter (comp #{:minion} :type))
-                  (map :name))
-    :play-area (cond->> (get-in game [:nemesis :play-area])
-                        name (filter (comp #{name} :name))
+  (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])
+        husks? (and number-of-husks
+                    (pos? number-of-husks))]
+    (case area
+      :minions (concat (->> (get-in game [:nemesis :play-area])
+                            (filter (comp #{:minion} :type))
+                            (map :name))
+                       (when husks? [:husks]))
+      :husks (when husks? [:husks])
+      :play-area (cond->> (get-in game [:nemesis :play-area])
+                          name (filter (comp #{name} :name))
+                          :always (map :name))
+      :discard (cond->> (get-in game [:nemesis :discard])
+                        type (filter (comp #{type} :type))
+                        most-recent (take-last 1)           ; it's important that 'most-recent' is evaluated last
                         :always (map :name))
-    :discard (cond->> (get-in game [:nemesis :discard])
-                      type (filter (comp #{type} :type))
-                      most-recent (take-last 1)             ; it's important that 'most-recent' is evaluated last
-                      :always (map :name))
 
-    :nemesis [:nemesis]))
+      :nemesis [:nemesis])))
 
 (effects/register-options {:nemesis options-from-nemesis})
 

@@ -4,6 +4,7 @@
             [aeons-end.effects :as effects]
             [aeons-end.nemeses.rageborne :refer [rageborne]]
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
+            [aeons-end.nemeses.carapace-queen :refer [carapace-queen deal-damage-to-husks]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]))
@@ -79,13 +80,16 @@
 
 (defn resolve-nemesis-card [game {:keys [player-no card-name]}]
   (cond
-    card-name (let [{{:keys [name type effects]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
-                (cond-> game
-                        (= :attack type) (push-effect-stack {:effects (concat
-                                                                        [[:set-resolving {:card-name name}]]
-                                                                        effects
-                                                                        [[:clear-resolving]]
-                                                                        [[:discard-nemesis-card {:card-name name}]])})))
+    card-name (let [{{:keys [name type immediately] :as card} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+                    effects (or (:effects card)
+                                (:effects immediately))]
+                (push-effect-stack game {:effects (concat
+                                                    [[:set-resolving {:card-name name}]]
+                                                    (when effects
+                                                      effects)
+                                                    [[:clear-resolving]]
+                                                    (when (= :attack type)
+                                                      [[:discard-nemesis-card {:card-name name}]]))}))
     player-no (push-effect-stack game {:player-no player-no
                                        :effects   [[:activate-ability]]})))
 
@@ -131,45 +135,49 @@
   (let [life (get-in game [:nemesis :life])]
     (assoc-in game [:nemesis :life] (max (- life damage) 0))))
 
-(defn deal-damage-to-minion [game {:keys [card-name damage kill-effects]}]
-  (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-        {:keys [life max-life modify-damage]} card
-        modify-damage-fn (when modify-damage
-                           (effects/get-predicate modify-damage))
-        damage           (if modify-damage-fn
-                           (modify-damage-fn damage)
-                           damage)
-        killed?          (<= life damage)]
-    (-> game
-        (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
-                                                              (- life damage)))
-        (cond-> killed? (discard-nemesis-card {:card-name card-name}))
-        (cond-> (and killed?
-                     kill-effects) (push-effect-stack {:effects kill-effects})))))
+(defn deal-damage-to-minion [game {:keys [card-name damage kill-effects] :as args}]
+  (if (= :husks card-name)
+    (deal-damage-to-husks game args)
+    (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+          {:keys [life max-life modify-damage]} card
+          modify-damage-fn (when modify-damage
+                             (effects/get-predicate modify-damage))
+          damage           (if modify-damage-fn
+                             (modify-damage-fn game damage)
+                             damage)
+          killed?          (<= life damage)]
+      (-> game
+          (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
+                                                                (- life damage)))
+          (cond-> killed? (discard-nemesis-card {:card-name card-name}))
+          (cond-> (and killed?
+                       kill-effects) (push-effect-stack {:effects kill-effects}))))))
 
-(defn deal-damage-to-target [game {:keys [damage area card-name kill-effects]}]
-  (push-effect-stack game {:effects (case area
-                                      :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
-                                      :minions [[:deal-damage-to-minion {:card-name    card-name
-                                                                         :damage       damage
-                                                                         :kill-effects kill-effects}]])}))
+(defn deal-damage-to-target [game {:keys [player-no damage area card-name kill-effects]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :nemesis [[:deal-damage-to-nemesis {:damage damage}]]
+                                        :minions [[:deal-damage-to-minion {:card-name    card-name
+                                                                           :damage       damage
+                                                                           :kill-effects kill-effects}]])}))
 
-(defn deal-damage [{:keys [nemesis] :as game} {:keys [arg bonus-damage kill-effects]
-                                               :or   {bonus-damage 0}}]
-  (let [{:keys [name play-area]} nemesis
-        minions (->> play-area
-                     (filter (comp #{:minion} :type)))
+(defn deal-damage [{:keys [nemesis] :as game} {:keys [player-no arg bonus-damage kill-effects]
+                                               :or   {bonus-damage 0}
+                                               :as   args}]
+  (let [{:keys [name]} nemesis
+        minions (ut/options-from-nemesis game {:area :minions})
         damage  (+ arg bonus-damage)]
-    (push-effect-stack game {:effects (if (not-empty minions)
-                                        [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
-                                                        :choice  [:deal-damage-to-target {:damage       damage
-                                                                                          :kill-effects kill-effects}]
-                                                        :options [:mixed
-                                                                  [:nemesis]
-                                                                  [:nemesis :minions]]
-                                                        :min     1
-                                                        :max     1}]]
-                                        [[:deal-damage-to-nemesis {:damage damage}]])})))
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (not-empty minions)
+                                          [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                          :choice  [:deal-damage-to-target {:damage       damage
+                                                                                            :kill-effects kill-effects}]
+                                                          :options [:mixed
+                                                                    [:nemesis]
+                                                                    [:nemesis :minions]]
+                                                          :min     1
+                                                          :max     1}]]
+                                          [[:deal-damage-to-nemesis {:damage damage}]])})))
 
 (effects/register {:deal-damage-to-nemesis deal-damage-to-nemesis
                    :deal-damage-to-minion  deal-damage-to-minion
@@ -212,16 +220,9 @@
 (effects/register {:exhaust-player exhaust-player
                    :damage-player  damage-player})
 
-(def generic-nemesis {:name       :generic
-                      :difficulty 1
-                      :life       70
-                      :unleash    [[:damage-gravehold 2]]
-                      :cards      [attack/nix minion/howling-spinners power/planar-collision
-                                   attack/smite minion/null-scion power/aphotic-sun
-                                   attack/throttle minion/monstrosity-of-omens power/apocalypse-ritual]})
-
 (def nemeses [rageborne
-              umbra-titan])
+              umbra-titan
+              carapace-queen])
 
 (def basic-cards (concat
                    ; WE Tier 1

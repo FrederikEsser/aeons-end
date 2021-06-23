@@ -741,6 +741,7 @@
                                        :life 5}]}}
                (deal-damage 1)
                (choose {:area      :nemesis
+                        :player-no 0
                         :card-name :nemesis}))
            {:nemesis {:life      49
                       :play-area [{:name :bad-motherfucker
@@ -752,6 +753,7 @@
                                        :life 5}]}}
                (deal-damage 1)
                (choose {:area      :minions
+                        :player-no 0
                         :card-name :bad-motherfucker}))
            {:nemesis {:life      50
                       :play-area [{:name :bad-motherfucker
@@ -764,6 +766,7 @@
                                        :max-life 2}]}}
                (deal-damage 1)
                (choose {:area      :minions
+                        :player-no 0
                         :card-name :bad-motherfucker}))
            {:nemesis {:life    50
                       :discard [{:name     :bad-motherfucker
@@ -780,6 +783,7 @@
                                        :life 2}]}}
                (cast-spell 0 0 :spark)
                (choose {:area      :nemesis
+                        :player-no 0
                         :card-name :nemesis}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]
@@ -800,6 +804,7 @@
                                        :max-life 2}]}}
                (cast-spell 0 0 :spark)
                (choose {:area      :minions
+                        :player-no 0
                         :card-name :bad-motherfucker}))
            {:players [{:breaches [{:status       :opened
                                    :bonus-damage 1}]

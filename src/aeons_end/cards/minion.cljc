@@ -76,7 +76,7 @@
                                                                  :damage    2}]]}
                  :quote      "'One of the few indigenous creatures of the cave, though corrupted from exposure to the breach.' Gex, Breach Mage Advisor"})
 
-(defn monstrosity-of-omens-modify-damage [damage]
+(defn monstrosity-of-omens-modify-damage [_ damage]
   (min damage 1))
 
 (effects/register-predicates {::monstrosity-of-omens-modify-damage monstrosity-of-omens-modify-damage})
@@ -91,8 +91,8 @@
                            :type          :minion
                            :tier          3
                            :life          5
-                           :modify-damage ::monstrosity-of-omens-modify-damage
                            :text          "When damage is dealt to this minion, reduce that damage to 1."
+                           :modify-damage ::monstrosity-of-omens-modify-damage
                            :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
                                            :effects [[::monstrosity-of-omens-damage]]}
                            :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' Yan Magda, Enlightened Exile"})

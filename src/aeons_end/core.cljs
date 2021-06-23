@@ -46,7 +46,7 @@
   (swap! state update :selection remove-idx idx))
 
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
-  (let [inverse? (or (#{:nemesis :sigil} type)
+  (let [inverse? (or (#{:nemesis :sigil :husks} type)
                      (<= 2 (:player-no type))
                      (#{:closed :focused :openable} status))]
     {:color            (cond
@@ -64,6 +64,7 @@
                          (#{:spell :power} type) "#f7e2b5"
                          (= :minion type) "#aadfef"
                          (= :strike type) "#b79171"
+                         (= :husks type) "#5f5356"
                          (= :breach type) (cond
                                             (= :opened status) "#f8e238"
                                             (= :destroyed status) :white
@@ -85,6 +86,7 @@
                          (#{:spell :power} type) "#f8c44e"
                          (= :minion type) "#49c4e9"
                          (= :strike type) "#5e3628"
+                         (= :husks type) "#232122"
                          (#{:breach :sigil} type) (cond
                                                     (#{:closed :openable} status) "#434f64"
                                                     (#{:destroyed} status) "#ccc"
@@ -97,6 +99,7 @@
                          (= :nemesis type) "#782d2a"
                          :else :grey)
      :border-width     2
+     :vertical-align   :top
      :width            width
      :min-width        min-width
      :max-width        max-width}))
@@ -186,7 +189,7 @@
            text]))
 
 (defn view-nemesis-card [{:keys [name name-ui text quote choice-value type status cost number-of-cards
-                                 to-discard-text power power-text life persistent-text
+                                 immediately-text to-discard-text power power-text life persistent-text
                                  cast-text interaction] :as card}]
   (when card
     (let [disabled (nil? interaction)]
@@ -208,6 +211,8 @@
         [:div
          (when text
            (format-text text))
+         (when immediately-text
+           (format-text immediately-text "IMMEDIATELY"))
          (when to-discard-text
            (format-text to-discard-text "TO DISCARD"))
          (when power-text
@@ -454,7 +459,7 @@
         [:tbody
          [:tr
           [:td {:col-span 2}
-           (let [{:keys [name name-ui life tokens deck play-area discard fury interaction choice-value]} (-> @state :game :nemesis)]
+           (let [{:keys [name name-ui life tokens deck play-area discard fury husks interaction choice-value]} (-> @state :game :nemesis)]
              [:div [:table
                     [:tbody
                      [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
@@ -527,6 +532,21 @@
                        (when fury
                          [:div "Fury: " fury])]
                       [:td [:div
+                            (when husks
+                              (let [{:keys [number-of-husks title swarm-text swarm-interval interaction choice-value]} husks
+                                    disabled (nil? interaction)]
+                                [:button {:style    (merge (button-style :type :husks
+                                                                         :disabled disabled)
+                                                           {:width      "150px"
+                                                            :min-height "170px"})
+                                          :title    (format-title {:text title})
+                                          :disabled disabled
+                                          :on-click (when interaction
+                                                      (fn [] (case interaction
+                                                               :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value :husks))))))}
+                                 [:div
+                                  [:div {:style {:font-size "1.4em"}} (str number-of-husks " husk" (when (not= 1 number-of-husks) "s"))]
+                                  [:div (format-text swarm-text (str "SWARM " swarm-interval))]]]))
                             (mapk view-nemesis-card play-area)]]
                       [:td [:div
                             (when deck
@@ -715,7 +735,7 @@
                 [:table
                  [:tbody
                   (for [row (range 3)]
-                    [:tr
+                    [:tr {:key (str "row" row)}
                      (for [col (range 3)]
                        (let [idx   (+ col (* 3 row))
                              {:keys [type min-cost max-cost card-name]} (get supply idx)
@@ -723,7 +743,7 @@
                                      :gem gem/cards
                                      :relic relic/cards
                                      :spell spell/cards)]
-                         [:td {:key idx}
+                         [:td {:key (str "cell" idx)}
                           [:select {:style     (merge (button-style :type type
                                                                     :max-width 40)
                                                       {:-webkit-appearance :none

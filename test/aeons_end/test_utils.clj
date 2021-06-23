@@ -58,7 +58,8 @@
 
 (defn deal-damage [game damage]
   (-> game
-      (push-effect-stack {:effects [[:deal-damage damage]]})
+      (push-effect-stack {:player-no 0
+                          :effects   [[:deal-damage damage]]})
       check-stack))
 
 (defn damage-player [game player-no damage]

@@ -155,7 +155,7 @@
       (is (= (-> {:nemesis {:play-area [(assoc monstrosity-of-omens :life 4)]}
                   :players [{:breaches [{:prepped-spells [spark]}]}]}
                  (cast-spell 0 0 :spark)
-                 (choose {:area :minions :card-name :monstrosity-of-omens}))
+                 (choose {:area :minions :player-no 0 :card-name :monstrosity-of-omens}))
              {:nemesis {:play-area [(assoc monstrosity-of-omens :life 3)]}
               :players [{:breaches [{}]
                          :discard  [spark]}]}))
@@ -163,7 +163,7 @@
                   :players [{:breaches [{:status         :opened
                                          :prepped-spells [amplify-vision]}]}]}
                  (cast-spell 0 0 :amplify-vision)
-                 (choose {:area :minions :card-name :monstrosity-of-omens}))
+                 (choose {:area :minions :player-no 0 :card-name :monstrosity-of-omens}))
              {:nemesis {:play-area [(assoc monstrosity-of-omens :life 3)]}
               :players [{:breaches [{:status :opened}]
                          :discard  [amplify-vision]}]}))
@@ -172,7 +172,7 @@
                                          :bonus-damage   1
                                          :prepped-spells [spark]}]}]}
                  (cast-spell 0 0 :spark)
-                 (choose {:area :minions :card-name :monstrosity-of-omens}))
+                 (choose {:area :minions :player-no 0 :card-name :monstrosity-of-omens}))
              {:nemesis {:play-area [(assoc monstrosity-of-omens :life 3)]}
               :players [{:breaches [{:status       :opened
                                      :bonus-damage 1}]
@@ -182,7 +182,7 @@
                                          :bonus-damage   1
                                          :prepped-spells [dark-fire]}]}]}
                  (cast-spell 0 0 :dark-fire)
-                 (choose {:area :minions :card-name :monstrosity-of-omens}))
+                 (choose {:area :minions :player-no 0 :card-name :monstrosity-of-omens}))
              {:nemesis {:play-area [(assoc monstrosity-of-omens :life 3)]}
               :players [{:breaches [{:status       :opened
                                      :bonus-damage 1}]

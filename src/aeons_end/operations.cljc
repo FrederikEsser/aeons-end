@@ -9,6 +9,7 @@
                     :keys        [name
                                   deck
                                   play-area
+                                  discard
                                   victory-condition]
                     :as          nemesis} :nemesis
                    :as                    game}]
@@ -21,6 +22,7 @@
                                    :text       [(str (ut/format-name name) " has been defeated and all its minions retreat.")
                                                 "Gravehold is safe - for now."]}
         (and nemesis
+             (not-empty discard)
              (empty? deck)
              (empty? play-area)) {:conclusion :victory
                                   :text       [(str (ut/format-name name) " is exhausted and all its minions defeated.")
@@ -135,9 +137,13 @@
 
 (defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
   (when phase-change
-    (->> (get-in game [:players player-no :breaches])
-         (mapcat :prepped-spells)
-         (mapcat (comp phase-change :while-prepped)))))
+    (let [while-prepped-effects (->> (get-in game [:players player-no :breaches])
+                                     (mapcat :prepped-spells)
+                                     (mapcat (comp phase-change :while-prepped)))
+          nemesis-card-effects  (->> (get-in game [:nemesis :play-area])
+                                     (mapcat phase-change))]
+      (concat while-prepped-effects
+              nemesis-card-effects))))
 
 (def phase-order [:out-of-turn
                   :casting

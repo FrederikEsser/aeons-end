@@ -428,7 +428,7 @@
                                            :type :minion
                                            :life 2}]}}
                    (cast-spell 0 0 :extinguish)
-                   (choose {:area :minions :card-name :caterpillar}))
+                   (choose {:area :minions :player-no 0 :card-name :caterpillar}))
                {:players [{:breaches [{}]
                            :discard  [extinguish]}]
                 :nemesis {:play-area [{:name :caterpillar
@@ -440,7 +440,7 @@
                                            :type :minion
                                            :life 1}]}}
                    (cast-spell 0 0 :extinguish)
-                   (choose {:area :minions :card-name :caterpillar}))
+                   (choose {:area :minions :player-no 0 :card-name :caterpillar}))
                {:players [{:name     :quilius
                            :breaches [{}]
                            :discard  [extinguish]
@@ -456,7 +456,7 @@
                                            :type :minion
                                            :life 2}]}}
                    (cast-spell 0 0 :extinguish)
-                   (choose {:area :minions :card-name :caterpillar}))
+                   (choose {:area :minions :player-no 0 :card-name :caterpillar}))
                {:players [{:name     :quilius
                            :breaches [{:status       :opened
                                        :bonus-damage 1}]
@@ -476,7 +476,7 @@
                                            :life 4}]}}
                    (play 0 :blasting-staff)
                    (choose {:player-no 0 :breach-no 0 :card-name :extinguish})
-                   (choose {:area :minions :card-name :caterpillar}))
+                   (choose {:area :minions :player-no 0 :card-name :caterpillar}))
                {:players [{:name      :quilius
                            :breaches  [{:status       :opened
                                         :bonus-damage 1}]
@@ -493,7 +493,7 @@
                                            :type :minion
                                            :life 1}]}}
                    (cast-spell 0 0 :extinguish)
-                   (choose {:area :minions :card-name :caterpillar}))
+                   (choose {:area :minions :player-no 0 :card-name :caterpillar}))
                {:players [{:breaches [{}]
                            :discard  [extinguish]}
                           {:name     :quilius

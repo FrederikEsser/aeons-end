@@ -1,6 +1,7 @@
 (ns aeons-end.front-end-view
   (:require [aeons-end.utils :as ut]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]))
 
 (defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
                           {:keys [options max choice-opts] :as choice}]
@@ -271,11 +272,11 @@
                text)]))
 
 (defn view-nemesis [{{:keys [name life play-area deck discard
-                             tokens fury]}     :nemesis
-                     {:keys [player-no phase]} :player
-                     choice                    :choice
-                     resolving                 :resolving
-                     :as                       game}]
+                             tokens fury husks]} :nemesis
+                     {:keys [player-no phase]}   :player
+                     choice                      :choice
+                     resolving                   :resolving
+                     :as                         game}]
   (merge {:name-ui (ut/format-name name)
           :life    life
           :deck    (if (empty? deck)
@@ -283,7 +284,7 @@
                      {:number-of-cards (count deck)})}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (map (fn [{:keys [name to-discard power persistent life] :as card}]
+                            (map (fn [{:keys [name immediately to-discard power persistent life] :as card}]
                                    (let [can-discard-fn (when (and to-discard
                                                                    (:predicate to-discard))
                                                           (effects/get-predicate (:predicate to-discard)))
@@ -292,6 +293,8 @@
                                      (merge (view-card card)
                                             (when (= resolving name)
                                               {:status :resolving})
+                                            (when immediately
+                                              {:immediately-text (:text immediately)})
                                             (when to-discard
                                               {:to-discard-text (:text to-discard)})
                                             (when power
@@ -311,10 +314,12 @@
                                                                  :card-name name} choice))))))})
          {:discard (merge
                      (when (not-empty discard)
-                       {:card (let [{:keys [name to-discard power persistent life] :as card} (last discard)]
+                       {:card (let [{:keys [name immediately to-discard power persistent life] :as card} (last discard)]
                                 (merge (view-card card)
                                        (when (= resolving name)
                                          {:status :resolving})
+                                       (when immediately
+                                         {:immediately-text (:text immediately)})
                                        (when to-discard
                                          {:to-discard-text (:text to-discard)})
                                        (when power
@@ -328,18 +333,22 @@
                      {:cards           (if (empty? discard)
                                          []
                                          (->> discard
-                                              (map (fn [{:keys [name text to-discard power persistent life] :as card}]
+                                              (map (fn [{:keys [name text immediately to-discard power persistent life] :as card}]
                                                      (merge (view-card card)
                                                             {:text (concat (when life
                                                                              [(str "Life: " life)])
                                                                            (when text
                                                                              (format-text text))
+                                                                           (when immediately
+                                                                             (format-text (:text immediately) "IMMEDIATELY"))
                                                                            (when to-discard
                                                                              (format-text (:text to-discard) "TO DISCARD"))
                                                                            (when power
                                                                              (format-text (:text power) "POWER"))
                                                                            (when persistent
                                                                              (format-text (:text persistent) "PERSISTENT")))}
+                                                            (when immediately
+                                                              {:immediately-text (:text immediately)})
                                                             (when to-discard
                                                               {:to-discard-text (:text to-discard)})
                                                             (when power
@@ -355,6 +364,22 @@
            {:tokens tokens})
          (when fury
            {:fury fury})
+         (when husks
+           (let [{:keys [number-of-husks swarm-effects]} husks
+                 {:keys [text min-husks max-husks]} (lookup-swarm-effects husks)]
+             {:husks (merge {:number-of-husks number-of-husks
+                             :swarm-interval  (str min-husks (if max-husks
+                                                               (str "-" max-husks)
+                                                               "+"))
+                             :swarm-text      text
+                             :title           (concat ["When Carapace Queen Swarms, count the number of husks in play and resolve the following:"]
+                                                      (->> swarm-effects
+                                                           (map (fn [{:keys [min-husks max-husks text]}]
+                                                                  (str min-husks (if max-husks (str "-" max-husks) "+")
+                                                                       " husks: " text)))))}
+                            (choice-interaction {:area      :minions
+                                                 :card-name :husks} choice)
+                            (choice-interaction {:area :husks} choice))}))
          (choice-interaction {:area :nemesis} choice)))
 
 (defn view-trash [{:keys [trash]}]
