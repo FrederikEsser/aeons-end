@@ -80,6 +80,30 @@
                                                     :max     1}]]
                    :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
 
+(defn haunted-berylite-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:gain-charges 2]]})))
+
+(effects/register {::haunted-berylite-discard haunted-berylite-discard})
+
+(def haunted-berylite {:name            :haunted-berylite
+                       :type            :gem
+                       :cost            3
+                       :auto-play-index -1
+                       :text            ["Discard a card in hand. If you do, gain 2 charges."
+                                         "OR"
+                                         "Gain 2 Aether."]
+                       :effects         [[:give-choice {:title     :haunted-berylite
+                                                        :text      "Discard a card in hand. If you do, gain 2 charges."
+                                                        :choice    ::haunted-berylite-discard
+                                                        :options   [:player :hand]
+                                                        :or-choice {:text    "Gain 2 Aether"
+                                                                    :effects [[:gain-aether 2]]}
+                                                        :max       1}]]
+                       :quote           "'All things end. And each leaves behind a shadow, a skull, a memory.' Yan Magda, Enlightened Exile"})
+
 (def jade {:name    :jade
            :type    :gem
            :cost    2
@@ -149,6 +173,7 @@
             bloodstone-jewel
             breach-ore
             burning-opal
+            haunted-berylite
             jade
             leeching-agate
             pain-stone

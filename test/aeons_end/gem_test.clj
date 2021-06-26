@@ -128,6 +128,24 @@
                        :aether    3}
                       {:hand [crystal]}]}))))
 
+(deftest haunted-berylite-test
+  (testing "Haunted Berylite"
+    (is (= (-> {:players [{:hand    [haunted-berylite crystal]
+                           :ability {:charges     0
+                                     :charge-cost 5}}]}
+               (play 0 :haunted-berylite)
+               (choose :crystal))
+           {:players [{:play-area [haunted-berylite]
+                       :discard   [crystal]
+                       :ability   {:charges     2
+                                   :charge-cost 5}}]}))
+    (is (= (-> {:players [{:hand [haunted-berylite crystal]}]}
+               (play 0 :haunted-berylite)
+               (choose nil))
+           {:players [{:hand      [crystal]
+                       :play-area [haunted-berylite]
+                       :aether    2}]}))))
+
 (deftest pain-stone-test
   (testing "Pain Stone"
     (is (= (-> {:players [{:hand [pain-stone]}]
@@ -162,43 +180,43 @@
 (deftest sifters-pearl-test
   (let [sifters-pearl (assoc sifters-pearl :id 1)]
     (testing "Sifter's Pearl"
-     (is (= (-> {:players [{:hand [sifters-pearl]
-                            :deck [crystal spark]}]}
-                (play 0 :sifter's-pearl)
-                (choose nil))
-            {:players [{:play-area      [sifters-pearl]
-                        :aether         2
-                        :deck           [crystal spark]
-                        :revealed-cards 1}]}))
-     (is (= (-> {:players [{:hand [sifters-pearl]
-                            :deck [crystal spark]}]}
-                (play 0 :sifter's-pearl)
-                (choose :crystal))
-            {:players [{:play-area [sifters-pearl]
-                        :aether    2
-                        :deck      [spark]
-                        :discard   [crystal]}]}))
-     (is (= (-> {:players [{:hand    [sifters-pearl]
-                            :discard [crystal crystal]}]}
-                (play 0 :sifter's-pearl)
-                (choose :crystal))
-            {:players [{:play-area [sifters-pearl]
-                        :aether    2
-                        :deck      [crystal]
-                        :discard   [crystal]}]}))
-     (is (= (-> {:players [{:hand [sifters-pearl]}]}
-                (play 0 :sifter's-pearl))
-            {:players [{:play-area [sifters-pearl]
-                        :aether    2}]}))
-     (is (= (-> {:players [{:hand [sifters-pearl]
-                            :deck [crystal spark]}
-                           {:deck [crystal spark]}]}
-                (play 0 :sifter's-pearl)
-                (choose nil)
-                (choose :crystal))
-            {:players [{:play-area      [sifters-pearl]
-                        :aether         2
-                        :deck           [crystal spark]
-                        :revealed-cards 1}
-                       {:deck    [spark]
-                        :discard [crystal]}]})))))
+      (is (= (-> {:players [{:hand [sifters-pearl]
+                             :deck [crystal spark]}]}
+                 (play 0 :sifter's-pearl)
+                 (choose nil))
+             {:players [{:play-area      [sifters-pearl]
+                         :aether         2
+                         :deck           [crystal spark]
+                         :revealed-cards 1}]}))
+      (is (= (-> {:players [{:hand [sifters-pearl]
+                             :deck [crystal spark]}]}
+                 (play 0 :sifter's-pearl)
+                 (choose :crystal))
+             {:players [{:play-area [sifters-pearl]
+                         :aether    2
+                         :deck      [spark]
+                         :discard   [crystal]}]}))
+      (is (= (-> {:players [{:hand    [sifters-pearl]
+                             :discard [crystal crystal]}]}
+                 (play 0 :sifter's-pearl)
+                 (choose :crystal))
+             {:players [{:play-area [sifters-pearl]
+                         :aether    2
+                         :deck      [crystal]
+                         :discard   [crystal]}]}))
+      (is (= (-> {:players [{:hand [sifters-pearl]}]}
+                 (play 0 :sifter's-pearl))
+             {:players [{:play-area [sifters-pearl]
+                         :aether    2}]}))
+      (is (= (-> {:players [{:hand [sifters-pearl]
+                             :deck [crystal spark]}
+                            {:deck [crystal spark]}]}
+                 (play 0 :sifter's-pearl)
+                 (choose nil)
+                 (choose :crystal))
+             {:players [{:play-area      [sifters-pearl]
+                         :aether         2
+                         :deck           [crystal spark]
+                         :revealed-cards 1}
+                        {:deck    [spark]
+                         :discard [crystal]}]})))))

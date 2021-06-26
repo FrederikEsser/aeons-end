@@ -431,13 +431,18 @@
 
 (effects/register {:pay pay})
 
-(defn gain-charge [game {:keys [player-no]}]
+(defn gain-charges [game {:keys [player-no arg]}]
   (let [{:keys [charges charge-cost]
          :or   {charges 0}} (get-in game [:players player-no :ability])]
     (cond-> game
-            (< charges charge-cost) (update-in [:players player-no :ability :charges] ut/plus 1))))
+            (< charges charge-cost) (assoc-in [:players player-no :ability :charges] (min (+ arg charges) charge-cost)))))
 
-(effects/register {:gain-charge gain-charge})
+(defn gain-charge [game {:keys [player-no]}]
+  (gain-charges game {:player-no player-no
+                      :arg       1}))
+
+(effects/register {:gain-charges gain-charges
+                   :gain-charge  gain-charge})
 
 (defn spend-charges [game {:keys [player-no arg]}]
   (if arg
