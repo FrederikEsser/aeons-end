@@ -25,6 +25,15 @@
   (swap! game-state update :game (partial take-last 1))
   (view))
 
+(defn switch-mode []
+  (let [{:keys [mode] :as game} (get-game)
+        new-mode (case mode
+                   :slow :swift
+                   :swift :slow)]
+    (swap! game-state update :game conj (-> game
+                                            (assoc :mode new-mode)))
+    (view)))
+
 (defn start-game [game-setup]
   (let [game (setup/create-game game-setup)]
     (swap! game-state assoc :game (-> game

@@ -449,11 +449,12 @@
                                                       :type    type})))))
                :number-of-cards (count discard)})})
 
-(defn view-game [{:keys [difficulty gravehold turn-order players effect-stack current-player game-over] :as game}]
+(defn view-game [{:keys [mode difficulty gravehold turn-order players effect-stack current-player game-over] :as game}]
   (let [[{:keys [player-no] :as choice}] effect-stack
         {:keys [phase] :as player} (get players current-player)]
     (merge
-      {:nemesis    (view-nemesis (merge game
+      {:mode       mode
+       :nemesis    (view-nemesis (merge game
                                         (when player
                                           {:player (-> player
                                                        (assoc :player-no current-player))})

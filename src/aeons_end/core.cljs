@@ -816,7 +816,11 @@
        (let [{:keys [number-of-cards] :as trash} (get-in @state [:game :trash])]
          (when (pos? number-of-cards)
            [:div (str "Destroyed")
-            [view-expandable-pile :trash trash]]))])))
+            [view-expandable-pile :trash trash]]))
+       (when-not setup-game?
+         [:button {:style    (button-style)
+                   :on-click (fn [] (swap! state assoc :game (cmd/switch-mode)))}
+          (str (ut/format-name (-> @state :game :mode)) " mode")])])))
 
 ;; -------------------------
 ;; Initialize app
