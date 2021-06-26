@@ -13,13 +13,23 @@
 ;; -------------------------
 ;; Views
 
+(def random-market [{:type :gem} {:type :gem} {:type :gem}
+                    {:type :relic} {:type :relic} {:type :spell}
+                    {:type :spell} {:type :spell} {:type :spell}])
+
+(def balanced-market [{:type :gem :max-cost 4 #_3} {:type :gem :min-cost 4} {:type :gem}
+                      {:type :relic :max-cost 4} {:type :relic :min-cost 4} {:type :spell}
+                      {:type :spell :max-cost 4} {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 5 #_6}])
+
+(def prosperous-market [{:type :gem, :max-cost 3} {:type :gem, :min-cost 4, :max-cost 4} {:type :gem, :min-cost 5}
+                        {:type :relic, :max-cost 4} {:type :relic, :min-cost 5} {:type :spell}
+                        {:type :spell, :max-cost 4, :min-cost 4} {:type :spell, :min-cost 5, :max-cost 5} {:type :spell, :min-cost 6}])
+
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty :fit
                                       :nemesis    {:min-level 3 :max-level 4}
                                       :players    [{} {}]
-                                      :supply     [{:type :gem} {:type :gem} {:type :gem}
-                                                   {:type :relic} {:type :relic} {:type :spell}
-                                                   {:type :spell} {:type :spell} {:type :spell}]}
+                                      :supply     random-market}
                         :selection   []
                         :expanded?   {:market true}}))
 
@@ -595,7 +605,8 @@
                                                                       (swap! state update-in [:game-setup :players player-no] dissoc :name)
                                                                       (swap! state assoc-in [:game-setup :players player-no :name] value))))}
                                             [:<>
-                                             [:option {:value :random} "Random mage"]
+                                             [:option {:value :random} "Any mage"]
+                                             [:hr]
                                              (->> mages/mages
                                                   (remove (comp (clojure.set/difference selected-players #{name}) :name))
                                                   (sort-by :name)
@@ -678,24 +689,29 @@
           [:td
            (if setup-game?
              (let [supply         (get-in @state [:game-setup :supply])
+                   value          (cond
+                                    (= supply random-market) :random
+                                    (= supply balanced-market) :balanced
+                                    (= supply prosperous-market) :prosperous
+                                    :else :custom)
                    selected-cards (->> supply
                                        (keep :card-name)
                                        set)]
                [:div
-                [:strong "Market "] [:select {:on-change (fn [event]
+                [:strong "Market "] [:select {:value     value
+                                              :on-change (fn [event]
                                                            (let [value (keyword (.. event -target -value))]
                                                              (case value
-                                                               :random (swap! state assoc-in [:game-setup :supply] [{:type :gem} {:type :gem} {:type :gem}
-                                                                                                                    {:type :relic} {:type :relic} {:type :spell}
-                                                                                                                    {:type :spell} {:type :spell} {:type :spell}])
-                                                               :balanced (swap! state assoc-in [:game-setup :supply] [{:type :gem :max-cost 4} {:type :gem} {:type :gem :min-cost 5}
-                                                                                                                      {:type :relic :max-cost 4} {:type :relic} {:type :spell :max-cost 4}
-                                                                                                                      {:type :spell :min-cost 4 :max-cost 4} {:type :spell} {:type :spell :min-cost 5}])
+                                                               :random (swap! state assoc-in [:game-setup :supply] random-market)
+                                                               :balanced (swap! state assoc-in [:game-setup :supply] balanced-market)
+                                                               :prosperous (swap! state assoc-in [:game-setup :supply] prosperous-market)
                                                                :custom nil)))}
                                      [:<>
                                       [:option {:value :random} "All random"]
                                       [:option {:value :balanced} "Balanced"]
-                                      [:option {:value :custom} "Custom"]]]
+                                      [:option {:value :prosperous} "Prosperous"]
+                                      (when (= :custom value)
+                                        [:option {:value :custom} "Custom"])]]
                 [:table
                  [:tbody
                   (for [row (range 3)]
@@ -740,7 +756,7 @@
                                                                                                             (dissoc :min-cost
                                                                                                                     :max-cost)))))))}
                            [:<>
-                            [:option {:value :random} (ut/format-name type)]
+                            [:option {:value :random} (str "Any " (ut/format-name type))]
                             [:hr]
                             (->> cards
                                  (remove (comp (clojure.set/difference selected-cards #{card-name}) :name))
