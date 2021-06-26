@@ -96,6 +96,32 @@
                               [::fiend-catcher-choice]]
                     :quote   "'It's as good a place as any for a world-swallowing beast.' Garu, Oathsworn Protector"})
 
+(defn mages-totem-destroy [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (concat [[:move-card {:card-name card-name
+                                                            :from      :play-area
+                                                            :to        :trash}]]
+                                              (when (= :mage's-totem card-name)
+                                                [[:heal-gravehold 1]]))}))
+
+(effects/register {::mages-totem-destroy mages-totem-destroy})
+
+(def mages-totem {:name    :mage's-totem
+                  :type    :relic
+                  :cost    2
+                  :text    ["Destroy a gem or relic you played this turn."
+                            "OR"
+                            "Destroy this. Gravehold gains 1 life."]
+                  :effects [[:give-choice {:title   :mage's-totem
+                                           :text    ["Destroy a gem or relic you played this turn."
+                                                     "OR"
+                                                     "Destroy this. Gravehold gains 1 life."]
+                                           :choice  ::mages-totem-destroy
+                                           :options [:player :play-area {:types #{:gem :relic}}]
+                                           :min     1
+                                           :max     1}]]
+                  :quote   "'Once, the conclave worshiped at the foot of a great tower much like this very effigy.' Yan Magda, Enlightened Exile"})
+
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :temporal-helix
@@ -170,6 +196,7 @@
             blasting-staff
             cairn-compass
             fiend-catcher
+            mages-totem
             temporal-helix
             vortex-gauntlet
             unstable-prism])

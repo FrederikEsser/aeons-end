@@ -40,7 +40,15 @@
         (assoc-in [:players player-no :life] (min (+ current-life life)
                                                   player-starting-life)))))
 
-(effects/register {:heal heal})
+(defn heal-gravehold [{:keys [difficulty] :as game} {:keys [arg]}]
+  (let [gravehold-starting-life (gravehold-starting-life difficulty)
+        current-life            (get-in game [:gravehold :life])]
+    (-> game
+        (assoc-in [:gravehold :life] (min (+ current-life arg)
+                                          gravehold-starting-life)))))
+
+(effects/register {:heal           heal
+                   :heal-gravehold heal-gravehold})
 
 (defn kill-player [game {:keys [player-no]}]
   (let [{:keys [life]} (get-in game [:players player-no])]

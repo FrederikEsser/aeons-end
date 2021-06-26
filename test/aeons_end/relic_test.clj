@@ -326,6 +326,32 @@
                            :revealed-cards 1}
               :trash      [spark]})))))
 
+(deftest mages-totem-test
+  (testing "Mage's Totem"
+    (let [mages-totem (assoc mages-totem :id 1)]
+      (is (= (-> {:players [{:hand      [mages-totem]
+                             :play-area [crystal]}]}
+                 (play 0 :mage's-totem)
+                 (choose :crystal))
+             {:players [{:play-area [mages-totem]}]
+              :trash   [crystal]}))
+      (is (= (-> {:players   [{:hand      [mages-totem]
+                               :play-area [crystal]}]
+                  :gravehold {:life 20}}
+                 (play 0 :mage's-totem)
+                 (choose :mage's-totem))
+             {:players   [{:play-area [crystal]}]
+              :gravehold {:life 21}
+              :trash     [mages-totem]}))
+      (is (= (-> {:players   [{:hand      [mages-totem]
+                               :play-area [crystal]}]
+                  :gravehold {:life 30}}
+                 (play 0 :mage's-totem)
+                 (choose :mage's-totem))
+             {:players   [{:play-area [crystal]}]
+              :gravehold {:life 30}
+              :trash     [mages-totem]})))))
+
 (deftest temporal-helix-test
   (testing "Temporal Helix"
     (let [spark (assoc spark :id 1)]
