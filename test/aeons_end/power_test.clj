@@ -163,17 +163,27 @@
                               resolve-nemesis-cards-in-play
                               (choose {:player-no 0})
                               (choose :crystal))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                                           :unleash   [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:deck [crystal jade]}
+                                           {}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 1}))))
     (is (= (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
                             :unleash   [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
-                :players   [{:discard [crystal]}]}
+                :players   [{}
+                            {:discard [crystal]}]}
                resolve-nemesis-cards-in-play
-               (choose {:player-no 0})
+               (choose {:player-no 1})
                (choose :crystal))
            {:nemesis   {:discard [(assoc-in chaos-flail [:power :power] 0)]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
-            :players   [{}]
+            :players   [{}
+                        {}]
             :trash     [crystal]}))))
 
 (deftest dire-abbatoir-test

@@ -164,7 +164,7 @@
                                          [:give-choice {:title   :chaos-flail
                                                         :text    "Any player places their discard pile on top of their deck and shuffles it.\nThen, that player reveals the top two cards of their deck and destroys the most expensive card revealed."
                                                         :choice  ::chaos-flail-shuffle
-                                                        :options [:players]
+                                                        :options [:players {:min-deck+discard 1}]
                                                         :min     1
                                                         :max     1}]]}})
 

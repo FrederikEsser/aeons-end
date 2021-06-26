@@ -398,9 +398,12 @@
 (defn count-cards-in-hand [{:keys [hand]}]
   (count hand))
 
+(defn count-cards-in-deck-and-discard [{:keys [deck discard]}]
+  (count (concat deck discard)))
+
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
-                                       number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati
+                                       number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati min-deck+discard
                                        last type cost min-cost max-cost most-expensive most-opened-breaches
                                        status max-breach-no]}]]
   (let [highest-charge (->> players
@@ -431,6 +434,7 @@
                                 most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
                                 number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))
                                 min-hand (filter (comp #(<= min-hand %) count-cards-in-hand))
+                                min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))
                                 least-life (filter (comp #{low-life} :life))
                                 most-life (filter (comp #{high-life} :life))
                                 not-exhausted (filter (comp pos? :life))
