@@ -193,6 +193,15 @@
                      :effects [[::planar-insight-damage]]
                      :quote   "'She may no longer speak, but she sees much.' Brama, Breach Mage Elder"})
 
+(def radiance {:name    :radiance
+               :type    :spell
+               :cost    8
+               :cast    ["Deal 5 damage."
+                         "Each ally draws a card."]
+               :effects [[:deal-damage 5]
+                         [:other-players {:effects [[:draw 1]]}]]
+               :quote   "'All of us, together. For apart we are doomed.' Brama, Breach Mage Elder"})
+
 (def spectral-echo {:name    :spectral-echo
                     :type    :spell
                     :cost    3
@@ -206,14 +215,19 @@
                                              :max     1}]]
                     :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
 
-(def radiance {:name    :radiance
-               :type    :spell
-               :cost    8
-               :cast    ["Deal 5 damage."
-                         "Each ally draws a card."]
-               :effects [[:deal-damage 5]
-                         [:other-players {:effects [[:draw 1]]}]]
-               :quote   "'All of us, together. For apart we are doomed.' Brama, Breach Mage Elder"})
+(def scorch {:name    :scorch
+             :type    :spell
+             :cost    5
+             :cast    ["Deal 4 damage."
+                       "If this damage causes a minion from the nemesis deck to the discarded, any ally gains 2 charges."]
+             :effects [[:deal-damage {:arg          4
+                                      :kill-effects [[:give-choice {:title   :scorch
+                                                                    :text    "Any ally gains 2 charges"
+                                                                    :choice  [:gain-charges {:arg 2}]
+                                                                    :options [:players :ability {:ally true :fully-charged false}]
+                                                                    :min     1
+                                                                    :max     1}]]}]]
+             :quote   "'With each beast she marks, Quilius thinks herself closer to enlightenment.' Yan Magda, Enlightened Exile"})
 
 (def cards [amplify-vision
             blaze
@@ -224,4 +238,5 @@
             phoenix-flame
             planar-insight
             radiance
+            scorch
             spectral-echo])

@@ -508,3 +508,70 @@
                                    :bonus-damage 1}]
                        :discard  [planar-insight]}]
             :nemesis {:life 45}}))))
+
+(deftest scorch-test
+  (testing "Scorch"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [scorch]}]}
+                          {:ability {:charge-cost 5}}]
+                :nemesis {:play-area [{:name :caterpillar
+                                       :type :minion
+                                       :life 5}]}}
+               (cast-spell 0 0 :scorch)
+               (choose {:area :minions :player-no 0 :card-name :caterpillar}))
+           {:players [{:breaches [{}]
+                       :discard  [scorch]}
+                      {:ability {:charge-cost 5}}]
+            :nemesis {:play-area [{:name :caterpillar
+                                   :type :minion
+                                   :life 1}]}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [scorch]}]}
+                          {:ability {:charges     0
+                                     :charge-cost 5}}]
+                :nemesis {:play-area [{:name :caterpillar
+                                       :type :minion
+                                       :life 4}]}}
+               (cast-spell 0 0 :scorch)
+               (choose {:area :minions :player-no 0 :card-name :caterpillar})
+               (choose {:player-no 1}))
+           {:players [{:breaches [{}]
+                       :discard  [scorch]}
+                      {:ability {:charges     2
+                                 :charge-cost 5}}]
+            :nemesis {:discard [{:name :caterpillar
+                                 :type :minion
+                                 :life 0}]}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [scorch]}]}
+                          {:ability {:charges     4
+                                     :charge-cost 5}}]
+                :nemesis {:play-area [{:name :caterpillar
+                                       :type :minion
+                                       :life 4}]}}
+               (cast-spell 0 0 :scorch)
+               (choose {:area :minions :player-no 0 :card-name :caterpillar})
+               (choose {:player-no 1}))
+           {:players [{:breaches [{}]
+                       :discard  [scorch]}
+                      {:ability {:charges     5
+                                 :charge-cost 5}}]
+            :nemesis {:discard [{:name :caterpillar
+                                 :type :minion
+                                 :life 0}]}}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [scorch]}]
+                           :ability  {:charges     0
+                                      :charge-cost 5}}
+                          {:ability {:charges     5
+                                     :charge-cost 5}}]
+                :nemesis {:play-area [{:name :caterpillar
+                                       :type :minion
+                                       :life 4}]}}
+               (cast-spell 0 0 :scorch)
+               (choose {:area :minions :player-no 0 :card-name :caterpillar}))
+           {:players [{:breaches [{}]
+                       :discard  [scorch]
+                       :ability  {:charges     0
+                                  :charge-cost 5}}
+                      {:ability {:charges     5
+                                 :charge-cost 5}}]
+            :nemesis {:discard [{:name :caterpillar
+                                 :type :minion
+                                 :life 0}]}}))))

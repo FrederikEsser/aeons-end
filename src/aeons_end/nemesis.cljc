@@ -135,7 +135,7 @@
   (let [life (get-in game [:nemesis :life])]
     (assoc-in game [:nemesis :life] (max (- life damage) 0))))
 
-(defn deal-damage-to-minion [game {:keys [card-name damage kill-effects] :as args}]
+(defn deal-damage-to-minion [game {:keys [player-no card-name damage kill-effects] :as args}]
   (if (= :husks card-name)
     (deal-damage-to-husks game args)
     (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
@@ -151,7 +151,8 @@
                                                                 (- life damage)))
           (cond-> killed? (discard-nemesis-card {:card-name card-name}))
           (cond-> (and killed?
-                       kill-effects) (push-effect-stack {:effects kill-effects}))))))
+                       kill-effects) (push-effect-stack {:player-no player-no
+                                                         :effects   kill-effects}))))))
 
 (defn deal-damage-to-target [game {:keys [player-no damage area card-name kill-effects]}]
   (push-effect-stack game {:player-no player-no
