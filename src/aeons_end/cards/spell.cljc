@@ -193,6 +193,35 @@
                      :effects [[::planar-insight-damage]]
                      :quote   "'She may no longer speak, but she sees much.' Brama, Breach Mage Elder"})
 
+(defn pyromancy-discard [game {:keys [caster card-name player-card-names] :as args}]
+  (let [card-count (cond card-name 1
+                         player-card-names (count player-card-names)
+                         :else 0)]
+    (push-effect-stack game (merge {:player-no caster
+                                    :args      args         ; bonus-damage
+                                    :effects   [[:collective-discard-from-hand args]
+                                                [:deal-damage (+ 1 (* 3 card-count))]]}))))
+
+(defn pyromancy-give-choice [game {:keys [player-no] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :args      args                  ; bonus-damage
+                           :effects   [[:give-choice {:title   :pyromancy
+                                                      :text    "Discard up to two cards in hand"
+                                                      :choice  [::pyromancy-discard {:caster player-no}]
+                                                      :options [:players :hand {:ally true}]
+                                                      :max     2}]]}))
+
+(effects/register {::pyromancy-discard     pyromancy-discard
+                   ::pyromancy-give-choice pyromancy-give-choice})
+
+(def pyromancy {:name    :pyromancy
+                :type    :spell
+                :cost    7
+                :cast    ["Deal 1 damage."
+                          "Allies may collectively discard up to two cards in hand. For each card discarded this way, deal 3 additional damage."]
+                :effects [[::pyromancy-give-choice]]
+                :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
+
 (def radiance {:name    :radiance
                :type    :spell
                :cost    8
@@ -237,6 +266,7 @@
             nova-forge
             phoenix-flame
             planar-insight
+            pyromancy
             radiance
             scorch
             spectral-echo])
