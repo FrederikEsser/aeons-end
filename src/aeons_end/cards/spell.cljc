@@ -231,19 +231,6 @@
                          [:other-players {:effects [[:draw 1]]}]]
                :quote   "'All of us, together. For apart we are doomed.' Brama, Breach Mage Elder"})
 
-(def spectral-echo {:name    :spectral-echo
-                    :type    :spell
-                    :cost    3
-                    :cast    ["Deal 2 damage."
-                              "You may destroy a card in hand."]
-                    :effects [[:deal-damage 2]
-                              [:give-choice {:title   :spectral-echo
-                                             :text    "You may destroy a card in hand."
-                                             :choice  :destroy-from-hand
-                                             :options [:player :hand]
-                                             :max     1}]]
-                    :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
-
 (def scorch {:name    :scorch
              :type    :spell
              :cost    5
@@ -257,6 +244,19 @@
                                                                     :min     1
                                                                     :max     1}]]}]]
              :quote   "'With each beast she marks, Quilius thinks herself closer to enlightenment.' Yan Magda, Enlightened Exile"})
+
+(def spectral-echo {:name    :spectral-echo
+                    :type    :spell
+                    :cost    3
+                    :cast    ["Deal 2 damage."
+                              "You may destroy a card in hand."]
+                    :effects [[:deal-damage 2]
+                              [:give-choice {:title   :spectral-echo
+                                             :text    "You may destroy a card in hand."
+                                             :choice  :destroy-from-hand
+                                             :options [:player :hand]
+                                             :max     1}]]
+                    :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
 
 (def cards [amplify-vision
             blaze

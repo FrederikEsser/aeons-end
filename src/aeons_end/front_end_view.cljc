@@ -1,7 +1,8 @@
 (ns aeons-end.front-end-view
   (:require [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]))
+            [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]
+            [clojure.string :as string]))
 
 (defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
                           {:keys [options max choice-opts] :as choice}]
@@ -271,17 +272,29 @@
                  (str title ": "))
                text)]))
 
+(defn get-value [game val]
+  (if (keyword? val)
+    (let [val-fn (effects/get-predicate val)]
+      (when val-fn
+        (val-fn game)))
+    val))
+
 (defn view-nemesis [{{:keys [name life play-area deck discard
+                             unleash-text additional-rules
                              tokens fury husks]} :nemesis
                      {:keys [player-no phase]}   :player
                      choice                      :choice
                      resolving                   :resolving
                      :as                         game}]
-  (merge {:name-ui (ut/format-name name)
-          :life    life
-          :deck    (if (empty? deck)
-                     {}
-                     {:number-of-cards (count deck)})}
+  (merge {:name-ui          (ut/format-name name)
+          :life             life
+          :deck             (if (empty? deck)
+                              {}
+                              {:number-of-cards (count deck)})
+          :unleash-text     (get-value game unleash-text)
+          :additional-rules (str "Additional Rules:\n"
+                                 (->> (get-value game additional-rules)
+                                      (string/join "\n")))}
          (when (not-empty play-area)
            {:play-area (->> play-area
                             (map (fn [{:keys [name immediately to-discard power persistent life] :as card}]

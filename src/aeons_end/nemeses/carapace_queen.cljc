@@ -276,10 +276,21 @@
                       [::swarm]]
             :quote   "'The sound of the things, skittering across the cave walls, is loud enough to drown our screams.' Nerva, Survivor"})
 
+(defn unleash-text [{:keys [difficulty]}]
+  (if (#{:beginner :normal} difficulty)
+    "Place two husks into play."
+    "Place three husks into play."))
+
+(effects/register-predicates {::unleash-text unleash-text})
+
 (def carapace-queen {:name              :carapace-queen
                      :level             3
                      :life              60
                      :unleash           [[::unleash]]
+                     :unleash-text      ::unleash-text
+                     :additional-rules  ["- Each husk is a minion that has 1 life."
+                                         "- When a player deals damage to a husk, that player may suffer 1 damage to distribute the damage dealt over multiple husks."
+                                         "- When Carapace Queen has fifteen husks in play and must place another into play, Gravehold suffers 1 damage instead."]
                      :victory-condition ::victory-condition
                      :cards             [broodwomb endless-throng hatch
                                          blot-the-sun foul-multitudes infest

@@ -266,11 +266,27 @@
 
 (effects/register-predicates {::victory-condition victory-condition})
 
+(defn unleash-text [{:keys [current-player] :as game}]
+  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+                                     (filter (comp #{:nemesis} :type))
+                                     count)]
+    [(case (-> discarded-nemesis-cards
+               (cond-> (int? current-player) inc)
+               (mod 2))
+       0 "Gravehold suffers 2 damage"
+       1 "Any player suffers 2 damage.")
+     "OR"
+     "Umbra Titan loses one nemesis token."]))
+
+(effects/register-predicates {::unleash-text unleash-text})
+
 (def umbra-titan {:name              :umbra-titan
                   :level             3
                   :life              70
                   :setup             [[::setup]]
                   :unleash           [[::unleash]]
+                  :unleash-text      ::unleash-text
+                  :additional-rules  ["When Umbra Titan has zero nemesis tokens, Gravehold's foundation is undermined. Gravehold collapses into rubble and the players lose."]
                   :victory-condition ::victory-condition
                   :cards             [cryptid grubber seismic-roar
                                       maul tombfright vault-behemoth

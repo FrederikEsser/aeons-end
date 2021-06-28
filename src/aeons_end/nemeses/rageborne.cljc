@@ -307,18 +307,32 @@
             :effects [[::seize-choice]]
             :quote   "'How this cave has not long ago collapsed is a wonder and a mercy.' Nerva, Survivor"})
 
-(def rageborne {:name          :rageborne
-                :level         2
-                :life          70
-                :unleash       [[::gain-fury]]
-                :after-effects [[::after-effects]]
-                :cards         [cleave provoker unrelenting-ire
-                                blood-cry invoke-carnage scorn
-                                avatar-of-wrath onslaught rolling-death]
-                :fury          0
-                :strike-deck   [convoke
-                                devastate
-                                eviscerate
-                                frenzy
-                                raze
-                                seize]})
+(defn additional-rules [{:keys [difficulty]}]
+  ["When Rageborne Strikes, resolve the following in order:"
+   "- Draw a card from the strike deck and resolve it."
+   "- Shuffle that card back into the strike deck."
+   (if (#{:beginner :normal} difficulty)
+     "- Rageborne loses three Fury tokens"
+     "- Rageborne loses one Fury token")
+   "At the end of the nemesis turn, if Rageborne has four or more Fury tokens, it Strikes once."])
+
+(effects/register-predicates {::additional-rules additional-rules})
+
+(def rageborne {:name             :rageborne
+                :level            2
+                :life             70
+                :unleash          [[::gain-fury]]
+                :unleash-text     "Rageborne gains one Fury token."
+                :additional-rules ::additional-rules
+                :after-effects    [[::after-effects]]
+                :cards            [cleave provoker unrelenting-ire
+                                   blood-cry invoke-carnage scorn
+                                   avatar-of-wrath onslaught rolling-death]
+                :fury             1
+                :strike-deck      (->> [convoke
+                                        devastate
+                                        eviscerate
+                                        frenzy
+                                        raze
+                                        seize]
+                                       shuffle)})
