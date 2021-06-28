@@ -66,6 +66,23 @@
             :on-gain [[::blaze-on-gain]]
             :effects [[::blaze-damage]]})
 
+(defn catalyst-deal-damage [game {:keys [player-no] :as args}]
+  (let [{:keys [life]} (get-in game [:players player-no])
+        damage (if (<= life 2) 7 2)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage damage]]})))
+
+(effects/register {::catalyst-deal-damage catalyst-deal-damage})
+
+(def catalyst {:name    :catalyst
+               :type    :spell
+               :cost    6
+               :cast    ["Deal 2 damage."
+                         "If you have 2 life or less, deal 5 additional damage."]
+               :effects [[::catalyst-deal-damage]]
+               :quote   "'What little quiet we have found is drowned out by the screams of the many we have lost.' Gex, Breach Mage Adviser"})
+
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
   (let [card-count (cond card-name 1
                          card-names (count card-names)
@@ -260,6 +277,7 @@
 
 (def cards [amplify-vision
             blaze
+            catalyst
             dark-fire
             essence-theft
             ignite
