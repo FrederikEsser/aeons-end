@@ -96,6 +96,20 @@
                               [::fiend-catcher-choice]]
                     :quote   "'It's as good a place as any for a world-swallowing beast.' Garu, Oathsworn Protector"})
 
+(def mages-talisman {:name    :mage's-talisman
+                     :type    :relic
+                     :cost    5
+                     :text    ["Gain 1 charge"
+                               "Any ally gains 1 charge."]
+                     :effects [[:gain-charge]
+                               [:give-choice {:title   :mage's-talisman
+                                              :text    "Any ally gains 1 charge"
+                                              :choice  :gain-charge
+                                              :options [:players :ability {:ally true :fully-charged false}]
+                                              :min     1
+                                              :max     1}]]
+                     :quote   "'The sister-mages of old would wear their talismans as a symbol of their station and a warning to those that would challenge them.'"})
+
 (defn mages-totem-destroy [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (concat [[:move-card {:card-name card-name
@@ -196,6 +210,7 @@
             blasting-staff
             cairn-compass
             fiend-catcher
+            mages-talisman
             mages-totem
             temporal-helix
             vortex-gauntlet
