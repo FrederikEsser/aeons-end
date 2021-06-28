@@ -132,6 +132,23 @@
                                              :max     1}]]
                     :quote   "'There is talk of the link between the mages and our adversaries. More and more, the difference between the two becomes harder to see.' Ohat, Dirt Merchant"})
 
+(defn feedback-aura-deal-damage [game {:keys [player-no] :as args}]
+  (let [{:keys [charges]} (get-in game [:players player-no :ability])
+        damage (if (>= charges 4) 6 3)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage damage]]})))
+
+(effects/register {::feedback-aura-deal-damage feedback-aura-deal-damage})
+
+(def feedback-aura {:name    :feedback-aura
+                    :type    :spell
+                    :cost    5
+                    :cast    ["Deal 3 damage."
+                              "If you have 4 or more charges, deal 3 additional damage."]
+                    :effects [[::feedback-aura-deal-damage]]
+                    :quote   "'The void flows through me now; I am one with nothing.' Xaxos, Voidbringer"})
+
 (def ignite {:name    :ignite
              :type    :spell
              :cost    4
@@ -280,6 +297,7 @@
             catalyst
             dark-fire
             essence-theft
+            feedback-aura
             ignite
             nova-forge
             phoenix-flame
