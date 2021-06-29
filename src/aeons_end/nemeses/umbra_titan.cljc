@@ -273,8 +273,8 @@
     [(case (-> discarded-nemesis-cards
                (cond-> (int? current-player) inc)
                (mod 2))
-       0 "Gravehold suffers 2 damage"
-       1 "Any player suffers 2 damage.")
+       0 "Gravehold [alt. any player] suffers 2 damage"
+       1 "Any player [alt. Gravehold] suffers 2 damage.")
      "OR"
      "Umbra Titan loses one nemesis token."]))
 

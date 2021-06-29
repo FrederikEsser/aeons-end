@@ -7,7 +7,7 @@
 (defn astral-cube-heal [game _]
   (let [{:keys [player-no]} (-> game :turn-order :deck first :type)
         exhausted? (when (and player-no
-                              (pos? player-no))
+                              (<= 0 player-no))
                      (zero? (get-in game [:players player-no :life])))]
     (cond
       (= -1 player-no) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube

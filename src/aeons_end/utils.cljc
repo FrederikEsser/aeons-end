@@ -406,24 +406,26 @@
                                        number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati min-deck+discard
                                        last type cost min-cost max-cost most-expensive most-opened-breaches
                                        status max-breach-no]}]]
-  (let [highest-charge (->> players
+  (let [solo-play?     (= 1 (count players))
+        highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
                             (apply max 0))
         highest-opened (->> players
                             (map count-opened-breaches)
                             (apply max 0))
-        low-life       (->> players
-                            (keep :life)
-                            (filter pos?)                   ; Exhausted players are spared
-                            (apply min 20))
+        low-life       (if solo-play?
+                         (-> players first :life)
+                         (->> players
+                              (keep :life)
+                              (filter pos?)                 ; Exhausted players are spared
+                              (apply min 20)))
         high-life      (->> players
                             (keep :life)
-                            (filter pos?)                   ; Exhausted players are spared
                             (apply max 0))
         valid-players  (cond->> (map-indexed (fn [player-no player]
                                                (assoc player :player-no player-no)) players)
                                 (and ally
-                                     (> (count players) 1)) (remove (comp #{player-no} :player-no))
+                                     (not solo-play?)) (remove (comp #{player-no} :player-no))
                                 min-charges (filter (comp #(>= % min-charges) :charges :ability))
                                 most-charges (filter (comp #{highest-charge} :charges :ability))
                                 activation (filter (comp #{activation} :activation :ability))

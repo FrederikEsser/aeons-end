@@ -127,7 +127,7 @@
   (let [{:keys [overswarming?]} (get-in game [:nemesis :husks])]
     (when overswarming?
       {:conclusion :defeat
-       :text       "You're overswarmed by the Carapace Queens hordes of husks."})))
+       :text       "You're overswarmed by the Carapace Queen's hordes of husks."})))
 
 (effects/register-predicates {::victory-condition victory-condition})
 

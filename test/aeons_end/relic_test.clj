@@ -65,6 +65,14 @@
             :turn-order {:deck           [turn-order/player-2]
                          :revealed-cards 1}}))
     (is (= (-> {:players    [{:hand [astral-cube]
+                              :life 0}]
+                :turn-order {:deck [turn-order/player-1]}}
+               (play 0 :astral-cube))
+           {:players    [{:play-area [astral-cube]
+                          :life      0}]
+            :turn-order {:deck           [turn-order/player-1]
+                         :revealed-cards 1}}))
+    (is (= (-> {:players    [{:hand [astral-cube]
                               :life 8}
                              {:life 0}
                              {:life 1}]
