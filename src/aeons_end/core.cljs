@@ -459,59 +459,60 @@
         [:tbody
          [:tr
           [:td {:col-span 2}
-           (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks interaction choice-value]} (-> @state :game :nemesis)]
-             [:div [:table
-                    [:tbody
-                     [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
-                     [:tr
-                      [:td
-                       (if setup-game?
-                         (let [{:keys [name min-level]} (-> @state :game-setup :nemesis)
-                               difficulty (-> @state :game-setup :difficulty)]
-                           [:div
-                            [:select {:value     (or name
-                                                     min-level
-                                                     :random)
-                                      :on-change (fn [event]
-                                                   (let [value          (.. event -target -value)
-                                                         nemesis-setup  (cond
-                                                                          (re-matches #"\d" value) (let [min-level (js/parseInt value)]
-                                                                                                     {:min-level min-level
-                                                                                                      :max-level (inc min-level)})
-                                                                          (= "random" value) {}
-                                                                          :else {:name (keyword value)})
-                                                         new-difficulty (cond
-                                                                          (and (nil? (:min-level nemesis-setup))
-                                                                               (= :fit difficulty)) :normal
-                                                                          (and (:min-level nemesis-setup)
-                                                                               (nil? min-level)) :fit
-                                                                          :else difficulty)]
-                                                     (swap! state update :game-setup merge {:nemesis    nemesis-setup
-                                                                                            :difficulty new-difficulty})))}
-                             [:<>
-                              [:option {:value :random} "Any nemesis"]
-                              [:hr]
-                              (->> (range 1 8 2)
-                                   (mapk (fn [n]
-                                           [:option {:value n} (str "Level " n "-" (inc n))])))
-                              [:hr]
-                              (->> nemesis/nemeses
-                                   (sort-by (juxt :level :name))
-                                   (mapk (fn [{:keys [name level]}]
-                                           [:option {:value name} (str (ut/format-name name) " (" level ")")])))]]
-                            [:div
-                             "Diff: "
-                             [:select {:value     (-> @state :game-setup :difficulty)
-                                       :on-change #(swap! state assoc-in [:game-setup :difficulty] (keyword (.. % -target -value)))}
-                              [:<>
-                               (when (-> @state :game-setup :nemesis :min-level)
-                                 [:<>
-                                  [option :fit]
-                                  [:hr]])
-                               [option :beginner -2]
-                               [option :normal]
-                               [option :expert +2]
-                               [option :extinction +4]]]]])
+           (if setup-game?
+             (let [{:keys [name min-level]} (-> @state :game-setup :nemesis)
+                   difficulty (-> @state :game-setup :difficulty)]
+               [:div
+                "Nemesis: "
+                [:select {:value     (or name
+                                         min-level
+                                         :random)
+                          :on-change (fn [event]
+                                       (let [value          (.. event -target -value)
+                                             nemesis-setup  (cond
+                                                              (re-matches #"\d" value) (let [min-level (js/parseInt value)]
+                                                                                         {:min-level min-level
+                                                                                          :max-level (inc min-level)})
+                                                              (= "random" value) {}
+                                                              :else {:name (keyword value)})
+                                             new-difficulty (cond
+                                                              (and (nil? (:min-level nemesis-setup))
+                                                                   (= :fit difficulty)) :normal
+                                                              (and (:min-level nemesis-setup)
+                                                                   (nil? min-level)) :fit
+                                                              :else difficulty)]
+                                         (swap! state update :game-setup merge {:nemesis    nemesis-setup
+                                                                                :difficulty new-difficulty})))}
+                 [:<>
+                  [:option {:value :random} "Any nemesis"]
+                  [:hr]
+                  (->> (range 1 8 2)
+                       (mapk (fn [n]
+                               [:option {:value n} (str "Level " n "-" (inc n))])))
+                  [:hr]
+                  (->> nemesis/nemeses
+                       (sort-by (juxt :level :name))
+                       (mapk (fn [{:keys [name level]}]
+                               [:option {:value name} (str (ut/format-name name) " (" level ")")])))]]
+                [:div
+                 "Difficulty: "
+                 [:select {:value     (-> @state :game-setup :difficulty)
+                           :on-change #(swap! state assoc-in [:game-setup :difficulty] (keyword (.. % -target -value)))}
+                  [:<>
+                   (when (-> @state :game-setup :nemesis :min-level)
+                     [:<>
+                      [option :fit]
+                      [:hr]])
+                   [option :beginner -2]
+                   [option :normal]
+                   [option :expert +2]
+                   [option :extinction +4]]]]])
+             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks interaction choice-value]} (-> @state :game :nemesis)]
+               [:div [:table
+                      [:tbody
+                       [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
+                       [:tr
+                        [:td
                          [:div
                           (let [disabled (nil? interaction)]
                             [:button {:style    (merge (button-style :type :nemesis
@@ -541,29 +542,29 @@
                                                :padding-top "3px"}}
                                  "Fury: " fury])
                               [:hr]
-                              (format-text unleash-text "UNLEASH")]])])]
-                      [:td [:div
-                            (when husks
-                              (let [{:keys [number-of-husks title swarm-text swarm-interval interaction choice-value]} husks
-                                    disabled (nil? interaction)]
-                                [:button {:style    (merge (button-style :type :husks
-                                                                         :disabled disabled)
-                                                           {:width      "150px"
-                                                            :min-height "170px"})
-                                          :title    (format-title {:text title})
-                                          :disabled disabled
-                                          :on-click (when interaction
-                                                      (fn [] (case interaction
-                                                               :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value :husks))))))}
-                                 [:div
-                                  [:div {:style {:font-size "1.4em"}} (str number-of-husks " husk" (when (not= 1 number-of-husks) "s"))]
-                                  [:div (format-text swarm-text (str "SWARM " swarm-interval))]]]))
-                            (mapk view-nemesis-card play-area)]]
-                      [:td [:div
-                            (when deck
-                              (str (:number-of-cards deck) " Cards"))]]
-                      [:td [view-expandable-pile :discard/nemesis discard
-                            {:nemesis? true}]]]]]])]]
+                              (format-text unleash-text "UNLEASH")]])]]
+                        [:td [:div
+                              (when husks
+                                (let [{:keys [number-of-husks title swarm-text swarm-interval interaction choice-value]} husks
+                                      disabled (nil? interaction)]
+                                  [:button {:style    (merge (button-style :type :husks
+                                                                           :disabled disabled)
+                                                             {:width      "150px"
+                                                              :min-height "170px"})
+                                            :title    (format-title {:text title})
+                                            :disabled disabled
+                                            :on-click (when interaction
+                                                        (fn [] (case interaction
+                                                                 :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value :husks))))))}
+                                   [:div
+                                    [:div {:style {:font-size "1.4em"}} (str number-of-husks " husk" (when (not= 1 number-of-husks) "s"))]
+                                    [:div (format-text swarm-text (str "SWARM " swarm-interval))]]]))
+                              (mapk view-nemesis-card play-area)]]
+                        [:td [:div
+                              (when deck
+                                (str (:number-of-cards deck) " Cards"))]]
+                        [:td [view-expandable-pile :discard/nemesis discard
+                              {:nemesis? true}]]]]]]))]]
          [:tr
           [:td
            (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]
@@ -617,16 +618,22 @@
                                          (keep :name)
                                          set)]
                [:div
-                [:div "Players " [:select {:value     (count players)
-                                           :on-change (fn [event]
-                                                        (let [value (js/parseInt (.. event -target -value))
-                                                              diff  (- value (count players))]
-                                                          (swap! state assoc-in [:game-setup :players] (vec (if (pos? diff)
-                                                                                                              (concat players (repeat diff {}))
-                                                                                                              (take value players))))))}
-                                  [:<> (->> (range 1 5)
-                                            (mapk (fn [n]
-                                                    [:option {:value n} n])))]]]
+                [:div "Players: " [:select {:style     {:width              "20px"
+                                                        :padding            "4px"
+                                                        :-webkit-appearance :none
+                                                        :-moz-appearance    :none
+                                                        :text-indent        "1px"
+                                                        :text-overflow      ""}
+                                            :value     (count players)
+                                            :on-change (fn [event]
+                                                         (let [value (js/parseInt (.. event -target -value))
+                                                               diff  (- value (count players))]
+                                                           (swap! state assoc-in [:game-setup :players] (vec (if (pos? diff)
+                                                                                                               (concat players (repeat diff {}))
+                                                                                                               (take value players))))))}
+                                   [:<> (->> (range 1 5)
+                                             (mapk (fn [n]
+                                                     [:option {:value n} n])))]]]
                 (->> players
                      (mapk-indexed (fn [player-no {:keys [name]}]
                                      [:div [:select {:value     (or name :random)
@@ -729,20 +736,20 @@
                                        (keep :card-name)
                                        set)]
                [:div
-                [:strong "Market "] [:select {:value     value
-                                              :on-change (fn [event]
-                                                           (let [value (keyword (.. event -target -value))]
-                                                             (case value
-                                                               :random (swap! state assoc-in [:game-setup :supply] random-market)
-                                                               :balanced (swap! state assoc-in [:game-setup :supply] balanced-market)
-                                                               :prosperous (swap! state assoc-in [:game-setup :supply] prosperous-market)
-                                                               :custom nil)))}
-                                     [:<>
-                                      [:option {:value :random} "All random"]
-                                      [:option {:value :balanced} "Balanced"]
-                                      [:option {:value :prosperous} "Prosperous"]
-                                      (when (= :custom value)
-                                        [:option {:value :custom} "Custom"])]]
+                [:strong "Market: "] [:select {:value     value
+                                               :on-change (fn [event]
+                                                            (let [value (keyword (.. event -target -value))]
+                                                              (case value
+                                                                :random (swap! state assoc-in [:game-setup :supply] random-market)
+                                                                :balanced (swap! state assoc-in [:game-setup :supply] balanced-market)
+                                                                :prosperous (swap! state assoc-in [:game-setup :supply] prosperous-market)
+                                                                :custom nil)))}
+                                      [:<>
+                                       [:option {:value :random} "All random"]
+                                       [:option {:value :balanced} "Balanced"]
+                                       [:option {:value :prosperous} "Prosperous"]
+                                       (when (= :custom value)
+                                         [:option {:value :custom} "Custom"])]]
                 [:table
                  [:tbody
                   (for [row (range 3)]
