@@ -96,6 +96,30 @@
                               [::fiend-catcher-choice]]
                     :quote   "'It's as good a place as any for a world-swallowing beast.' Garu, Oathsworn Protector"})
 
+(defn focusing-orb-destroy [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:move-card {:card-name :focusing-orb
+                                                    :from      :play-area
+                                                    :to        :trash}]
+                                       [:heal-gravehold 3]]}))
+
+(effects/register {::focusing-orb-destroy focusing-orb-destroy})
+
+(def focusing-orb {:name    :focusing-orb
+                   :type    :relic
+                   :cost    4
+                   :text    ["Focus any player's breach."
+                             "OR"
+                             "Destroy this. Gravehold gains 3 life."]
+                   :effects [[:give-choice {:title     :focusing-orb
+                                            :text      "Focus any player's breach."
+                                            :choice    :focus-breach
+                                            :options   [:players :breaches {:stati #{:closed :focused}}]
+                                            :or-choice {:text    "Destroy this. Gravehold gains 3 life."
+                                                        :effects [[::focusing-orb-destroy]]}
+                                            :max       1}]]
+                   :quote   "'Jian picked up the orb as if knowing its purpose. That was the last day she ever spoke.'"})
+
 (def mages-talisman {:name    :mage's-talisman
                      :type    :relic
                      :cost    5
@@ -210,6 +234,7 @@
             blasting-staff
             cairn-compass
             fiend-catcher
+            focusing-orb
             mages-talisman
             mages-totem
             temporal-helix

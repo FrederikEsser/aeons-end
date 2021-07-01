@@ -405,7 +405,7 @@
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati min-deck+discard
                                        last type cost min-cost max-cost most-expensive most-opened-breaches
-                                       status max-breach-no]}]]
+                                       status stati max-breach-no]}]]
   (let [solo-play?     (= 1 (count players))
         highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
@@ -457,6 +457,7 @@
                                                                                                     :breach-no breach-no}))))))))]
                            (cond->> options
                                     status (filter (comp #{status} :status))
+                                    stati (filter (comp stati :status))
                                     max-breach-no (filter (comp #(<= % max-breach-no) :breach-no :option))
                                     :always (map :option)))
       :else (let [options      (case area
