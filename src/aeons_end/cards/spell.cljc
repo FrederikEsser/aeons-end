@@ -2,7 +2,8 @@
   (:require [aeons-end.nemesis]
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]
-            [aeons-end.utils :as ut]))
+            [aeons-end.utils :as ut])
+  (:refer-clojure :exclude [char]))
 
 (defn amplify-vision-damage [game {:keys [player-no] :as args}]
   (let [all-breaches-opened? (->> (get-in game [:players player-no :breaches])
@@ -82,6 +83,20 @@
                          "If you have 2 life or less, deal 5 additional damage."]
                :effects [[::catalyst-deal-damage]]
                :quote   "'What little quiet we have found is drowned out by the screams of the many we have lost.' Gex, Breach Mage Adviser"})
+
+(def char {:name    :char
+           :type    :spell
+           :cost    8
+           :cast    ["Deal 6 damage."
+                     "If this damage causes a minion from the nemesis deck to the discarded, any player gains 2 life."]
+           :effects [[:deal-damage {:arg          6
+                                    :kill-effects [[:give-choice {:title   :char
+                                                                  :text    "Any player gains 2 life."
+                                                                  :choice  [:heal {:life 2}]
+                                                                  :options [:players {:not-exhausted true}]
+                                                                  :min     1
+                                                                  :max     1}]]}]]
+           :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
 
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
   (let [card-count (cond card-name 1
@@ -295,6 +310,7 @@
 (def cards [amplify-vision
             blaze
             catalyst
+            char
             dark-fire
             essence-theft
             feedback-aura

@@ -7,7 +7,8 @@
             [aeons-end.cards.spell :refer :all]
             [aeons-end.cards.relic :refer [cairn-compass temporal-helix]]
             [aeons-end.cards.starter :refer :all]
-            [aeons-end.mages :refer [garnet-shard]]))
+            [aeons-end.mages :refer [garnet-shard]])
+  (:refer-clojure :exclude [char]))
 
 (deftest amplify-vision-test
   (testing "Amplify Vision"
