@@ -80,6 +80,23 @@
                                                     :max     1}]]
                    :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
 
+(defn erratic-ingot-gain-aether [game {:keys [player-no]}]
+  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+                                     (filter (comp #{:nemesis} :type))
+                                     count)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain-aether (if (pos? discarded-nemesis-cards) 4 2)]]})))
+
+(effects/register {::erratic-ingot-gain-aether erratic-ingot-gain-aether})
+
+(def erratic-ingot {:name    :erratic-ingot
+                    :type    :gem
+                    :cost    5
+                    :text    ["Gain 2 Aether."
+                              "Gain an additional 2 Aether if there is at least one nemesis turn order card in the turn order discard pile."]
+                    :effects [[::erratic-ingot-gain-aether]]
+                    :quote   "'Hit it all you like, Adelheim. It has a mind of its own.' Gex, Breach Mage Adviser"})
+
 (defn haunted-berylite-discard [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -173,6 +190,7 @@
             bloodstone-jewel
             breach-ore
             burning-opal
+            erratic-ingot
             haunted-berylite
             jade
             leeching-agate
