@@ -84,6 +84,28 @@
                :effects [[::catalyst-deal-damage]]
                :quote   "'What little quiet we have found is drowned out by the screams of the many we have lost.' Gex, Breach Mage Adviser"})
 
+(defn celestial-spire-draw [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :celestial-spire)]
+    (cond-> game
+            (zero? pile-size) (push-effect-stack {:player-no player-no
+                                                  :effects   [[:give-choice {:title   :celestial-spire
+                                                                             :text    "Any ally draws a card."
+                                                                             :choice  [:draw {:arg 1}]
+                                                                             :options [:players {:ally true}]
+                                                                             :min     1
+                                                                             :max     1}]]}))))
+
+(effects/register {::celestial-spire-draw celestial-spire-draw})
+
+(def celestial-spire {:name    :celestial-spire
+                      :type    :spell
+                      :cost    5
+                      :cast    ["Deal 3 damage."
+                                "If this card's supply pile is empty, any ally draws a card."]
+                      :effects [[:deal-damage 3]
+                                [::celestial-spire-draw]]
+                      :quote   "'The spires are beacons in the spaces in between.' Mist, Voidbringer"})
+
 (def char {:name    :char
            :type    :spell
            :cost    8
@@ -287,7 +309,7 @@
                        "If this damage causes a minion from the nemesis deck to the discarded, any ally gains 2 charges."]
              :effects [[:deal-damage {:arg          4
                                       :kill-effects [[:give-choice {:title   :scorch
-                                                                    :text    "Any ally gains 2 charges"
+                                                                    :text    "Any ally gains 2 charges."
                                                                     :choice  [:gain-charges {:arg 2}]
                                                                     :options [:players :ability {:ally true :fully-charged false}]
                                                                     :min     1
@@ -310,6 +332,7 @@
 (def cards [amplify-vision
             blaze
             catalyst
+            celestial-spire
             char
             dark-fire
             essence-theft

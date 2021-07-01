@@ -227,6 +227,31 @@
                           {}]
                 :supply  [{:card blaze :pile-size 4}]}))))))
 
+(deftest celestial-spire-test
+  (testing "Celestial Spire"
+    (is (= (-> {:supply  [{:card celestial-spire :pile-size 1}]
+                :players [{:breaches [{:prepped-spells [celestial-spire]}]}
+                          {:deck [crystal crystal]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :celestial-spire))
+           {:supply  [{:card celestial-spire :pile-size 1}]
+            :players [{:breaches [{}]
+                       :discard  [celestial-spire]}
+                      {:deck [crystal crystal]}]
+            :nemesis {:life 47}}))
+    (is (= (-> {:supply  [{:card celestial-spire :pile-size 0}]
+                :players [{:breaches [{:prepped-spells [celestial-spire]}]}
+                          {:deck [crystal crystal]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :celestial-spire)
+               (choose {:player-no 1}))
+           {:supply  [{:card celestial-spire :pile-size 0}]
+            :players [{:breaches [{}]
+                       :discard  [celestial-spire]}
+                      {:hand [crystal]
+                       :deck [crystal]}]
+            :nemesis {:life 47}}))))
+
 (deftest dark-fire-test
   (testing "Dark Fire"
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]

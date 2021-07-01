@@ -195,7 +195,8 @@
     (let [disabled (nil? interaction)]
       [:button {:style    (merge (button-style :disabled disabled
                                                :type type
-                                               :status status)
+                                               :status status
+                                               :number-of-cards number-of-cards)
                                  {:width      "150px"
                                   :min-height "170px"})
                 :title    quote
