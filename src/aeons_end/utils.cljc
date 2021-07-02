@@ -404,7 +404,7 @@
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati min-deck+discard
-                                       last type cost min-cost max-cost most-expensive most-opened-breaches
+                                       last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost
                                        status stati max-breach-no]}]]
   (let [solo-play?     (= 1 (count players))
         highest-charge (->> players
@@ -450,11 +450,17 @@
                                        (map #(select-keys % [:player-no])))
       (= :breaches area) (let [options (->> valid-players
                                             (mapcat (fn [{:keys [player-no breaches]}]
-                                                      (->> breaches
-                                                           (keep-indexed (fn do-breach [breach-no {:keys [status] :as breach}]
-                                                                           (when (not= :destroyed status)
-                                                                             (assoc breach :option {:player-no player-no
-                                                                                                    :breach-no breach-no}))))))))]
+                                                      (let [cheapest-breach-no (->> breaches
+                                                                                    (keep-indexed (fn [breach-no {:keys [status]}]
+                                                                                                    (when (#{:closed :focused} status)
+                                                                                                      breach-no)))
+                                                                                    first)]
+                                                        (cond->> breaches
+                                                                 :always (keep-indexed (fn do-breach [breach-no {:keys [status] :as breach}]
+                                                                                         (when (not= :destroyed status)
+                                                                                           (assoc breach :option {:player-no player-no
+                                                                                                                  :breach-no breach-no}))))
+                                                                 lowest-focus-cost (filter (comp #{cheapest-breach-no} :breach-no :option)))))))]
                            (cond->> options
                                     status (filter (comp #{status} :status))
                                     stati (filter (comp stati :status))

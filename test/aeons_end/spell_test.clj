@@ -362,6 +362,180 @@
                        :discard  [ignite]}]
             :nemesis {:life 48}}))))
 
+(deftest jagged-lightning-test
+  (testing "Jagged Lightning"
+    (is (= (-> {:current-player 0
+                :players        [{:breaches [{:status         :opened
+                                              :prepped-spells [jagged-lightning]}
+                                             {:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 3
+                                              :stage      1}]}
+                                 {:breaches [{:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 2
+                                              :stage      2}]}]
+                :nemesis        {:life 50}}
+               (cast-spell 0 0 :jagged-lightning))
+           {:current-player 0
+            :players        [{:breaches [{:status :opened}
+                                         {:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 3
+                                          :stage      1}]
+                              :discard  [jagged-lightning]}
+                             {:breaches [{:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 2
+                                          :stage      2}]}]
+            :nemesis        {:life 47}}))
+    (is (= (-> {:current-player 0
+                :players        [{:breaches [{:status         :opened
+                                              :prepped-spells [jagged-lightning]}
+                                             {:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 3
+                                              :stage      1}]
+                                  :hand     [spark]}
+                                 {:breaches [{:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 2
+                                              :stage      2}]}]
+                :nemesis        {:life 50}}
+               (cast-spell 0 0 :jagged-lightning)
+               (choose nil))
+           {:current-player 0
+            :players        [{:breaches [{:status :opened}
+                                         {:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 3
+                                          :stage      1}]
+                              :hand     [spark]
+                              :discard  [jagged-lightning]}
+                             {:breaches [{:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 2
+                                          :stage      2}]}]
+            :nemesis        {:life 47}}))
+    (is (= (-> {:current-player 0
+                :players        [{:breaches [{:status         :opened
+                                              :prepped-spells [jagged-lightning]}
+                                             {:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 3
+                                              :stage      1}]
+                                  :hand     [spark]}
+                                 {:breaches [{:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 2
+                                              :stage      2}]}]
+                :nemesis        {:life 50}}
+               (cast-spell 0 0 :jagged-lightning)
+               (choose :spark)
+               (choose {:player-no 1 :breach-no 1}))
+           {:current-player 0
+            :players        [{:breaches [{:status :opened}
+                                         {:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 3
+                                          :stage      1}]
+                              :discard  [jagged-lightning spark]}
+                             {:breaches [{:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 2
+                                          :stage      3}]}]
+            :nemesis        {:life 47}}))
+    (is (= (-> {:current-player 0
+                :players        [{:breaches [{:status         :opened
+                                              :prepped-spells [jagged-lightning]}
+                                             {:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 3
+                                              :stage      1}]
+                                  :hand     [spark]}
+                                 {:breaches [{:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 2
+                                              :stage      3}]}]
+                :nemesis        {:life 50}}
+               (cast-spell 0 0 :jagged-lightning)
+               (choose :spark)
+               (choose {:player-no 1 :breach-no 1}))
+           {:current-player 0
+            :players        [{:breaches [{:status :opened}
+                                         {:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 3
+                                          :stage      1}]
+                              :discard  [jagged-lightning spark]}
+                             {:breaches [{:status :opened}
+                                         {:status :opened}]}]
+            :nemesis        {:life 47}}))
+    (is (= (-> {:current-player 0
+                :players        [{:breaches [{:status         :opened
+                                              :prepped-spells [jagged-lightning]}
+                                             {:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 3
+                                              :stage      1}]
+                                  :hand     [spark]}
+                                 {:breaches [{:status :opened}
+                                             {:status     :closed
+                                              :focus-cost 2
+                                              :stage      2}]}]
+                :nemesis        {:life 50}}
+               (cast-spell 0 0 :jagged-lightning)
+               (choose :spark)
+               (choose {:player-no 0 :breach-no 2}))
+           {:current-player 0
+            :players        [{:breaches [{:status :opened}
+                                         {:status :opened}
+                                         {:status     :focused
+                                          :focus-cost 3
+                                          :stage      2}]
+                              :discard  [jagged-lightning spark]}
+                             {:breaches [{:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 2
+                                          :stage      2}]}]
+            :nemesis        {:life 47}}))
+    (is (= (-> {:current-player 0
+                :players        [{:breaches [{:status         :opened
+                                              :prepped-spells [jagged-lightning]}
+                                             {:status :opened}]
+                                  :hand     [spark]}
+                                 {:breaches [{:status :destroyed}
+                                             {:status :opened}]}]
+                :nemesis        {:life 50}}
+               (cast-spell 0 0 :jagged-lightning)
+               (choose :spark))
+           {:current-player 0
+            :players        [{:breaches [{:status :opened}
+                                         {:status :opened}]
+                              :discard  [jagged-lightning spark]}
+                             {:breaches [{:status :destroyed}
+                                         {:status :opened}]}]
+            :nemesis        {:life 47}}))
+    (is (thrown-with-msg? AssertionError #"Choose error"
+                          (-> {:current-player 0
+                               :players        [{:breaches [{:status         :opened
+                                                             :prepped-spells [jagged-lightning]}
+                                                            {:status :opened}]
+                                                 :hand     [spark]}
+                                                {:breaches [{:status :opened}
+                                                            {:status :opened}
+                                                            {:status     :closed
+                                                             :focus-cost 3
+                                                             :stage      1}
+                                                            {:status     :closed
+                                                             :focus-cost 4
+                                                             :stage      3}]
+                                                 :hand     [spark]}]
+                               :nemesis        {:life 50}}
+                              (cast-spell 0 0 :jagged-lightning)
+                              (choose :spark)
+                              (choose {:player-no 1 :breach-no 3}))))))
+
 (deftest nova-forge-test
   (testing "Nova Forge"
     (testing "While prepped"

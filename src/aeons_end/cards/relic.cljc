@@ -158,7 +158,7 @@
                                            :options [:player :play-area {:types #{:gem :relic}}]
                                            :min     1
                                            :max     1}]]
-                  :quote   "'Once, the conclave worshiped at the foot of a great tower much like this very effigy.' Yan Magda, Enlightened Exile"})
+                  :quote   "'Once, the conclave worshipped at the foot of a great tower much like this very effigy.' Yan Magda, Enlightened Exile"})
 
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no

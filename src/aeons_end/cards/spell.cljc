@@ -200,6 +200,32 @@
                                       :max     1}]]
              :quote   "'We are but one flickering flame against unimaginable dark.' Kadir, Breach Mage Delver"})
 
+(defn jagged-lightning-discard [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-from-hand {:card-name card-name}]
+                                                    [:give-choice {:title   :jagged-lightning
+                                                                   :text    "Any player focuses their closed breach with the lowest focus cost."
+                                                                   :choice  :focus-breach
+                                                                   :options [:players :breaches {:lowest-focus-cost true}]
+                                                                   :min     1
+                                                                   :max     1}]]})))
+
+(effects/register {::jagged-lightning-discard jagged-lightning-discard})
+
+(def jagged-lightning {:name    :jagged-lightning
+                       :type    :spell
+                       :cost    4
+                       :cast    ["Deal 3 damage."
+                                 "You may discard a card in hand. If you do, any player focuses their closed breach with the lowest focus cost."]
+                       :effects [[:deal-damage 3]
+                                 [:give-choice {:title   :jagged-lightning
+                                                :text    "You may discard a card in hand. If you do, any player focuses their closed breach with the lowest focus cost."
+                                                :choice  ::jagged-lightning-discard
+                                                :options [:player :hand]
+                                                :max     1}]]
+                       :quote   "'Let us hope it hurts.' Sparrow, Breach Mage Soldier"})
+
 (def nova-forge {:name          :nova-forge
                  :type          :spell
                  :cost          6
@@ -338,6 +364,7 @@
             essence-theft
             feedback-aura
             ignite
+            jagged-lightning
             nova-forge
             phoenix-flame
             planar-insight
