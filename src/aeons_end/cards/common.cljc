@@ -164,6 +164,16 @@
 
 (effects/register {:topdeck-prepped-spell topdeck-prepped-spell})
 
+(defn topdeck-from-gained [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:card-name   card-name
+                                                                 :from        :gaining
+                                                                 :to          :deck
+                                                                 :to-position :top}]]})))
+
+(effects/register {:topdeck-from-gained topdeck-from-gained})
+
 (defn destroy-prepped-spells [game {:keys [spells] :as args}]
   (push-effect-stack game {:effects (if spells
                                       (->> spells

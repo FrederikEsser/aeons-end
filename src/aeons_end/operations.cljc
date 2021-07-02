@@ -249,8 +249,7 @@
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
             player-no (cond->
-                        (and (= from :revealed)
-                             (= to :deck)) (increase-revealed-number-of-cards player-no)
+                        (= to :deck) (increase-revealed-number-of-cards player-no)
                         (= from :deck) (decrease-revealed-number-of-cards player-no)
                         (empty? from-cards) (update-in [:players player-no] dissoc from)
                         (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
@@ -623,7 +622,7 @@
             while-prepped-effects (push-effect-stack {:player-no player-no
                                                       :effects   while-prepped-effects}))))
 
-(defn prep-spell [game {:keys [player-no breach-no card-name] :as args}]
+(defn prep-spell [game {:keys [player-no breach-no card-name]}]
   (if card-name
     (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
       (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))

@@ -220,3 +220,25 @@
                          :revealed-cards 1}
                         {:deck    [spark]
                          :discard [crystal]}]})))))
+
+(deftest vriswood-amber-test
+  (let [vriswood-amber (assoc vriswood-amber :id 1)]
+    (testing "V'riswood Amber"
+      (is (= (-> {:players [{:aether 3
+                             :deck   [spark]}]
+                  :supply  [{:card vriswood-amber :pile-size 7}]}
+                 (buy-card 0 :v'riswood-amber)
+                 (choose nil))
+             {:players [{:aether  0
+                         :deck    [spark]
+                         :discard [vriswood-amber]}]
+              :supply  [{:card vriswood-amber :pile-size 6}]}))
+      (is (= (-> {:players [{:aether 3
+                             :deck   [spark]}]
+                  :supply  [{:card vriswood-amber :pile-size 7}]}
+                 (buy-card 0 :v'riswood-amber)
+                 (choose {:player-no 0 :card-name :v'riswood-amber :card-id 1}))
+             {:players [{:aether         0
+                         :deck           [vriswood-amber spark]
+                         :revealed-cards 1}]
+              :supply  [{:card vriswood-amber :pile-size 6}]})))))

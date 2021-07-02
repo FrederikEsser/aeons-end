@@ -61,8 +61,9 @@
            {:nemesis   {:discard [assail]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
-            :players   [{:breaches [{}]
-                         :deck     [spark crystal]}]}))
+            :players   [{:breaches       [{}]
+                         :deck           [spark crystal]
+                         :revealed-cards 1}]}))
     (is (= (-> {:nemesis   {:deck    [assail]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
@@ -76,9 +77,10 @@
            {:nemesis   {:discard [assail]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
-            :players   [{:breaches [{:prepped-spells [spark]}
-                                    {}]
-                         :deck     [ignite crystal]}
+            :players   [{:breaches       [{:prepped-spells [spark]}
+                                          {}]
+                         :deck           [ignite crystal]
+                         :revealed-cards 1}
                         {:breaches [{:prepped-spells [amplify-vision]}]
                          :deck     [crystal]}]}))
     (is (= (-> {:nemesis   {:deck    [assail]
@@ -97,8 +99,9 @@
             :players   [{:breaches [{:prepped-spells [spark]}
                                     {:prepped-spells [ignite]}]
                          :deck     [crystal]}
-                        {:breaches [{}]
-                         :deck     [amplify-vision crystal]}]}))
+                        {:breaches       [{}]
+                         :deck           [amplify-vision crystal]
+                         :revealed-cards 1}]}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
                           (-> {:nemesis   {:deck    [assail]
                                            :unleash [[:damage-gravehold 1]]}

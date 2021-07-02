@@ -186,6 +186,19 @@
                                                        [:topdeck-all-revealed]]}]]
                     :quote   "'To those who have stepped through the breach, the pearl shows the splinters of time itself.' Phaedraxa, Breach Mage Seer"})
 
+(def vriswood-amber {:name    :v'riswood-amber
+                     :type    :gem
+                     :cost    3
+                     :text    ["When you gain this, you may place it on top of your deck."
+                               "Gain 2 Aether."]
+                     :on-gain [[:give-choice {:title   :v'riswood-amber
+                                              :text    "You may place the gained V'riswood Amber on top of your deck."
+                                              :choice  :topdeck-from-gained
+                                              :options [:player :gaining]
+                                              :max     1}]]
+                     :effects [[:gain-aether 2]]
+                     :quote   "'Once, the trees of V'riswood towered ancient and beautiful. These polished bits of their amber is all that remains beyond that memory.' Brama, Breach Mage Elder"})
+
 (def cards [alien-element
             bloodstone-jewel
             breach-ore
@@ -196,4 +209,5 @@
             leeching-agate
             pain-stone
             searing-ruby
-            sifters-pearl])
+            sifters-pearl
+            vriswood-amber])

@@ -122,24 +122,28 @@
                                        (when revealed-cards
                                          (view-area :deck data :top revealed-cards)))})))))
 
-(defn view-discard [{{:keys [player-no discard]} :player
-                     choice                      :choice}]
-  (merge
-    (when (not-empty discard)
-      {:card (let [{:keys [id] :as card} (last discard)]
-               (merge (view-card card)
-                      (choice-interaction {:area      :discard
-                                           :player-no player-no
-                                           :card-id   id} choice)))})
-    {:cards           (if (empty? discard)
-                        []
-                        (->> discard
-                             (map (fn [{:keys [id] :as card}]
-                                    (merge (view-card card)
-                                           (choice-interaction {:area      :discard
-                                                                :player-no player-no
-                                                                :card-id   id} choice))))))
-     :number-of-cards (count discard)}))
+(defn view-discard [{{:keys [player-no discard gaining]} :player
+                     choice                              :choice}]
+  (let [cards (concat (->> discard
+                           (map #(assoc % :area :discard)))
+                      (->> gaining
+                           (map #(assoc % :area :gaining))))]
+    (merge
+      (when (not-empty cards)
+        {:card (let [{:keys [id area] :as card} (last cards)]
+                 (merge (view-card card)
+                        (choice-interaction {:area      area
+                                             :player-no player-no
+                                             :card-id   id} choice)))})
+      {:cards           (if (empty? cards)
+                          []
+                          (->> cards
+                               (map (fn [{:keys [id area] :as card}]
+                                      (merge (view-card card)
+                                             (choice-interaction {:area      area
+                                                                  :player-no player-no
+                                                                  :card-id   id} choice))))))
+       :number-of-cards (count cards)})))
 
 (defn view-options [options]
   (->> options

@@ -377,11 +377,11 @@
                min-cost (filter (comp #(>= % min-cost) :cost))
                max-cost (filter (comp #(<= % max-cost) :cost))
                most-expensive (filter (comp #{highest-cost} :cost))
-               (= :discard area) (map (fn [{:keys [id name]}]
-                                        {:player-no player-no
-                                         :card-id   id
-                                         :card-name name}))
-               (not= :discard area) (map :name)))))
+               (#{:discard :gaining} area) (map (fn [{:keys [id name]}]
+                                                  {:player-no player-no
+                                                   :card-id   id
+                                                   :card-name name}))
+               (not (#{:discard :gaining} area)) (map :name)))))
 
 (effects/register-options {:player options-from-player})
 
