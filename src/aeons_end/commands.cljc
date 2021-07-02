@@ -17,7 +17,7 @@
   (let [{{:keys [effects type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
     (assert card (str "Play error: There is no " (ut/format-name card-name) " in your Hand."))
     (assert type (str "Play error: " (ut/format-name card-name) " has no type."))
-    (assert (#{:gem :relic} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
+    (assert (#{:gem :relic :corruption} type) (str "Play error: You can't play " (ut/format-name type) " cards."))
     (assert effects (str "Play error: " (ut/format-name card-name) " has no effects."))
     (-> game
         (op/push-effect-stack {:player-no player-no

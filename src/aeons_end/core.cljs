@@ -65,6 +65,7 @@
                          (= :minion type) "#aadfef"
                          (= :strike type) "#b79171"
                          (= :husks type) "#5f5356"
+                         (= :corruption type) "#9dcb6b"
                          (= :breach type) (cond
                                             (= :opened status) "#f8e238"
                                             (= :destroyed status) :white
@@ -87,6 +88,7 @@
                          (= :minion type) "#49c4e9"
                          (= :strike type) "#5e3628"
                          (= :husks type) "#232122"
+                         (= :corruption type) "#34971c"
                          (#{:breach :sigil} type) (cond
                                                     (#{:closed :openable} status) "#434f64"
                                                     (#{:destroyed} status) "#ccc"
@@ -508,7 +510,7 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks interaction choice-value]} (-> @state :game :nemesis)]
+             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks corruption interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
@@ -542,6 +544,10 @@
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
                                  "Fury: " fury])
+                              (when corruption
+                                [:div {:style {:font-size   "1.1em"
+                                               :padding-top "3px"}}
+                                 "Corruption: " corruption])
                               [:hr]
                               (format-text unleash-text "UNLEASH")]])]]
                         [:td [:div

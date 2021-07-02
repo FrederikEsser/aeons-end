@@ -369,7 +369,7 @@
                                :always (map :option)))
     (let [cards        (get-in game [:players player-no area])
           highest-cost (->> cards
-                            (map :cost)
+                            (keep :cost)
                             (apply max 0))]
       (cond->> cards
                type (filter (comp #{type} :type))

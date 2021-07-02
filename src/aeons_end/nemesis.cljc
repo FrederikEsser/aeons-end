@@ -5,6 +5,7 @@
             [aeons-end.nemeses.rageborne :refer [rageborne]]
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.nemeses.carapace-queen :refer [carapace-queen deal-damage-to-husks]]
+            [aeons-end.nemeses.crooked-mask :refer [crooked-mask]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]))
@@ -223,7 +224,8 @@
 
 (def nemeses [rageborne
               umbra-titan
-              carapace-queen])
+              carapace-queen
+              crooked-mask])
 
 (def basic-cards (concat
                    ; WE Tier 1

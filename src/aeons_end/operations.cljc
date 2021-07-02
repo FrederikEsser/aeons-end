@@ -141,9 +141,11 @@
                                      (mapcat :prepped-spells)
                                      (mapcat (comp phase-change :while-prepped)))
           nemesis-card-effects  (->> (get-in game [:nemesis :play-area])
-                                     (mapcat phase-change))]
+                                     (mapcat phase-change))
+          nemesis-effects       (get-in game [:nemesis phase-change])]
       (concat while-prepped-effects
-              nemesis-card-effects))))
+              nemesis-card-effects
+              nemesis-effects))))
 
 (def phase-order [:out-of-turn
                   :casting
@@ -165,6 +167,7 @@
       (let [next-phase                (next-phase current-phase)
             phase-change              (cond (#{:casting} next-phase) :at-start-casting
                                             (#{:main} next-phase) :at-start-main
+                                            (#{:main} current-phase) :at-end-main
                                             (#{:draw} current-phase) :at-end-draw)
             spells-in-closed-breaches (->> (get-in game [:players player-no :breaches])
                                            (remove (comp #{:opened} :status))
@@ -258,7 +261,9 @@
                                                                                                   (cond-> breach
                                                                                                           (empty? prepped-spells) (dissoc :prepped-spells))))))))
             (nil? player-no) (cond->
-                               (empty? from-cards) (update :nemesis dissoc from)))))
+                               (empty? from-cards) (update :nemesis dissoc from))
+            (and (= :trash from)
+                 (-> game :trash empty?)) (dissoc :trash))))
 
 (defn- get-card [game {:keys [player-no card-name move-card-id from from-position breach-no] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
@@ -270,12 +275,12 @@
         {:card      (ut/give-id! card)
          :from-path from
          :idx       idx}))
-    (let [from-path (if player-no
-                      (case from
-                        :trash [:trash]
-                        :breach [:players player-no :breaches breach-no :prepped-spells]
-                        [:players player-no from])
-                      [:nemesis from])]
+    (let [from-path (cond
+                      (= :trash from) [:trash]
+                      (and player-no
+                           (= :breach from)) [:players player-no :breaches breach-no :prepped-spells]
+                      player-no [:players player-no from]
+                      (nil? player-no) [:nemesis from])]
       (merge {:from-path from-path}
              (case from-position
                :bottom {:idx (dec (count (get-in game from-path))) :card (last (get-in game from-path))}
@@ -290,7 +295,7 @@
     (update-in game [from-path idx] ut/remove-top-card)
     (update-in game from-path ut/vec-remove idx)))
 
-(defn- add-card [game to-path to-position {:keys [name] :as card}]
+(defn add-card [game to-path to-position {:keys [name] :as card}]
   (let [add-card-to-coll (fn [coll card]
                            (let [coll (vec coll)]
                              (if (empty? coll)
@@ -692,11 +697,11 @@
                                      first)]
     (cond-> game
             card (push-effect-stack {:player-no player-no
-                                     :effects   (concat [[:move-card {:card-name name
-                                                                      :from      :hand
-                                                                      :to        :play-area}]
-                                                         [:card-effect {:card card}]
-                                                         [:play-all-gems]])}))))
+                                     :effects   [[:move-card {:card-name name
+                                                              :from      :hand
+                                                              :to        :play-area}]
+                                                 [:card-effect {:card card}]
+                                                 [:play-all-gems]]}))))
 
 (effects/register {:play-all-gems play-all-gems})
 

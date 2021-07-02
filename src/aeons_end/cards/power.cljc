@@ -125,28 +125,23 @@
 
 (effects/register-predicates {::chaos-flail-can-discard? chaos-flail-can-discard?})
 
-(defn chaos-flail-shuffle [game {:keys [player-no]}]
-  (let [{:keys [deck discard]} (get-in game [:players player-no])
-        new-deck (->> deck
-                      (concat discard)
-                      shuffle)]
-    (-> game
-        (assoc-in [:players player-no :deck] new-deck)
-        (update-in [:players player-no] dissoc :discard)
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:move-cards {:number-of-cards 2
-                                                      :from            :deck
-                                                      :from-position   :top
-                                                      :to              :revealed}]
-                                        [:give-choice {:title   :chaos-flail
-                                                       :text    "Destroy the most expensive card revealed."
-                                                       :choice  :trash-from-revealed
-                                                       :options [:player :revealed {:most-expensive true}]
-                                                       :min     1
-                                                       :max     1}]
-                                        [:topdeck-all-revealed]]}))))
+(defn chaos-flail-destroy [game {:keys [player-no]}]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:shuffle-discard-into-deck]
+                                      [:move-cards {:number-of-cards 2
+                                                    :from            :deck
+                                                    :from-position   :top
+                                                    :to              :revealed}]
+                                      [:give-choice {:title   :chaos-flail
+                                                     :text    "Destroy the most expensive card revealed."
+                                                     :choice  :trash-from-revealed
+                                                     :options [:player :revealed {:most-expensive true}]
+                                                     :min     1
+                                                     :max     1}]
+                                      [:topdeck-all-revealed]]})))
 
-(effects/register {::chaos-flail-shuffle chaos-flail-shuffle})
+(effects/register {::chaos-flail-destroy chaos-flail-destroy})
 
 (def chaos-flail {:name       :chaos-flail
                   :type       :power
@@ -163,7 +158,7 @@
                                          [:unleash]
                                          [:give-choice {:title   :chaos-flail
                                                         :text    "Any player places their discard pile on top of their deck and shuffles it.\nThen, that player reveals the top two cards of their deck and destroys the most expensive card revealed."
-                                                        :choice  ::chaos-flail-shuffle
+                                                        :choice  ::chaos-flail-destroy
                                                         :options [:players {:min-deck+discard 1}]
                                                         :min     1
                                                         :max     1}]]}})

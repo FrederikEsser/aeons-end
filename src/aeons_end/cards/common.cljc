@@ -134,6 +134,18 @@
 
 (effects/register {:take-from-discard take-from-discard})
 
+(defn shuffle-discard-into-deck [game {:keys [player-no]}]
+  (let [{:keys [deck discard]} (get-in game [:players player-no])
+        new-deck (->> deck
+                      (concat discard)
+                      shuffle
+                      vec)]
+    (-> game
+        (assoc-in [:players player-no :deck] new-deck)
+        (update-in [:players player-no] dissoc :discard :revealed-cards))))
+
+(effects/register {:shuffle-discard-into-deck shuffle-discard-into-deck})
+
 (defn discard-prepped-spells [game {:keys [player-no spells] :as args}]
   (push-effect-stack game {:player-no player-no
                            :effects   (if spells
@@ -237,6 +249,16 @@
                                                                                                           :move-card-id card-id)])))}))))
 
 (effects/register {:destroy-from-area destroy-from-area})
+
+(defn destroy-this [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:move-card {:move-card-id card-id
+                                                              :from         :play-area
+                                                              :to           :trash}]]}))))
+
+(effects/register {:destroy-this destroy-this})
 
 (defn play-twice [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
