@@ -882,9 +882,9 @@
     (is (= (-> {:players [{:life 1}]}
                (heal-player 0 1))
            {:players [{:life 2}]}))
-    (is (thrown-with-msg? AssertionError #"Heal error: Exhausted player cannot be healed"
-                          (-> {:players [{:life 0}]}
-                              (heal-player 0 1))))))
+    (is (= (-> {:players [{:life 0}]}
+               (heal-player 0 1))
+           {:players [{:life 0}]}))))
 
 (deftest game-over-test
   (testing "Game Over"

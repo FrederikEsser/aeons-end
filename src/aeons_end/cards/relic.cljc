@@ -5,10 +5,7 @@
             [aeons-end.utils :as ut]))
 
 (defn astral-cube-heal [game _]
-  (let [{:keys [player-no]} (-> game :turn-order :deck first :type)
-        exhausted? (when (and player-no
-                              (<= 0 player-no))
-                     (zero? (get-in game [:players player-no :life])))]
+  (let [{:keys [player-no]} (-> game :turn-order :deck first :type)]
     (cond
       (= -1 player-no) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
                                                                          :text    "Any player gains 1 life."
@@ -16,9 +13,8 @@
                                                                          :options [:players {:not-exhausted true}]
                                                                          :min     1
                                                                          :max     1}]]})
-      (and player-no
-           (not exhausted?)) (push-effect-stack game {:player-no player-no
-                                                      :effects   [[:heal {:life 1}]]})
+      player-no (push-effect-stack game {:player-no player-no
+                                         :effects   [[:heal {:life 1}]]})
       :else game)))
 
 (effects/register {::astral-cube-heal astral-cube-heal})

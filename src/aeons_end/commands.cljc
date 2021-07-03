@@ -156,9 +156,10 @@
                                          (ut/format-types))))
     (-> game
         (op/push-effect-stack {:player-no player-no
-                               :effects   [[:draw (max (- 5 (count hand)) 0)]
-                                           [:clear-player]
+                               :effects   [[:set-phase {:phase :draw}]
+                                           [:draw (max (- 5 (count hand)) 0)]
                                            [:set-phase {:phase :out-of-turn}]
+                                           [:clear-player]
                                            [:next-turn]]})
         op/check-stack)))
 

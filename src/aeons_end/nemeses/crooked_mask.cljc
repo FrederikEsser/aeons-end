@@ -92,10 +92,90 @@
 
 (effects/register {::setup setup})
 
+(def blind-abandon {:name     :blind-abandon
+                    :type     :corruption
+                    :text     ["Suffer 1 damage."
+                               "You may destroy a non-corruption card in hand."
+                               "Destroy this."]
+                    :effects  [[:damage-player 1]
+                               [:give-choice {:title   :blind-abandon
+                                              :text    "You may destroy a non-corruption card in hand."
+                                              :choice  :destroy-from-hand
+                                              :options [:player :hand {:not-type :corruption}]
+                                              :max     1}]
+                               [:destroy-this]]
+                    :on-trash [[::corruption-on-trash]]})
+
+(def contagion {:name     :contagion
+                :type     :corruption
+                :text     ["Suffer 1 damage."
+                           "Return any card that costs 0 Aether in your discard pile to your hand."
+                           "Destroy this"]
+                :effects  [[:damage-player 1]
+                           [:give-choice {:title   :contagion
+                                          :text    "Return any card that costs 0 Aether in your discard pile to your hand."
+                                          :choice  :take-from-discard
+                                          :options [:player :discard {:cost 0}]
+                                          :min     1
+                                          :max     1}]
+                           [:destroy-this]]
+                :on-trash [[::corruption-on-trash]]})
+
+(def delirium-veil {:name     :delirium-veil
+                    :type     :corruption
+                    :text     ["Gravehold suffers 2 damage."
+                               "Focus a breach."
+                               "Destroy this"]
+                    :effects  [[:damage-gravehold 2]
+                               [:give-choice {:title   :delirium-veil
+                                              :text    "Focus a breach."
+                                              :choice  :focus-breach
+                                              :options [:player :breaches {:stati #{:closed :focused}}]
+                                              :min     1
+                                              :max     1}]
+                               [:destroy-this]]
+                    :on-trash [[::corruption-on-trash]]})
+
+(def dire-wisdom {:name     :dire-wisdom
+                  :type     :corruption
+                  :text     ["Gain a spell from any spell supply pile."
+                             "Gain three corruptions and place them on top of your deck."
+                             "Destroy this"]
+                  :effects  [[:give-choice {:title   :dire-wisdom
+                                            :text    "Gain a spell from any spell supply pile."
+                                            :choice  :gain
+                                            :options [:supply {:type :spell}]
+                                            :min     1
+                                            :max     1}]
+                             [::gain-corruption {:to :deck}]
+                             [::gain-corruption {:to :deck}]
+                             [::gain-corruption {:to :deck}]
+                             [:destroy-this]]
+                  :on-trash [[::corruption-on-trash]]})
+
+(def endless-hunger {:name     :endless-hunger
+                     :type     :corruption
+                     :text     ["Gravehold suffers 3 damage."
+                                "Gain 2 life."
+                                "Destroy this"]
+                     :effects  [[:damage-gravehold 3]
+                                [:heal {:life 2}]
+                                [:destroy-this]]
+                     :on-trash [[::corruption-on-trash]]})
+
+(def fever-of-war {:name     :fever-of-war
+                   :type     :corruption
+                   :text     ["Suffer 1 damage."
+                              "Deal 2 damage."
+                              "Destroy this"]
+                   :effects  [[:damage-player 1]
+                              [:deal-damage 2]
+                              [:destroy-this]]
+                   :on-trash [[::corruption-on-trash]]})
+
 (def generic-corruption-card {:name     :corruption
                               :type     :corruption
-                              ;:cost    -1
-                              :text     "Destroy this"
+                              :text     ["Destroy this"]
                               :effects  [[:destroy-this]]
                               :on-trash [[::corruption-on-trash]]})
 
@@ -109,4 +189,10 @@
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
                    :cards            []
-                   :corruption-deck  (repeat 11 generic-corruption-card)})
+                   :corruption-deck  (concat [blind-abandon
+                                              contagion
+                                              delirium-veil
+                                              dire-wisdom
+                                              endless-hunger
+                                              fever-of-war]
+                                             (repeat 5 generic-corruption-card))})

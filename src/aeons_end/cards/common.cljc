@@ -35,10 +35,9 @@
 (defn heal [{:keys [difficulty] :as game} {:keys [player-no life]}]
   (let [player-starting-life (player-starting-life difficulty)
         current-life         (get-in game [:players player-no :life])]
-    (assert (pos? current-life) "Heal error: Exhausted player cannot be healed.")
-    (-> game
-        (assoc-in [:players player-no :life] (min (+ current-life life)
-                                                  player-starting-life)))))
+    (cond-> game
+            (pos? current-life) (assoc-in [:players player-no :life] (min (+ current-life life)
+                                                                          player-starting-life)))))
 
 (defn heal-gravehold [{:keys [difficulty] :as game} {:keys [arg]}]
   (let [gravehold-starting-life (gravehold-starting-life difficulty)

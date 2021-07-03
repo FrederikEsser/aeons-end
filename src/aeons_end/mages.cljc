@@ -153,11 +153,9 @@
                                 [::shattered-geode-choice]]})
 
 (defn vimcraft-oath-aid-ally [game {:keys [player-no]}]
-  (let [exhausted? (zero? (get-in game [:players player-no :life]))]
-    (push-effect-stack game {:player-no player-no
-                             :effects   (concat [[:draw 1]]
-                                                (when-not exhausted?
-                                                  [[:heal {:life 2}]]))})))
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:draw 1]
+                                       [:heal {:life 2}]]}))
 
 (effects/register {::vimcraft-oath-aid-ally vimcraft-oath-aid-ally})
 

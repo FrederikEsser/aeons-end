@@ -330,7 +330,8 @@
     (count all-text)))
 
 (defn options-from-player [game {:keys [player-no area]}
-                           & [{:keys [type cost min-cost max-cost most-expensive lowest-focus-cost min-charges prepped-this-turn]}]]
+                           & [{:keys [type not-type cost min-cost max-cost most-expensive lowest-focus-cost stati
+                                      min-charges prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
                                   (keep-indexed (fn [breach-no {:keys [status] :as breach}]
@@ -343,6 +344,7 @@
                                   (apply min 20))]
                 (cond->> options
                          lowest-focus-cost (filter (comp #{low-cost} :focus-cost))
+                         stati (filter (comp stati :status))
                          :always (map :option)))
     :ability (let [charges (get-in game [:players player-no :ability :charges])]
                (when (or (nil? min-charges)
@@ -373,9 +375,14 @@
                             (apply max 0))]
       (cond->> cards
                type (filter (comp #{type} :type))
+               not-type (remove (comp #{not-type} :type))
                cost (filter (comp #(= % cost) :cost))
-               min-cost (filter (comp #(>= % min-cost) :cost))
-               max-cost (filter (comp #(<= % max-cost) :cost))
+               min-cost (filter (fn [{:keys [cost]}]
+                                  (and cost
+                                       (<= min-cost cost))))
+               max-cost (filter (fn [{:keys [cost]}]
+                                  (and cost
+                                       (<= cost max-cost))))
                most-expensive (filter (comp #{highest-cost} :cost))
                (#{:discard :gaining} area) (map (fn [{:keys [id name]}]
                                                   {:player-no player-no
@@ -536,10 +543,11 @@
 (effects/register-options {:turn-order options-from-turn-order})
 
 (defn options-from-supply [{:keys [supply] :as game} _
-                           & [{:keys [type max-cost]}]]
+                           & [{:keys [type max-cost all]}]]
   (cond->> supply
            type (filter (comp #{type} :type :card))
            max-cost (filter (comp #(<= % max-cost) :cost :card))
+           (not all) (filter (comp pos? :pile-size))
            :always (map (comp :name :card))))
 
 (effects/register-options {:supply options-from-supply})
