@@ -104,3 +104,52 @@
                  :persistent {:text    "Unleash."
                               :effects [[:unleash]]}
                  :quote      "'Qiulius's first blow glanced off its carapace like breath, but her second blow carved it in twain.' Dezmodia, Voidborn Prodigy"})
+
+(defn generic-choice [game {:keys [choice]}]
+  (push-effect-stack game {:effects (case choice
+                                      :damage [[:damage-gravehold 3]]
+                                      :unleash [[:unleash]
+                                                [:unleash]])}))
+
+(effects/register {::generic-choice generic-choice})
+
+(defn generic [tier & [idx]]
+  (let [name (str (case tier
+                    1 "Small"
+                    2 "Medium"
+                    3 "Large")
+                  " Minion"
+                  (when idx
+                    (str " (" idx ")")))]
+    {:name       name
+     :type       :minion
+     :tier       tier
+     :life       (case tier
+                   1 5
+                   2 10
+                   3 17)
+     :persistent (case tier
+                   1 {:text    ["Any player suffers 2 damage."
+                                "OR"
+                                "Gravehold suffers 2 damage"]
+                      :effects [[:give-choice {:title     name
+                                               :text      "Any player suffers 2 damage."
+                                               :choice    [:damage-player {:arg 2}]
+                                               :or-choice {:text    "Gravehold suffers 2 damage"
+                                                           :effects [[:damage-gravehold 2]]}
+                                               :options   [:players]
+                                               :max       1}]]}
+                   2 {:text    ["Gravehold suffers 3 damage."
+                                "OR"
+                                "Unleash twice."]
+                      :effects [[:give-choice {:title   name
+                                               :choice  ::generic-choice
+                                               :options [:special
+                                                         {:option :damage :text "Gravehold suffers 3 damage"}
+                                                         {:option :unleash :text "Unleash twice"}]
+                                               :min     1
+                                               :max     1}]]}
+                   3 {:text    "Unleash three times."
+                      :effects [[:unleash]
+                                [:unleash]
+                                [:unleash]]})}))

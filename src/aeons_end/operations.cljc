@@ -677,10 +677,23 @@
 (effects/register {:spell-effect spell-effect
                    :cast-spell   cast-spell})
 
+(defn can-discard? [game {:keys [player-no card]}]
+  (let [predicate (-> card :to-discard :predicate)
+        {:keys [pred args]} (if (vector? predicate)
+                              {:pred (first predicate)
+                               :args (second predicate)}
+                              {:pred predicate})
+        pred-fn   (when pred
+                    (effects/get-predicate pred))]
+    (when pred-fn
+      (pred-fn game (merge {:player-no player-no}
+                           args)))))
+
 (defn discard-power-card [game {:keys [player-no card-name]}]
-  (let [{:keys [predicate effects text]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name}) :card :to-discard)
-        pred-fn (effects/get-predicate predicate)]
-    (assert (pred-fn game {:player-no player-no}) (str "Resolve TO DISCARD error: " (ut/format-name card-name)
+  (let [{:keys [card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
+        {:keys [text effects]} (:to-discard card)]
+    (assert (can-discard? game {:player-no player-no
+                                :card      card}) (str "Resolve TO DISCARD error: " (ut/format-name card-name)
                                                        " can't be discarded, because you can't '" text "'."))
     (-> game
         (push-effect-stack {:player-no player-no

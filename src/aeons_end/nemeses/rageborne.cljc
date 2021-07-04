@@ -81,11 +81,6 @@
              :effects [[::strike]]
              :quote   "'Thraxir was breach commander for as long as most could remember. To honor him, to this very day no man or woman has been elected to the post in his stead.'"})
 
-(defn invoke-carnage-can-discard? [game {:keys [player-no]}]
-  (power/can-afford? game {:player-no player-no :amount 7}))
-
-(effects/register-predicates {::invoke-carnage-can-discard? invoke-carnage-can-discard?})
-
 (defn invoke-carnage-damage [game _]
   (let [damage (inc (get-in game [:nemesis :fury]))]
     (push-effect-stack game {:effects [[:give-choice {:title   :invoke-carnage
@@ -101,7 +96,7 @@
                      :type       :power
                      :tier       2
                      :to-discard {:text      "Spend 7 Aether."
-                                  :predicate ::invoke-carnage-can-discard?
+                                  :predicate [::power/can-afford? {:amount 7}]
                                   :effects   [[:pay {:amount 7
                                                      :type   :discard-power-card}]]}
                      :power      {:power   2
@@ -147,16 +142,11 @@
                             :effects [[::provoker-damage]]}
                :quote      "'I nearly wasted a freshly forged chopper on one of these things.' Reeve, Breach Mage Elite"})
 
-(defn rolling-death-can-discard? [game {:keys [player-no]}]
-  (power/can-afford? game {:player-no player-no :amount 8}))
-
-(effects/register-predicates {::rolling-death-can-discard? rolling-death-can-discard?})
-
 (def rolling-death {:name       :rolling-death
                     :type       :power
                     :tier       3
                     :to-discard {:text      "Spend 8 Aether."
-                                 :predicate ::rolling-death-can-discard?
+                                 :predicate [::power/can-afford? {:amount 8}]
                                  :effects   [[:pay {:amount 8
                                                     :type   :discard-power-card}]]}
                     :power      {:power   2

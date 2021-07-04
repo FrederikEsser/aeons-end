@@ -2,7 +2,9 @@
   (:require [aeons-end.operations :refer [push-effect-stack add-card]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.power :as power]))
+            [aeons-end.cards.power :as power]
+            [aeons-end.cards.minion :as minion]
+            [aeons-end.cards.attack :as attack]))
 
 (defn gain-corruption [game {:keys [player-no to]}]
   (let [[card & new-corruption-deck] (get-in game [:nemesis :corruption-deck])
@@ -188,7 +190,9 @@
                    :at-start-casting [[::resolve-corruption]]
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
-                   :cards            []
+                   :cards            [(attack/generic 1 1) (attack/generic 1 2) (minion/generic 1)
+                                      (attack/generic 2) (minion/generic 2) (power/generic 2)
+                                      (attack/generic 3) (minion/generic 3 1) (minion/generic 3 2)]
                    :corruption-deck  (concat [blind-abandon
                                               contagion
                                               delirium-veil

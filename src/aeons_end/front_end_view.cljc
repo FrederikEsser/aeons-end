@@ -1,6 +1,7 @@
 (ns aeons-end.front-end-view
   (:require [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
+            [aeons-end.operations :refer [can-discard?]]
             [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]
             [clojure.string :as string]))
 
@@ -302,11 +303,8 @@
          (when (not-empty play-area)
            {:play-area (->> play-area
                             (map (fn [{:keys [name immediately to-discard power persistent life] :as card}]
-                                   (let [can-discard-fn (when (and to-discard
-                                                                   (:predicate to-discard))
-                                                          (effects/get-predicate (:predicate to-discard)))
-                                         can-discard?   (and can-discard-fn
-                                                             (can-discard-fn game {:player-no player-no}))]
+                                   (let [can-discard? (can-discard? game {:player-no player-no
+                                                                          :card      card})]
                                      (merge (view-card card)
                                             (when (= resolving name)
                                               {:status :resolving})

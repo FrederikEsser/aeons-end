@@ -131,16 +131,11 @@
                      "Umbra Titan loses two nemesis tokens."]
            :effects [[::maul-give-choice]]})
 
-(defn seismic-roar-can-discard? [game {:keys [player-no]}]
-  (power/can-afford? game {:player-no player-no :amount 6}))
-
-(effects/register-predicates {::seismic-roar-can-discard? seismic-roar-can-discard?})
-
 (def seismic-roar {:name       :seismic-roar
                    :type       :power
                    :tier       1
                    :to-discard {:text      "Spend 6 Aether."
-                                :predicate ::seismic-roar-can-discard?
+                                :predicate [::power/can-afford? {:amount 6}]
                                 :effects   [[:pay {:amount 6
                                                    :type   :discard-power-card}]]}
                    :power      {:power   3
@@ -194,16 +189,11 @@
                                 :effects [[::lose-nemesis-tokens 1]]}
                    :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' Mazahaedron, Henge Mystic"})
 
-(defn yawning-black-can-discard? [game {:keys [player-no]}]
-  (power/can-afford? game {:player-no player-no :amount 8}))
-
-(effects/register-predicates {::yawning-black-can-discard? yawning-black-can-discard?})
-
 (def yawning-black {:name       :yawning-black
                     :type       :power
                     :tier       3
                     :to-discard {:text      "Spend 8 Aether."
-                                 :predicate ::yawning-black-can-discard?
+                                 :predicate [::power/can-afford? {:amount 8}]
                                  :effects   [[:pay {:amount 8
                                                     :type   :discard-power-card}]]}
                     :power      {:power   2

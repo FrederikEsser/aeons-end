@@ -7,12 +7,7 @@
   (let [player (get-in game [:players player-no])]
     (ut/can-afford? player amount :discard-power-card)))
 
-(effects/register {::can-afford? can-afford?})
-
-(defn apocalypse-ritual-can-discard? [game {:keys [player-no]}]
-  (can-afford? game {:player-no player-no :amount 8}))
-
-(effects/register-predicates {::apocalypse-ritual-can-discard? apocalypse-ritual-can-discard?})
+(effects/register-predicates {::can-afford? can-afford?})
 
 (defn apocalypse-ritual-damage [game _]
   (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
@@ -26,17 +21,12 @@
                         :type       :power
                         :tier       3
                         :to-discard {:text      "Spend 8 Aether."
-                                     :predicate ::apocalypse-ritual-can-discard?
+                                     :predicate [::can-afford? {:amount 8}]
                                      :effects   [[:pay {:amount 8
                                                         :type   :discard-power-card}]]}
                         :power      {:power   2
                                      :text    "Gravehold suffers 5 damage for each nemesis turn order card in the turn order discard pile."
                                      :effects [[::apocalypse-ritual-damage]]}})
-
-(defn aphotic-sun-can-discard? [game {:keys [player-no]}]
-  (can-afford? game {:player-no player-no :amount 7}))
-
-(effects/register-predicates {::aphotic-sun-can-discard? aphotic-sun-can-discard?})
 
 (defn aphotic-sun-damage [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -49,7 +39,7 @@
                   :type       :power
                   :tier       2
                   :to-discard {:text      "Spend 7 Aether."
-                               :predicate ::aphotic-sun-can-discard?
+                               :predicate [::can-afford? {:amount 7}]
                                :effects   [[:pay {:amount 7
                                                   :type   :discard-power-card}]]}
                   :power      {:power   2
@@ -99,16 +89,11 @@
                                                              :min     1
                                                              :max     1}]]}})
 
-(defn dire-abbatoir-can-discard? [game {:keys [player-no]}]
-  (can-afford? game {:player-no player-no :amount 7}))
-
-(effects/register-predicates {::dire-abbatoir-can-discard? dire-abbatoir-can-discard?})
-
 (def dire-abbatoir {:name       :dire-abbatoir
                     :type       :power
                     :tier       3
                     :to-discard {:text      "Spend 8 Aether."
-                                 :predicate ::dire-abbatoir-can-discard?
+                                 :predicate [::can-afford? {:amount 8}]
                                  :effects   [[:pay {:amount 8
                                                     :type   :discard-power-card}]]}
                     :power      {:power   2
@@ -119,11 +104,6 @@
                                                           :options [:players {:most-life true}]
                                                           :min     1
                                                           :max     1}]]}})
-
-(defn chaos-flail-can-discard? [game {:keys [player-no]}]
-  (can-afford? game {:player-no player-no :amount 7}))
-
-(effects/register-predicates {::chaos-flail-can-discard? chaos-flail-can-discard?})
 
 (defn chaos-flail-destroy [game {:keys [player-no]}]
   (-> game
@@ -147,7 +127,7 @@
                   :type       :power
                   :tier       2
                   :to-discard {:text      "Spend 7 Aether."
-                               :predicate ::chaos-flail-can-discard?
+                               :predicate [::can-afford? {:amount 7}]
                                :effects   [[:pay {:amount 7
                                                   :type   :discard-power-card}]]}
                   :power      {:power   2
@@ -199,7 +179,7 @@
                   :type       :power
                   :tier       2
                   :to-discard {:text      "Spend 7 Aether."
-                               :predicate ::aphotic-sun-can-discard?
+                               :predicate [::can-afford? {:amount 7}]
                                :effects   [[:pay {:amount 7
                                                   :type   :discard-power-card}]]}
                   :power      {:power   1
@@ -307,3 +287,47 @@
                                        [:unleash]
                                        [::withering-beam-destroy-spells]]}
                      :quote "'I watched a fellow merchant atrophy and fall to the ground in ash as the beam hit his cart.' Ohat, Dirt Merchant"})
+
+(defn generic [tier & [idx]]
+  (let [name (str (case tier
+                    1 "Minor"
+                    2 "Medium"
+                    3 "Major")
+                  " Power"
+                  (when idx
+                    (str " (" idx ")")))]
+    {:name       name
+     :type       :power
+     :tier       tier
+     :to-discard (case tier
+                   1 {:text      "Spend 6 Aether."
+                      :predicate [::can-afford? {:amount 6}]
+                      :effects   [[:pay {:amount 6 :type :discard-power-card}]]}
+                   2 {:text      "Spend 7 Aether."
+                      :predicate [::can-afford? {:amount 7}]
+                      :effects   [[:pay {:amount 7 :type :discard-power-card}]]}
+                   3 {:text      "Spend 8 Aether."
+                      :predicate [::can-afford? {:amount 8}]
+                      :effects   [[:pay {:amount 8 :type :discard-power-card}]]})
+     :power      (case tier
+                   1 {:power   2
+                      :text    "Unleash twice."
+                      :effects [[:unleash]
+                                [:unleash]]}
+                   2 {:power   2
+                      :text    "Unleash 4 times."
+                      :effects [[:unleash]
+                                [:unleash]
+                                [:unleash]
+                                [:unleash]]}
+                   3 {:power   2
+                      :text    ["Any player suffers 6 damage."
+                                "OR"
+                                "Gravehold suffers 6 damage."]
+                      :effects [[:give-choice {:title     :yawning-black
+                                               :text      "Any player suffers 6 damage."
+                                               :choice    [:damage-player {:arg 6}]
+                                               :or-choice {:text    "Gravehold suffers 6 damage."
+                                                           :effects [[:damage-gravehold 6]]}
+                                               :options   [:players]
+                                               :max       1}]]})}))

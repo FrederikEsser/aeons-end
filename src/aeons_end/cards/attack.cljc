@@ -267,3 +267,41 @@
                          [:unleash]
                          [::throttle-choice]]
                :quote   "'Were I made of muscle and blood like the others, the impact would have surely ended me.' Remnant, Aetherial Entity"})
+
+(defn generic [tier & [idx]]
+  (let [name (str (case tier
+                    1 "Weak"
+                    2 "Medium"
+                    3 "Strong")
+                  " Attack"
+                  (when idx
+                    (str " (" idx ")")))]
+    (merge
+      {:name name
+       :type :attack
+       :tier tier}
+      (case tier
+        1 {:text    ["Unleash"
+                     "Any player suffers 2 damage."]
+           :effects [[:unleash]
+                     [:give-choice {:title   name
+                                    :text    "Any player suffers 2 damage."
+                                    :choice  [:damage-player {:arg 2}]
+                                    :options [:players]
+                                    :min     1
+                                    :max     1}]]}
+        2 {:text    ["Unleash twice."
+                     "Gravehold suffers 2 damage."]
+           :effects [[:unleash]
+                     [:unleash]
+                     [:damage-gravehold 2]]}
+        3 {:text    ["Gravehold suffers 7 damage."
+                     "OR"
+                     "Unleash three times."]
+           :effects [[:give-choice {:title   name
+                                    :choice  ::quell-choice
+                                    :options [:special
+                                              {:option :damage :text "Gravehold suffers 7 damage."}
+                                              {:option :unleash :text "Unleash three times."}]
+                                    :min     1
+                                    :max     1}]]}))))
