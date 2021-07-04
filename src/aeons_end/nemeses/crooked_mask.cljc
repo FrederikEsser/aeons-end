@@ -207,6 +207,21 @@
                               :effects  [[:destroy-this]]
                               :on-trash [[::corruption-on-trash]]})
 
+(def bedlam-sage {:name       :bedlam-sage
+                  :type       :minion
+                  :tier       3
+                  :life       14
+                  :persistent {:text    ["Gravehold gains 2 life."
+                                         "The player with the most life suffers 3 damage."]
+                               :effects [[:heal-gravehold 2]
+                                         [:give-choice {:title   :bedlam-sage
+                                                        :text    "The player with the most life suffers 3 damage."
+                                                        :choice  [:damage-player {:arg 3}]
+                                                        :options [:players {:most-life true}]
+                                                        :min     1
+                                                        :max     1}]]}
+                  :quote      "'Employing a complex stratagem against such an unpredictable foe is beyond foolish. Instinct is our only and best weapon.' Mist, Breach Mage Dagger Captain"})
+
 (defn twisting-madness-discard [game {:keys [player-no] :as args}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:discard-from-hand args]
@@ -243,7 +258,7 @@
                    :additional-rules ::additional-rules
                    :cards            [(attack/generic 1 1) (attack/generic 1 2) (minion/generic 1)
                                       (attack/generic 2) (minion/generic 2) twisting-madness
-                                      (attack/generic 3) (minion/generic 3 1) (minion/generic 3 2)]
+                                      (attack/generic 3) bedlam-sage (minion/generic 3)]
                    :corruption-deck  (concat [blind-abandon
                                               contagion
                                               delirium-veil
