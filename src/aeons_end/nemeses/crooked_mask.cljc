@@ -175,6 +175,32 @@
                               [:destroy-this]]
                    :on-trash [[::corruption-on-trash]]})
 
+(def grim-sight {:name     :grim-sight
+                 :type     :corruption
+                 :text     ["Gravehold suffers 2 damage."
+                            "Look at the top card of your deck. You may destroy it."
+                            "Destroy this"]
+                 :effects  [[:damage-gravehold 2]
+                            [:reveal-from-deck 1]
+                            [:give-choice {:title   :grim-sight
+                                           :text    "Look at the top card of your deck. You may destroy it."
+                                           :choice  :trash-from-revealed
+                                           :options [:player :revealed]
+                                           :max     1}]
+                            [:topdeck-all-revealed]
+                            [:destroy-this]]
+                 :on-trash [[::corruption-on-trash]]})
+
+(def lust-for-power {:name     :lust-for-power
+                     :type     :corruption
+                     :text     ["Suffer 1 damage."
+                                "Gain 1 charge."
+                                "Destroy this"]
+                     :effects  [[:damage-player 1]
+                                [:gain-charge]
+                                [:destroy-this]]
+                     :on-trash [[::corruption-on-trash]]})
+
 (def generic-corruption-card {:name     :corruption
                               :type     :corruption
                               :text     ["Destroy this"]
@@ -198,5 +224,7 @@
                                               delirium-veil
                                               dire-wisdom
                                               endless-hunger
-                                              fever-of-war]
-                                             (repeat 5 generic-corruption-card))})
+                                              fever-of-war
+                                              grim-sight
+                                              lust-for-power]
+                                             (repeat 3 generic-corruption-card))})

@@ -89,30 +89,11 @@
                                                              :min     1
                                                              :max     1}]]}})
 
-(def dire-abbatoir {:name       :dire-abbatoir
-                    :type       :power
-                    :tier       3
-                    :to-discard {:text      "Spend 8 Aether."
-                                 :predicate [::can-afford? {:amount 8}]
-                                 :effects   [[:pay {:amount 8
-                                                    :type   :discard-power-card}]]}
-                    :power      {:power   2
-                                 :text    "The player with the most life suffers damage equal to their current life."
-                                 :effects [[:give-choice {:title   :dire-abbatoir
-                                                          :text    "The player with the most life suffers damage equal to their current life."
-                                                          :choice  :kill-player
-                                                          :options [:players {:most-life true}]
-                                                          :min     1
-                                                          :max     1}]]}})
-
 (defn chaos-flail-destroy [game {:keys [player-no]}]
   (-> game
       (push-effect-stack {:player-no player-no
                           :effects   [[:shuffle-discard-into-deck]
-                                      [:move-cards {:number-of-cards 2
-                                                    :from            :deck
-                                                    :from-position   :top
-                                                    :to              :revealed}]
+                                      [:reveal-from-deck 2]
                                       [:give-choice {:title   :chaos-flail
                                                      :text    "Destroy the most expensive card revealed."
                                                      :choice  :trash-from-revealed
@@ -142,6 +123,22 @@
                                                         :options [:players {:min-deck+discard 1}]
                                                         :min     1
                                                         :max     1}]]}})
+
+(def dire-abbatoir {:name       :dire-abbatoir
+                    :type       :power
+                    :tier       3
+                    :to-discard {:text      "Spend 8 Aether."
+                                 :predicate [::can-afford? {:amount 8}]
+                                 :effects   [[:pay {:amount 8
+                                                    :type   :discard-power-card}]]}
+                    :power      {:power   2
+                                 :text    "The player with the most life suffers damage equal to their current life."
+                                 :effects [[:give-choice {:title   :dire-abbatoir
+                                                          :text    "The player with the most life suffers damage equal to their current life."
+                                                          :choice  :kill-player
+                                                          :options [:players {:most-life true}]
+                                                          :min     1
+                                                          :max     1}]]}})
 
 (defn heart-of-nothing-can-discard? [game {:keys [player-no]}]
   (let [cards-in-hand (->> (get-in game [:players player-no :hand])

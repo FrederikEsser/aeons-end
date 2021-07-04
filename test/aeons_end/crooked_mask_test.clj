@@ -270,4 +270,30 @@
                 :supply     [{:card radiance :pile-size 0}
                              {:card fiend-catcher :pile-size 5}]
                 :nemesis    {:corruption-deck [corruption-card dire-wisdom]}
-                :players    [{:deck [corruption-card corruption-card corruption-card crystal]}]}))))))
+                :players    [{:deck [corruption-card corruption-card corruption-card crystal]}]}))))
+    (testing "Grim Sight"
+      (let [grim-sight (assoc grim-sight :id 1)]
+        (is (= (-> {:difficulty :normal
+                    :nemesis    {}
+                    :players    [{:hand [grim-sight]
+                                  :deck [crystal]}]
+                    :gravehold  {:life 30}}
+                   (play 0 :grim-sight)
+                   (choose :crystal))
+               {:difficulty :normal
+                :nemesis    {:corruption-deck [grim-sight]}
+                :players    [{}]
+                :gravehold  {:life 28}
+                :trash      [crystal]}))
+        (is (= (-> {:difficulty :normal
+                    :nemesis    {}
+                    :players    [{:hand [grim-sight]
+                                  :deck [crystal]}]
+                    :gravehold  {:life 30}}
+                   (play 0 :grim-sight)
+                   (choose nil))
+               {:difficulty :normal
+                :nemesis    {:corruption-deck [grim-sight]}
+                :players    [{:deck           [crystal]
+                              :revealed-cards 1}]
+                :gravehold  {:life 28}}))))))
