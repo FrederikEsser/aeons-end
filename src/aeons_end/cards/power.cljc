@@ -7,7 +7,14 @@
   (let [player (get-in game [:players player-no])]
     (ut/can-afford? player amount :discard-power-card)))
 
-(effects/register-predicates {::can-afford? can-afford?})
+(defn cards-in-hand? [game {:keys [player-no amount]}]
+  (let [cards-in-hand (->> (get-in game [:players player-no :hand])
+                           count)]
+    (>= cards-in-hand amount)))
+
+
+(effects/register-predicates {::can-afford?    can-afford?
+                              ::cards-in-hand? cards-in-hand?})
 
 (defn apocalypse-ritual-damage [game _]
   (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
@@ -151,7 +158,7 @@
                        :type       :power
                        :tier       1
                        :to-discard {:text      "Discard four cards in hand."
-                                    :predicate ::heart-of-nothing-can-discard?
+                                    :predicate [::cards-in-hand? {:amount 4}]
                                     :effects   [[:give-choice {:title   :heart-of-nothing
                                                                :text    "Discard four cards in hand."
                                                                :choice  :discard-from-hand

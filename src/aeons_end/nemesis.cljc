@@ -186,6 +186,13 @@
                    :deal-damage-to-target  deal-damage-to-target
                    :deal-damage            deal-damage})
 
+
+(defn heal-nemesis [{{:keys [life max-life]} :nemesis :as game} {:keys [arg]}]
+  (assoc-in game [:nemesis :life] (min (+ life arg)
+                                       max-life)))
+
+(effects/register {:heal-nemesis heal-nemesis})
+
 (defn damage-gravehold [{:keys [gravehold] :as game} {:keys [arg]}]
   (assoc-in game [:gravehold :life] (max (- (:life gravehold) arg) 0)))
 

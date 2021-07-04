@@ -207,6 +207,31 @@
                               :effects  [[:destroy-this]]
                               :on-trash [[::corruption-on-trash]]})
 
+(defn twisting-madness-discard [game {:keys [player-no] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:discard-from-hand args]
+                                       [:draw 1]]}))
+
+(effects/register {::twisting-madness-discard twisting-madness-discard})
+
+(def twisting-madness {:name       :twisting-madness
+                       :type       :power
+                       :tier       2
+                       :to-discard {:text      "Discard four cards in hand and draw one card."
+                                    :predicate [::power/cards-in-hand? {:amount 4}]
+                                    :effects   [[:give-choice {:title   :twisting-madness
+                                                               :text    "Discard four cards in hand and draw one card."
+                                                               :choice  ::twisting-madness-discard
+                                                               :options [:player :hand]
+                                                               :min     4
+                                                               :max     4}]]}
+                       :power      {:power   2
+                                    :text    ["Gravehold gain 3 life."
+                                              "Crooked Mask gain 13 life."]
+                                    :effects [[:heal-gravehold 3]
+                                              [:heal-nemesis 13]]}
+                       :quote      "'Is it laughing at us?' Nym, Breach Mage Apprentice"})
+
 (def crooked-mask {:name             :crooked-mask
                    :level            5
                    :life             70
@@ -217,7 +242,7 @@
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
                    :cards            [(attack/generic 1 1) (attack/generic 1 2) (minion/generic 1)
-                                      (attack/generic 2) (minion/generic 2) (power/generic 2)
+                                      (attack/generic 2) (minion/generic 2) twisting-madness
                                       (attack/generic 3) (minion/generic 3 1) (minion/generic 3 2)]
                    :corruption-deck  (concat [blind-abandon
                                               contagion

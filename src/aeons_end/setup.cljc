@@ -26,24 +26,26 @@
                              3 7}})
 
 (defn create-nemesis [{:keys [life cards] :as nemesis} & {:keys [number-of-players difficulty]}]
-  (-> nemesis
-      (assoc :life (case difficulty
-                     :beginner (- life 10)
-                     :extinction (+ life 10)
-                     life)
-             :deck (->> (range 1 4)
-                        (mapcat (fn [tier]
-                                  (->> nemesis/basic-cards
-                                       (filter (comp #{tier} :tier))
-                                       shuffle
-                                       (take (get-in basic-nemesis-cards [number-of-players tier]))
-                                       (concat (->> cards
-                                                    (filter (comp #{tier} :tier))))
-                                       shuffle)))
-                        (concat [])
-                        vec)
-             :phase :out-of-turn)
-      (dissoc :cards)))
+  (let [life (case difficulty
+               :beginner (- life 10)
+               :extinction (+ life 10)
+               life)]
+    (-> nemesis
+        (assoc :life life
+               :max-life life
+               :deck (->> (range 1 4)
+                          (mapcat (fn [tier]
+                                    (->> nemesis/basic-cards
+                                         (filter (comp #{tier} :tier))
+                                         shuffle
+                                         (take (get-in basic-nemesis-cards [number-of-players tier]))
+                                         (concat (->> cards
+                                                      (filter (comp #{tier} :tier))))
+                                         shuffle)))
+                          (concat [])
+                          vec)
+               :phase :out-of-turn)
+        (dissoc :cards))))
 
 (defn select-nemesis [{:keys [name min-level max-level]} difficulty]
   (let [fit?             (= :fit difficulty)
