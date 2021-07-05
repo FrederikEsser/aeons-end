@@ -328,7 +328,7 @@
                       :text    ["Any player suffers 6 damage."
                                 "OR"
                                 "Gravehold suffers 6 damage."]
-                      :effects [[:give-choice {:title     :yawning-black
+                      :effects [[:give-choice {:title     name
                                                :text      "Any player suffers 6 damage."
                                                :choice    [:damage-player {:arg 6}]
                                                :or-choice {:text    "Gravehold suffers 6 damage."

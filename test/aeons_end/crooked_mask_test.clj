@@ -8,7 +8,7 @@
             [aeons-end.turn-order :as turn-order]
             [aeons-end.cards.gem :refer []]
             [aeons-end.cards.relic :refer [fiend-catcher]]
-            [aeons-end.cards.spell :refer [radiance]]))
+            [aeons-end.cards.spell :refer [ignite radiance]]))
 
 (defn fixture [f]
   (with-rand-seed 124 (f)))
@@ -297,3 +297,62 @@
                 :players    [{:deck           [crystal]
                               :revealed-cards 1}]
                 :gravehold  {:life 28}}))))))
+
+(deftest tempt-test
+  (testing "Tempt"
+    (let [ignite (assoc ignite :id 1)]
+      (is (= (-> {:nemesis {:deck [tempt]}
+                  :supply  [{:card fiend-catcher :pile-size 5}
+                            {:card ignite :pile-size 5}]
+                  :players [{:hand [crystal crystal spark]
+                             :life 10}]}
+                 draw-nemesis-card
+                 (choose {:player-no 0})
+                 (choose :ignite))
+             {:nemesis {:discard [tempt]}
+              :supply  [{:card fiend-catcher :pile-size 5}
+                        {:card ignite :pile-size 4}]
+              :players [{:hand    [spark]
+                         :discard [crystal crystal ignite]
+                         :life    7}]})))
+    (let [fiend-catcher (assoc fiend-catcher :id 1)]
+      (is (= (-> {:nemesis {:deck [tempt]}
+                  :supply  [{:card fiend-catcher :pile-size 5}
+                            {:card ignite :pile-size 5}]
+                  :players [{:hand [spark]
+                             :life 10}]}
+                 draw-nemesis-card
+                 (choose {:player-no 0})
+                 (choose :fiend-catcher))
+             {:nemesis {:discard [tempt]}
+              :supply  [{:card fiend-catcher :pile-size 4}
+                        {:card ignite :pile-size 5}]
+              :players [{:hand    [spark]
+                         :discard [fiend-catcher]
+                         :life    7}]})))
+    (is (= (-> {:nemesis {:deck [tempt]}
+                :supply  [{:card ignite :pile-size 0}
+                          {:card radiance :pile-size 5}]
+                :players [{:hand [crystal fiend-catcher spark ignite]
+                           :life 10}
+                          {:hand [crystal]
+                           :life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 1}))
+           {:nemesis {:discard [tempt]}
+            :supply  [{:card ignite :pile-size 0}
+                      {:card radiance :pile-size 5}]
+            :players [{:hand [crystal fiend-catcher spark ignite]
+                       :life 10}
+                      {:discard [crystal]
+                       :life    7}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:deck [tempt]}
+                               :supply  [{:card ignite :pile-size 4}
+                                         {:card radiance :pile-size 5}]
+                               :players [{:hand [crystal crystal fiend-catcher spark ignite]
+                                          :life 10}
+                                         {:hand [crystal]
+                                          :life 10}]}
+                              draw-nemesis-card
+                              (choose {:player-no 1}))))))

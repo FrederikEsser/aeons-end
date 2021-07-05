@@ -112,7 +112,7 @@
                 :type     :corruption
                 :text     ["Suffer 1 damage."
                            "Return any card that costs 0 Aether in your discard pile to your hand."
-                           "Destroy this"]
+                           "Destroy this."]
                 :effects  [[:damage-player 1]
                            [:give-choice {:title   :contagion
                                           :text    "Return any card that costs 0 Aether in your discard pile to your hand."
@@ -127,7 +127,7 @@
                     :type     :corruption
                     :text     ["Gravehold suffers 2 damage."
                                "Focus a breach."
-                               "Destroy this"]
+                               "Destroy this."]
                     :effects  [[:damage-gravehold 2]
                                [:give-choice {:title   :delirium-veil
                                               :text    "Focus a breach."
@@ -142,7 +142,7 @@
                   :type     :corruption
                   :text     ["Gain a spell from any spell supply pile."
                              "Gain three corruptions and place them on top of your deck."
-                             "Destroy this"]
+                             "Destroy this."]
                   :effects  [[:give-choice {:title   :dire-wisdom
                                             :text    "Gain a spell from any spell supply pile."
                                             :choice  :gain
@@ -159,7 +159,7 @@
                      :type     :corruption
                      :text     ["Gravehold suffers 3 damage."
                                 "Gain 2 life."
-                                "Destroy this"]
+                                "Destroy this."]
                      :effects  [[:damage-gravehold 3]
                                 [:heal {:life 2}]
                                 [:destroy-this]]
@@ -169,7 +169,7 @@
                    :type     :corruption
                    :text     ["Suffer 1 damage."
                               "Deal 2 damage."
-                              "Destroy this"]
+                              "Destroy this."]
                    :effects  [[:damage-player 1]
                               [:deal-damage 2]
                               [:destroy-this]]
@@ -179,7 +179,7 @@
                  :type     :corruption
                  :text     ["Gravehold suffers 2 damage."
                             "Look at the top card of your deck. You may destroy it."
-                            "Destroy this"]
+                            "Destroy this."]
                  :effects  [[:damage-gravehold 2]
                             [:reveal-from-deck 1]
                             [:give-choice {:title   :grim-sight
@@ -195,7 +195,7 @@
                      :type     :corruption
                      :text     ["Suffer 1 damage."
                                 "Gain 1 charge."
-                                "Destroy this"]
+                                "Destroy this."]
                      :effects  [[:damage-player 1]
                                 [:gain-charge]
                                 [:destroy-this]]
@@ -203,7 +203,7 @@
 
 (def generic-corruption-card {:name     :corruption
                               :type     :corruption
-                              :text     ["Destroy this"]
+                              :text     ["Destroy this."]
                               :effects  [[:destroy-this]]
                               :on-trash [[::corruption-on-trash]]})
 
@@ -221,6 +221,34 @@
                                                         :min     1
                                                         :max     1}]]}
                   :quote      "'Employing a complex stratagem against such an unpredictable foe is beyond foolish. Instinct is our only and best weapon.' Mist, Breach Mage Dagger Captain"})
+
+(defn tempt-attack [game {:keys [player-no]}]
+  (let [crystals (->> (get-in game [:players player-no :hand])
+                      (map :name)
+                      (filter #{:crystal}))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:discard-from-hand {:card-names crystals}]
+                                         [:damage-player 3]
+                                         [:give-choice {:title   :tempt
+                                                        :text    "Gain a card from any supply pile that costs 4 Aether or less."
+                                                        :choice  :gain
+                                                        :options [:supply {:max-cost 4}]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::tempt-attack tempt-attack})
+
+(def tempt {:name    :tempt
+            :type    :attack
+            :tier    1
+            :text    "The player with the most Crystals in hand discards all of their Crystals, suffers 3 damage, and gains a card from any supply pile that costs 4 Aether or less."
+            :effects [[:give-choice {:title   :tempt
+                                     :text    "The player with the most Crystals in hand discards all of their Crystals, suffers 3 damage, and gains a card from any supply pile that costs 4 Aether or less."
+                                     :choice  ::tempt-attack
+                                     :options [:players {:most-crystals true}]
+                                     :min     1
+                                     :max     1}]]
+            :quote   "'There is a dust that fills the air when a hole is torn through the wall of the world. For some it is just that, dust. But for others, it warps the mind and grants strange power.'"})
 
 (defn twisting-madness-discard [game {:keys [player-no] :as args}]
   (push-effect-stack game {:player-no player-no
@@ -256,7 +284,7 @@
                    :at-start-casting [[::resolve-corruption]]
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
-                   :cards            [(attack/generic 1 1) (attack/generic 1 2) (minion/generic 1)
+                   :cards            [(attack/generic 1) (minion/generic 1) tempt
                                       (attack/generic 2) (minion/generic 2) twisting-madness
                                       (attack/generic 3) bedlam-sage (minion/generic 3)]
                    :corruption-deck  (concat [blind-abandon

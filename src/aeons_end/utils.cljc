@@ -408,10 +408,15 @@
 (defn count-cards-in-deck-and-discard [{:keys [deck discard]}]
   (count (concat deck discard)))
 
+(defn count-crystals [{:keys [hand]}]
+  (->> hand
+       (filter (comp #{:crystal} :name))
+       count))
+
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati min-deck+discard
-                                       last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost
+                                       last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost most-crystals
                                        status stati max-breach-no]}]]
   (let [solo-play?     (= 1 (count players))
         highest-charge (->> players
@@ -428,6 +433,9 @@
                               (apply min 20)))
         high-life      (->> players
                             (keep :life)
+                            (apply max 0))
+        max-crystals   (->> players
+                            (map count-crystals)
                             (apply max 0))
         valid-players  (cond->> (map-indexed (fn [player-no player]
                                                (assoc player :player-no player-no)) players)
@@ -446,6 +454,7 @@
                                 min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))
                                 least-life (filter (comp #{low-life} :life))
                                 most-life (filter (comp #{high-life} :life))
+                                most-crystals (filter (comp #{max-crystals} count-crystals))
                                 not-exhausted (filter (comp pos? :life))
                                 empty-breach-stati (filter (fn [{:keys [breaches]}]
                                                              (->> breaches
