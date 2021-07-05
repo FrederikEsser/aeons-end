@@ -222,6 +222,16 @@
                                                         :max     1}]]}
                   :quote      "'Employing a complex stratagem against such an unpredictable foe is beyond foolish. Instinct is our only and best weapon.' Mist, Breach Mage Dagger Captain"})
 
+(def corrupter {:name       :corrupter
+                :type       :minion
+                :tier       1
+                :life       6
+                :text       "When this minion suffers damage, the player who dealt that damage gains a corruption and places it on top of their deck."
+                :when-hit   [[::gain-corruption {:to :deck}]]
+                :persistent {:text    "Gravehold suffers 1 damage."
+                             :effects [[:damage-gravehold 1]]}
+                :quote      "'The Corrupters are but a shadow of the Crooked Mask, bringing madness to all that have endured its pollution.'"})
+
 (defn pain-sower-damage [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:damage-player 2]
@@ -332,7 +342,7 @@
                    :at-start-casting [[::resolve-corruption]]
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
-                   :cards            [(attack/generic 1) (minion/generic 1) tempt
+                   :cards            [(attack/generic 1) corrupter tempt
                                       pain-sower twisting-madness vex
                                       (attack/generic 3) bedlam-sage (minion/generic 3)]
                    :corruption-deck  (concat [blind-abandon

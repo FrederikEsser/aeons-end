@@ -140,7 +140,7 @@
   (if (= :husks card-name)
     (deal-damage-to-husks game args)
     (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-          {:keys [life max-life modify-damage]} card
+          {:keys [life max-life modify-damage when-hit]} card
           modify-damage-fn (when modify-damage
                              (effects/get-predicate modify-damage))
           damage           (if modify-damage-fn
@@ -151,9 +151,12 @@
           (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
                                                                 (- life damage)))
           (cond-> killed? (discard-nemesis-card {:card-name card-name}))
-          (cond-> (and killed?
-                       kill-effects) (push-effect-stack {:player-no player-no
-                                                         :effects   kill-effects}))))))
+          (push-effect-stack {:player-no player-no
+                              :effects   (concat
+                                           (when (pos? damage)
+                                             when-hit)
+                                           (when killed?
+                                             kill-effects))})))))
 
 (defn deal-damage-to-target [game {:keys [player-no damage area card-name kill-effects]}]
   (push-effect-stack game {:player-no player-no

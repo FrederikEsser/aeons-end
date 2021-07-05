@@ -299,6 +299,33 @@
                               :revealed-cards 1}]
                 :gravehold  {:life 28}}))))))
 
+(deftest corrupter-test
+  (testing "Corrupter"
+    (is (= (-> {:nemesis {:play-area       [(assoc corrupter :life 6)]
+                          :corruption-deck [corruption-card corruption-card-2]}
+                :players [{:deck [crystal spark]}]}
+               (deal-damage 2)
+               (choose {:area :minions :player-no 0 :card-name :corrupter}))
+           {:nemesis {:play-area       [(assoc corrupter :life 4)]
+                      :corruption-deck [corruption-card-2]}
+            :players [{:deck [corruption-card crystal spark]}]}))
+    (is (= (-> {:nemesis {:play-area       [(assoc corrupter :life 1)]
+                          :corruption-deck [corruption-card corruption-card-2]}
+                :players [{:deck [crystal spark]}]}
+               (deal-damage 1)
+               (choose {:area :minions :player-no 0 :card-name :corrupter}))
+           {:nemesis {:discard         [(assoc corrupter :life 0)]
+                      :corruption-deck [corruption-card-2]}
+            :players [{:deck [corruption-card crystal spark]}]}))
+    (is (= (-> {:nemesis {:play-area       [(assoc corrupter :life 1)]
+                          :corruption-deck [corruption-card corruption-card-2]}
+                :players [{:deck [crystal spark]}]}
+               (deal-damage 0)
+               (choose {:area :minions :player-no 0 :card-name :corrupter}))
+           {:nemesis {:play-area       [(assoc corrupter :life 1)]
+                      :corruption-deck [corruption-card corruption-card-2]}
+            :players [{:deck [crystal spark]}]}))))
+
 (deftest pain-sower-test
   (testing "Pain Sower"
     (is (= (-> {:current-player :nemesis
