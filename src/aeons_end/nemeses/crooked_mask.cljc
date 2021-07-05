@@ -301,6 +301,28 @@
                                               [:heal-nemesis 13]]}
                        :quote      "'Is it laughing at us?' Nym, Breach Mage Apprentice"})
 
+(defn vex-discard [game _]
+  (let [damage (->> (get-in game [:nemesis :deck])
+                    (take 2)
+                    (filter (comp #{3} :tier))
+                    count
+                    (* 4))]
+    (push-effect-stack game {:effects [[:move-cards {:number-of-cards 2
+                                                     :from            :deck
+                                                     :from-position   :top
+                                                     :to              :discard}]
+                                       [:damage-gravehold damage]]})))
+
+(effects/register {::vex-discard vex-discard})
+
+(def vex {:name    :vex
+          :type    :attack
+          :tier    2
+          :text    ["Discard the top two cards of the nemesis deck."
+                    "For each tier 3 nemesis card discarded this way, Gravehold suffers 4 damage."]
+          :effects [[::vex-discard]]
+          :quote   "'It is one thing to swing a sword or beckon flame from the void. But it is another act indeed to fight blinding madness from within.' Brama, Breach Mage Elder"})
+
 (def crooked-mask {:name             :crooked-mask
                    :level            5
                    :life             70
@@ -311,7 +333,7 @@
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
                    :cards            [(attack/generic 1) (minion/generic 1) tempt
-                                      (attack/generic 2) pain-sower twisting-madness
+                                      pain-sower twisting-madness vex
                                       (attack/generic 3) bedlam-sage (minion/generic 3)]
                    :corruption-deck  (concat [blind-abandon
                                               contagion

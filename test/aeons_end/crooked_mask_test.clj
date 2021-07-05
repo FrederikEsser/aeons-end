@@ -4,6 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.nemeses.crooked-mask :as crooked-mask :refer :all]
+            [aeons-end.cards.attack :as attack]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.turn-order :as turn-order]
             [aeons-end.cards.gem :refer []]
@@ -427,3 +428,29 @@
                                           :life 10}]}
                               draw-nemesis-card
                               (choose {:player-no 1}))))))
+
+(deftest vex-test
+  (testing "Vex"
+    (is (= (-> {:nemesis   {:deck [vex pain-sower twisting-madness bedlam-sage]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:deck    [bedlam-sage]
+                        :discard [pain-sower twisting-madness vex]}
+            :gravehold {:life 30}}))
+    (is (= (-> {:nemesis   {:deck [vex twisting-madness bedlam-sage attack/banish]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:deck    [attack/banish]
+                        :discard [twisting-madness bedlam-sage vex]}
+            :gravehold {:life 26}}))
+    (is (= (-> {:nemesis   {:deck [vex bedlam-sage attack/banish attack/quell]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:deck    [attack/quell]
+                        :discard [bedlam-sage attack/banish vex]}
+            :gravehold {:life 22}}))
+    (is (= (-> {:nemesis   {:deck [vex bedlam-sage]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard [bedlam-sage vex]}
+            :gravehold {:life 26}}))))
