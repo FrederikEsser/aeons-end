@@ -110,7 +110,7 @@
                     :effects     [[:give-choice {:title   :tempest-sigil
                                                  :text    "Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."
                                                  :choice  ::tempest-sigil-replace-breach
-                                                 :options [:players :breaches {:status        :opened
+                                                 :options [:players :breaches {:opened        true
                                                                                :max-breach-no 1}]
                                                  :min     1
                                                  :max     1}]]})

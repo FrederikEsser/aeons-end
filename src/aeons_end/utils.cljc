@@ -330,7 +330,7 @@
     (count all-text)))
 
 (defn options-from-player [game {:keys [player-no area]}
-                           & [{:keys [type not-type cost min-cost max-cost most-expensive lowest-focus-cost stati
+                           & [{:keys [type not-type cost min-cost max-cost most-expensive lowest-focus-cost opened
                                       min-charges prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
@@ -344,7 +344,8 @@
                                   (apply min 20))]
                 (cond->> options
                          lowest-focus-cost (filter (comp #{low-cost} :focus-cost))
-                         stati (filter (comp stati :status))
+                         opened (filter (comp #{:opened} :status))
+                         (false? opened) (remove (comp #{:opened} :status))
                          :always (map :option)))
     :ability (let [charges (get-in game [:players player-no :ability :charges])]
                (when (or (nil? min-charges)
@@ -415,9 +416,9 @@
 
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
-                                       number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach-stati min-deck+discard
+                                       number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach min-deck+discard
                                        last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost most-crystals
-                                       status stati max-breach-no]}]]
+                                       opened max-breach-no]}]]
   (let [solo-play?     (= 1 (count players))
         highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
@@ -456,11 +457,11 @@
                                 most-life (filter (comp #{high-life} :life))
                                 most-crystals (filter (comp #{max-crystals} count-crystals))
                                 not-exhausted (filter (comp pos? :life))
-                                empty-breach-stati (filter (fn [{:keys [breaches]}]
-                                                             (->> breaches
-                                                                  (filter (comp empty? :prepped-spells))
-                                                                  (filter (comp empty-breach-stati :status))
-                                                                  not-empty))))]
+                                empty-breach (filter (fn [{:keys [breaches]}]
+                                                       (->> breaches
+                                                            (remove (comp #{:destroyed} :status))
+                                                            (filter (comp empty? :prepped-spells))
+                                                            not-empty))))]
     (cond
       (#{:players :ability} area) (->> valid-players
                                        (map #(select-keys % [:player-no])))
@@ -478,8 +479,8 @@
                                                                                                                   :breach-no breach-no}))))
                                                                  lowest-focus-cost (filter (comp #{cheapest-breach-no} :breach-no :option)))))))]
                            (cond->> options
-                                    status (filter (comp #{status} :status))
-                                    stati (filter (comp stati :status))
+                                    opened (filter (comp #{:opened} :status))
+                                    (false? opened) (remove (comp #{:opened} :status))
                                     max-breach-no (filter (comp #(<= % max-breach-no) :breach-no :option))
                                     :always (map :option)))
       :else (let [options      (case area

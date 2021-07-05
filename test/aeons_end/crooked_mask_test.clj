@@ -298,6 +298,77 @@
                               :revealed-cards 1}]
                 :gravehold  {:life 28}}))))))
 
+(deftest pain-sower-test
+  (testing "Pain Sower"
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area [pain-sower]}
+                :players        [{:breaches [{:status     :closed
+                                              :focus-cost 4
+                                              :stage      0}]
+                                  :life     10}
+                                 {:breaches [{:status     :closed
+                                              :focus-cost 4
+                                              :stage      0}]
+                                  :life     10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0})
+               (choose {:player-no 1 :breach-no 0}))
+           {:current-player :nemesis
+            :nemesis        {:play-area [pain-sower]}
+            :players        [{:breaches [{:status     :closed
+                                          :focus-cost 4
+                                          :stage      0}]
+                              :life     8}
+                             {:breaches [{:status     :closed
+                                          :focus-cost 4
+                                          :stage      1}]
+                              :life     10}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:current-player :nemesis
+                               :nemesis        {:play-area [pain-sower]}
+                               :players        [{:breaches [{:status     :closed
+                                                             :focus-cost 4
+                                                             :stage      0}]
+                                                 :life     10}
+                                                {:breaches [{:status     :closed
+                                                             :focus-cost 4
+                                                             :stage      0}]
+                                                 :life     10}]}
+                              (resolve-nemesis-cards-in-play)
+                              (choose {:player-no 0})
+                              (choose {:player-no 0 :breach-no 0}))))
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area [pain-sower]}
+                :players        [{:breaches [{:status     :closed
+                                              :focus-cost 4
+                                              :stage      3}]
+                                  :life     10}
+                                 {:breaches [{:status :opened}]
+                                  :life     2}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:current-player :nemesis
+            :nemesis        {:play-area [pain-sower]}
+            :players        [{:breaches [{:status     :closed
+                                          :focus-cost 4
+                                          :stage      3}]
+                              :life     8}
+                             {:breaches [{:status :opened}]
+                              :life     2}]}))
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area [pain-sower]}
+                :players        [{:breaches [{:status     :closed
+                                              :focus-cost 4
+                                              :stage      3}]
+                                  :life     10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0})
+               (choose {:player-no 0 :breach-no 0}))
+           {:current-player :nemesis
+            :nemesis        {:play-area [pain-sower]}
+            :players        [{:breaches [{:status :opened}]
+                              :life     8}]}))))
+
 (deftest tempt-test
   (testing "Tempt"
     (let [ignite (assoc ignite :id 1)]

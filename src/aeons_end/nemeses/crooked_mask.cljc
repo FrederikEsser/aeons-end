@@ -132,7 +132,7 @@
                                [:give-choice {:title   :delirium-veil
                                               :text    "Focus a breach."
                                               :choice  :focus-breach
-                                              :options [:player :breaches {:stati #{:closed :focused}}]
+                                              :options [:player :breaches {:opened false}]
                                               :min     1
                                               :max     1}]
                                [:destroy-this]]
@@ -222,6 +222,32 @@
                                                         :max     1}]]}
                   :quote      "'Employing a complex stratagem against such an unpredictable foe is beyond foolish. Instinct is our only and best weapon.' Mist, Breach Mage Dagger Captain"})
 
+(defn pain-sower-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 2]
+                                       [:give-choice {:title   :pain-sower
+                                                      :text    "A different player focuses a breach."
+                                                      :choice  :focus-breach
+                                                      :options [:players :breaches {:ally true :opened false}]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::pain-sower-damage pain-sower-damage})
+
+(def pain-sower {:name       :pain-sower
+                 :type       :minion
+                 :tier       2
+                 :life       11
+                 :persistent {:text    ["Any player suffers 2 damage."
+                                        "A different player focuses a breach."]
+                              :effects [[:give-choice {:title   :pain-sower
+                                                       :text    "Any player suffers 2 damage."
+                                                       :choice  [::pain-sower-damage {:arg 2}]
+                                                       :options [:players]
+                                                       :min     1
+                                                       :max     1}]]}
+                 :quote      "'Even its beasts seem to delight in lunacy' Brama, Breach Mage Elder"})
+
 (defn tempt-attack [game {:keys [player-no]}]
   (let [crystals (->> (get-in game [:players player-no :hand])
                       (map :name)
@@ -285,7 +311,7 @@
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
                    :cards            [(attack/generic 1) (minion/generic 1) tempt
-                                      (attack/generic 2) (minion/generic 2) twisting-madness
+                                      (attack/generic 2) pain-sower twisting-madness
                                       (attack/generic 3) bedlam-sage (minion/generic 3)]
                    :corruption-deck  (concat [blind-abandon
                                               contagion
