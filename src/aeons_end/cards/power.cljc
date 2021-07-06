@@ -147,13 +147,6 @@
                                                           :min     1
                                                           :max     1}]]}})
 
-(defn heart-of-nothing-can-discard? [game {:keys [player-no]}]
-  (let [cards-in-hand (->> (get-in game [:players player-no :hand])
-                           count)]
-    (>= cards-in-hand 4)))
-
-(effects/register-predicates {::heart-of-nothing-can-discard? heart-of-nothing-can-discard?})
-
 (def heart-of-nothing {:name       :heart-of-nothing
                        :type       :power
                        :tier       1
@@ -327,11 +320,11 @@
                    3 {:power   2
                       :text    ["Any player suffers 6 damage."
                                 "OR"
-                                "Gravehold suffers 6 damage."]
+                                "Gravehold suffers 8 damage."]
                       :effects [[:give-choice {:title     name
                                                :text      "Any player suffers 6 damage."
                                                :choice    [:damage-player {:arg 6}]
-                                               :or-choice {:text    "Gravehold suffers 6 damage."
-                                                           :effects [[:damage-gravehold 6]]}
+                                               :or-choice {:text    "Gravehold suffers 8 damage."
+                                                           :effects [[:damage-gravehold 8]]}
                                                :options   [:players]
                                                :max       1}]]})}))

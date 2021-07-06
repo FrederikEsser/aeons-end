@@ -252,11 +252,11 @@
                                         "A different player focuses a breach."]
                               :effects [[:give-choice {:title   :pain-sower
                                                        :text    "Any player suffers 2 damage."
-                                                       :choice  [::pain-sower-damage {:arg 2}]
+                                                       :choice  ::pain-sower-damage
                                                        :options [:players]
                                                        :min     1
                                                        :max     1}]]}
-                 :quote      "'Even its beasts seem to delight in lunacy' Brama, Breach Mage Elder"})
+                 :quote      "'Even its beasts seem to delight in lunacy.' Brama, Breach Mage Elder"})
 
 (defn tempt-attack [game {:keys [player-no]}]
   (let [crystals (->> (get-in game [:players player-no :hand])
@@ -305,8 +305,8 @@
                                                                :min     4
                                                                :max     4}]]}
                        :power      {:power   2
-                                    :text    ["Gravehold gain 3 life."
-                                              "Crooked Mask gain 13 life."]
+                                    :text    ["Gravehold gains 3 life."
+                                              "Crooked Mask gains 13 life."]
                                     :effects [[:heal-gravehold 3]
                                               [:heal-nemesis 13]]}
                        :quote      "'Is it laughing at us?' Nym, Breach Mage Apprentice"})

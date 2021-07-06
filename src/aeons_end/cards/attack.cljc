@@ -282,26 +282,21 @@
        :tier tier}
       (case tier
         1 {:text    ["Unleash"
+                     "Gravehold suffers 3 damage."]
+           :effects [[:unleash]
+                     [:damage-gravehold 3]]}
+        2 {:text    ["Unleash twice."
                      "Any player suffers 2 damage."]
            :effects [[:unleash]
+                     [:unleash]
                      [:give-choice {:title   name
                                     :text    "Any player suffers 2 damage."
                                     :choice  [:damage-player {:arg 2}]
                                     :options [:players]
                                     :min     1
                                     :max     1}]]}
-        2 {:text    ["Unleash twice."
-                     "Gravehold suffers 2 damage."]
+        3 {:text    ["Unleash twice."
+                     "Gravehold suffers 4 damage."]
            :effects [[:unleash]
                      [:unleash]
-                     [:damage-gravehold 2]]}
-        3 {:text    ["Gravehold suffers 7 damage."
-                     "OR"
-                     "Unleash three times."]
-           :effects [[:give-choice {:title   name
-                                    :choice  ::quell-choice
-                                    :options [:special
-                                              {:option :damage :text "Gravehold suffers 7 damage."}
-                                              {:option :unleash :text "Unleash three times."}]
-                                    :min     1
-                                    :max     1}]]}))))
+                     [:damage-gravehold 4]]}))))
