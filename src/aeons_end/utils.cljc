@@ -553,12 +553,18 @@
 (effects/register-options {:turn-order options-from-turn-order})
 
 (defn options-from-supply [{:keys [supply] :as game} _
-                           & [{:keys [type max-cost all]}]]
-  (cond->> supply
-           type (filter (comp #{type} :type :card))
-           max-cost (filter (comp #(<= % max-cost) :cost :card))
-           (not all) (filter (comp pos? :pile-size))
-           :always (map (comp :name :card))))
+                           & [{:keys [type max-cost least-expensive all]}]]
+  (let [piles    (cond->> supply
+                          type (filter (comp #{type} :type :card))
+                          max-cost (filter (comp #(<= % max-cost) :cost :card)))
+        min-cost (when (not-empty piles)
+                   (->> piles
+                        (map (comp :cost :card))
+                        (apply min)))]
+    (cond->> piles
+             least-expensive (filter (comp #{min-cost} :cost :card))
+             (not all) (filter (comp pos? :pile-size))
+             :always (map (comp :name :card)))))
 
 (effects/register-options {:supply options-from-supply})
 

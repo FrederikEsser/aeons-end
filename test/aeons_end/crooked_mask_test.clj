@@ -7,8 +7,8 @@
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.turn-order :as turn-order]
-            [aeons-end.cards.gem :refer []]
-            [aeons-end.cards.relic :refer [fiend-catcher]]
+            [aeons-end.cards.gem :refer [haunted-berylite jade sifters-pearl]]
+            [aeons-end.cards.relic :refer [mages-totem fiend-catcher temporal-helix]]
             [aeons-end.cards.spell :refer [ignite radiance]]))
 
 (defn fixture [f]
@@ -297,7 +297,115 @@
                 :nemesis    {:corruption-deck [grim-sight]}
                 :players    [{:deck           [crystal]
                               :revealed-cards 1}]
-                :gravehold  {:life 28}}))))))
+                :gravehold  {:life 28}}))))
+    (testing "Insatiable Avarice"
+      (let [insatiable-avarice (assoc insatiable-avarice :id 1)
+            haunted-berylite   (assoc haunted-berylite :id 2)]
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card haunted-berylite :pile-size 7}]
+                    :nemesis    {}
+                    :players    [{:hand [insatiable-avarice]
+                                  :life 10}]}
+                   (play 0 :insatiable-avarice)
+                   (choose :haunted-berylite))
+               {:difficulty :normal
+                :supply     [{:card haunted-berylite :pile-size 6}]
+                :nemesis    {:corruption-deck [insatiable-avarice]}
+                :players    [{:hand [haunted-berylite]
+                              :life 8}]}))
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card jade :pile-size 0}
+                                 {:card haunted-berylite :pile-size 7}
+                                 {:card fiend-catcher :pile-size 5}
+                                 {:card radiance :pile-size 5}]
+                    :nemesis    {}
+                    :players    [{:hand [insatiable-avarice]
+                                  :life 10}]}
+                   (play 0 :insatiable-avarice))
+               {:difficulty :normal
+                :supply     [{:card jade :pile-size 0}
+                             {:card haunted-berylite :pile-size 7}
+                             {:card fiend-catcher :pile-size 5}
+                             {:card radiance :pile-size 5}]
+                :nemesis    {:corruption-deck [insatiable-avarice]}
+                :players    [{:life 8}]}))
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card haunted-berylite :pile-size 7}
+                                 {:card sifters-pearl :pile-size 0}]
+                    :nemesis    {}
+                    :players    [{:hand [insatiable-avarice]
+                                  :life 10}]}
+                   (play 0 :insatiable-avarice)
+                   (choose :haunted-berylite))
+               {:difficulty :normal
+                :supply     [{:card haunted-berylite :pile-size 6}
+                             {:card sifters-pearl :pile-size 0}]
+                :nemesis    {:corruption-deck [insatiable-avarice]}
+                :players    [{:hand [haunted-berylite]
+                              :life 8}]}))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:difficulty :normal
+                                   :supply     [{:card haunted-berylite :pile-size 7}
+                                                {:card sifters-pearl :pile-size 0}]
+                                   :nemesis    {}
+                                   :players    [{:hand [insatiable-avarice]
+                                                 :life 10}]}
+                                  (play 0 :insatiable-avarice)
+                                  (choose :sifter's-pearl))))))
+    (testing "Reckless Might"
+      (let [reckless-might (assoc reckless-might :id 1)
+            mages-totem    (assoc mages-totem :id 2)
+            temporal-helix (assoc temporal-helix :id 3)]
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card mages-totem :pile-size 5}
+                                 {:card temporal-helix :pile-size 5}]
+                    :nemesis    {}
+                    :players    [{:hand [reckless-might]
+                                  :deck [crystal]
+                                  :life 10}]}
+                   (play 0 :reckless-might)
+                   (choose :mage's-totem))
+               {:difficulty :normal
+                :supply     [{:card mages-totem :pile-size 4}
+                             {:card temporal-helix :pile-size 5}]
+                :nemesis    {:corruption-deck [reckless-might]}
+                :players    [{:deck           [mages-totem crystal]
+                              :revealed-cards 1
+                              :life           9}]}))
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card mages-totem :pile-size 5}
+                                 {:card temporal-helix :pile-size 5}]
+                    :nemesis    {}
+                    :players    [{:hand [reckless-might]
+                                  :deck [crystal]
+                                  :life 10}]}
+                   (play 0 :reckless-might)
+                   (choose :temporal-helix))
+               {:difficulty :normal
+                :supply     [{:card mages-totem :pile-size 5}
+                             {:card temporal-helix :pile-size 4}]
+                :nemesis    {:corruption-deck [reckless-might]}
+                :players    [{:deck           [temporal-helix crystal]
+                              :revealed-cards 1
+                              :life           6}]}))
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card jade :pile-size 7}
+                                 {:card mages-totem :pile-size 0}
+                                 {:card temporal-helix :pile-size 0}
+                                 {:card radiance :pile-size 5}]
+                    :nemesis    {}
+                    :players    [{:hand [reckless-might]
+                                  :deck [crystal]
+                                  :life 10}]}
+                   (play 0 :reckless-might))
+               {:difficulty :normal
+                :supply     [{:card jade :pile-size 7}
+                             {:card mages-totem :pile-size 0}
+                             {:card temporal-helix :pile-size 0}
+                             {:card radiance :pile-size 5}]
+                :nemesis    {:corruption-deck [reckless-might]}
+                :players    [{:deck [crystal]
+                              :life 10}]}))))))
 
 (deftest corrupter-test
   (testing "Corrupter"

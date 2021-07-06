@@ -191,6 +191,21 @@
                             [:destroy-this]]
                  :on-trash [[::corruption-on-trash]]})
 
+(def insatiable-avarice {:name     :insatiable-avarice
+                         :type     :corruption
+                         :text     ["Suffer 2 damage."
+                                    "Gain a gem from the least expensive gem supply pile and place it into your hand."
+                                    "Destroy this."]
+                         :effects  [[:damage-player 2]
+                                    [:give-choice {:title   :insatiable-avarice
+                                                   :text    "Gain a gem from the least expensive gem supply pile and place it into your hand."
+                                                   :choice  [:gain {:to :hand}]
+                                                   :options [:supply {:type :gem :least-expensive true}]
+                                                   :min     1
+                                                   :max     1}]
+                                    [:destroy-this]]
+                         :on-trash [[::corruption-on-trash]]})
+
 (def lust-for-power {:name     :lust-for-power
                      :type     :corruption
                      :text     ["Suffer 1 damage."
@@ -198,6 +213,33 @@
                                 "Destroy this."]
                      :effects  [[:damage-player 1]
                                 [:gain-charge]
+                                [:destroy-this]]
+                     :on-trash [[::corruption-on-trash]]})
+
+(defn reckless-might-gain [game {:keys [player-no card-name]}]
+  (let [{:keys [card]} (ut/get-pile-idx game card-name)
+        damage (-> (:cost card)
+                   inc
+                   (quot 2))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain {:card-name   card-name
+                                                 :to          :deck
+                                                 :to-position :top}]
+                                         [:damage-player damage]]})))
+
+(effects/register {::reckless-might-gain reckless-might-gain})
+
+(def reckless-might {:name     :reckless-might
+                     :type     :corruption
+                     :text     ["Gain a relic from any relic supply pile and place on top of your deck."
+                                "Suffer damage equal to half its cost, rounded up."
+                                "Destroy this."]
+                     :effects  [[:give-choice {:title   :reckless-might
+                                               :text    "Gain a relic from any relic supply pile and place on top of your deck.\nSuffer damage equal to half its cost, rounded up."
+                                               :choice  ::reckless-might-gain
+                                               :options [:supply {:type :relic}]
+                                               :min     1
+                                               :max     1}]
                                 [:destroy-this]]
                      :on-trash [[::corruption-on-trash]]})
 
@@ -345,12 +387,14 @@
                    :cards            [(attack/generic 1) corrupter tempt
                                       pain-sower twisting-madness vex
                                       (attack/generic 3) bedlam-sage (minion/generic 3)]
-                   :corruption-deck  (concat [blind-abandon
-                                              contagion
-                                              delirium-veil
-                                              dire-wisdom
-                                              endless-hunger
-                                              fever-of-war
-                                              grim-sight
-                                              lust-for-power]
-                                             (repeat 3 generic-corruption-card))})
+                   :corruption-deck  [blind-abandon
+                                      contagion
+                                      delirium-veil
+                                      dire-wisdom
+                                      endless-hunger
+                                      fever-of-war
+                                      grim-sight
+                                      insatiable-avarice
+                                      lust-for-power
+                                      generic-corruption-card
+                                      reckless-might]})
