@@ -407,6 +407,44 @@
                 :players    [{:deck [crystal]
                               :life 10}]}))))))
 
+(deftest afflict-test
+  (testing "Afflict"
+    (is (= (-> {:nemesis {:deck            [afflict]
+                          :corruption-deck [{:type :corruption :id 1}
+                                            {:type :corruption :id 2}
+                                            {:type :corruption :id 3}
+                                            {:type :corruption :id 4}]}
+                :players [{:deck [crystal]
+                           :life 8}
+                          {:deck [crystal]
+                           :life 8}
+                          {:deck [crystal]
+                           :life 8}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 2}]))
+           {:nemesis {:discard         [afflict]
+                      :corruption-deck []}
+            :players [{:deck [{:type :corruption :id 2} {:type :corruption :id 1} crystal]
+                       :life 9}
+                      {:deck [crystal]
+                       :life 8}
+                      {:deck [{:type :corruption :id 4} {:type :corruption :id 3} crystal]
+                       :life 9}]}))
+    (is (= (-> {:nemesis {:deck            [afflict]
+                          :corruption-deck [{:type :corruption :id 1}
+                                            {:type :corruption :id 2}
+                                            {:type :corruption :id 3}
+                                            {:type :corruption :id 4}]}
+                :players [{:deck [crystal]
+                           :life 6}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis {:discard         [afflict]
+                      :corruption-deck []}
+            :players [{:deck [{:type :corruption :id 4} {:type :corruption :id 3} {:type :corruption :id 2} {:type :corruption :id 1} crystal]
+                       :life 8}]}))))
+
 (deftest corrupter-test
   (testing "Corrupter"
     (is (= (-> {:nemesis {:play-area       [(assoc corrupter :life 6)]

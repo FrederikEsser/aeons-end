@@ -92,14 +92,14 @@
                          [::encroach-damage]]})
 
 (defn engulf-attack [game _]
-  (let [{:keys [name effects] :as card} (->> (get-in game [:nemesis :discard])
-                                             (filter (comp #{:attack} :type))
-                                             last)]
+  (let [{:keys [id name effects] :as card} (->> (get-in game [:nemesis :discard])
+                                                (filter (comp #{:attack} :type))
+                                                last)]
     (cond-> game
             card (push-effect-stack {:effects (concat [[:set-resolving {:card-name name}]
-                                                       [:move-card {:card-name name
-                                                                    :from      :discard
-                                                                    :to        :discard}]]
+                                                       [:move-card {:move-card-id id
+                                                                    :from         :discard
+                                                                    :to           :discard}]]
                                                       effects)}))))
 
 (effects/register {::engulf-attack engulf-attack})

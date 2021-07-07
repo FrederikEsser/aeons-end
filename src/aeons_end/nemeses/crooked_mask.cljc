@@ -264,6 +264,35 @@
                                                         :max     1}]]}
                   :quote      "'Employing a complex stratagem against such an unpredictable foe is beyond foolish. Instinct is our only and best weapon.' Mist, Breach Mage Dagger Captain"})
 
+(defn afflict-corrupt [game {:keys [player-no player-card-names]}]
+  (let [player-numbers (or (some->> player-card-names
+                                    (map :player-no))
+                           (when player-no
+                             [player-no player-no]))]
+    (->> player-numbers
+         reverse
+         (reduce (fn [game player-no]
+                   (push-effect-stack game {:player-no player-no
+                                            :effects   [[::gain-corruption {:to :deck}]
+                                                        [::gain-corruption {:to :deck}]
+                                                        [:heal {:life 1}]]}))
+                 game))))
+
+(effects/register {::afflict-corrupt afflict-corrupt})
+
+(def afflict {:name    :afflict
+              :type    :attack
+              :tier    3
+              :text    ["Two different players each gain two corruptions and place them on top of their decks."
+                        "Each of those players gains 1 life."]
+              :effects [[:give-choice {:title   :afflict
+                                       :text    "Two different players each gain two corruptions and place them on top of their decks."
+                                       :choice  ::afflict-corrupt
+                                       :options [:players]
+                                       :min     2
+                                       :max     2}]]
+              :quote   "'It was as if a whisper echoed behind my eyes, tempting me to stray into the raw abyss.' Xaxos, Breach Mage Adept"})
+
 (def corrupter {:name       :corrupter
                 :type       :minion
                 :tier       1
@@ -386,7 +415,7 @@
                    :additional-rules ::additional-rules
                    :cards            [(attack/generic 1) corrupter tempt
                                       pain-sower twisting-madness vex
-                                      (attack/generic 3) bedlam-sage (minion/generic 3)]
+                                      afflict bedlam-sage (minion/generic 3)]
                    :corruption-deck  [blind-abandon
                                       contagion
                                       delirium-veil

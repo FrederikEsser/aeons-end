@@ -43,7 +43,7 @@
                                                       (filter (comp #{tier} :tier))))
                                          shuffle)))
                           (concat [])
-                          vec)
+                          (mapv ut/give-id!))
                :phase :out-of-turn)
         (dissoc :cards))))
 
