@@ -570,7 +570,7 @@
                                  :breaches [{:status :opened}]
                                  :phase    :out-of-turn}]}
                      (play 0 :cairn-compass)
-                     (choose {:player-no 1 :card-name :nova-forge :card-id 1}))
+                     (choose {:player-no 1 :card-id 1}))
                  {:players [{:play-area [cairn-compass]}
                             {:breaches [{:status         :opened
                                          :prepped-spells [nova-forge]}]
@@ -580,7 +580,7 @@
                                  :breaches [{:status :opened}]
                                  :phase    :main}]}
                      (play 0 :cairn-compass)
-                     (choose {:player-no 0 :card-name :nova-forge :card-id 1}))
+                     (choose {:player-no 0 :card-id 1}))
                  {:players [{:play-area        [cairn-compass]
                              :breaches         [{:status         :opened
                                                  :prepped-spells [nova-forge]}]

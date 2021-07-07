@@ -126,10 +126,12 @@
 
 (effects/register {:collective-discard-prepped-spells collective-discard-prepped-spells})
 
-(defn take-from-discard [game {:keys [card-name card-names] :as args}]
+(defn take-from-discard [game {:keys [player-no card-id]}]
   (cond-> game
-          (or card-name card-names) (move-cards (merge args {:from :discard
-                                                             :to   :hand}))))
+          card-id (push-effect-stack {:player-no player-no
+                                      :effects   [[:move-card {:move-card-id card-id
+                                                               :from         :discard
+                                                               :to           :hand}]]})))
 
 (effects/register {:take-from-discard take-from-discard})
 
@@ -175,7 +177,7 @@
 
 (effects/register {:topdeck-prepped-spell topdeck-prepped-spell})
 
-(defn topdeck-from-gained [game {:keys [player-no card-name]}]
+(defn topdeck-from-gained [game {:keys [player-no card-id card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
                                         :effects   [[:move-card {:card-name   card-name
@@ -234,7 +236,7 @@
 
 (defn destroy-from-area [game {:keys [player-no area card-name card-id choices]}]
   (let [choices (or choices
-                    (when (and area card-name)
+                    (when (and area (or card-name card-id))
                       [{:area      area
                         :card-name card-name
                         :card-id   card-id}]))]

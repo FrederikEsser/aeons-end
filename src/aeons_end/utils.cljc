@@ -385,11 +385,10 @@
                                   (and cost
                                        (<= cost max-cost))))
                most-expensive (filter (comp #{highest-cost} :cost))
-               (#{:discard :gaining} area) (map (fn [{:keys [id name]}]
-                                                  {:player-no player-no
-                                                   :card-id   id
-                                                   :card-name name}))
-               (not (#{:discard :gaining} area)) (map :name)))))
+               (#{:discard} area) (map (fn [{:keys [id]}]
+                                         {:player-no player-no
+                                          :card-id   id}))
+               (not (#{:discard} area)) (map :name)))))
 
 (effects/register-options {:player options-from-player})
 
@@ -488,10 +487,9 @@
                                                (mapcat (fn [{:keys [player-no discard]}]
                                                          (->> (cond->> discard
                                                                        last (take-last 1)) ; it's important that 'last' is evaluated first
-                                                              (map (fn [{:keys [id name] :as card}]
+                                                              (map (fn [{:keys [id] :as card}]
                                                                      (assoc card :option {:player-no player-no
-                                                                                          :card-id   id
-                                                                                          :card-name name})))))))
+                                                                                          :card-id   id})))))))
                                  :hand (->> valid-players
                                             (mapcat (fn [{:keys [player-no hand]}]
                                                       (->> hand

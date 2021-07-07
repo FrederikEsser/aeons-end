@@ -19,7 +19,7 @@
                                :life    10}]}
                  draw-nemesis-card
                  (choose {:player-no 0})
-                 (choose {:player-no 0 :card-name :crystal :card-id 1}))
+                 (choose {:player-no 0 :card-id 1}))
              {:nemesis   {:discard [afflict]
                           :unleash [[:damage-gravehold 1]]}
               :gravehold {:life 29}

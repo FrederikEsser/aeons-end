@@ -230,7 +230,7 @@
                               {:discard [spark crystal]}
                               {:discard [crystal]}]}
                    (play 0 :shattered-geode)
-                   (choose {:player-no 1 :card-name :crystal :card-id 2}))
+                   (choose {:player-no 1 :card-id 2}))
                {:players [{:hand      [crystal]
                            :play-area [shattered-geode]
                            :aether    1}
@@ -240,7 +240,7 @@
                               {:discard [spark crystal]}
                               {:discard [crystal]}]}
                    (play 0 :shattered-geode)
-                   (choose {:player-no 2 :card-name :crystal :card-id 2}))
+                   (choose {:player-no 2 :card-id 2}))
                {:players [{:hand      [crystal]
                            :play-area [shattered-geode]
                            :aether    1}
@@ -250,23 +250,23 @@
                               (-> {:players [{:hand [shattered-geode]}
                                              {:discard [crystal spark]}]}
                                   (play 0 :shattered-geode)
-                                  (choose {:player-no 1 :card-name :crystal :card-id 2}))))
+                                  (choose {:player-no 1 :card-id 2}))))
         (is (thrown-with-msg? AssertionError #"Choose error:"
                               (-> {:players [{:hand    [shattered-geode]
                                               :discard [spark crystal]}
                                              {}]}
                                   (play 0 :shattered-geode)
-                                  (choose {:player-no 0 :card-id 2 :card-name :crystal}))))
+                                  (choose {:player-no 0 :card-id 2}))))
         (is (thrown-with-msg? AssertionError #"Choose error:"
                               (-> {:players [{:hand    [shattered-geode]
                                               :discard [spark crystal]}
                                              {:discard [spark crystal]}]}
                                   (play 0 :shattered-geode)
-                                  (choose {:player-no 0 :card-id 2 :card-name :crystal}))))
+                                  (choose {:player-no 0 :card-id 2}))))
         (is (= (-> {:players [{:hand    [shattered-geode]
                                :discard [spark crystal]}]}
                    (play 0 :shattered-geode)
-                   (choose {:player-no 0 :card-id 2 :card-name :crystal}))
+                   (choose {:player-no 0 :card-id 2}))
                {:players [{:hand      [crystal]
                            :play-area [shattered-geode]
                            :discard   [spark]
@@ -274,7 +274,7 @@
         (is (= (-> {:players [{:hand    [shattered-geode]
                                :discard [spark crystal]}]}
                    (play-all-gems 0)
-                   (choose {:player-no 0 :card-id 2 :card-name :crystal}))
+                   (choose {:player-no 0 :card-id 2}))
                {:players [{:play-area [shattered-geode crystal]
                            :discard   [spark]
                            :aether    2}]}))))
@@ -286,8 +286,8 @@
                               {:deck [crystal crystal]
                                :life 7}]}
                    (activate-ability 0)
-                   (choose [{:player-no 0 :card-id 1 :card-name :crystal}
-                            {:player-no 0 :card-id 2 :card-name :spark}])
+                   (choose [{:player-no 0 :card-id 1}
+                            {:player-no 0 :card-id 2}])
                    (choose {:player-no 1}))
                {:players [{:ability (assoc vimcraft-oath :charges 0)}
                           {:hand [crystal]
@@ -299,7 +299,7 @@
                                  :discard [crystal spark (assoc crystal :id 3)]}
                                 {:life 7}]}
                      (activate-ability 0)
-                     (choose [{:player-no 0 :card-id 1 :card-name :crystal}])
+                     (choose [{:player-no 0 :card-id 1}])
                      (choose {:player-no 1}))
                  {:players [{:ability (assoc vimcraft-oath :charges 0)
                              :discard [spark (assoc crystal :id 3)]}
@@ -309,7 +309,7 @@
                                  :discard [crystal spark (assoc crystal :id 3)]}
                                 {:life 7}]}
                      (activate-ability 0)
-                     (choose [{:player-no 0 :card-id 3 :card-name :crystal}])
+                     (choose [{:player-no 0 :card-id 3}])
                      (choose {:player-no 1}))
                  {:players [{:ability (assoc vimcraft-oath :charges 0)
                              :discard [crystal spark]}
@@ -319,7 +319,7 @@
                                  :discard [crystal]}
                                 {:life 7}]}
                      (activate-ability 0)
-                     (choose {:player-no 0 :card-id 1 :card-name :crystal})
+                     (choose {:player-no 0 :card-id 1})
                      (choose {:player-no 1}))
                  {:players [{:ability (assoc vimcraft-oath :charges 0)}
                             {:life 9}]

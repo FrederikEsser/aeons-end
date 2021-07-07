@@ -85,7 +85,7 @@
                                 :discard [corruption-card]}]
                   :turn-order {:deck [turn-order/player-1]}}
                  (play 0 :fiend-catcher)
-                 (choose {:area :discard :player-no 0 :card-name :corruption :card-id 1}))
+                 (choose {:area :discard :player-no 0 :card-id 1}))
              {:difficulty :normal
               :nemesis    {:corruption-deck [corruption-card-2 corruption-card]}
               :players    [{:play-area [fiend-catcher]}]
@@ -199,7 +199,7 @@
                                   :discard [crystal]
                                   :life    10}]}
                    (play 0 :contagion)
-                   (choose {:player-no 0 :card-name :crystal :card-id 2}))
+                   (choose {:player-no 0 :card-id 2}))
                {:difficulty :normal
                 :nemesis    {:corruption-deck [contagion]}
                 :players    [{:hand [crystal]

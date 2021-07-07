@@ -125,25 +125,27 @@
 
 (defn view-discard [{{:keys [player-no discard gaining]} :player
                      choice                              :choice}]
-  (let [cards (concat (->> discard
-                           (map #(assoc % :area :discard)))
-                      (->> gaining
-                           (map #(assoc % :area :gaining))))]
+  (let [cards      (concat (->> discard
+                                (map #(assoc % :area :discard)))
+                           (->> gaining
+                                (map #(assoc % :area :gaining))))
+        choice-key (fn choice-key [{:keys [id name area]}]
+                     (merge {:area      area
+                             :player-no player-no}
+                            (case area
+                              :discard {:card-id id}
+                              :gaining {:card-name name})))]
     (merge
       (when (not-empty cards)
-        {:card (let [{:keys [id area] :as card} (last cards)]
+        {:card (let [card (last cards)]
                  (merge (view-card card)
-                        (choice-interaction {:area      area
-                                             :player-no player-no
-                                             :card-id   id} choice)))})
+                        (choice-interaction (choice-key card) choice)))})
       {:cards           (if (empty? cards)
                           []
                           (->> cards
-                               (map (fn [{:keys [id area] :as card}]
+                               (map (fn [card]
                                       (merge (view-card card)
-                                             (choice-interaction {:area      area
-                                                                  :player-no player-no
-                                                                  :card-id   id} choice))))))
+                                             (choice-interaction (choice-key card) choice))))))
        :number-of-cards (count cards)})))
 
 (defn view-options [options]

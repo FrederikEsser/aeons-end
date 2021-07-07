@@ -237,7 +237,7 @@
                              :deck   [spark]}]
                   :supply  [{:card vriswood-amber :pile-size 7}]}
                  (buy-card 0 :v'riswood-amber)
-                 (choose {:player-no 0 :card-name :v'riswood-amber :card-id 1}))
+                 (choose :v'riswood-amber))
              {:players [{:aether         0
                          :deck           [vriswood-amber spark]
                          :revealed-cards 1}]
