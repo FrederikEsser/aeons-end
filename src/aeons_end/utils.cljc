@@ -405,6 +405,11 @@
 (defn count-cards-in-hand [{:keys [hand]}]
   (count hand))
 
+(defn count-non-corruption [{:keys [hand]}]
+  (->> hand
+       (remove (comp #{:corruption} :type))
+       count))
+
 (defn count-cards-in-deck-and-discard [{:keys [deck discard]}]
   (count (concat deck discard)))
 
@@ -417,7 +422,7 @@
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach min-deck+discard
                                        last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost most-crystals
-                                       opened max-breach-no]}]]
+                                       opened max-breach-no min-non-corruption]}]]
   (let [solo-play?     (= 1 (count players))
         highest-charge (->> players
                             (map #(get-in % [:ability :charges] 0))
@@ -451,6 +456,7 @@
                                 most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
                                 number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))
                                 min-hand (filter (comp #(<= min-hand %) count-cards-in-hand))
+                                min-non-corruption (filter (comp #(<= min-non-corruption %) count-non-corruption))
                                 min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))
                                 least-life (filter (comp #{low-life} :life))
                                 most-life (filter (comp #{high-life} :life))

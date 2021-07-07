@@ -329,6 +329,40 @@
                                                        :max     1}]]}
                  :quote      "'Even its beasts seem to delight in lunacy.' Brama, Breach Mage Elder"})
 
+(defn ruin-priest-discard [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :ruin-priest
+                                                      :text    "Discards three non-corruption cards."
+                                                      :choice  :discard-from-hand
+                                                      :options [:player :hand {:not-type :corruption}]
+                                                      :min     3
+                                                      :max     3}]
+                                       [::gain-corruption {:to :hand}]
+                                       [::gain-corruption {:to :hand}]
+                                       [::gain-corruption {:to :hand}]]}))
+
+(defn ruin-priest-choice [{:keys [players] :as game} _]
+  (let [max-cards (->> players
+                       (map ut/count-non-corruption)
+                       (apply max 0))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :ruin-priest
+                                                      :text    "Any player discards three non-corruption cards. That player gains three corruptions and places them into their hand."
+                                                      :choice  ::ruin-priest-discard
+                                                      :options [:players {:min-non-corruption (min 3 max-cards)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::ruin-priest-discard ruin-priest-discard
+                   ::ruin-priest-choice  ruin-priest-choice})
+
+(def ruin-priest {:name       :ruin-priest
+                  :type       :minion
+                  :tier       3
+                  :life       17
+                  :persistent {:text    "Any player discards three non-corruption cards. That player gains three corruptions and places them into their hand."
+                               :effects [[::ruin-priest-choice]]}
+                  :quote      "'In the dark, there is a light. And in madness, there is reason.' Xaxos, Breach Mage Adept"})
+
 (defn tempt-attack [game {:keys [player-no]}]
   (let [crystals (->> (get-in game [:players player-no :hand])
                       (map :name)
@@ -415,7 +449,7 @@
                    :additional-rules ::additional-rules
                    :cards            [(attack/generic 1) corrupter tempt
                                       pain-sower twisting-madness vex
-                                      afflict bedlam-sage (minion/generic 3)]
+                                      afflict bedlam-sage ruin-priest]
                    :corruption-deck  [blind-abandon
                                       contagion
                                       delirium-veil

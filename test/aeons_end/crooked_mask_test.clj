@@ -543,6 +543,66 @@
             :players        [{:breaches [{:status :opened}]
                               :life     8}]}))))
 
+(deftest ruin-priest-test
+  (testing "Ruin Priest"
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area       [ruin-priest]
+                                 :corruption-deck [corruption-card corruption-card corruption-card corruption-card]}
+                :players        [{:hand [crystal crystal crystal crystal crystal]}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0})
+               (choose [:crystal :crystal :crystal]))
+           {:current-player :nemesis
+            :nemesis        {:play-area       [ruin-priest]
+                             :corruption-deck [corruption-card]}
+            :players        [{:hand    [crystal crystal
+                                        corruption-card corruption-card corruption-card]
+                              :discard [crystal crystal crystal]}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:current-player :nemesis
+                               :nemesis        {:play-area       [ruin-priest]
+                                                :corruption-deck [corruption-card corruption-card corruption-card corruption-card]}
+                               :players        [{:hand [crystal crystal crystal crystal crystal]}
+                                                {:hand [crystal crystal corruption-card corruption-card corruption-card]}]}
+                              (resolve-nemesis-cards-in-play)
+                              (choose {:player-no 1}))))
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area       [ruin-priest]
+                                 :corruption-deck [corruption-card corruption-card corruption-card corruption-card]}
+                :players        [{:hand [crystal crystal]}
+                                 {:hand [crystal crystal corruption-card corruption-card corruption-card]}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 1})
+               (choose [:crystal :crystal]))
+           {:current-player :nemesis
+            :nemesis        {:play-area       [ruin-priest]
+                             :corruption-deck [corruption-card]}
+            :players        [{:hand [crystal crystal]}
+                             {:hand    [corruption-card corruption-card corruption-card corruption-card corruption-card corruption-card]
+                              :discard [crystal crystal]}]}))
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area       [ruin-priest]
+                                 :corruption-deck [corruption-card corruption-card corruption-card corruption-card]}
+                :players        [{:hand [crystal corruption-card corruption-card corruption-card]}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0})
+               (choose :crystal))
+           {:current-player :nemesis
+            :nemesis        {:play-area       [ruin-priest]
+                             :corruption-deck [corruption-card]}
+            :players        [{:hand    [corruption-card corruption-card corruption-card corruption-card corruption-card corruption-card]
+                              :discard [crystal]}]}))
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:play-area       [ruin-priest]
+                                 :corruption-deck [corruption-card corruption-card corruption-card corruption-card]}
+                :players        [{:hand [corruption-card corruption-card corruption-card]}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:current-player :nemesis
+            :nemesis        {:play-area       [ruin-priest]
+                             :corruption-deck [corruption-card]}
+            :players        [{:hand [corruption-card corruption-card corruption-card corruption-card corruption-card corruption-card]}]}))))
+
 (deftest tempt-test
   (testing "Tempt"
     (let [ignite (assoc ignite :id 1)]
