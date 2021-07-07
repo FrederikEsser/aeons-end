@@ -152,7 +152,7 @@
   (->> options
        (map (fn [option] (select-keys option [:option :text])))))
 
-(defn view-choice [{:keys [title text or-choice source options min max optional?] :as choice}]
+(defn view-choice [{:keys [title text or-choice source options min max optional? repeatable?] :as choice}]
   (->> (merge (when title
                 {:choice-title (ut/format-name title)})
               {:text          text
@@ -168,7 +168,9 @@
                                            :to   (last options)}}
                 {})
               (when-not (nil? optional?)
-                {:optional? optional?}))))
+                {:optional? optional?})
+              (when repeatable?
+                {:repeatable? repeatable?}))))
 
 (defn view-breaches [{{:keys [player-no
                               breaches

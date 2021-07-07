@@ -2,9 +2,7 @@
   (:require [aeons-end.operations :refer [push-effect-stack add-card]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.power :as power]
-            [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.attack :as attack]))
+            [aeons-end.cards.power :as power]))
 
 (defn gain-corruption [game {:keys [player-no to]}]
   (let [[card & new-corruption-deck] (get-in game [:nemesis :corruption-deck])
@@ -293,6 +291,36 @@
                                        :max     2}]]
               :quote   "'It was as if a whisper echoed behind my eyes, tempting me to stray into the raw abyss.' Xaxos, Breach Mage Adept"})
 
+(defn burden-gain-corruption [game {:keys [player-card-names]}]
+  (->> player-card-names
+       (map :player-no)
+       reverse
+       (reduce (fn [game player-no]
+                 (push-effect-stack game {:player-no player-no
+                                          :effects   [[::gain-corruption {:to :deck}]]}))
+               game)))
+
+(effects/register {::burden-gain-corruption burden-gain-corruption})
+
+(def burden {:name    :burden
+             :type    :attack
+             :tier    1
+             :text    ["The players collectively gain two corruptions and place them on top of their decks."
+                       "Any player focuses a breach."]
+             :effects [[:give-choice {:title       :burden
+                                      :text        "The players collectively gain two corruptions and place them on top of their decks."
+                                      :choice      ::burden-gain-corruption
+                                      :options     [:players]
+                                      :min         2
+                                      :max         2
+                                      :repeatable? true}]
+                       [:give-choice {:title   :burden
+                                      :text    "Any player focuses a breach."
+                                      :choice  :focus-breach
+                                      :options [:players :breaches {:opened false}]
+                                      :min     1
+                                      :max     1}]]})
+
 (def corrupter {:name       :corrupter
                 :type       :minion
                 :tier       1
@@ -384,7 +412,7 @@
             :tier    1
             :text    "The player with the most Crystals in hand discards all of their Crystals, suffers 3 damage, and gains a card from any supply pile that costs 4 Aether or less."
             :effects [[:give-choice {:title   :tempt
-                                     :text    "The player with the most Crystals in hand discards all of their Crystals, suffers 3 damage, and gains a card from any supply pile that costs 4 Aether or less."
+                                     :text    "The player with the most Crystals in hand discards all of their Crystals."
                                      :choice  ::tempt-attack
                                      :options [:players {:most-crystals true}]
                                      :min     1
@@ -447,7 +475,7 @@
                    :at-start-casting [[::resolve-corruption]]
                    :at-end-main      [[::resolve-corruption]]
                    :additional-rules ::additional-rules
-                   :cards            [(attack/generic 1) corrupter tempt
+                   :cards            [burden corrupter tempt
                                       pain-sower twisting-madness vex
                                       afflict bedlam-sage ruin-priest]
                    :corruption-deck  [blind-abandon

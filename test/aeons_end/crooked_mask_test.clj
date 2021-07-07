@@ -445,6 +445,61 @@
             :players [{:deck [{:type :corruption :id 4} {:type :corruption :id 3} {:type :corruption :id 2} {:type :corruption :id 1} crystal]
                        :life 8}]}))))
 
+(deftest burden-test
+  (testing "Burden"
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:deck            [burden]
+                                 :corruption-deck [{:type :corruption :id 1}
+                                                   {:type :corruption :id 2}]}
+                :players        [{:deck     [crystal]
+                                  :breaches [{:status     :closed
+                                              :focus-cost 2
+                                              :stage      3}
+                                             {:status     :closed
+                                              :focus-cost 4
+                                              :stage      2}]}
+                                 {:deck [crystal]}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 1}])
+               (choose {:player-no 0 :breach-no 1}))
+           {:current-player :nemesis
+            :nemesis        {:discard         [burden]
+                             :corruption-deck []}
+            :players        [{:deck     [{:type :corruption :id 1} crystal]
+                              :breaches [{:status     :closed
+                                          :focus-cost 2
+                                          :stage      3}
+                                         {:status     :closed
+                                          :focus-cost 4
+                                          :stage      3}]}
+                             {:deck [{:type :corruption :id 2} crystal]}]}))
+    (is (= (-> {:current-player :nemesis
+                :nemesis        {:deck            [burden]
+                                 :corruption-deck [{:type :corruption :id 1}
+                                                   {:type :corruption :id 2}]}
+                :players        [{:deck     [crystal]
+                                  :breaches [{:status     :closed
+                                              :focus-cost 2
+                                              :stage      3}
+                                             {:status     :closed
+                                              :focus-cost 4
+                                              :stage      2}]}
+                                 {:deck [crystal]}]}
+               draw-nemesis-card
+               (choose [{:player-no 1}
+                        {:player-no 1}])
+               (choose {:player-no 0 :breach-no 0}))
+           {:current-player :nemesis
+            :nemesis        {:discard         [burden]
+                             :corruption-deck []}
+            :players        [{:deck     [crystal]
+                              :breaches [{:status :opened}
+                                         {:status     :closed
+                                          :focus-cost 4
+                                          :stage      2}]}
+                             {:deck [{:type :corruption :id 2} {:type :corruption :id 1} crystal]}]}))))
+
 (deftest corrupter-test
   (testing "Corrupter"
     (is (= (-> {:nemesis {:play-area       [(assoc corrupter :life 6)]

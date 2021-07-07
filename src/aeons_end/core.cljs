@@ -666,7 +666,7 @@
                 (let [players (get-in @state [:game :players])]
                   (->> players
                        (mapk (fn [{:keys [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]}]
-                               (let [max           (get-in @state [:game :choice :max])
+                               (let [{:keys [max repeatable?]} (get-in @state [:game :choice])
                                      breach-no     (->> breaches
                                                         (filter (comp #{:opened :focused} :status))
                                                         (filter (comp empty? :prepped-spells))
@@ -683,7 +683,8 @@
                                           disabled  (or (nil? interaction)
                                                         (and (= :choosable interaction)
                                                              (= (count selection) max))
-                                                        (->> selection (map :option) (some #{name choice-value})))]
+                                                        (and (not repeatable?)
+                                                             (->> selection (map :option) (some #{name choice-value}))))]
                                       [:button {:style    (button-style :type type
                                                                         :disabled disabled)
                                                 :disabled disabled
