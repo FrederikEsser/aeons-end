@@ -8,7 +8,13 @@
             [aeons-end.cards.spell :refer [ignite]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
-            [aeons-end.mages :refer :all]))
+            [aeons-end.mages :refer :all]
+            [aeons-end.turn-order :as turn-order]))
+
+(defn fixture [f]
+  (with-rand-seed 123 (f)))
+
+(use-fixtures :each fixture)
 
 (deftest adelheim-test
   (testing "Adelheim"
@@ -339,6 +345,106 @@
                      (choose {:player-no 1}))
                  {:players [{:ability (assoc vimcraft-oath :charges 0)}
                             {:life 9}]})))))))
+
+(deftest lash-test
+  (testing "Lash"
+    (testing "Quartz Shard"
+      (is (= (-> {:players    [{:hand [quartz-shard]}]
+                  :turn-order {:deck [turn-order/nemesis
+                                      turn-order/player-1]}}
+                 (play 0 :quartz-shard)
+                 (choose :bottom))
+             {:players    [{:play-area [quartz-shard]
+                            :aether    1}]
+              :turn-order {:deck [turn-order/player-1
+                                  turn-order/nemesis]}}))
+      (is (= (-> {:players    [{:hand [quartz-shard]}]
+                  :turn-order {:deck [turn-order/player-1
+                                      turn-order/nemesis]}}
+                 (play 0 :quartz-shard)
+                 (choose :top))
+             {:players    [{:play-area [quartz-shard]
+                            :aether    2}]
+              :turn-order {:deck           [turn-order/player-1
+                                            turn-order/nemesis]
+                           :revealed-cards 1}}))
+      (is (= (-> {:players    [{:hand [quartz-shard]}]
+                  :turn-order {:deck [turn-order/wild
+                                      turn-order/nemesis]}}
+                 (play 0 :quartz-shard)
+                 (choose :bottom))
+             {:players    [{:play-area [quartz-shard]
+                            :aether    2}]
+              :turn-order {:deck [turn-order/nemesis
+                                  turn-order/wild]}})))
+    (testing "Quicken Thought"
+      (is (= (-> {:players    [{:ability (assoc quicken-thought :charges 5)
+                                :life    10}]
+                  :turn-order {:deck    [turn-order/nemesis
+                                         turn-order/player-2]
+                               :discard [turn-order/player-1]}}
+                 (activate-ability 0)
+                 (choose :player-1))
+             {:players    [{:ability (assoc quicken-thought :charges 0)
+                            :life    9}]
+              :turn-order {:deck [turn-order/player-2
+                                  turn-order/nemesis
+                                  turn-order/player-1]}}))
+      (is (= (-> {:current-player 1
+                  :players        [{:ability (assoc quicken-thought :charges 5)
+                                    :life    10}
+                                   {:life  10
+                                    :phase :casting}]
+                  :turn-order     {:deck    [turn-order/nemesis]
+                                   :discard [turn-order/player-1
+                                             turn-order/player-2]}}
+                 (activate-ability 0)
+                 (choose :player-2))
+             {:current-player 1
+              :players        [{:ability (assoc quicken-thought :charges 0)
+                                :life    10}
+                               {:life  9
+                                :phase :main}]
+              :turn-order     {:deck    [turn-order/nemesis
+                                         turn-order/player-2]
+                               :discard [turn-order/player-1]}}))
+      (is (= (-> {:current-player 1
+                  :players        [{:ability (assoc quicken-thought :charges 5)
+                                    :life    10}
+                                   {:life  10
+                                    :phase :main}]
+                  :turn-order     {:deck    [turn-order/nemesis]
+                                   :discard [turn-order/player-1
+                                             turn-order/player-2]}}
+                 (activate-ability 0)
+                 (choose :player-1))
+             {:current-player 1
+              :players        [{:ability (assoc quicken-thought :charges 0)
+                                :life    9}
+                               {:life  10
+                                :phase :main}]
+              :turn-order     {:deck    [turn-order/player-1
+                                         turn-order/nemesis]
+                               :discard [turn-order/player-2]}}))
+      (is (= (-> {:current-player 0
+                  :players        [{:ability (assoc quicken-thought :charges 5)
+                                    :life    10
+                                    :phase   :main}
+                                   {:life 10}]
+                  :turn-order     {:deck    [turn-order/player-1
+                                             turn-order/player-2]
+                                   :discard [turn-order/nemesis
+                                             turn-order/wild]}}
+                 (activate-ability 0))
+             {:current-player 0
+              :players        [{:ability (assoc quicken-thought :charges 0)
+                                :life    10
+                                :phase   :main}
+                               {:life 10}]
+              :turn-order     {:deck    [turn-order/player-1
+                                         turn-order/player-2]
+                               :discard [turn-order/nemesis
+                                         turn-order/wild]}})))))
 
 (deftest mist-test
   (testing "Mist"

@@ -185,6 +185,69 @@
           :deck     [crystal crystal crystal crystal spark]
           :ability  vimcraft-oath})
 
+(defn quartz-shard-move-turn-order-card [game {:keys [choice]}]
+  (cond-> game
+          (= :bottom choice) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
+
+(defn quartz-shard-choice [game {:keys [player-no]}]
+  (let [{:keys [type]} (-> game :turn-order :deck first)]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:give-choice {:title   :quartz-shard
+                                                               :text    "You may place the revealed turn order card on the bottom or the top of the turn order deck."
+                                                               :choice  ::quartz-shard-move-turn-order-card
+                                                               :options [:special
+                                                                         {:option :top :text "Top"}
+                                                                         {:option :bottom :text "Bottom"}]
+                                                               :min     1
+                                                               :max     1}]]
+                                               (when-not (= :nemesis type)
+                                                 [[:gain-aether 1]]))}))))
+
+(effects/register {::quartz-shard-move-turn-order-card quartz-shard-move-turn-order-card
+                   ::quartz-shard-choice               quartz-shard-choice})
+
+(def quartz-shard {:name    :quartz-shard
+                   :type    :gem
+                   :cost    0
+                   :text    ["Gain 1 Aether.png."
+                             "Reveal the top card of the turn order deck. You may place that card on the bottom or the top of the turn order deck. If you revealed a player turn order card, gain an additional 1 Aether."]
+                   :effects [[:gain-aether 1]
+                             [:reveal-top-turn-order]
+                             [::quartz-shard-choice]]})
+
+(defn quicken-thought-shuffle-into-turn-order-deck [game {:keys [card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:turn-order :discard] {:name card-name})
+        player-no (get-in card [:type :player-no])]
+    (cond-> game
+            (int? player-no) (push-effect-stack {:player-no player-no
+                                                 :effects   [[:shuffle-into-turn-order-deck {:card-name card-name}]
+                                                             [:damage-player 1]]}))))
+
+(effects/register {::quicken-thought-shuffle-into-turn-order-deck quicken-thought-shuffle-into-turn-order-deck})
+
+(def quicken-thought {:name        :quicken-thought
+                      :activation  :any-main-phase
+                      :charge-cost 5
+                      :text        ["Shuffle any player's turn order card into the turn order deck. That player suffers 1 damage."
+                                    "(You may not choose the wildcard turn order card.)"]
+                      :effects     [[:give-choice {:title   :quicken-thought
+                                                   :text    "Shuffle any player's turn order card into the turn order deck. That player suffers 1 damage."
+                                                   :choice  ::quicken-thought-shuffle-into-turn-order-deck
+                                                   :options [:turn-order :discard {:player-non-wild true}]
+                                                   :min     1
+                                                   :max     1}]]})
+
+(def lash {:name     :lash
+           :title    "Beach Mage Scout"
+           :breaches [{}
+                      {:stage 2}
+                      {:stage 0}
+                      {:stage 2}]
+           :hand     [quartz-shard crystal crystal crystal spark]
+           :deck     [crystal crystal crystal spark spark]
+           :ability  quicken-thought})
+
 (def moonstone-shard {:name    :moonstone-shard
                       :type    :gem
                       :cost    0
@@ -310,5 +373,6 @@
             dezmodia
             gex
             jian
+            lash
             mist
             quilius])

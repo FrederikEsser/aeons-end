@@ -220,27 +220,29 @@
                                                     :player-no player-no
                                                     :breach-no idx} choice)))))))
 
-(defn view-ability [{{:keys [player-no ability phase] :as player} :player
-                     choice                                       :choice
-                     active?                                      :active-player?}]
-  (let [{:keys [name
+(defn view-ability [{:keys [player current-player choice] :as game}]
+  (let [{:keys [player-no ability]} player
+        {:keys [name
                 text
                 activation
                 charges
-                charge-cost]} ability]
+                charge-cost]} ability
+        {:keys [phase]} (get-in game [:players current-player])]
     (merge {:name-ui     (ut/format-name name)
             :text        text
             :charges     charges
             :charge-cost charge-cost}
            (cond
-             (and active?
+             (and (= current-player player-no)
                   (not choice)
                   (#{:casting :main} phase)
                   (ut/can-afford? player 2 :charge-ability)
                   (not (>= charges charge-cost))) {:interaction :chargeable}
-             (and active?
+             (and (or (and (= current-player player-no)
+                           (= :your-main-phase activation))
+                      (and (int? current-player)
+                           (= :any-main-phase activation)))
                   (not choice)
-                  (= :your-main-phase activation)
                   (#{:casting :main} phase)
                   (>= charges charge-cost)) {:interaction :activatable})
            (choice-interaction {:area      :ability

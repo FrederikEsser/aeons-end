@@ -455,13 +455,14 @@
 
 (effects/register {:spend-charges spend-charges})
 
-(defn activate-ability [{:keys [nemesis] :as game} {:keys [player-no]}]
+(defn activate-ability [{:keys [current-player nemesis] :as game} {:keys [player-no]}]
   (let [{:keys [ability phase]} (get-in game [:players player-no])
         {:keys [name activation charges charge-cost effects]
          :or   {charges 0}} ability]
     (when phase
       (assert (case activation
                 :your-main-phase (= :main phase)
+                :any-main-phase (= :main (get-in game [:players current-player :phase]))
                 :nemesis-draw (= :draw (:phase nemesis)))
               (str "Activate error: " (ut/format-name name) " can't be activated in the " (ut/format-name phase) " phase.")))
     (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))

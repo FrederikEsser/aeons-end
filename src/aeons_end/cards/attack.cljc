@@ -68,14 +68,14 @@
              :quote   "'Get down! It's ejecting back at us!' Ohat, Dirt Merchant"})
 
 (defn encroach-damage [game _]
-  (let [{:keys [player-no]} (-> game :turn-order :deck first :type)]
+  (let [{:keys [player-no] :as type} (-> game :turn-order :deck first :type)]
     (cond
-      (= -1 player-no) (push-effect-stack game {:effects [[:give-choice {:title   :encroach
-                                                                         :text    "Any player suffers 2 damage."
-                                                                         :choice  [:damage-player {:arg 2}]
-                                                                         :options [:players]
-                                                                         :min     1
-                                                                         :max     1}]]})
+      (= :wild type) (push-effect-stack game {:effects [[:give-choice {:title   :encroach
+                                                                      :text    "Any player suffers 2 damage."
+                                                                      :choice  [:damage-player {:arg 2}]
+                                                                      :options [:players]
+                                                                      :min     1
+                                                                      :max     1}]]})
       player-no (push-effect-stack game {:player-no player-no
                                          :effects   [[:damage-player 2]]})
       :else (push-effect-stack game {:effects [[:damage-gravehold 3]]}))))

@@ -71,10 +71,10 @@
                                             (commands/charge-ability current-player)))
     (view)))
 
-(defn activate-ability []
-  (let [{:keys [current-player] :as game} (get-game)]
+(defn activate-ability [player-no]
+  (let [game (get-game)]
     (swap! game-state update :game conj (-> game
-                                            (commands/activate-ability current-player)))
+                                            (commands/activate-ability player-no)))
     (view)))
 
 (defn focus-breach [breach-no]

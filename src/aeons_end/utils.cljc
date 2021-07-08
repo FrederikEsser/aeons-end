@@ -547,15 +547,15 @@
 
 (effects/register-options {:nemesis options-from-nemesis})
 
-(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]} & [{:keys [type not-type]}]]
+(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]} & [{:keys [not-type player-non-wild]}]]
   (let [{:keys [deck revealed-cards]} turn-order
         cards (if (and (= :revealed area)
                        revealed-cards)
                 (take revealed-cards deck)
                 (get turn-order area))]
     (cond->> cards
-             type (filter (comp #{type} :type))
              not-type (remove (comp #{not-type} :type))
+             player-non-wild (filter (comp int? :player-no :type))
              :always (map :name))))
 
 (effects/register-options {:turn-order options-from-turn-order})

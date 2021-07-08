@@ -2,8 +2,9 @@
   (:require [aeons-end.utils :as ut]
             [aeons-end.operations :as op]))
 
-(defn- check-command [command {:keys [current-player effect-stack]} player-no]
-  (when current-player
+(defn- check-command [command {:keys [current-player effect-stack]} & [player-no]]
+  (when (and current-player
+             player-no)
     (assert (= player-no current-player) (str command " error: It's not your turn.")))
   (assert (empty? effect-stack) (str command " error: You have a choice to make.")))
 
@@ -85,13 +86,17 @@
                                          [:gain-charge]]})
       op/check-stack))
 
-(defn activate-ability [game player-no]
-  (check-command "Activate" game player-no)
-  (-> game
-      (op/push-effect-stack {:player-no player-no
-                             :effects   [[:set-phase {:phase :main}]
-                                         [:activate-ability]]})
-      op/check-stack))
+(defn activate-ability [{:keys [current-player] :as game} player-no]
+  (let [{:keys [activation]} (get-in game [:players player-no :ability])]
+    (check-command "Activate" game (if (= :any-main-phase activation)
+                                     current-player
+                                     player-no))
+    (-> game
+        (op/push-effect-stack {:player-no player-no
+                               :effects   [[:activate-ability]]})
+        (op/push-effect-stack {:player-no current-player
+                               :effects   [[:set-phase {:phase :main}]]})
+        op/check-stack)))
 
 (defn focus-breach [game player-no breach-no]
   (check-command "Focus" game player-no)

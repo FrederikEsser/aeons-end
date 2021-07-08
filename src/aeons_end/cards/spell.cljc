@@ -137,7 +137,7 @@
                 :cast    ["Discard up to two cards in hand."
                           "Deal 3 damage for each card discarded this way."]
                 :effects [[:give-choice {:title   :dark-fire
-                                         :text    "Discard up to two cards in hand"
+                                         :text    "Discard up to two cards in hand."
                                          :choice  ::dark-fire-discard
                                          :options [:player :hand]
                                          :max     2}]]
@@ -303,7 +303,7 @@
   (push-effect-stack game {:player-no player-no
                            :args      args                  ; bonus-damage
                            :effects   [[:give-choice {:title   :pyromancy
-                                                      :text    "Discard up to two cards in hand"
+                                                      :text    "Allies may collectively discard up to two cards in hand."
                                                       :choice  [::pyromancy-discard {:caster player-no}]
                                                       :options [:players :hand {:ally true}]
                                                       :max     2}]]}))

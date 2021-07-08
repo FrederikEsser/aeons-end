@@ -20,7 +20,7 @@
                :effects [[:set-current-player {:player-no 3}]]})
 
 (def wild {:name    :wild
-           :type    {:player-no -1}
+           :type    :wild
            :effects [[:give-choice {:title   :turn-order
                                     :text    "Any player takes a turn."
                                     :choice  :set-current-player

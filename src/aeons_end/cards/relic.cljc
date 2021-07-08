@@ -5,14 +5,14 @@
             [aeons-end.utils :as ut]))
 
 (defn astral-cube-heal [game _]
-  (let [{:keys [player-no]} (-> game :turn-order :deck first :type)]
+  (let [{:keys [player-no] :as type} (-> game :turn-order :deck first :type)]
     (cond
-      (= -1 player-no) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
-                                                                         :text    "Any player gains 1 life."
-                                                                         :choice  [:heal {:life 1}]
-                                                                         :options [:players {:not-exhausted true}]
-                                                                         :min     1
-                                                                         :max     1}]]})
+      (= :wild type) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
+                                                                       :text    "Any player gains 1 life."
+                                                                       :choice  [:heal {:life 1}]
+                                                                       :options [:players {:not-exhausted true}]
+                                                                       :min     1
+                                                                       :max     1}]]})
       player-no (push-effect-stack game {:player-no player-no
                                          :effects   [[:heal {:life 1}]]})
       :else game)))
