@@ -458,16 +458,20 @@
    :discard (merge
               (when (not-empty discard)
                 {:card (let [{:keys [name type]} (last discard)]
-                         {:name    name
-                          :name-ui (ut/format-name name)
-                          :type    type})})
+                         (merge {:name    name
+                                 :name-ui (ut/format-name name)
+                                 :type    type}
+                                (choice-interaction {:area      :discard
+                                                     :card-name name} choice)))})
               {:cards           (if (empty? discard)
                                   []
                                   (->> discard
                                        (map (fn [{:keys [name type]}]
                                               (merge {:name    name
                                                       :name-ui (ut/format-name name)
-                                                      :type    type})))))
+                                                      :type    type}
+                                                     (choice-interaction {:area      :discard
+                                                                          :card-name name} choice))))))
                :number-of-cards (count discard)})})
 
 (defn view-game [{:keys [mode difficulty gravehold turn-order players effect-stack current-player game-over] :as game}]

@@ -876,9 +876,9 @@
 
 (effects/register {:card-effect card-effect})
 
-(defn clear-player [game {:keys [player-no]}]
+(defn clear-player [{:keys [current-player] :as game} {:keys [player-no]}]
   (-> game
-      (dissoc :current-player)
+      (cond-> current-player (assoc :current-player :no-one))
       (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn)
       (ut/update-in-if-present [:players player-no :breaches]
                                (partial mapv (fn [{:keys [status] :as breach}]

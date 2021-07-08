@@ -547,12 +547,16 @@
 
 (effects/register-options {:nemesis options-from-nemesis})
 
-(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]}]
+(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]} & [{:keys [type not-type]}]]
   (let [{:keys [deck revealed-cards]} turn-order
-        cards (when (and (= :revealed area)
-                         revealed-cards)
-                (take revealed-cards deck))]
-    (map :name cards)))
+        cards (if (and (= :revealed area)
+                       revealed-cards)
+                (take revealed-cards deck)
+                (get turn-order area))]
+    (cond->> cards
+             type (filter (comp #{type} :type))
+             not-type (remove (comp #{not-type} :type))
+             :always (map :name))))
 
 (effects/register-options {:turn-order options-from-turn-order})
 

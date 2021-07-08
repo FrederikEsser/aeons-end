@@ -352,6 +352,55 @@
                                                  :life 10}]}
                                   (play 0 :insatiable-avarice)
                                   (choose :sifter's-pearl))))))
+    (testing "Nothingness"
+      (let [nothingness (assoc nothingness :id 1)]
+        (is (= (-> {:difficulty :normal
+                    :nemesis    {}
+                    :players    [{:hand [nothingness crystal crystal corruption-card]
+                                  :life 10}]
+                    :turn-order {:discard [turn-order/player-1]}}
+                   (play 0 :nothingness)
+                   (choose [:crystal :crystal])
+                   (choose :player-1))
+               {:difficulty :normal
+                :nemesis    {:corruption-deck [nothingness]}
+                :players    [{:hand    [corruption-card]
+                              :discard [crystal crystal]
+                              :life    8}]
+                :turn-order {:deck [turn-order/player-1]}}))
+        (is (= (-> {:difficulty :normal
+                    :nemesis    {}
+                    :players    [{:hand [nothingness crystal corruption-card]
+                                  :life 10}]
+                    :turn-order {:deck    [turn-order/nemesis]
+                                 :discard [turn-order/player-1
+                                           turn-order/player-2]}}
+                   (play 0 :nothingness)
+                   (choose :crystal)
+                   (choose :player-2))
+               {:difficulty :normal
+                :nemesis    {:corruption-deck [nothingness]}
+                :players    [{:hand    [corruption-card]
+                              :discard [crystal]
+                              :life    8}]
+                :turn-order {:deck    [turn-order/nemesis
+                                       turn-order/player-2]
+                             :discard [turn-order/player-1]}}))
+        (is (= (-> {:difficulty :normal
+                    :nemesis    {}
+                    :players    [{:hand [nothingness corruption-card]
+                                  :life 10}]
+                    :turn-order {:deck    [turn-order/player-1]
+                                 :discard [turn-order/nemesis
+                                           turn-order/nemesis]}}
+                   (play 0 :nothingness))
+               {:difficulty :normal
+                :nemesis    {:corruption-deck [nothingness]}
+                :players    [{:hand [corruption-card]
+                              :life 8}]
+                :turn-order {:deck    [turn-order/player-1]
+                             :discard [turn-order/nemesis
+                                       turn-order/nemesis]}}))))
     (testing "Reckless Might"
       (let [reckless-might (assoc reckless-might :id 1)
             mages-totem    (assoc mages-totem :id 2)

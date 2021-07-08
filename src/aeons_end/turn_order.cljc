@@ -72,3 +72,15 @@
         (update :turn-order dissoc :revealed-cards))))
 
 (effects/register {:put-turn-order-top-to-bottom put-turn-order-top-to-bottom})
+
+(defn shuffle-into-turn-order-deck [{:keys [turn-order] :as game} {:keys [card-name]}]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:turn-order :discard] {:name card-name})
+        {:keys [deck discard]} turn-order]
+    (cond-> game
+            card (assoc :turn-order (merge {:deck (->> (conj deck card)
+                                                       shuffle
+                                                       vec)}
+                                           (when (> (count discard) 1)
+                                             {:discard (ut/vec-remove discard idx)}))))))
+
+(effects/register {:shuffle-into-turn-order-deck shuffle-into-turn-order-deck})

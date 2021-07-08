@@ -214,6 +214,27 @@
                                 [:destroy-this]]
                      :on-trash [[::corruption-on-trash]]})
 
+(def nothingness {:name     :nothingness
+                  :type     :corruption
+                  :text     ["Discard two non-corruption cards. Suffer 2 damage."
+                             "Shuffle any player's turn order card into the turn order deck."
+                             "Destroy this."]
+                  :effects  [[:give-choice {:title   :nothingness
+                                            :text    "Discards two non-corruption cards."
+                                            :choice  :discard-from-hand
+                                            :options [:player :hand {:not-type :corruption}]
+                                            :min     2
+                                            :max     2}]
+                             [:damage-player 2]
+                             [:give-choice {:title   :nothingness
+                                            :text    "Shuffle any player's turn order card into the turn order deck."
+                                            :choice  :shuffle-into-turn-order-deck
+                                            :options [:turn-order :discard {:not-type :nemesis}]
+                                            :min     1
+                                            :max     1}]
+                             [:destroy-this]]
+                  :on-trash [[::corruption-on-trash]]})
+
 (defn reckless-might-gain [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-pile-idx game card-name)
         damage (-> (:cost card)
@@ -240,12 +261,6 @@
                                                :max     1}]
                                 [:destroy-this]]
                      :on-trash [[::corruption-on-trash]]})
-
-(def generic-corruption-card {:name     :corruption
-                              :type     :corruption
-                              :text     ["Destroy this."]
-                              :effects  [[:destroy-this]]
-                              :on-trash [[::corruption-on-trash]]})
 
 (def bedlam-sage {:name       :bedlam-sage
                   :type       :minion
@@ -487,5 +502,5 @@
                                       grim-sight
                                       insatiable-avarice
                                       lust-for-power
-                                      generic-corruption-card
+                                      nothingness
                                       reckless-might]})
