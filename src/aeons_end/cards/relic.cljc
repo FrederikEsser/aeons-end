@@ -59,6 +59,27 @@
                                              :max     1}]]
                     :quote   "'Being lost down there once was more than enough.' Indira, Breach Apprentice"})
 
+(defn conclave-destroy [game {:keys [player-no]}]
+  (let [{:keys [pile-size]} (ut/get-pile-idx game :conclave-scroll)]
+    (cond-> game
+            (zero? pile-size) (push-effect-stack {:player-no player-no
+                                                  :effects   [[:give-choice {:title   :conclave-scroll
+                                                                             :text    "You may destroy the top card of any ally's discard pile."
+                                                                             :choice  :destroy-from-discard
+                                                                             :options [:players :discard {:ally true :last true}]
+                                                                             :max     1}]]}))))
+
+(effects/register {::conclave-destroy conclave-destroy})
+
+(def conclave-scroll {:name    :conclave-scroll
+                      :type    :relic
+                      :cost    3
+                      :text    ["Gain 1 charge."
+                                "If this card's supply pile is empty, you may destroy the top card of any ally's discard pile."]
+                      :effects [[:gain-charge]
+                                [::conclave-destroy]]
+                      :quote   "'Brama and her ilk read the words and consider them answers. I see only questions.' Yan Magda, Enlightened Exile"})
+
 (defn fiend-catcher-move-nemesis-card [game {:keys [card-name]}]
   (cond-> game
           (= :nemesis card-name) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
@@ -229,6 +250,7 @@
 (def cards [astral-cube
             blasting-staff
             cairn-compass
+            conclave-scroll
             fiend-catcher
             focusing-orb
             mages-talisman
