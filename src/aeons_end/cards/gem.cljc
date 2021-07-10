@@ -1,7 +1,8 @@
 (ns aeons-end.cards.gem
   (:require [aeons-end.cards.common :refer [gain-aether]]
             [aeons-end.operations :refer [push-effect-stack]]
-            [aeons-end.effects :as effects]))
+            [aeons-end.effects :as effects]
+            [aeons-end.utils :as ut]))
 
 (defn alien-element-gain-aether [game {:keys [player-no]}]
   (let [breaches-with-prepped-spells (->> (get-in game [:players player-no :breaches])
@@ -186,6 +187,41 @@
                                                        [:topdeck-all-revealed]]}]]
                     :quote   "'To those who have stepped through the breach, the pearl shows the splinters of time itself.' Phaedraxa, Breach Mage Seer"})
 
+(defn volcanic-glass-donate [game {:keys [player-no donator no-choice?]}]
+  (if no-choice?
+    game
+    (-> game
+        (update-in [:players donator :aether] - 2)
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:gain {:card-name   :volcanic-glass
+                                                :to          :deck
+                                                :to-position :top}]]}))))
+
+(defn volcanic-glass-on-gain [{:keys [current-player] :as game} {:keys [player-no]}]
+  (let [{:keys [aether]} (get-in game [:players player-no])
+        {:keys [pile-size]} (ut/get-pile-idx game :volcanic-glass)]
+    (cond-> game
+            (and (= player-no current-player)
+                 (>= aether 2)
+                 (pos? pile-size)) (push-effect-stack {:player-no player-no
+                                                       :effects   [[:give-choice {:title   :volcanic-glass
+                                                                                  :text    "Any ally may gain a Volcanic Glass on top of their deck, if you spend 2 Aether."
+                                                                                  :choice  [::volcanic-glass-donate {:donator player-no}]
+                                                                                  :options [:players {:ally true}]
+                                                                                  :max     1}]]}))))
+
+(effects/register {::volcanic-glass-donate  volcanic-glass-donate
+                   ::volcanic-glass-on-gain volcanic-glass-on-gain})
+
+(def volcanic-glass {:name    :volcanic-glass
+                     :type    :gem
+                     :cost    3
+                     :text    ["When you gain this on your turn, you may spend 2 Aether. If you do, any ally also gains a Volcanic Glass and places it on top of their deck."
+                               "Gain 2 Aether."]
+                     :on-gain [[::volcanic-glass-on-gain]]
+                     :effects [[:gain-aether 2]]
+                     :quote   "'Long has this brittle slag been called \"god's mirror.\"' Mazahaedron, Henge Mystic"})
+
 (def vriswood-amber {:name    :v'riswood-amber
                      :type    :gem
                      :cost    3
@@ -210,4 +246,5 @@
             pain-stone
             searing-ruby
             sifters-pearl
+            volcanic-glass
             vriswood-amber])

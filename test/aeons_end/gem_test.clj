@@ -221,6 +221,85 @@
                         {:deck    [spark]
                          :discard [crystal]}]})))))
 
+(deftest volcanic-glass-test
+  (testing "Volcanic Glass"
+    (let [volcanic-glass (assoc volcanic-glass :id 1)]
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 5}
+                                   {:deck [spark]}]
+                  :supply         [{:card volcanic-glass :pile-size 7}]}
+                 (buy-card 0 :volcanic-glass)
+                 (choose nil))
+             {:current-player 0
+              :players        [{:discard [volcanic-glass]
+                                :aether  2}
+                               {:deck [spark]}]
+              :supply         [{:card volcanic-glass :pile-size 6}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 5}
+                                   {:deck [spark]}]
+                  :supply         [{:card volcanic-glass :pile-size 7}]}
+                 (buy-card 0 :volcanic-glass)
+                 (choose {:player-no 1}))
+             {:current-player 0
+              :players        [{:discard [volcanic-glass]
+                                :aether  0}
+                               {:deck           [volcanic-glass spark]
+                                :revealed-cards 1}]
+              :supply         [{:card volcanic-glass :pile-size 5}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 4}
+                                   {:deck [spark]}]
+                  :supply         [{:card volcanic-glass :pile-size 7}]}
+                 (buy-card 0 :volcanic-glass))
+             {:current-player 0
+              :players        [{:discard [volcanic-glass]
+                                :aether  1}
+                               {:deck [spark]}]
+              :supply         [{:card volcanic-glass :pile-size 6}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 5}
+                                   {:deck [spark]}]
+                  :supply         [{:card volcanic-glass :pile-size 1}]}
+                 (buy-card 0 :volcanic-glass))
+             {:current-player 0
+              :players        [{:discard [volcanic-glass]
+                                :aether  2}
+                               {:deck [spark]}]
+              :supply         [{:card volcanic-glass :pile-size 0}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 5}]
+                  :supply         [{:card volcanic-glass :pile-size 7}]}
+                 (buy-card 0 :volcanic-glass)
+                 (choose {:player-no 0}))
+             {:current-player 0
+              :players        [{:deck           [volcanic-glass]
+                                :discard        [volcanic-glass]
+                                :revealed-cards 1
+                                :aether         0}]
+              :supply         [{:card volcanic-glass :pile-size 5}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 5}]
+                  :supply         [{:card volcanic-glass :pile-size 7}]}
+                 (buy-card 0 :volcanic-glass)
+                 (choose nil))
+             {:current-player 0
+              :players        [{:discard [volcanic-glass]
+                                :aether  2}]
+              :supply         [{:card volcanic-glass :pile-size 6}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:aether 7}]
+                  :supply         [{:card volcanic-glass :pile-size 7}]}
+                 (buy-card 0 :volcanic-glass)
+                 (choose {:player-no 0})
+                 (choose {:player-no 0}))
+             {:current-player 0
+              :players        [{:deck           [volcanic-glass volcanic-glass]
+                                :discard        [volcanic-glass]
+                                :revealed-cards 2
+                                :aether         0}]
+              :supply         [{:card volcanic-glass :pile-size 4}]})))))
+
 (deftest vriswood-amber-test
   (let [vriswood-amber (assoc vriswood-amber :id 1)]
     (testing "V'riswood Amber"
