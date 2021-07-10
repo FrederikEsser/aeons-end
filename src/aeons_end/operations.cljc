@@ -365,11 +365,12 @@
                              :to           to
                              :to-position  to-position}))))
 
-(defn gain [game {:keys [player-no card-name from to]
+(defn gain [game {:keys [player-no card-name from to no-choice?]
                   :or   {from :supply
                          to   :discard}
                   :as   args}]
-  (if card-name
+  (if (and card-name
+           (not no-choice?))
     (let [{:keys [card from-path idx]} (get-card game {:player-no player-no
                                                        :card-name card-name
                                                        :from      from})

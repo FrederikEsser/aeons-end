@@ -226,6 +226,35 @@
                                                 :max     1}]]
                        :quote   "'Let us hope it hurts.' Sparrow, Breach Mage Soldier"})
 
+(defn nether-conduit-reveal [game {:keys [player-no card-name] :as args}]
+  (let [{:keys [card pile-size]} (ut/get-pile-idx game card-name)
+        cards-missing (when card
+                        (- (if (= :gem (:type card)) 7 5)
+                           pile-size))]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :args      args        ; bonus-damage
+                                     :effects   (concat [[:deal-damage cards-missing]]
+                                                        (when (pos? pile-size)
+                                                          [[:give-choice {:title   :nether-conduit
+                                                                          :text    (str "Any ally may gain a " (ut/format-name card-name) ".")
+                                                                          :choice  [:gain {:card-name card-name}]
+                                                                          :options [:players {:ally true}]
+                                                                          :max     1}]]))}))))
+
+(effects/register {::nether-conduit-reveal nether-conduit-reveal})
+
+(def nether-conduit {:name    :nether-conduit
+                     :type    :spell
+                     :cost    7
+                     :cast    "Reveal a card in hand that costs 2 Aether or more. If you do, deal damage equal to the number of cards missing in that card's supply pile. Then, any ally may gain a card from that supply pile."
+                     :effects [[:give-choice {:title   :nether-conduit
+                                              :text    "Reveal a card in hand that costs 2 Aether or more."
+                                              :choice  ::nether-conduit-reveal
+                                              :options [:player :hand {:min-cost 2}]
+                                              :min     1
+                                              :max     1}]]})
+
 (def nova-forge {:name          :nova-forge
                  :type          :spell
                  :cost          6
@@ -365,6 +394,7 @@
             feedback-aura
             ignite
             jagged-lightning
+            nether-conduit
             nova-forge
             phoenix-flame
             planar-insight

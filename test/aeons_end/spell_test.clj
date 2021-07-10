@@ -5,6 +5,7 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.mages :refer [black-mirror]]
             [aeons-end.cards.spell :refer :all]
+            [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.relic :refer [cairn-compass temporal-helix]]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.mages :refer [garnet-shard]])
@@ -535,6 +536,86 @@
                               (cast-spell 0 0 :jagged-lightning)
                               (choose :spark)
                               (choose {:player-no 1 :breach-no 3}))))))
+
+(deftest nether-conduit-test
+  (testing "Nether Conduit"
+    (let [nether-conduit (assoc nether-conduit :id 1)]
+      (is (= (-> {:supply  [{:card nether-conduit :pile-size 3}]
+                  :players [{:breaches [{:prepped-spells [nether-conduit]}]
+                             :hand     [nether-conduit]}
+                            {}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :nether-conduit)
+                 (choose :nether-conduit)
+                 (choose {:player-no 1}))
+             {:supply  [{:card nether-conduit :pile-size 2}]
+              :players [{:breaches [{}]
+                         :hand     [nether-conduit]
+                         :discard  [nether-conduit]}
+                        {:discard [nether-conduit]}]
+              :nemesis {:life 48}}))
+      (is (= (-> {:supply  [{:card nether-conduit :pile-size 0}]
+                  :players [{:breaches [{:prepped-spells [nether-conduit]}]
+                             :hand     [nether-conduit]}
+                            {}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :nether-conduit)
+                 (choose :nether-conduit))
+             {:supply  [{:card nether-conduit :pile-size 0}]
+              :players [{:breaches [{}]
+                         :hand     [nether-conduit]
+                         :discard  [nether-conduit]}
+                        {}]
+              :nemesis {:life 45}}))
+      (is (= (-> {:supply  [{:card jade :pile-size 3}]
+                  :players [{:breaches [{:prepped-spells [nether-conduit]}]
+                             :hand     [jade]}
+                            {}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :nether-conduit)
+                 (choose :jade)
+                 (choose nil))
+             {:supply  [{:card jade :pile-size 3}]
+              :players [{:breaches [{}]
+                         :hand     [jade]
+                         :discard  [nether-conduit]}
+                        {}]
+              :nemesis {:life 46}}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [nether-conduit]}]
+                             :hand     [crystal spark]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :nether-conduit))
+             {:players [{:breaches [{}]
+                         :hand     [crystal spark]
+                         :discard  [nether-conduit]}]
+              :nemesis {:life 50}}))
+      (is (= (-> {:supply  [{:card nether-conduit :pile-size 1}]
+                  :players [{:breaches [{:prepped-spells [nether-conduit]}]
+                             :hand     [nether-conduit]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :nether-conduit)
+                 (choose :nether-conduit)
+                 (choose {:player-no 0}))
+             {:supply  [{:card nether-conduit :pile-size 0}]
+              :players [{:breaches [{}]
+                         :hand     [nether-conduit]
+                         :discard  [nether-conduit nether-conduit]}]
+              :nemesis {:life 46}}))
+      (is (= (-> {:supply  [{:card jade :pile-size 1}]
+                  :players [{:breaches [{:status         :opened
+                                         :bonus-damage   1
+                                         :prepped-spells [nether-conduit]}]
+                             :hand     [jade]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :nether-conduit)
+                 (choose :jade)
+                 (choose nil))
+             {:supply  [{:card jade :pile-size 1}]
+              :players [{:breaches [{:status       :opened
+                                     :bonus-damage 1}]
+                         :hand     [jade]
+                         :discard  [nether-conduit]}]
+              :nemesis {:life 43}})))))
 
 (deftest nova-forge-test
   (testing "Nova Forge"
