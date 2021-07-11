@@ -627,3 +627,43 @@
              {:players [{:ability  (assoc quietus-vow :charges 0)
                          :trophies 4}]
               :nemesis {:life 42}})))))
+
+(deftest ulgimor-test
+  (testing "Ulgimor"
+    (testing "Coal Shard"
+      (let [coal-shard (assoc coal-shard :id 1)]
+        (is (= (-> {:players [{:hand    [coal-shard]
+                               :ability {:charge-cost 6
+                                         :charges     0}
+                               :life    3}]}
+                   (play 0 :coal-shard))
+               {:players [{:play-area [coal-shard]
+                           :ability   {:charge-cost 6
+                                       :charges     1}
+                           :life      1
+                           :aether    3}]}))
+        (is (= (-> {:players [{:hand    [coal-shard]
+                               :ability {:charge-cost 6
+                                         :charges     0}
+                               :life    2}]}
+                   (play 0 :coal-shard))
+               {:players [{:ability {:charge-cost 6
+                                     :charges     0}
+                           :life    2}]
+                :trash   [coal-shard]}))))
+    (testing "Eidolon Shroud"
+      (is (= (-> {:players [{:ability (assoc eidolon-shroud :charges 6)
+                             :life    3}
+                            {:life 3}]}
+                 (activate-ability 0))
+             {:players [{:ability (assoc eidolon-shroud :charges 0)
+                         :life    9}
+                        {:life 3}]}))
+      (is (= (-> {:players [{:ability (assoc eidolon-shroud :charges 6)
+                             :life    0}
+                            {:life 3}]}
+                 (activate-ability 0)
+                 (choose {:player-no 1}))
+             {:players [{:ability (assoc eidolon-shroud :charges 0)
+                         :life    0}
+                        {:life 8}]})))))

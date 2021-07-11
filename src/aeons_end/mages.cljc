@@ -65,7 +65,7 @@
                    :charge-cost 5
                    :text        "Any player gains 4 life."
                    :effects     [[:give-choice {:title   :brink-siphon
-                                                :text    "Any player gains 4 life"
+                                                :text    "Any player gains 4 life."
                                                 :choice  [:heal {:life 4}]
                                                 :options [:players {:not-exhausted true}]
                                                 :min     1
@@ -368,6 +368,56 @@
               :ability  quietus-vow
               :trophies 0})
 
+(defn coal-shard-effects [game {:keys [player-no card-id]}]
+  (let [{:keys [life]} (get-in game [:players player-no])]
+    (push-effect-stack game {:player-no player-no
+                             :card-id   card-id
+                             :effects   (if (<= life 2)
+                                          [[:destroy-this]]
+                                          [[:gain-aether 3]
+                                           [:gain-charge]
+                                           [:damage-player 2]])})))
+
+(effects/register {::coal-shard-effects coal-shard-effects})
+
+(defn eidolon-shroud-heal [game {:keys [player-no]}]
+  (let [{:keys [life]} (get-in game [:players player-no])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (pos? life)
+                                          [[:heal {:life 6}]]
+                                          [[:give-choice {:title   :eidolon-shroud
+                                                          :text    "Any ally gains 5 life."
+                                                          :choice  [:heal {:life 5}]
+                                                          :options [:players {:ally true :not-exhausted true}]
+                                                          :min     1
+                                                          :max     1}]])})))
+
+(effects/register {::eidolon-shroud-heal eidolon-shroud-heal})
+
+(def eidolon-shroud {:name        :eidolon-shroud
+                     :activation  :your-main-phase
+                     :charge-cost 6
+                     :text        ["Gain 6 life."
+                                   "If you are exhausted, any ally gains 5 life instead."]
+                     :effects     [[::eidolon-shroud-heal]]})
+
+(def coal-shard {:name    :coal-shard
+                 :type    :gem
+                 :cost    0
+                 :text    ["If you have 2 life or less, destroy this."
+                           "Otherwise, gain 3 Aether, gain 1 charge, and suffer 2 damage."]
+                 :effects [[::coal-shard-effects]]})
+
+(def ulgimor {:name     :ulgimor
+              :title    "Shadowkin Beast"
+              :breaches [{}
+                         {:stage 1}
+                         {:stage 0}
+                         {:stage 1}]
+              :hand     [coal-shard crystal crystal spark spark]
+              :deck     [crystal crystal crystal spark spark]
+              :ability  eidolon-shroud})
+
 (def mages [adelheim
             brama
             dezmodia
@@ -375,4 +425,5 @@
             jian
             lash
             mist
-            quilius])
+            quilius
+            ulgimor])

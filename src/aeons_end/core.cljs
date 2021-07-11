@@ -512,7 +512,7 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks corruption interaction choice-value]} (-> @state :game :nemesis)]
+             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks corruptions interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
@@ -546,10 +546,10 @@
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
                                  "Fury: " fury])
-                              (when corruption
+                              (when corruptions
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
-                                 "Corruption: " corruption])
+                                 "Corruptions: " corruptions])
                               [:hr]
                               (format-text unleash-text "UNLEASH")]])]]
                         [:td [:div

@@ -402,7 +402,7 @@
                                                  :card-name :husks} choice)
                             (choice-interaction {:area :husks} choice))}))
          (when corruption-deck
-           {:corruption (count corruption-deck)})
+           {:corruptions (count corruption-deck)})
          (choice-interaction {:area :nemesis} choice)))
 
 (defn view-trash [{:keys [trash]}]
