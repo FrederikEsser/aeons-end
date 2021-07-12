@@ -537,6 +537,18 @@
                               (choose :spark)
                               (choose {:player-no 1 :breach-no 3}))))))
 
+(deftest lava-tendril-test
+  (testing "Lava Tendril"
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [lava-tendril]}]
+                           :phase    :casting}]
+                :nemesis {:life 50}}
+               (set-phase 0 :main))
+           {:players [{:breaches [{:status         :opened
+                                   :prepped-spells [lava-tendril]}]
+                       :phase    :main}]
+            :nemesis {:life 49}}))))
+
 (deftest nether-conduit-test
   (testing "Nether Conduit"
     (let [nether-conduit (assoc nether-conduit :id 1)]

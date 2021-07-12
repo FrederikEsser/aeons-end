@@ -226,6 +226,15 @@
                                                 :max     1}]]
                        :quote   "'Let us hope it hurts.' Sparrow, Breach Mage Soldier"})
 
+(def lava-tendril {:name          :lava-tendril
+                   :type          :spell
+                   :cost          4
+                   :text          "While prepped, at the end of your casting phase deal 1 damage."
+                   :cast          "Deal 3 damage."
+                   :while-prepped {:at-end-casting [[:deal-damage 1]]}
+                   :effects       [[:deal-damage 3]]
+                   :quote         "'My turn!' Nym, Breach Apprentice"})
+
 (defn nether-conduit-reveal [game {:keys [player-no card-name] :as args}]
   (let [{:keys [card pile-size]} (ut/get-pile-idx game card-name)
         cards-missing (when card
@@ -396,6 +405,7 @@
             feedback-aura
             ignite
             jagged-lightning
+            lava-tendril
             nether-conduit
             nova-forge
             phoenix-flame

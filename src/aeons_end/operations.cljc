@@ -166,7 +166,7 @@
     (if (and current-phase (not= current-phase phase))
       (let [next-phase                (next-phase current-phase)
             phase-change              (cond (#{:casting} next-phase) :at-start-casting
-                                            (#{:main} next-phase) :at-start-main
+                                            (#{:casting} current-phase) :at-end-casting
                                             (#{:main} current-phase) :at-end-main
                                             (#{:draw} current-phase) :at-end-draw)
             spells-in-closed-breaches (->> (get-in game [:players player-no :breaches])
