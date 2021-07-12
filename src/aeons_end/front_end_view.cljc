@@ -3,7 +3,8 @@
             [aeons-end.effects :as effects]
             [aeons-end.operations :refer [can-discard?]]
             [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [aeons-end.operations :as op]))
 
 (defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
                           {:keys [options max choice-opts] :as choice}]
@@ -195,6 +196,10 @@
                                                                                 (#{:casting} phase)
                                                                                 (#{:spell} type))
                                                                        {:interaction :castable})
+                                                                     (when (and active?
+                                                                                (not choice)
+                                                                                (op/can-use-while-prepped? player card))
+                                                                       {:interaction :while-preppedable})
                                                                      (choice-interaction {:area      :prepped-spells
                                                                                           :player-no player-no
                                                                                           :breach-no idx

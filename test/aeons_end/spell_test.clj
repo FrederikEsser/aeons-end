@@ -624,49 +624,44 @@
         (is (= (-> {:players [{:breaches [{:status         :opened
                                            :prepped-spells [nova-forge]}]
                                :phase    :casting}]}
-                   (set-phase 0 :main))
+                   (use-while-prepped 0 0 :nova-forge))
                {:players [{:breaches         [{:status         :opened
                                                :prepped-spells [nova-forge]}]
                            :earmarked-aether {#{:spell} 2}
+                           :this-turn        [{:while-prepped 1}]
                            :phase            :main}]}))
-        (is (= (-> {:players [{:hand     [nova-forge]
-                               :breaches [{:status :opened}]
-                               :phase    :main}]}
-                   (prep-spell 0 0 :nova-forge))
+        (is (thrown-with-msg? AssertionError #"While prepped error:"
+                              (-> {:players [{:breaches  [{:status         :opened
+                                                           :prepped-spells [nova-forge]}]
+                                              :this-turn [{:while-prepped 1}]
+                                              :phase     :main}]}
+                                  (use-while-prepped 0 0 :nova-forge))))
+        (is (= (-> {:players [{:hand      [nova-forge]
+                               :breaches  [{:status :opened}]
+                               :this-turn [{:while-prepped 1}]
+                               :phase     :main}]}
+                   (prep-spell 0 0 :nova-forge)
+                   (use-while-prepped 0 0 :nova-forge))
                {:players [{:breaches         [{:status         :opened
                                                :prepped-spells [nova-forge]}]
                            :earmarked-aether {#{:spell} 2}
-                           :phase            :main}]}))
-        (is (= (-> {:players [{:hand     [nova-forge]
-                               :breaches [{:status :opened}]
-                               :phase    :casting}]}
-                   (prep-spell 0 0 :nova-forge))
-               {:players [{:breaches         [{:status         :opened
-                                               :prepped-spells [nova-forge]}]
-                           :earmarked-aether {#{:spell} 2}
+                           :this-turn        [{:while-prepped 1}]
                            :phase            :main}]}))
         (let [cairn-compass (assoc cairn-compass :id 2)]
-          (is (= (-> {:players [{:hand [cairn-compass]}
-                                {:discard  [nova-forge]
-                                 :breaches [{:status :opened}]
-                                 :phase    :out-of-turn}]}
-                     (play 0 :cairn-compass)
-                     (choose {:player-no 1 :card-id 1}))
-                 {:players [{:play-area [cairn-compass]}
-                            {:breaches [{:status         :opened
-                                         :prepped-spells [nova-forge]}]
-                             :phase    :out-of-turn}]}))
-          (is (= (-> {:players [{:hand     [cairn-compass]
-                                 :discard  [nova-forge]
-                                 :breaches [{:status :opened}]
-                                 :phase    :main}]}
+          (is (= (-> {:real-game? true
+                      :players    [{:hand      [cairn-compass]
+                                    :discard   [nova-forge]
+                                    :breaches  [{:status :opened}]
+                                    :this-turn [{:while-prepped 1}]
+                                    :phase     :main}]}
                      (play 0 :cairn-compass)
                      (choose {:player-no 0 :card-id 1}))
-                 {:players [{:play-area        [cairn-compass]
-                             :breaches         [{:status         :opened
-                                                 :prepped-spells [nova-forge]}]
-                             :earmarked-aether {#{:spell} 2}
-                             :phase            :main}]})))))))
+                 {:real-game? true
+                  :players    [{:play-area [cairn-compass]
+                                :breaches  [{:status         :opened
+                                             :prepped-spells [nova-forge]}]
+                                :this-turn [{:prep :nova-forge :id 1}]
+                                :phase     :main}]})))))))
 
 (deftest phoenix-flame-test
   (testing "Phoenix Flame"

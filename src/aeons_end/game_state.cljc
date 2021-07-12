@@ -101,6 +101,12 @@
                                             (commands/cast-spell current-player breach-no card-name)))
     (view)))
 
+(defn use-while-prepped [breach-no card-name]
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (commands/use-while-prepped current-player breach-no card-name)))
+    (view)))
+
 (defn discard-power-card [card-name]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game

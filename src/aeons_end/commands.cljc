@@ -50,6 +50,19 @@
                                                          :card-name card-name}]]})
         op/check-stack)))
 
+(defn use-while-prepped [game player-no breach-no card-name]
+  (check-command "While prepped" game player-no)
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
+        {:keys [phase]} (:while-prepped card)]
+    (assert phase (str "While prepped error: " (ut/format-name card-name) " has no 'while prepped' effects."))
+    (-> game
+        (op/push-effect-stack {:player-no player-no
+                               :effects   [[:set-phase {:phase phase}]
+                                           [:use-while-prepped {:player-no player-no
+                                                                :breach-no breach-no
+                                                                :card-name card-name}]]})
+        op/check-stack)))
+
 (defn cast-spell [game player-no breach-no card-name]
   (check-command "Cast" game player-no)
   (-> game

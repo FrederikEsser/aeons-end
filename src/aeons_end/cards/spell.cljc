@@ -260,7 +260,9 @@
                  :cost          6
                  :text          "While prepped, once per turn during your main phase you may gain 2 Aether that can only be used to gain a spell."
                  :cast          "Deal 4 damage."
-                 :while-prepped {:at-start-main [[:gain-aether {:arg 2 :earmark #{:spell}}]]}
+                 :while-prepped {:phase   :main
+                                 :once    true
+                                 :effects [[:gain-aether {:arg 2 :earmark #{:spell}}]]}
                  :effects       [[:deal-damage 4]]
                  :quote         "'As I have said before, the breach is my anvil, Adelheim.' Gex, Breach Mage Adviser"})
 

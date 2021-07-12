@@ -620,14 +620,11 @@
                    :all-players   affect-all-players})
 
 (defn on-prep-spell [{:keys [real-game?] :as game} {:keys [player-no card]}]
-  (let [{:keys [id name while-prepped]} card
-        phase                 (get-in game [:players player-no :phase])
-        while-prepped-effects (when (= :main phase)
-                                (:at-start-main while-prepped))]
+  (let [{:keys [id name]} card
+        this-turn (get-in game [:players player-no :this-turn])]
     (cond-> game
             real-game? (update-in [:players player-no :this-turn] concat [{:prep name :id id}])
-            while-prepped-effects (push-effect-stack {:player-no player-no
-                                                      :effects   while-prepped-effects}))))
+            this-turn (update-in [:players player-no :this-turn] (partial remove (comp #{id} :while-prepped))))))
 
 (defn prep-spell [game {:keys [player-no breach-no card-name]}]
   (if card-name
@@ -678,6 +675,26 @@
 
 (effects/register {:spell-effect spell-effect
                    :cast-spell   cast-spell})
+
+(defn can-use-while-prepped? [{:keys [this-turn] :as player} {:keys [id while-prepped]}]
+  (and while-prepped
+       (= (:phase player) (:phase while-prepped))
+       (or (not (:once while-prepped))
+           (not (some (comp #{id} :while-prepped) this-turn)))))
+
+(defn use-while-prepped [game {:keys [player-no breach-no card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
+        {:keys [id while-prepped]} card
+        {:keys [once effects]} while-prepped
+        player (get-in game [:players player-no])]
+    (when once
+      (assert (can-use-while-prepped? player card) (str "While prepped error: " (ut/format-name card-name) " can only be used once per turn.")))
+    (-> game
+        (update-in [:players player-no :this-turn] concat [{:while-prepped id}])
+        (push-effect-stack {:player-no player-no
+                            :effects   effects}))))
+
+(effects/register {:use-while-prepped use-while-prepped})
 
 (defn can-discard? [game {:keys [player-no card]}]
   (let [predicate (-> card :to-discard :predicate)
