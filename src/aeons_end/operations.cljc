@@ -676,9 +676,10 @@
 (effects/register {:spell-effect spell-effect
                    :cast-spell   cast-spell})
 
-(defn can-use-while-prepped? [{:keys [this-turn] :as player} {:keys [id while-prepped]}]
+(defn can-use-while-prepped? [{:keys [phase this-turn]} {:keys [id while-prepped]}]
   (and while-prepped
-       (= (:phase player) (:phase while-prepped))
+       (or (nil? phase)
+           (= phase (:phase while-prepped)))
        (or (not (:once while-prepped))
            (not (some (comp #{id} :while-prepped) this-turn)))))
 

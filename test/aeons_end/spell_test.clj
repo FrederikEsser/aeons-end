@@ -113,6 +113,17 @@
                        :discard  [amplify-vision]}]
             :nemesis {:life 46}}))))
 
+(deftest arcane-nexus-test
+  (testing "Arcane Nexus"
+    (let [arcane-nexus (assoc arcane-nexus :id 1)]
+      (is (= (-> {:players [{:breaches  [{:prepped-spells [arcane-nexus]}]
+                             :play-area [jade]}]}
+                 (use-while-prepped 0 0 :arcane-nexus)
+                 (choose :jade))
+             {:players [{:breaches  [{:prepped-spells [arcane-nexus]}]
+                         :hand      [jade]
+                         :this-turn [{:while-prepped 1}]}]})))))
+
 (deftest blaze-test
   (let [blaze (assoc blaze :id 1)]
     (testing "Blaze"

@@ -315,7 +315,21 @@
                               :life 8}]}))
         (is (= (-> {:difficulty :normal
                     :supply     [{:card jade :pile-size 0}
-                                 {:card haunted-berylite :pile-size 7}
+                                 {:card haunted-berylite :pile-size 7}]
+                    :nemesis    {}
+                    :players    [{:hand [insatiable-avarice]
+                                  :life 10}]}
+                   (play 0 :insatiable-avarice)
+                   (choose :haunted-berylite))
+               {:difficulty :normal
+                :supply     [{:card jade :pile-size 0}
+                             {:card haunted-berylite :pile-size 6}]
+                :nemesis    {:corruption-deck [insatiable-avarice]}
+                :players    [{:hand [haunted-berylite]
+                              :life 8}]}))
+        (is (= (-> {:difficulty :normal
+                    :supply     [{:card jade :pile-size 0}
+                                 {:card haunted-berylite :pile-size 0}
                                  {:card fiend-catcher :pile-size 5}
                                  {:card radiance :pile-size 5}]
                     :nemesis    {}
@@ -324,7 +338,7 @@
                    (play 0 :insatiable-avarice))
                {:difficulty :normal
                 :supply     [{:card jade :pile-size 0}
-                             {:card haunted-berylite :pile-size 7}
+                             {:card haunted-berylite :pile-size 0}
                              {:card fiend-catcher :pile-size 5}
                              {:card radiance :pile-size 5}]
                 :nemesis    {:corruption-deck [insatiable-avarice]}

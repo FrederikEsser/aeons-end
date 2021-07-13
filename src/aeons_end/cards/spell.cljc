@@ -24,6 +24,23 @@
                                [::amplify-vision-damage]]
                      :quote   "'The breaches are merely a mirror through which worlds whisper.' Phaedraxa, Breach Mage Seer"})
 
+(def arcane-nexus {:name          :arcane-nexus
+                   :type          :spell
+                   :cost          7
+                   :text          "While prepped, once per turn during your main phase you may return a gem you played this turn to your hand."
+                   :cast          "Deal 4 damage."
+                   :while-prepped {:phase   :main
+                                   :once    true
+                                   :effects [[:give-choice {:title   :arcane-nexus
+                                                            :text    "Return a gem you played this turn to your hand."
+                                                            :choice  [:move-card {:from :play-area
+                                                                                  :to   :hand}]
+                                                            :options [:player :play-area {:type :gem}]
+                                                            :min     1
+                                                            :max     1}]]}
+                   :effects       [[:deal-damage 4]]
+                   :quote         "'The taint of aether clings to everything in Gravehold. And we that survived near-extinction reek with it, too.' Nerva, Survivor"})
+
 (defn blaze-move-card [game {:keys [from-player card-id player-no]}]
   (cond-> game
           card-id (push-effect-stack {:player-no from-player
@@ -396,6 +413,7 @@
                     :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
 
 (def cards [amplify-vision
+            arcane-nexus
             blaze
             catalyst
             celestial-spire
