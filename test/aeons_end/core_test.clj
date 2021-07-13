@@ -5,7 +5,9 @@
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.cards.gem :refer [jade]]
+            [aeons-end.cards.relic :refer [cairn-compass]]
             [aeons-end.mages :refer [buried-light]]
+            [aeons-end.cards.power :as power]
             [aeons-end.turn-order :as turn-order]))
 
 (defn fixture [f]
@@ -1024,3 +1026,116 @@
               :players    [{:breaches  [{:status         :opened
                                          :prepped-spells [spark]}]
                             :this-turn [{:prep :spark :id 1}]}]})))))
+
+(deftest while-prepped-test
+  (testing "While prepped"
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [{:name          :spell
+                                                         :id            1
+                                                         :while-prepped {:phase   :main
+                                                                         :effects [[:gain-aether 1]]}}]}]
+                           :phase    :casting}]}
+               (use-while-prepped 0 0 :spell))
+           {:players [{:breaches  [{:status         :opened
+                                    :prepped-spells [{:name          :spell
+                                                      :id            1
+                                                      :while-prepped {:phase   :main
+                                                                      :effects [[:gain-aether 1]]}}]}]
+                       :aether    1
+                       :this-turn [{:while-prepped 1}]
+                       :phase     :main}]}))
+    (is (= (-> {:players [{:breaches  [{:status         :opened
+                                        :prepped-spells [{:name          :spell
+                                                          :id            1
+                                                          :while-prepped {:phase   :main
+                                                                          :effects [[:gain-aether 1]]}}]}]
+                           :this-turn [{:while-prepped 1}]
+                           :phase     :casting}]}
+               (use-while-prepped 0 0 :spell))
+           {:players [{:breaches  [{:status         :opened
+                                    :prepped-spells [{:name          :spell
+                                                      :id            1
+                                                      :while-prepped {:phase   :main
+                                                                      :effects [[:gain-aether 1]]}}]}]
+                       :aether    1
+                       :this-turn [{:while-prepped 1}
+                                   {:while-prepped 1}]
+                       :phase     :main}]}))
+    (is (thrown-with-msg? AssertionError #"While prepped error:"
+                          (-> {:players [{:breaches  [{:status         :opened
+                                                       :prepped-spells [{:name          :spell
+                                                                         :id            1
+                                                                         :while-prepped {:phase   :main
+                                                                                         :once    true
+                                                                                         :effects [[:gain-aether 1]]}}]}]
+                                          :this-turn [{:while-prepped 1}]
+                                          :phase     :main}]}
+                              (use-while-prepped 0 0 :spell))))
+    (is (= (-> {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [{:name          :spell
+                                                         :id            1
+                                                         :while-prepped {:phase    :main
+                                                                         :can-use? [::power/can-afford? {:amount 1}]
+                                                                         :effects  [[:pay {:amount 1}]]}}]}]
+                           :aether   1
+                           :phase    :main}]}
+               (use-while-prepped 0 0 :spell))
+           {:players [{:breaches  [{:status         :opened
+                                    :prepped-spells [{:name          :spell
+                                                      :id            1
+                                                      :while-prepped {:phase    :main
+                                                                      :can-use? [::power/can-afford? {:amount 1}]
+                                                                      :effects  [[:pay {:amount 1}]]}}]}]
+                       :aether    0
+                       :this-turn [{:while-prepped 1}]
+                       :phase     :main}]}))
+    (is (thrown-with-msg? AssertionError #"Pay error:"
+                          (-> {:players [{:breaches [{:status         :opened
+                                                      :prepped-spells [{:name          :spell
+                                                                        :id            1
+                                                                        :while-prepped {:phase    :main
+                                                                                        :can-use? [::power/can-afford? {:amount 1}]
+                                                                                        :effects  [[:pay {:amount 1}]]}}]}]
+                                          :aether   0
+                                          :phase    :main}]}
+                              (use-while-prepped 0 0 :spell))))
+    (is (= (-> {:players [{:hand      [{:name          :spell
+                                        :id            1
+                                        :type          :spell
+                                        :while-prepped {:phase   :main
+                                                        :once    true
+                                                        :effects [[:gain-aether 1]]}}]
+                           :breaches  [{:status :opened}]
+                           :this-turn [{:while-prepped 1}]
+                           :phase     :main}]}
+               (prep-spell 0 0 :spell)
+               (use-while-prepped 0 0 :spell))
+           {:players [{:breaches  [{:status         :opened
+                                    :prepped-spells [{:name          :spell
+                                                      :id            1
+                                                      :type          :spell
+                                                      :while-prepped {:phase   :main
+                                                                      :once    true
+                                                                      :effects [[:gain-aether 1]]}}]}]
+                       :aether    1
+                       :this-turn [{:while-prepped 1}]
+                       :phase     :main}]}))
+    (let [cairn-compass (assoc cairn-compass :id 2)]
+      (is (= (-> {:real-game? true
+                  :players    [{:hand      [cairn-compass]
+                                :discard   [{:name :spell
+                                             :id   1
+                                             :type :spell}]
+                                :breaches  [{:status :opened}]
+                                :this-turn [{:while-prepped 1}]
+                                :phase     :main}]}
+                 (play 0 :cairn-compass)
+                 (choose {:player-no 0 :card-id 1}))
+             {:real-game? true
+              :players    [{:play-area [cairn-compass]
+                            :breaches  [{:status         :opened
+                                         :prepped-spells [{:name :spell
+                                                           :id   1
+                                                           :type :spell}]}]
+                            :this-turn [{:prep :spell :id 1}]
+                            :phase     :main}]})))))

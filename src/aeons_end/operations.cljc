@@ -673,23 +673,37 @@
                                                                      :breach-no breach-no
                                                                      :to        :discard}]]}))))
 
+(defn call-predicate [game {:keys [player-no predicate]}]
+  (let [{:keys [pred args]} (if (vector? predicate)
+                              {:pred (first predicate)
+                               :args (second predicate)}
+                              {:pred predicate})
+        pred-fn (when pred
+                  (effects/get-predicate pred))]
+    (when pred-fn
+      (pred-fn game (merge {:player-no player-no}
+                           args)))))
+
 (effects/register {:spell-effect spell-effect
                    :cast-spell   cast-spell})
 
-(defn can-use-while-prepped? [{:keys [phase this-turn]} {:keys [id while-prepped]}]
-  (and while-prepped
-       (or (nil? phase)
-           (= phase (:phase while-prepped)))
-       (or (not (:once while-prepped))
-           (not (some (comp #{id} :while-prepped) this-turn)))))
+(defn can-use-while-prepped? [game {:keys [player-no card]}]
+  (let [{:keys [phase this-turn]} (get-in game [:players player-no])
+        {:keys [id while-prepped]} card
+        {:keys [once can-use?]} while-prepped]
+    (cond-> while-prepped
+            phase (ut/and' (= phase (:phase while-prepped)))
+            once (ut/and' (not (some (comp #{id} :while-prepped) this-turn)))
+            can-use? (ut/and' (call-predicate game {:player-no player-no
+                                                    :predicate can-use?})))))
 
 (defn use-while-prepped [game {:keys [player-no breach-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
         {:keys [id while-prepped]} card
-        {:keys [once effects]} while-prepped
-        player (get-in game [:players player-no])]
+        {:keys [once effects]} while-prepped]
     (when once
-      (assert (can-use-while-prepped? player card) (str "While prepped error: " (ut/format-name card-name) " can only be used once per turn.")))
+      (assert (can-use-while-prepped? game {:player-no player-no
+                                            :card      card}) (str "While prepped error: " (ut/format-name card-name) " can only be used once per turn.")))
     (-> game
         (update-in [:players player-no :this-turn] concat [{:while-prepped id}])
         (push-effect-stack {:player-no player-no
@@ -698,16 +712,9 @@
 (effects/register {:use-while-prepped use-while-prepped})
 
 (defn can-discard? [game {:keys [player-no card]}]
-  (let [predicate (-> card :to-discard :predicate)
-        {:keys [pred args]} (if (vector? predicate)
-                              {:pred (first predicate)
-                               :args (second predicate)}
-                              {:pred predicate})
-        pred-fn   (when pred
-                    (effects/get-predicate pred))]
-    (when pred-fn
-      (pred-fn game (merge {:player-no player-no}
-                           args)))))
+  (let [predicate (-> card :to-discard :predicate)]
+    (call-predicate game {:player-no player-no
+                          :predicate predicate})))
 
 (defn discard-power-card [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})

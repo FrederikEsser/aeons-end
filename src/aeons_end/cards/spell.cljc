@@ -423,6 +423,37 @@
                                              :max     1}]]
                     :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
 
+(defn wildfire-whip-can-use? [game {:keys [player-no]}]
+  (let [{:keys [aether]} (get-in game [:players player-no])]
+    (and aether
+         (>= aether 2))))
+
+(effects/register-predicates {::wildfire-whip-can-use? wildfire-whip-can-use?})
+
+(defn wildfire-whip-cast [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :wildfire-whip
+                                                      :text    "Cast any player's prepped spell."
+                                                      :choice  [:cast-spell {:caster player-no}]
+                                                      :options [:players :prepped-spells]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::wildfire-whip-cast wildfire-whip-cast})
+
+(def wildfire-whip {:name          :wildfire-whip
+                    :type          :spell
+                    :cost          6
+                    :text          "While prepped, during your main phase you may spend 2 Aether to cast any player's prepped spell."
+                    :cast          "Deal 4 damage."
+                    :while-prepped {:phase    :main
+                                    :can-use? ::wildfire-whip-can-use?
+                                    :effects  [[:pay {:amount 2
+                                                      :type   :wildfire-whip}]
+                                               [::wildfire-whip-cast]]}
+                    :effects       [[:deal-damage 4]]
+                    :quote         "'Sometimes a little motivation is needed for dire situations.' Z'hana, Breach Mage Renegade"})
+
 (def cards [amplify-vision
             arcane-nexus
             aurora
@@ -443,4 +474,5 @@
             pyromancy
             radiance
             scorch
-            spectral-echo])
+            spectral-echo
+            wildfire-whip])

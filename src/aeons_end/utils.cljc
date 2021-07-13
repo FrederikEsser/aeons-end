@@ -188,6 +188,9 @@
 (defn plus [n m]
   (if n (+ n m) m))
 
+(defn and' [a b]
+  (and a b))
+
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
 

@@ -198,7 +198,8 @@
                                                                        {:interaction :castable})
                                                                      (when (and active?
                                                                                 (not choice)
-                                                                                (op/can-use-while-prepped? player card))
+                                                                                (op/can-use-while-prepped? game {:player-no player-no
+                                                                                                                 :card      card}))
                                                                        {:interaction :while-preppedable})
                                                                      (choice-interaction {:area      :prepped-spells
                                                                                           :player-no player-no

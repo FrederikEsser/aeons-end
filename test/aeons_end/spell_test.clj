@@ -644,47 +644,11 @@
   (testing "Nova Forge"
     (testing "While prepped"
       (let [nova-forge (assoc nova-forge :id 1)]
-        (is (= (-> {:players [{:breaches [{:status         :opened
-                                           :prepped-spells [nova-forge]}]
-                               :phase    :casting}]}
+        (is (= (-> {:players [{:breaches [{:prepped-spells [nova-forge]}]}]}
                    (use-while-prepped 0 0 :nova-forge))
-               {:players [{:breaches         [{:status         :opened
-                                               :prepped-spells [nova-forge]}]
+               {:players [{:breaches         [{:prepped-spells [nova-forge]}]
                            :earmarked-aether {#{:spell} 2}
-                           :this-turn        [{:while-prepped 1}]
-                           :phase            :main}]}))
-        (is (thrown-with-msg? AssertionError #"While prepped error:"
-                              (-> {:players [{:breaches  [{:status         :opened
-                                                           :prepped-spells [nova-forge]}]
-                                              :this-turn [{:while-prepped 1}]
-                                              :phase     :main}]}
-                                  (use-while-prepped 0 0 :nova-forge))))
-        (is (= (-> {:players [{:hand      [nova-forge]
-                               :breaches  [{:status :opened}]
-                               :this-turn [{:while-prepped 1}]
-                               :phase     :main}]}
-                   (prep-spell 0 0 :nova-forge)
-                   (use-while-prepped 0 0 :nova-forge))
-               {:players [{:breaches         [{:status         :opened
-                                               :prepped-spells [nova-forge]}]
-                           :earmarked-aether {#{:spell} 2}
-                           :this-turn        [{:while-prepped 1}]
-                           :phase            :main}]}))
-        (let [cairn-compass (assoc cairn-compass :id 2)]
-          (is (= (-> {:real-game? true
-                      :players    [{:hand      [cairn-compass]
-                                    :discard   [nova-forge]
-                                    :breaches  [{:status :opened}]
-                                    :this-turn [{:while-prepped 1}]
-                                    :phase     :main}]}
-                     (play 0 :cairn-compass)
-                     (choose {:player-no 0 :card-id 1}))
-                 {:real-game? true
-                  :players    [{:play-area [cairn-compass]
-                                :breaches  [{:status         :opened
-                                             :prepped-spells [nova-forge]}]
-                                :this-turn [{:prep :nova-forge :id 1}]
-                                :phase     :main}]})))))))
+                           :this-turn        [{:while-prepped 1}]}]}))))))
 
 (deftest phoenix-flame-test
   (testing "Phoenix Flame"
@@ -874,3 +838,18 @@
             :nemesis {:discard [{:name :caterpillar
                                  :type :minion
                                  :life 0}]}}))))
+
+(deftest wildfire-whip-test
+  (testing "Wildfire Whip"
+    (testing "While prepped"
+      (let [wildfire-whip (assoc wildfire-whip :id 1)]
+        (is (= (-> {:players [{:breaches [{:prepped-spells [wildfire-whip]}]
+                               :aether   2}]
+                    :nemesis {:life 50}}
+                   (use-while-prepped 0 0 :wildfire-whip)
+                   (choose {:player-no 0 :breach-no 0 :card-name :wildfire-whip}))
+               {:players [{:breaches  [{}]
+                           :discard   [wildfire-whip]
+                           :aether    0
+                           :this-turn [{:while-prepped 1}]}]
+                :nemesis {:life 46}}))))))
