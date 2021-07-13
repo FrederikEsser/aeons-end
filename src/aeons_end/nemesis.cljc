@@ -6,6 +6,7 @@
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.nemeses.carapace-queen :refer [carapace-queen deal-damage-to-husks]]
             [aeons-end.nemeses.crooked-mask :refer [crooked-mask]]
+            [aeons-end.nemeses.magus-of-cloaks :refer [magus-of-cloaks]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]))
@@ -132,9 +133,18 @@
 
 (effects/register {:after-effects after-effects})
 
-(defn deal-damage-to-nemesis [game {:keys [damage]}]
-  (let [life (get-in game [:nemesis :life])]
-    (assoc-in game [:nemesis :life] (max (- life damage) 0))))
+(defn deal-damage-to-nemesis [{:keys [nemesis] :as game} {:keys [damage]}]
+  (if (pos? damage)
+    (let [{:keys [life modify-damage when-hit]} nemesis
+          modify-damage-fn (when modify-damage
+                             (effects/get-predicate modify-damage))
+          damage           (if modify-damage-fn
+                             (modify-damage-fn game damage)
+                             damage)]
+      (-> game
+          (assoc-in [:nemesis :life] (max (- life damage) 0))
+          (cond-> when-hit (push-effect-stack {:effects when-hit}))))
+    game))
 
 (defn deal-damage-to-minion [game {:keys [player-no card-name damage kill-effects] :as args}]
   (if (= :husks card-name)
@@ -235,7 +245,8 @@
 (def nemeses [rageborne
               umbra-titan
               carapace-queen
-              crooked-mask])
+              crooked-mask
+              magus-of-cloaks])
 
 (def basic-cards (concat
                    ; WE Tier 1
