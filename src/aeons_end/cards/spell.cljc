@@ -41,6 +41,17 @@
                    :effects       [[:deal-damage 4]]
                    :quote         "'The taint of aether clings to everything in Gravehold. And we that survived near-extinction reek with it, too.' Nerva, Survivor"})
 
+(def aurora {:name          :aurora
+             :type          :spell
+             :cost          5
+             :text          "While prepped, once per turn during your main plase you may gain 1 charge."
+             :cast          "Deal 3 damage."
+             :while-prepped {:phase   :main
+                             :once    true
+                             :effects [[:gain-charge]]}
+             :effects       [[:deal-damage 3]]
+             :quote         "'It is only natural that they question my being here. But let my answer be written in fire.' Yan Magda, Enlightened Exile"})
+
 (defn blaze-move-card [game {:keys [from-player card-id player-no]}]
   (cond-> game
           card-id (push-effect-stack {:player-no from-player
@@ -414,6 +425,7 @@
 
 (def cards [amplify-vision
             arcane-nexus
+            aurora
             blaze
             catalyst
             celestial-spire
