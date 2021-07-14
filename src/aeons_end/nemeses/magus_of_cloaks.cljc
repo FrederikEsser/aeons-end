@@ -56,6 +56,18 @@
 
 (effects/register-predicates {::modify-damage modify-damage})
 
+(defn when-hit [game {:keys [damage]}]
+  (let [discard-powers (->> (get-in game [:nemesis :play-area])
+                            (filter (comp #{::nemesis-damaged} :to-discard))
+                            (map :name))]
+    (push-effect-stack game {:effects (concat [[::lose-nemesis-token]]
+                                              (when (pos? damage)
+                                                (->> discard-powers
+                                                     (map (fn [card-name]
+                                                            [:discard-nemesis-card {:card-name card-name}])))))})))
+
+(effects/register {::when-hit when-hit})
+
 (defn additional-rules [{:keys [difficulty]}]
   ["- When Magus of Cloaks would be dealt damage, reduce that damage by the number of nemesis tokens he has. Then, Magus of Cloaks loses one nemesis token."
    (if (#{:beginner :normal} difficulty)
@@ -63,6 +75,29 @@
      "- Magus of Cloaks can never have less than three nemesis tokens or more than nine nemesis tokens.")])
 
 (effects/register-predicates {::additional-rules additional-rules})
+
+(def rising-dark {:name       :rising-dark
+                  :type       :power
+                  :tier       1
+                  :text       "When Magus of Cloaks is dealt damage, discard this."
+                  :to-discard ::nemesis-damaged
+                  :power      {:power   3
+                               :text    ["Unleash."
+                                         "Any player suffers 3 damage."
+                                         "Any player destroys a prepped spell that costs 0."]
+                               :effects [[:unleash]
+                                         [:give-choice {:title   :rising-dark
+                                                        :text    "Any player suffers 3 damage."
+                                                        :choice  [:damage-player {:arg 3}]
+                                                        :options [:players]
+                                                        :min     1
+                                                        :max     1}]
+                                         [:give-choice {:title   :rising-dark
+                                                        :text    "Any player destroys a prepped spell that costs 0."
+                                                        :choice  :destroy-prepped-spells
+                                                        :options [:players :prepped-spells {:cost 0}]
+                                                        :min     1
+                                                        :max     1}]]}})
 
 (def magus-of-cloaks {:name             :magus-of-cloaks
                       :level            7
@@ -74,7 +109,7 @@
                                          "Gravehold suffers 2 damage."]
                       :additional-rules ::additional-rules
                       :modify-damage    ::modify-damage
-                      :when-hit         [[::lose-nemesis-token]]
-                      :cards            [(minion/generic 1) (power/generic 1 1) (power/generic 1 2)
+                      :when-hit         [[::when-hit]]
+                      :cards            [(minion/generic 1) rising-dark (power/generic 1)
                                          (minion/generic 2) (power/generic 2) (attack/generic 2)
                                          (attack/generic 3) (power/generic 3) (minion/generic 3)]})

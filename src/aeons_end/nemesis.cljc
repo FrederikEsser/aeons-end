@@ -143,7 +143,8 @@
                              damage)]
       (-> game
           (assoc-in [:nemesis :life] (max (- life damage) 0))
-          (cond-> when-hit (push-effect-stack {:effects when-hit}))))
+          (cond-> when-hit (push-effect-stack {:args    {:damage damage}
+                                               :effects when-hit}))))
     game))
 
 (defn deal-damage-to-minion [game {:keys [player-no card-name damage kill-effects] :as args}]
@@ -177,8 +178,7 @@
                                                                            :kill-effects kill-effects}]])}))
 
 (defn deal-damage [{:keys [nemesis] :as game} {:keys [player-no arg bonus-damage kill-effects]
-                                               :or   {bonus-damage 0}
-                                               :as   args}]
+                                               :or   {bonus-damage 0}}]
   (let [{:keys [name]} nemesis
         minions (ut/options-from-nemesis game {:area :minions})
         damage  (+ arg bonus-damage)]

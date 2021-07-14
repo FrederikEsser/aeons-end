@@ -29,7 +29,7 @@
                         :game-setup  {:difficulty :fit
                                       :nemesis    {:min-level 5 :max-level 6}
                                       :players    [{} {}]
-                                      :supply     random-market}
+                                      :supply     balanced-market}
                         :selection   []
                         :expanded?   {:market true}}))
 
