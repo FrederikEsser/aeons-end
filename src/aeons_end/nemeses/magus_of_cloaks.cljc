@@ -76,6 +76,34 @@
 
 (effects/register-predicates {::additional-rules additional-rules})
 
+(defn ashen-haruspex-modify-damage [_ damage]
+  (max (- damage 2) 0))
+
+(effects/register-predicates {::ashen-haruspex-modify-damage ashen-haruspex-modify-damage})
+
+(defn ashen-haruspex-damage [game _]
+  (let [damage (-> (get-in game [:nemesis :tokens])
+                   inc
+                   (quot 2))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :ashen-haruspex
+                                                      :text    (str "Any player suffers " damage " damage.")
+                                                      :choice  [:damage-player {:arg damage}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::ashen-haruspex-damage ashen-haruspex-damage})
+
+(def ashen-haruspex {:name          :ashen-haruspex
+                     :type          :minion
+                     :tier          2
+                     :life          5
+                     :text          "When this minion is dealt damage, prevent 2 of that damage."
+                     :modify-damage ::ashen-haruspex-modify-damage
+                     :persistent    {:text    "Any player suffers damage equal to half the number of nemesis tokens Magus of Cloaks has, rounded up."
+                                     :effects [[::ashen-haruspex-damage]]}
+                     :quote         "'If any among us can kill the dark itself, it is Quilius.' Garu, Oathsworn Protector"})
+
 (def rising-dark {:name       :rising-dark
                   :type       :power
                   :tier       1
@@ -97,7 +125,8 @@
                                                         :choice  :destroy-prepped-spells
                                                         :options [:players :prepped-spells {:cost 0}]
                                                         :min     1
-                                                        :max     1}]]}})
+                                                        :max     1}]]}
+                  :quote      "'Worlds are born and die in the dark.' Yan Magda, Enlightened Exile"})
 
 (defn twilight-empire-damage [game _]
   (let [damage (get-in game [:nemesis :tokens])]
@@ -125,5 +154,5 @@
                       :modify-damage    ::modify-damage
                       :when-hit         [[::when-hit]]
                       :cards            [(minion/generic 1) rising-dark twilight-empire
-                                         (minion/generic 2) (power/generic 2) (attack/generic 2)
+                                         ashen-haruspex (power/generic 2) (attack/generic 2)
                                          (attack/generic 3) (power/generic 3) (minion/generic 3)]})

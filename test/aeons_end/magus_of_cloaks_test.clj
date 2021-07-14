@@ -90,6 +90,38 @@
                         :tokens        2
                         :life          35}})))))
 
+(deftest ashen-haruspex-test
+  (testing "Ashen Haruspex"
+    (is (= (-> {:nemesis {:play-area [ashen-haruspex]
+                          :tokens    2}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [ashen-haruspex]
+                      :tokens    2}
+            :players [{:life 9}]}))
+    (is (= (-> {:nemesis {:play-area [ashen-haruspex]
+                          :tokens    7}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [ashen-haruspex]
+                      :tokens    7}
+            :players [{:life 6}]}))
+    (testing "Taking damage"
+      (is (= (-> {:nemesis {:play-area [(assoc ashen-haruspex :life 4)]}}
+                 (deal-damage 2)
+                 (choose {:area :minions :player-no 0 :card-name :ashen-haruspex}))
+             {:nemesis {:play-area [(assoc ashen-haruspex :life 4)]}}))
+      (is (= (-> {:nemesis {:play-area [(assoc ashen-haruspex :life 4)]}}
+                 (deal-damage 3)
+                 (choose {:area :minions :player-no 0 :card-name :ashen-haruspex}))
+             {:nemesis {:play-area [(assoc ashen-haruspex :life 3)]}}))
+      (is (= (-> {:nemesis {:play-area [(assoc ashen-haruspex :life 4)]}}
+                 (deal-damage 5)
+                 (choose {:area :minions :player-no 0 :card-name :ashen-haruspex}))
+             {:nemesis {:play-area [(assoc ashen-haruspex :life 1)]}})))))
+
 (deftest rising-dark-test
   (testing "Rising Dark"
     (testing "To Discard"
