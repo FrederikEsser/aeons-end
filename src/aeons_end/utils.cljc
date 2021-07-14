@@ -423,7 +423,7 @@
 
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
-                                       number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach min-deck+discard
+                                       min-number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach min-deck+discard
                                        last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost most-crystals
                                        opened max-breach-no min-non-corruption]}]]
   (let [solo-play?     (= 1 (count players))
@@ -457,7 +457,7 @@
                                 (false? fully-charged) (remove (fn [{{:keys [charges charge-cost]} :ability}]
                                                                  (>= charges charge-cost)))
                                 most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
-                                number-of-prepped-spells (filter (comp #{number-of-prepped-spells} count-prepped-spells))
+                                min-number-of-prepped-spells (filter (comp #(>= % min-number-of-prepped-spells) count-prepped-spells))
                                 min-hand (filter (comp #(<= min-hand %) count-cards-in-hand))
                                 min-non-corruption (filter (comp #(<= min-non-corruption %) count-non-corruption))
                                 min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))

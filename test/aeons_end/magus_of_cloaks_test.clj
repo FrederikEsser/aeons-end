@@ -122,6 +122,102 @@
                  (choose {:area :minions :player-no 0 :card-name :ashen-haruspex}))
              {:nemesis {:play-area [(assoc ashen-haruspex :life 1)]}})))))
 
+(deftest black-solstice-test
+  (testing "Black Solstice"
+    (testing "To Discard"
+      (is (= (-> {:nemesis {:play-area     [black-solstice]
+                            :modify-damage ::magus-of-cloaks/modify-damage
+                            :when-hit      [[::magus-of-cloaks/when-hit]]
+                            :tokens        4
+                            :life          30}}
+                 (deal-damage 4))
+             {:nemesis {:play-area     [black-solstice]
+                        :modify-damage ::magus-of-cloaks/modify-damage
+                        :when-hit      [[::magus-of-cloaks/when-hit]]
+                        :tokens        3
+                        :life          30}}))
+      (is (= (-> {:nemesis {:play-area     [black-solstice]
+                            :modify-damage ::magus-of-cloaks/modify-damage
+                            :when-hit      [[::magus-of-cloaks/when-hit]]
+                            :tokens        3
+                            :life          30}}
+                 (deal-damage 4))
+             {:nemesis {:discard       [black-solstice]
+                        :modify-damage ::magus-of-cloaks/modify-damage
+                        :when-hit      [[::magus-of-cloaks/when-hit]]
+                        :tokens        2
+                        :life          29}})))
+    (testing "Power"
+      (is (= (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
+                              :unleash   [[:damage-gravehold 1]]}
+                  :gravehold {:life 30}
+                  :players   [{:breaches [{:prepped-spells [spark]}]
+                               :life     10}]}
+                 resolve-nemesis-cards-in-play
+                 (choose {:player-no 0})
+                 (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+             {:nemesis   {:discard [(assoc-in black-solstice [:power :power] 0)]
+                          :unleash [[:damage-gravehold 1]]}
+              :gravehold {:life 28}
+              :players   [{:breaches [{}]
+                           :discard  [spark]
+                           :life     7}]}))
+      (is (= (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
+                              :unleash   [[:damage-gravehold 1]]}
+                  :gravehold {:life 30}
+                  :players   [{:breaches [{:prepped-spells [ignite]}]
+                               :life     10}
+                              {:breaches [{}]
+                               :life     10}]}
+                 resolve-nemesis-cards-in-play
+                 (choose {:player-no 0})
+                 (choose {:player-no 0 :breach-no 0 :card-name :ignite}))
+             {:nemesis   {:discard [(assoc-in black-solstice [:power :power] 0)]
+                          :unleash [[:damage-gravehold 1]]}
+              :gravehold {:life 28}
+              :players   [{:breaches [{}]
+                           :discard  [ignite]
+                           :life     7}
+                          {:breaches [{}]
+                           :life     10}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
+                                             :unleash   [[:damage-gravehold 1]]}
+                                 :gravehold {:life 30}
+                                 :players   [{:breaches [{:prepped-spells [ignite]}]
+                                              :life     10}
+                                             {:breaches [{:prepped-spells [spark]}]
+                                              :life     3}]}
+                                resolve-nemesis-cards-in-play
+                                (choose {:player-no 0})
+                                (choose {:player-no 1 :breach-no 0 :card-name :spark}))))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
+                                             :unleash   [[:damage-gravehold 1]]}
+                                 :gravehold {:life 30}
+                                 :players   [{:breaches [{:prepped-spells [ignite]}]
+                                              :life     10}
+                                             {:breaches [{}]
+                                              :life     10}]}
+                                resolve-nemesis-cards-in-play
+                                (choose {:player-no 1}))))
+      (is (= (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
+                                             :unleash   [[:damage-gravehold 1]]}
+                                 :gravehold {:life 30}
+                                 :players   [{:breaches [{}]
+                                              :life     10}
+                                             {:breaches [{}]
+                                              :life     10}]}
+                                resolve-nemesis-cards-in-play
+                                (choose {:player-no 1}))
+             {:nemesis   {:discard [(assoc-in black-solstice [:power :power] 0)]
+                          :unleash [[:damage-gravehold 1]]}
+              :gravehold {:life 28}
+              :players   [{:breaches [{}]
+                           :life     10}
+                          {:breaches [{}]
+                           :life     7}]})))))
+
 (deftest rising-dark-test
   (testing "Rising Dark"
     (testing "To Discard"

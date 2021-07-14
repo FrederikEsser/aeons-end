@@ -104,6 +104,45 @@
                                      :effects [[::ashen-haruspex-damage]]}
                      :quote         "'If any among us can kill the dark itself, it is Quilius.' Garu, Oathsworn Protector"})
 
+(defn black-solstice-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 3]
+                                       [:give-choice {:title   :black-solstice
+                                                      :text    "Discard a prepped spell."
+                                                      :choice  :discard-prepped-spells
+                                                      :options [:player :prepped-spells]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(defn black-solstice-give-choice [{:keys [players] :as game} _]
+  (let [prepped-spells? (->> players
+                             (mapcat :breaches)
+                             (mapcat :prepped-spells)
+                             not-empty)]
+    (push-effect-stack game {:effects [[:give-choice {:title   :black-solstice
+                                                      :text    "Any player suffers 3 damage and discards a prepped spell."
+                                                      :choice  ::black-solstice-damage
+                                                      :options [:players (when prepped-spells?
+                                                                           {:min-number-of-prepped-spells 1})]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::black-solstice-damage      black-solstice-damage
+                   ::black-solstice-give-choice black-solstice-give-choice})
+
+(def black-solstice {:name       :black-solstice
+                     :type       :power
+                     :tier       2
+                     :text       "When Magus of Cloaks is dealt damage, discard this."
+                     :to-discard ::nemesis-damaged
+                     :power      {:power   2
+                                  :text    ["Unleash twice."
+                                            "Any player suffers 3 damage and discards a prepped spell."]
+                                  :effects [[:unleash]
+                                            [:unleash]
+                                            [::black-solstice-give-choice]]}
+                     :quote      "'I could not tell if Ulgimor was afraid or simply angry. Can a shadow feel such things?' Ohat, Dirt Merchant"})
+
 (def rising-dark {:name       :rising-dark
                   :type       :power
                   :tier       1
@@ -154,5 +193,5 @@
                       :modify-damage    ::modify-damage
                       :when-hit         [[::when-hit]]
                       :cards            [(minion/generic 1) rising-dark twilight-empire
-                                         ashen-haruspex (power/generic 2) (attack/generic 2)
+                                         ashen-haruspex black-solstice (attack/generic 2)
                                          (attack/generic 3) (power/generic 3) (minion/generic 3)]})
