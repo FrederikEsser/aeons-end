@@ -218,6 +218,54 @@
                           {:breaches [{}]
                            :life     7}]})))))
 
+(deftest eclipse-test
+  (testing "Eclipse"
+    (let [spark (assoc spark :id 1)]
+      (is (= (-> {:nemesis {:deck   [eclipse]
+                            :tokens 2}
+                  :players [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}]
+                             :life     10}]}
+                 draw-nemesis-card
+                 (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+             {:nemesis {:discard [eclipse]
+                        :tokens  7}
+              :players [{:breaches [{}]
+                         :life     8}
+                        {:breaches [{:prepped-spells [spark]}]
+                         :life     10}]
+              :trash   [spark]}))
+      (is (= (-> {:nemesis {:deck   [eclipse]
+                            :tokens 3}
+                  :players [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [ignite]}]
+                             :life     10}]}
+                 draw-nemesis-card
+                 (choose {:player-no 1 :breach-no 0 :card-name :ignite}))
+             {:nemesis {:discard [eclipse]
+                        :tokens  8}
+              :players [{:breaches [{:prepped-spells [spark]}]
+                         :life     10}
+                        {:breaches [{}]
+                         :life     8}]
+              :trash   [ignite]}))
+      (is (= (-> {:nemesis {:deck   [eclipse]
+                            :tokens 4}
+                  :players [{:breaches [{}]
+                             :life     10}
+                            {:breaches [{}]
+                             :life     10}]}
+                 draw-nemesis-card
+                 (choose {:player-no 1}))
+             {:nemesis {:discard [eclipse]
+                        :tokens  8}
+              :players [{:breaches [{}]
+                         :life     10}
+                        {:breaches [{}]
+                         :life     8}]})))))
+
 (deftest enshroud-test
   (testing "Enshroud"
     (let [spark (assoc spark :id 1)]

@@ -143,6 +143,39 @@
                                             [::black-solstice-give-choice]]}
                      :quote      "'I could not tell if Ulgimor was afraid or simply angry. Can a shadow feel such things?' Ohat, Dirt Merchant"})
 
+(defn eclipse-damage [game {:keys [player-no breach-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (concat (when card-name
+                                                [[:destroy-prepped-spells {:breach-no breach-no
+                                                                           :card-name card-name}]])
+                                              [[:damage-player 2]])}))
+
+(defn eclipse-give-choice [{:keys [players] :as game} _]
+  (let [prepped-spells? (->> players
+                             (mapcat :breaches)
+                             (mapcat :prepped-spells)
+                             not-empty)]
+    (push-effect-stack game {:effects [[:give-choice {:title   :eclipse
+                                                      :text    "The player with the most expensive prepped spell destroys that spell and suffers 2 damage."
+                                                      :choice  ::eclipse-damage
+                                                      :options (if prepped-spells?
+                                                                 [:players :prepped-spells {:most-expensive true}]
+                                                                 [:players])
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::eclipse-damage      eclipse-damage
+                   ::eclipse-give-choice eclipse-give-choice})
+
+(def eclipse {:name    :eclipse
+              :type    :attack
+              :tier    3
+              :text    ["Magus of Cloaks gains five nemesis tokens."
+                        "The player with the most expensive prepped spell destroys that spell and suffers 2 damage."]
+              :effects [[::gain-nemesis-tokens 5]
+                        [::eclipse-give-choice]]
+              :quote   "'We live in darkness, but they thrive in it.' Mist, Voidwalker"})
+
 (def enshroud {:name    :enshroud
                :type    :attack
                :tier    2
@@ -208,4 +241,4 @@
                       :when-hit         [[::when-hit]]
                       :cards            [(minion/generic 1) rising-dark twilight-empire
                                          ashen-haruspex black-solstice enshroud
-                                         (attack/generic 3) (power/generic 3) (minion/generic 3)]})
+                                         eclipse (power/generic 3) (minion/generic 3)]})
