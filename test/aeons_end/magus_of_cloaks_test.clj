@@ -202,14 +202,14 @@
                                 resolve-nemesis-cards-in-play
                                 (choose {:player-no 1}))))
       (is (= (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
-                                             :unleash   [[:damage-gravehold 1]]}
-                                 :gravehold {:life 30}
-                                 :players   [{:breaches [{}]
-                                              :life     10}
-                                             {:breaches [{}]
-                                              :life     10}]}
-                                resolve-nemesis-cards-in-play
-                                (choose {:player-no 1}))
+                              :unleash   [[:damage-gravehold 1]]}
+                  :gravehold {:life 30}
+                  :players   [{:breaches [{}]
+                               :life     10}
+                              {:breaches [{}]
+                               :life     10}]}
+                 resolve-nemesis-cards-in-play
+                 (choose {:player-no 1}))
              {:nemesis   {:discard [(assoc-in black-solstice [:power :power] 0)]
                           :unleash [[:damage-gravehold 1]]}
               :gravehold {:life 28}
@@ -217,6 +217,42 @@
                            :life     10}
                           {:breaches [{}]
                            :life     7}]})))))
+
+(deftest enshroud-test
+  (testing "Enshroud"
+    (let [spark (assoc spark :id 1)]
+      (is (= (-> {:nemesis {:deck   [enshroud]
+                            :tokens 3}
+                  :players [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [spark]}]}]}
+                 draw-nemesis-card
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                          {:player-no 1 :breach-no 0 :card-name :spark}]))
+             {:nemesis {:discard [enshroud]
+                        :tokens  7}
+              :players [{:breaches [{}]}
+                        {:breaches [{}]}]
+              :trash   [spark spark]}))
+      (is (= (-> {:nemesis {:deck   [enshroud]
+                            :tokens 4}
+                  :players [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
+                 draw-nemesis-card
+                 (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+             {:nemesis {:discard [enshroud]
+                        :tokens  8}
+              :players [{:breaches [{}]}
+                        {:breaches [{:prepped-spells [ignite]}]}]
+              :trash   [spark]}))
+      (is (= (-> {:nemesis {:deck   [enshroud]
+                            :tokens 5}
+                  :players [{:breaches [{:prepped-spells [ignite]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
+                 draw-nemesis-card)
+             {:nemesis {:discard [enshroud]
+                        :tokens  8}
+              :players [{:breaches [{:prepped-spells [ignite]}]}
+                        {:breaches [{:prepped-spells [ignite]}]}]})))))
 
 (deftest rising-dark-test
   (testing "Rising Dark"

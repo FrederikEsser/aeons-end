@@ -143,6 +143,20 @@
                                             [::black-solstice-give-choice]]}
                      :quote      "'I could not tell if Ulgimor was afraid or simply angry. Can a shadow feel such things?' Ohat, Dirt Merchant"})
 
+(def enshroud {:name    :enshroud
+               :type    :attack
+               :tier    2
+               :text    ["Magus of Cloaks gains four nemesis tokens."
+                         "The players collectively destroy two prepped spells that cost 0 Aether."]
+               :effects [[::gain-nemesis-tokens 4]
+                         [:give-choice {:title   :enshroud
+                                        :text    "The players collectively destroy two prepped spells that cost 0 Aether."
+                                        :choice  :destroy-prepped-spells
+                                        :options [:players :prepped-spells {:cost 0}]
+                                        :min     2
+                                        :max     2}]]
+               :quote   "'The shadows rose and swallowed what little light there was.' Ohat, Dirt Merchant"})
+
 (def rising-dark {:name       :rising-dark
                   :type       :power
                   :tier       1
@@ -193,5 +207,5 @@
                       :modify-damage    ::modify-damage
                       :when-hit         [[::when-hit]]
                       :cards            [(minion/generic 1) rising-dark twilight-empire
-                                         ashen-haruspex black-solstice (attack/generic 2)
+                                         ashen-haruspex black-solstice enshroud
                                          (attack/generic 3) (power/generic 3) (minion/generic 3)]})
