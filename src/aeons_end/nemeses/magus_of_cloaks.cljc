@@ -76,6 +76,15 @@
 
 (effects/register-predicates {::additional-rules additional-rules})
 
+(defn victory-condition [{:keys [nemesis]}]
+  (let [{:keys [final-form?]} nemesis]
+    (when final-form?
+      {:conclusion :defeat
+       :text       "Magus of Cloaks reached its final form. Humanity is wiped out."})))
+
+(effects/register-predicates {::victory-condition victory-condition})
+
+
 (defn ashen-haruspex-modify-damage [_ damage]
   (max (- damage 2) 0))
 
@@ -214,6 +223,21 @@
                                                         :max     1}]]}
                   :quote      "'Worlds are born and die in the dark.' Yan Magda, Enlightened Exile"})
 
+(defn reach-final-form [game _]
+  (assoc-in game [:nemesis :final-form?] true))
+
+(effects/register {::reach-final-form reach-final-form})
+
+(def shadows-reach {:name        :shadow's-reach
+                    :type        :power
+                    :tier        3
+                    :immediately {:text    "Magus of Cloaks gain four nemesis tokens."
+                                  :effects [[::gain-nemesis-tokens 4]]}
+                    :power       {:power   9
+                                  :text    ["Magus of Cloaks reaches its final form. Humanity is wiped out. The players lose the game."]
+                                  :effects [[::reach-final-form]]}
+                    :quote       "'What little we have shall be smothered in the end.' Nerva, Survivor"})
+
 (defn twilight-empire-damage [game _]
   (let [damage (get-in game [:nemesis :tokens])]
     (push-effect-stack game {:effects [[:damage-gravehold damage]]})))
@@ -244,17 +268,18 @@
                                                              :max     1}]]}
                     :quote         "'Where Ulgimor is merely a beast of shadow, the Veil Daughter is a darkling goddess.' Dezmodia, Voidborn Prodigy"})
 
-(def magus-of-cloaks {:name             :magus-of-cloaks
-                      :level            7
-                      :life             35
-                      :tokens           4
-                      :unleash          [[::unleash]]
-                      :unleash-text     ["Magus of Cloaks gains two nemesis tokens."
-                                         "OR"
-                                         "Gravehold suffers 2 damage."]
-                      :additional-rules ::additional-rules
-                      :modify-damage    ::modify-damage
-                      :when-hit         [[::when-hit]]
-                      :cards            [(minion/generic 1) rising-dark twilight-empire
-                                         ashen-haruspex black-solstice enshroud
-                                         eclipse (power/generic 3) veil-daughter]})
+(def magus-of-cloaks {:name              :magus-of-cloaks
+                      :level             7
+                      :life              35
+                      :tokens            4
+                      :unleash           [[::unleash]]
+                      :unleash-text      ["Magus of Cloaks gains two nemesis tokens."
+                                          "OR"
+                                          "Gravehold suffers 2 damage."]
+                      :additional-rules  ::additional-rules
+                      :modify-damage     ::modify-damage
+                      :when-hit          [[::when-hit]]
+                      :victory-condition ::victory-condition
+                      :cards             [(minion/generic 1) rising-dark twilight-empire
+                                          ashen-haruspex black-solstice enshroud
+                                          eclipse shadows-reach veil-daughter]})
