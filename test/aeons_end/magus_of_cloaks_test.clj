@@ -93,28 +93,28 @@
 (deftest rising-dark-test
   (testing "Rising Dark"
     (testing "To Discard"
-      (is (= (-> {:nemesis {:play-area [rising-dark]
+      (is (= (-> {:nemesis {:play-area     [rising-dark]
                             :modify-damage ::magus-of-cloaks/modify-damage
                             :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens    4
-                            :life      30}}
+                            :tokens        4
+                            :life          30}}
                  (deal-damage 4))
-             {:nemesis {:play-area [rising-dark]
+             {:nemesis {:play-area     [rising-dark]
                         :modify-damage ::magus-of-cloaks/modify-damage
                         :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens    3
-                        :life      30}}))
-      (is (= (-> {:nemesis {:play-area [rising-dark]
+                        :tokens        3
+                        :life          30}}))
+      (is (= (-> {:nemesis {:play-area     [rising-dark]
                             :modify-damage ::magus-of-cloaks/modify-damage
                             :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens    3
-                            :life      30}}
+                            :tokens        3
+                            :life          30}}
                  (deal-damage 4))
-             {:nemesis {:discard [rising-dark]
+             {:nemesis {:discard       [rising-dark]
                         :modify-damage ::magus-of-cloaks/modify-damage
                         :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens  2
-                        :life    29}})))
+                        :tokens        2
+                        :life          29}})))
     (testing "Power"
       (is (= (-> {:nemesis   {:play-area [(assoc-in rising-dark [:power :power] 1)]
                               :unleash   [[:damage-gravehold 1]]}
@@ -146,3 +146,20 @@
                            :life     10}
                           {:breaches [{}]
                            :life     7}]})))))
+
+(deftest twilight-empire-test
+  (testing "Twilight Empire"
+    (is (= (-> {:nemesis   {:play-area [(assoc-in twilight-empire [:power :power] 1)]
+                            :tokens    4}
+                :gravehold {:life 30}}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in twilight-empire [:power :power] 0)]
+                        :tokens  5}
+            :gravehold {:life 26}}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in twilight-empire [:power :power] 1)]
+                            :tokens    8}
+                :gravehold {:life 30}}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in twilight-empire [:power :power] 0)]
+                        :tokens  8}
+            :gravehold {:life 22}}))))

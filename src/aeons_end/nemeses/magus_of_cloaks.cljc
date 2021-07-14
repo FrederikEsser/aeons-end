@@ -99,6 +99,20 @@
                                                         :min     1
                                                         :max     1}]]}})
 
+(defn twilight-empire-damage [game _]
+  (let [damage (get-in game [:nemesis :tokens])]
+    (push-effect-stack game {:effects [[:damage-gravehold damage]]})))
+
+(effects/register {::twilight-empire-damage twilight-empire-damage})
+
+(def twilight-empire {:name  :twilight-empire
+                      :type  :power
+                      :tier  1
+                      :power {:power   3
+                              :text    "Gravehold suffers damage equal to the number of nemesis tokens Magus of  Cloaks has. Then, Magus of Cloaks gains one nemesis token."
+                              :effects [[::twilight-empire-damage]
+                                        [::gain-nemesis-tokens {:arg 1}]]}})
+
 (def magus-of-cloaks {:name             :magus-of-cloaks
                       :level            7
                       :life             35
@@ -110,6 +124,6 @@
                       :additional-rules ::additional-rules
                       :modify-damage    ::modify-damage
                       :when-hit         [[::when-hit]]
-                      :cards            [(minion/generic 1) rising-dark (power/generic 1)
+                      :cards            [(minion/generic 1) rising-dark twilight-empire
                                          (minion/generic 2) (power/generic 2) (attack/generic 2)
                                          (attack/generic 3) (power/generic 3) (minion/generic 3)]})
