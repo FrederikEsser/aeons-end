@@ -70,7 +70,8 @@
                  :type       :minion
                  :tier       2
                  :life       12
-                 :persistent {:text    "Gravehold suffers 3 damage.\nThis minion suffers 2 damage."
+                 :persistent {:text    ["Gravehold suffers 3 damage."
+                                        "This minion suffers 2 damage."]
                               :effects [[:damage-gravehold 3]
                                         [:deal-damage-to-minion {:card-name :mangleroot
                                                                  :damage    2}]]}

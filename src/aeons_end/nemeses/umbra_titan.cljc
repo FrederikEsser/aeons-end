@@ -22,11 +22,12 @@
 (def crumble {:name    :crumble
               :type    :attack
               :tier    3
-              :text    ["Place the most recently discarded minion in the nemesis discard pile back into play. Unleash."
+              :text    ["Place the most recently discarded minion in the nemesis discard pile back into play."
+                        "Unleash."
                         "OR"
                         "Umbra Titan loses three nemesis tokens."]
               :effects [[:give-choice {:title     :crumble
-                                       :text      "Place the most recently discarded minion in the nemesis discard pile back into play. Unleash."
+                                       :text      "Place the most recently discarded minion in the nemesis discard pile back into play.\nUnleash."
                                        :choice    ::crumble-revive-minion
                                        :or-choice {:text    "Umbra Titan loses three nemesis tokens."
                                                    :effects [[::lose-nemesis-tokens 3]]}
@@ -171,7 +172,8 @@
                      :type       :minion
                      :tier       2
                      :life       9
-                     :persistent {:text    "Any player suffers 2 damage. If this minion has 8 or less life, Umbra Titan loses one nemesis token."
+                     :persistent {:text    ["Any player suffers 2 damage."
+                                            "If this minion has 8 or less life, Umbra Titan loses one nemesis token."]
                                   :effects [[:give-choice {:title   :vault-behemoth
                                                            :text    "Any player suffers 2 damage."
                                                            :choice  [:damage-player {:arg 2}]

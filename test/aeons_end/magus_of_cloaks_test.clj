@@ -218,6 +218,38 @@
                           {:breaches [{}]
                            :life     7}]})))))
 
+(deftest dusk-spawn-test
+  (testing "Dusk Spawn"
+    (is (= (-> {:nemesis {:play-area [dusk-spawn]}
+                :players [{:ability {:charges 1}
+                           :life    10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:area :players :player-no 0}))
+           {:nemesis {:play-area [dusk-spawn]}
+            :players [{:ability {:charges 1}
+                       :life    8}]}))
+    (is (= (-> {:nemesis {:play-area [dusk-spawn]}
+                :players [{:ability {:charges 1}
+                           :life    10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:area :ability :player-no 0}))
+           {:nemesis {:play-area [dusk-spawn]}
+            :players [{:ability {:charges 0}
+                       :life    10}]}))
+    (testing "Taking damage"
+      (is (= (-> {:nemesis {:play-area [(assoc dusk-spawn :life 4)]
+                            :tokens    4}}
+                 (deal-damage 2)
+                 (choose {:area :minions :player-no 0 :card-name :dusk-spawn}))
+             {:nemesis {:play-area [(assoc dusk-spawn :life 2)]
+                        :tokens    5}}))
+      (is (= (-> {:nemesis {:play-area [(assoc dusk-spawn :life 1)]
+                            :tokens    5}}
+                 (deal-damage 1)
+                 (choose {:area :minions :player-no 0 :card-name :dusk-spawn}))
+             {:nemesis {:discard [(assoc dusk-spawn :life 0)]
+                        :tokens  6}})))))
+
 (deftest eclipse-test
   (testing "Eclipse"
     (let [spark (assoc spark :id 1)]

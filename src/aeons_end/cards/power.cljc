@@ -50,7 +50,8 @@
                                :effects   [[:pay {:amount 7
                                                   :type   :discard-power-card}]]}
                   :power      {:power   2
-                               :text    "Unleash. The player with the most charges suffers 3 damage and loses all of their charges."
+                               :text    ["Unleash."
+                                         "The player with the most charges suffers 3 damage and loses all of their charges."]
                                :effects [[:unleash]
                                          [:give-choice {:title   :aphotic-sun
                                                         :text    "The player with the most charges suffers 3 damage and loses all of their charges."
@@ -279,7 +280,8 @@
                      :type  :power
                      :tier  3
                      :power {:power   2
-                             :text    "Unleash twice. The players collectively destroy the two most expensive prepped spells."
+                             :text    ["Unleash twice."
+                                       "The players collectively destroy the two most expensive prepped spells."]
                              :effects [[:unleash]
                                        [:unleash]
                                        [::withering-beam-destroy-spells]]}

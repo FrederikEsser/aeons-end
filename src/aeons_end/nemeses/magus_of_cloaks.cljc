@@ -152,6 +152,31 @@
                                             [::black-solstice-give-choice]]}
                      :quote      "'I could not tell if Ulgimor was afraid or simply angry. Can a shadow feel such things?' Ohat, Dirt Merchant"})
 
+(defn dusk-spawn-damage [game {:keys [area player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :ability [[:spend-charges 1]]
+                                        :players [[:damage-player 2]])}))
+
+(effects/register {::dusk-spawn-damage dusk-spawn-damage})
+
+(def dusk-spawn {:name       :dusk-spawn
+                 :type       :minion
+                 :tier       1
+                 :life       5
+                 :text       "When this minion is dealt damage, Magus of Cloaks gains one nemesis token."
+                 :when-hit   [[::gain-nemesis-tokens 1]]
+                 :persistent {:text    "Any player loses 1 charge or suffers 2 damage."
+                              :effects [[:give-choice {:title   :dusk-spawn
+                                                       :text    "Any player loses 1 charge or suffers 2 damage."
+                                                       :choice  ::dusk-spawn-damage
+                                                       :options [:mixed
+                                                                 [:players :ability {:min-charges 1}]
+                                                                 [:players]]
+                                                       :min     1
+                                                       :max     1}]]}
+                 :quote      "'It is shadow, given form and cruelty.' Mazahaedron, Henge Mystic"})
+
 (defn eclipse-damage [game {:keys [player-no breach-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (concat (when card-name
@@ -280,6 +305,6 @@
                       :modify-damage     ::modify-damage
                       :when-hit          [[::when-hit]]
                       :victory-condition ::victory-condition
-                      :cards             [(minion/generic 1) rising-dark twilight-empire
+                      :cards             [dusk-spawn rising-dark twilight-empire
                                           ashen-haruspex black-solstice enshroud
                                           eclipse shadows-reach veil-daughter]})
