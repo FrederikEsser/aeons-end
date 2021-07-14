@@ -375,3 +375,63 @@
            {:nemesis   {:discard [(assoc-in twilight-empire [:power :power] 0)]
                         :tokens  8}
             :gravehold {:life 22}}))))
+
+(deftest veil-daughter-test
+  (testing "Veil Daughter"
+    (is (= (-> {:nemesis {:play-area [veil-daughter]}
+                :players [{:ability {:charges 0}
+                           :life    10}
+                          {:ability {:charges 0}
+                           :life    10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [veil-daughter]}
+            :players [{:ability {:charges 0}
+                       :life    6}
+                      {:ability {:charges 0}
+                       :life    10}]}))
+    (is (= (-> {:nemesis {:play-area [veil-daughter]}
+                :players [{:ability {:charges 0}
+                           :life    10}
+                          {:ability {:charges 1}
+                           :life    10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 1}))
+           {:nemesis {:play-area [veil-daughter]}
+            :players [{:ability {:charges 0}
+                       :life    10}
+                      {:ability {:charges 1}
+                       :life    6}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [veil-daughter]}
+                               :players [{:ability {:charges 0}
+                                          :life    10}
+                                         {:ability {:charges 1}
+                                          :life    10}]}
+                              (resolve-nemesis-cards-in-play)
+                              (choose {:player-no 0}))))
+    (testing "Taking damage"
+      (is (= (-> {:nemesis {:play-area [(assoc veil-daughter :life 4)]
+                            :tokens    2}}
+                 (deal-damage 2)
+                 (choose {:area :minions :player-no 0 :card-name :veil-daughter}))
+             {:nemesis {:play-area [(assoc veil-daughter :life 4)]
+                        :tokens    2}}))
+      (is (= (-> {:nemesis {:play-area [(assoc veil-daughter :life 4)]
+                            :tokens    2}}
+                 (deal-damage 3)
+                 (choose {:area :minions :player-no 0 :card-name :veil-daughter}))
+             {:nemesis {:play-area [(assoc veil-daughter :life 3)]
+                        :tokens    2}}))
+      (is (= (-> {:nemesis {:play-area [(assoc veil-daughter :life 4)]
+                            :tokens    3}}
+                 (deal-damage 3)
+                 (choose {:area :minions :player-no 0 :card-name :veil-daughter}))
+             {:nemesis {:play-area [(assoc veil-daughter :life 4)]
+                        :tokens    3}}))
+      (is (= (-> {:nemesis {:play-area [(assoc veil-daughter :life 4)]
+                            :tokens    4}}
+                 (deal-damage 7)
+                 (choose {:area :minions :player-no 0 :card-name :veil-daughter}))
+             {:nemesis {:play-area [(assoc veil-daughter :life 1)]
+                        :tokens    4}})))))

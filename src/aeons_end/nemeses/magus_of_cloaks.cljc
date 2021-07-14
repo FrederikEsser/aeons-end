@@ -224,9 +224,25 @@
                       :type  :power
                       :tier  1
                       :power {:power   3
-                              :text    "Gravehold suffers damage equal to the number of nemesis tokens Magus of  Cloaks has. Then, Magus of Cloaks gains one nemesis token."
+                              :text    ["Gravehold suffers damage equal to the number of nemesis tokens Magus of Cloaks has."
+                                        "Then, Magus of Cloaks gains one nemesis token."]
                               :effects [[::twilight-empire-damage]
                                         [::gain-nemesis-tokens {:arg 1}]]}})
+
+(def veil-daughter {:name          :veil-daughter
+                    :type          :minion
+                    :tier          3
+                    :life          11
+                    :text          "When this minion is dealt damage, reduce that damage by the number of nemesis tokens Magus of Cloaks has."
+                    :modify-damage ::modify-damage
+                    :persistent    {:text    "The player with the most charges suffers 4 damage."
+                                    :effects [[:give-choice {:title   :veil-daughter
+                                                             :text    "The player with the most charges suffers 4 damage."
+                                                             :choice  [:damage-player {:arg 4}]
+                                                             :options [:players {:most-charges true}]
+                                                             :min     1
+                                                             :max     1}]]}
+                    :quote         "'Where Ulgimor is merely a beast of shadow, the Veil Daughter is a darkling goddess.' Dezmodia, Voidborn Prodigy"})
 
 (def magus-of-cloaks {:name             :magus-of-cloaks
                       :level            7
@@ -241,4 +257,4 @@
                       :when-hit         [[::when-hit]]
                       :cards            [(minion/generic 1) rising-dark twilight-empire
                                          ashen-haruspex black-solstice enshroud
-                                         eclipse (power/generic 3) (minion/generic 3)]})
+                                         eclipse (power/generic 3) veil-daughter]})
