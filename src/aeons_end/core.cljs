@@ -264,19 +264,23 @@
 
 (defn view-ability [{:keys [name-ui text type charges charge-cost interaction choice-value]} player-no]
   (let [disabled (nil? interaction)]
-    [:div
+    [:div {:style {:padding-top "3px"}}
      [:button {:style    (button-style :disabled disabled
                                        :type :ability
-                                       :status (when (>= charges charge-cost) :charged))
-               :title    text
+                                       :status (when (>= charges charge-cost) :charged)
+                                       :width "150px")
                :disabled disabled
                :on-click (when interaction
                            (fn [] (case interaction
                                     :quick-choosable (swap! state assoc :game (cmd/choose choice-value))
                                     :chargeable (swap! state assoc :game (cmd/charge-ability))
                                     :activatable (swap! state assoc :game (cmd/activate-ability player-no)))))}
-      (str name-ui
-           " (" charges "/" charge-cost ")")]]))
+      [:div
+       [:div {:style {:font-size "1.3em"}}
+        name-ui]
+       [:div {:style {:font-size "1.1em"}}
+        (str "Charges: " charges "/" charge-cost)]
+       (format-text text)]]]))
 
 (defn view-player-pile [pile max]
   [:div
@@ -687,23 +691,33 @@
                                                                 (and (not repeatable?)
                                                                      (->> selection (map :option) (some #{name choice-value}))))]
                                               [:button {:style    (button-style :type type
-                                                                                :disabled disabled)
+                                                                                :disabled disabled
+                                                                                :width "150px")
                                                         :disabled disabled
                                                         :on-click (when interaction
                                                                     (fn [] (case interaction
                                                                              :choosable (select! choice-value name)
                                                                              :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
                                                [:div
-                                                [:div {:style {:font-size "1.3em"}} name-ui]
+                                                [:div {:style {:font-size "1.4em"}} name-ui]
                                                 [:div {:style {:font-size   "0.9em"
                                                                :font-weight :normal
+                                                               :padding-top "1px"}}
+                                                 title]
+                                                [:div {:style {:font-size   "1.1em"
                                                                :padding-top "3px"}}
-                                                 title]]])]
+                                                 "Life: " life]
+                                                (when trophies
+                                                  [:div {:style {:font-size   "1.1em"
+                                                                 :padding-top "3px"}}
+                                                   "Trophies: " trophies])]])]
                                            (view-ability ability player-no)
-                                           (when trophies
-                                             [:div "Trophies: " trophies])
-                                           [:div "Life: " life]
-                                           [:div "Aether: " aether]]
+                                           (when active?
+                                             [:div {:style {:padding-top "3px"
+                                                            :font-size   "1.2em"
+                                                            :font-weight :bold
+                                                            :text-align  :center}}
+                                              "Aether: " aether])]
                                           [:td [:table
                                                 [:tbody {:style {:border :none}}
                                                  (mapk (partial view-breach max) breaches)]]]
