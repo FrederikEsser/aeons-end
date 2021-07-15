@@ -113,6 +113,13 @@
               (-> e f (with-meta {:key (random-uuid)}))))
        doall))
 
+(defn keepk [f coll]
+  (->> coll
+       (keep (fn [e]
+               (when e
+                 (-> e f (with-meta {:key (random-uuid)})))))
+       doall))
+
 (defn mapk-indexed [f coll]
   (->> coll
        (map-indexed (fn [i e]
@@ -120,7 +127,7 @@
        doall))
 
 (defn map-tag [tag coll & [style]]
-  (mapk (fn [x] [tag style x]) coll))
+  (keepk (fn [x] [tag style x]) coll))
 
 (defn format-title [{:keys [text cast-text]}]
   (str (if (coll? text)
@@ -458,12 +465,7 @@
                     :disabled disabled
                     :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
                                        (swap! state assoc :game (cmd/restart) :selection [])))}
-           "Retry"])
-        (let [disabled (-> @state :game :commands :can-undo? not)]
-          [:button {:style    (button-style :disabled disabled)
-                    :disabled disabled
-                    :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
-           "Undo"])]
+           "Retry"])]
 
        [:table
         [:tbody
@@ -583,7 +585,7 @@
           [:td
            (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]
              [:div
-              [:table
+              [:table {:style {:width "100%"}}
                [:tbody
                 [:tr (map-tag :th ["Gravehold" "Turn order deck"])]
                 [:tr
@@ -624,7 +626,17 @@
                      [:div
                       (format-text text)]]])
                  (when-let [choice (-> @state :game :choice)]
-                   (view-choice choice))]]]])
+                   (view-choice choice))
+                 [:td {:style {:max-width "100%"
+                               :float     :right}}
+                  [:div
+                   (let [disabled (-> @state :game :commands :can-undo? not)]
+                     [:button {:style    (button-style :disabled disabled)
+                               :disabled disabled
+                               :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
+                      [:div {:style {:font-size "2em"
+                                     :padding   "10px"}}
+                       "Undo"]])]]]]]])
 
            (if setup-game?
              (let [players          (get-in @state [:game-setup :players])
@@ -664,13 +676,14 @@
                                                   (sort-by :name)
                                                   (mapk (fn [{:keys [name]}]
                                                           [:option {:value name} (ut/format-name name)])))]]])))])
-             [:div
-              [:table
-               [:tbody
-                [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard"])]
-                (let [players (get-in @state [:game :players])]
+             (let [show-purchased? (get-in @state [:expanded? :purchased])
+                   players         (get-in @state [:game :players])]
+               [:div
+                [:table
+                 [:tbody
+                  [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard" (when show-purchased? "Purchased")])]
                   (->> players
-                       (mapk-indexed (fn [player-no {:keys [name name-ui title type life ability aether breaches hand play-area deck discard trophies active? choice-value interaction]}]
+                       (mapk-indexed (fn [player-no {:keys [name name-ui title type life ability aether breaches hand play-area deck discard purchased trophies active? choice-value interaction]}]
                                        (let [{:keys [max repeatable?]} (get-in @state [:game :choice])
                                              breach-no     (->> breaches
                                                                 (filter (comp #{:opened :focused} :status))
@@ -752,7 +765,11 @@
                                                 (view-player-pile deck max)]]
                                           [:td [view-expandable-pile (keyword "discard" (cljs.core/name name)) discard
                                                 {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))
-                                                 :max         max}]]])))))]]])]
+                                                 :max         max}]]
+                                          (when show-purchased?
+                                            [:td {:style {:background-color "#ccc"}}
+                                             (->> purchased
+                                                  (mapk (partial view-card)))])]))))]]]))]
           [:td
            (if setup-game?
              (let [supply         (get-in @state [:game-setup :supply])
@@ -865,10 +882,15 @@
            [:div (str "Destroyed")
             [view-expandable-pile :trash trash]]))
        (when-not setup-game?
-         [:div "Mode: "
-          [:button {:style    (button-style)
-                    :on-click (fn [] (swap! state assoc :game (cmd/switch-mode)))}
-           (ut/format-name (-> @state :game :mode))]])])))
+         (let [show-purchased? (get-in @state [:expanded? :purchased])]
+           [:div
+            "Mode: "
+            [:button {:style    (button-style)
+                      :on-click (fn [] (swap! state assoc :game (cmd/switch-mode)))}
+             (ut/format-name (-> @state :game :mode))]
+            " Purchased: "
+            [:button {:on-click (fn [] (swap! state update-in [:expanded? :purchased] not))}
+             (if show-purchased? "Shown" "Hidden")]]))])))
 
 ;; -------------------------
 ;; Initialize app

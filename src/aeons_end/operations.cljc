@@ -1,7 +1,8 @@
 (ns aeons-end.operations
   (:require [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [medley.core :as medley]))
 
 (defn game-over? [{:keys                  [real-game? players]
                    {gravehold-life :life} :gravehold
@@ -75,6 +76,8 @@
   (if (game-over? game)
     (-> game
         (dissoc :effect-stack :current-player)
+        (medley/update-existing :players (partial map (fn [{:keys [deck] :as player}]
+                                                        (assoc player :revealed-cards (count deck)))))
         (assoc :game-over (game-over? game)))
     (let [[{:keys [player-no card-id effect args] :as top}] (get game :effect-stack)]
       (cond-> game
@@ -869,7 +872,8 @@
                                                  max (update :max clojure.core/min (count options))))
         swiftable (and (= :swift mode)
                        (not-empty options)
-                       (apply = options)
+                       (or (apply = options)
+                           (<= (count options) min))
                        (= min (or max (count options)))
                        (not optional?))]
     (cond
@@ -907,10 +911,10 @@
   (-> game
       (cond-> current-player (assoc :current-player :no-one))
       (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn)
-      (ut/update-in-if-present [:players player-no :breaches]
-                               (partial mapv (fn [{:keys [status] :as breach}]
-                                               (cond-> breach
-                                                       (#{:focused} status) (assoc :status :closed)))))))
+      (medley/update-existing-in [:players player-no :breaches]
+                                 (partial mapv (fn [{:keys [status] :as breach}]
+                                                 (cond-> breach
+                                                         (#{:focused} status) (assoc :status :closed)))))))
 
 (defn set-current-player [game {:keys [player-no]}]
   (-> game

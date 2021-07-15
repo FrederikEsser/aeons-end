@@ -4,7 +4,8 @@
             [aeons-end.operations :refer [can-discard?]]
             [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]
             [clojure.string :as string]
-            [aeons-end.operations :as op]))
+            [aeons-end.operations :as op]
+            [medley.core :as medley]))
 
 (defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
                           {:keys [options max choice-opts] :as choice}]
@@ -149,6 +150,22 @@
                                              (choice-interaction (choice-key card) choice))))))
        :number-of-cards (count cards)})))
 
+(defn view-purchased [{:keys [hand play-area breaches deck revealed discard gaining] :as player}]
+  (->> breaches
+       (mapcat :prepped-spells)
+       (concat hand play-area deck revealed discard gaining)
+       (filter (fn [{:keys [cost]}]
+                 (and cost
+                      (>= cost 2))))
+       (map view-card)
+       frequencies
+       (map (fn [[card number-of-cards]]
+              (cond-> card
+                      (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))
+       (sort-by (juxt (comp type-sort-order :type)
+                      :cost
+                      :name))))
+
 (defn view-options [options]
   (->> options
        (map (fn [option] (select-keys option [:option :text])))))
@@ -271,6 +288,7 @@
           :play-area (view-area :play-area data)
           :deck      (view-deck data)
           :discard   (view-discard data)
+          :purchased (view-purchased player)
           :life      life
           :aether    (ut/format-aether player)}
          (when trophies

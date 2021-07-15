@@ -1001,8 +1001,10 @@
                  (update :game-over dissoc :text))
              {:real-game? true
               :nemesis    {:deck [{}]}
-              :players    [{:life 0}
-                           {:life 0}]
+              :players    [{:life           0
+                            :revealed-cards 0}
+                           {:life           0
+                            :revealed-cards 0}]
               :game-over  {:conclusion :defeat}})))))
 
 (deftest this-turn-test

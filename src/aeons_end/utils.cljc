@@ -173,18 +173,6 @@
         (update-in path vec)
         (as-> game (apply update-in game (concat path [idx]) f args)))))
 
-(defn update-if-present
-  "Update if a value is already present, otherwise do nothing (don't insert nil)."
-  [m k f & args]
-  (cond->> m
-           (get m k) (#(apply update % k f args))))
-
-(defn update-in-if-present
-  "Update if a value is already present, otherwise do nothing (don't insert nil)."
-  [m ks f & args]
-  (cond->> m
-           (get-in m ks) (#(apply update-in % ks f args))))
-
 (defn plus [n m]
   (if n (+ n m) m))
 
