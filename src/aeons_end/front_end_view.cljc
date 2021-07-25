@@ -316,11 +316,11 @@
 
 (defn view-nemesis [{{:keys [name life play-area deck discard
                              unleash-text additional-rules
-                             tokens fury husks corruption-deck]} :nemesis
-                     {:keys [player-no phase]}                   :player
-                     choice                                      :choice
-                     resolving                                   :resolving
-                     :as                                         game}]
+                             tokens fury husks tainted-jades corruption-deck]} :nemesis
+                     {:keys [player-no phase]}                                 :player
+                     choice                                                    :choice
+                     resolving                                                 :resolving
+                     :as                                                       game}]
   (merge {:name-ui          (ut/format-name name)
           :life             life
           :deck             (if (empty? deck)
@@ -425,6 +425,8 @@
                             (choice-interaction {:area      :minions
                                                  :card-name :husks} choice)
                             (choice-interaction {:area :husks} choice))}))
+         (when tainted-jades
+           {:tainted-jades (count tainted-jades)})
          (when corruption-deck
            {:corruptions (count corruption-deck)})
          (choice-interaction {:area :nemesis} choice)))

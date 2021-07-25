@@ -5,6 +5,7 @@
             [aeons-end.nemeses.rageborne :refer [rageborne]]
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.nemeses.carapace-queen :refer [carapace-queen deal-damage-to-husks]]
+            [aeons-end.nemeses.blight-lord :refer [blight-lord]]
             [aeons-end.nemeses.crooked-mask :refer [crooked-mask]]
             [aeons-end.nemeses.magus-of-cloaks :refer [magus-of-cloaks]]
             [aeons-end.cards.attack :as attack]
@@ -245,6 +246,7 @@
 (def nemeses [rageborne
               umbra-titan
               carapace-queen
+              blight-lord
               crooked-mask
               magus-of-cloaks])
 

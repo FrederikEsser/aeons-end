@@ -251,13 +251,14 @@
 
 (effects/register {:destroy-from-area destroy-from-area})
 
-(defn destroy-this [game {:keys [player-no card-id]}]
+(defn destroy-this [game {:keys [player-no card-id destroyed-by]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :play-area] {:id card-id})]
     (cond-> game
             card (push-effect-stack {:player-no player-no
-                                     :effects   [[:move-card {:move-card-id card-id
-                                                              :from         :play-area
-                                                              :to           :trash}]]}))))
+                                     :effects   [[:move-card (medley/assoc-some {:move-card-id card-id
+                                                                                 :from         :play-area
+                                                                                 :to           :trash}
+                                                                                :destroyed-by destroyed-by)]]}))))
 
 (effects/register {:destroy-this destroy-this})
 

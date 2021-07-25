@@ -535,7 +535,7 @@
                      (add-card to-path to-position card)
                      (state-maintenance player-no from to)))))
 
-(defn handle-on-trash [game {:keys [player-no card-name] :as args}]
+(defn handle-on-trash [game {:keys [player-no card-id card-name destroyed-by] :as args}]
   (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})
         on-trash-triggers (->> (get-in game [:players player-no :triggers])
                                (filter (comp #{:on-trash} :event))
@@ -546,7 +546,11 @@
                                (map (partial ut/add-effect-args args)))
         on-trash-effects  (concat on-trash-triggers reaction-effects on-trash)]
     (cond-> game
-            (not-empty on-trash-effects) (push-effect-stack (merge args {:effects on-trash-effects})))))
+            (not-empty on-trash-effects) (push-effect-stack {:player-no player-no
+                                                             :card-id   card-id
+                                                             :args      (when destroyed-by
+                                                                          {:destroyed-by destroyed-by})
+                                                             :effects   on-trash-effects}))))
 
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])

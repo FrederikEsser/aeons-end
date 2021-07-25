@@ -519,7 +519,7 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks corruptions interaction choice-value]} (-> @state :game :nemesis)]
+             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks tainted-jades corruptions interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
@@ -553,6 +553,10 @@
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
                                  "Fury: " fury])
+                              (when tainted-jades
+                                [:div {:style {:font-size   "1.1em"
+                                               :padding-top "3px"}}
+                                 "Tainted Jades: " tainted-jades])
                               (when corruptions
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
