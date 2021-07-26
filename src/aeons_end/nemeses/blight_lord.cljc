@@ -172,7 +172,7 @@
 (effects/register-predicates {::victory-condition victory-condition})
 
 (def blight-lord {:name              :blight-lord
-                  :level             4
+                  :level             5
                   :life              70
                   :setup             [[::setup]]
                   :unleash           [[::unleash]]

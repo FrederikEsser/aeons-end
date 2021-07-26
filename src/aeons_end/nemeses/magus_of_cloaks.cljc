@@ -294,7 +294,7 @@
                     :quote         "'Where Ulgimor is merely a beast of shadow, the Veil Daughter is a darkling goddess.' Dezmodia, Voidborn Prodigy"})
 
 (def magus-of-cloaks {:name              :magus-of-cloaks
-                      :level             7
+                      :level             6
                       :life              35
                       :tokens            4
                       :unleash           [[::unleash]]

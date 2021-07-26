@@ -284,7 +284,7 @@
 (effects/register-predicates {::unleash-text unleash-text})
 
 (def carapace-queen {:name              :carapace-queen
-                     :level             3
+                     :level             4
                      :life              60
                      :unleash           [[::unleash]]
                      :unleash-text      ::unleash-text
