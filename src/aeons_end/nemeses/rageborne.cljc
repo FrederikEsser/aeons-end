@@ -35,7 +35,7 @@
                                                      :min     1
                                                      :max     1}]]}))))
 
-(defn after-effects [game _]
+(defn at-end-turn [game _]
   (let [fury (get-in game [:nemesis :fury])]
     (cond-> game
             (<= 4 fury) (strike {}))))
@@ -44,7 +44,7 @@
                    ::lose-fury      lose-fury
                    ::resolve-strike resolve-strike
                    ::strike         strike
-                   ::after-effects  after-effects})
+                   ::at-end-turn    at-end-turn})
 
 (def avatar-of-wrath {:name       :avatar-of-wrath
                       :type       :minion
@@ -314,7 +314,7 @@
                 :unleash          [[::gain-fury]]
                 :unleash-text     "Rageborne gains one Fury token."
                 :additional-rules ::additional-rules
-                :after-effects    [[::after-effects]]
+                :at-end-turn      [[::at-end-turn]]
                 :cards            [cleave provoker unrelenting-ire
                                    blood-cry invoke-carnage scorn
                                    avatar-of-wrath onslaught rolling-death]

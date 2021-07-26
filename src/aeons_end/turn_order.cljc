@@ -1,7 +1,8 @@
 (ns aeons-end.turn-order
   (:require [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]
-            [aeons-end.utils :as ut]))
+            [aeons-end.utils :as ut]
+            [aeons-end.nemesis :as nemesis]))
 
 (def player-1 {:name    :player-1
                :type    {:player-no 0}
@@ -30,9 +31,10 @@
 
 (def nemesis {:name    :nemesis
               :type    :nemesis
-              :effects [[:resolve-nemesis-cards-in-play]
+              :effects [[::nemesis/at-start-turn]
+                        [:resolve-nemesis-cards-in-play]
                         [:draw-nemesis-card]
-                        [:after-effects]
+                        [::nemesis/at-end-turn]
                         [:next-turn]]})
 
 (defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]

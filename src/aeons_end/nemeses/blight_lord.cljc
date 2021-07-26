@@ -94,10 +94,78 @@
 
 (effects/register {::setup setup})
 
-(defn victory-condition [{:keys [nemesis]}]
-  (let [{:keys [tainted-level]} nemesis]
-    (when (and tainted-level
-               (>= tainted-level 9))
+(defn lookup-next-tainted-effects [{:keys [tainted-level tainted-effects]}]
+  (->> tainted-effects
+       (filter (fn [{:keys [level]}]
+                 (> level tainted-level)))
+       first))
+
+(defn lookup-tainted-effects [{:keys [tainted-level tainted-effects]}]
+  (->> tainted-effects
+       (filter (comp #{tainted-level} :level))
+       first))
+
+(defn increase-tainted-level [game _]
+  (update-in game [:nemesis :tainted-track :tainted-level] inc))
+
+(defn resolve-tainted-track [game _]
+  (let [{:keys [effects]} (-> (get-in game [:nemesis :tainted-track])
+                              lookup-tainted-effects)]
+    (cond-> game
+            effects (push-effect-stack {:effects effects}))))
+
+(defn do-advance-tainted-track [game _]
+  (push-effect-stack game {:effects [[::increase-tainted-level]
+                                     [:set-resolving {:card-name :tainted-track}]
+                                     [::resolve-tainted-track]
+                                     [:clear-resolving]]}))
+
+(defn advance-tainted-track [game _]
+  (push-effect-stack game {:effects [[:give-choice {:title   :tainted-track
+                                                    :text    "Advance the tainted track."
+                                                    :choice  ::do-advance-tainted-track
+                                                    :options [:nemesis :tainted-track]
+                                                    :min     1
+                                                    :max     1}]]}))
+
+(defn totally-taint [game _]
+  (assoc-in game [:nemesis :tainted-track :totally-tainted?] true))
+
+(effects/register {::increase-tainted-level   increase-tainted-level
+                   ::resolve-tainted-track    resolve-tainted-track
+                   ::do-advance-tainted-track do-advance-tainted-track
+                   ::advance-tainted-track    advance-tainted-track
+                   ::totally-taint            totally-taint})
+
+(def tainted-effects [{:level   3
+                       :text    "Gravehold suffers 7 damage."
+                       :effects [[:damage-gravehold 7]]}
+                      {:level   5
+                       :text    "The player with the lowest life suffers 4 damage."
+                       :effects [[:give-choice {:title   :tainted-track
+                                                :text    "The player with the lowest life suffers 4 damage."
+                                                :choice  [:damage-player {:arg 4}]
+                                                :options [:players {:least-life true}]
+                                                :min     1
+                                                :max     1}]]}
+                      {:level   7
+                       :text    "Blight Lord gains 10 life."
+                       :effects [[:heal-nemesis 10]]}
+                      {:level   9
+                       :text    "The players lose."
+                       :effects [[::totally-taint]]}])
+
+(defn at-start-turn [game _]
+  (let [tainted-jades (->> (get-in game [:nemesis :tainted-jades])
+                           count)]
+    (cond-> game
+            (< tainted-jades 2) (push-effect-stack {:effects (repeat (- 2 tainted-jades) [::advance-tainted-track])}))))
+
+(effects/register {::at-start-turn at-start-turn})
+
+(defn victory-condition [game]
+  (let [{:keys [totally-tainted?]} (get-in game [:nemesis :tainted-track])]
+    (when totally-tainted?
       {:conclusion :defeat
        :text       "The city of Gravehold is reduced to glass."})))
 
@@ -114,6 +182,9 @@
                                       "- At the start of each nemesis turn before resolving any other effects, count the number of Tainted Jades in the Tainted Jade supply pile. If there is only one, advance the Tainted Track once. If there are zero, advance the Tainted Track twice."
                                       "- When the Tainted Track is advanced to a space with an effect listed on it, resolve that effect immediately."]
                   :victory-condition ::victory-condition
+                  :at-start-turn     [[::at-start-turn]]
+                  :tainted-track     {:tainted-level   1
+                                      :tainted-effects tainted-effects}
                   :cards             [(attack/generic 1) (minion/generic 1) (power/generic 1)
                                       (attack/generic 2) (minion/generic 2) (power/generic 2)
                                       (attack/generic 3) (minion/generic 3) (power/generic 3)]})

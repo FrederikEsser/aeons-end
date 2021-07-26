@@ -39,8 +39,7 @@
 (def aethereal-ward {:name        :aethereal-ward
                      :activation  :nemesis-draw
                      :charge-cost 5
-                     :text        ["When a nemesis attack or power card is drawn but before it is resolved, you may discard it. It has no effect."
-                                   "(The nemesis does not draw a replacement card)"]
+                     :text        "When a nemesis attack or power card is drawn but before it is resolved, you may discard it. It has no effect."
                      :effects     [[::aethereal-ward-discard]]})
 
 (def adelheim {:name     :adelheim

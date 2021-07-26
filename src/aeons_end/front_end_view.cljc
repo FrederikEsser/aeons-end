@@ -3,6 +3,7 @@
             [aeons-end.effects :as effects]
             [aeons-end.operations :refer [can-discard?]]
             [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]
+            [aeons-end.nemeses.blight-lord :refer [lookup-tainted-effects lookup-next-tainted-effects]]
             [clojure.string :as string]
             [aeons-end.operations :as op]
             [medley.core :as medley]))
@@ -316,11 +317,12 @@
 
 (defn view-nemesis [{{:keys [name life play-area deck discard
                              unleash-text additional-rules
-                             tokens fury husks tainted-jades corruption-deck]} :nemesis
-                     {:keys [player-no phase]}                                 :player
-                     choice                                                    :choice
-                     resolving                                                 :resolving
-                     :as                                                       game}]
+                             tokens fury husks tainted-jades tainted-track
+                             corruption-deck]} :nemesis
+                     {:keys [player-no phase]} :player
+                     choice                    :choice
+                     resolving                 :resolving
+                     :as                       game}]
   (merge {:name-ui          (ut/format-name name)
           :life             life
           :deck             (if (empty? deck)
@@ -427,6 +429,21 @@
                             (choice-interaction {:area :husks} choice))}))
          (when tainted-jades
            {:tainted-jades (count tainted-jades)})
+         (when tainted-track
+           (let [{:keys [tainted-level tainted-effects]} tainted-track
+                 {:keys [text level]} (if (= :tainted-track resolving)
+                                        (lookup-tainted-effects tainted-track)
+                                        (lookup-next-tainted-effects tainted-track))]
+             {:tainted-track (merge {:tainted-level      tainted-level
+                                     :next-tainted-level level
+                                     :next-tainted-text  text
+                                     :title              (concat ["When the Tainted Track is advanced to a space with an effect listed on it, resolve that effect immediately."]
+                                                                 (->> tainted-effects
+                                                                      (map (fn [{:keys [level text]}]
+                                                                             (str "Space " level ": " text)))))}
+                                    (when (= :tainted-track resolving)
+                                      {:status :resolving})
+                                    (choice-interaction {:area :tainted-track} choice))}))
          (when corruption-deck
            {:corruptions (count corruption-deck)})
          (choice-interaction {:area :nemesis} choice)))

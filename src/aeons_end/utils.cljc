@@ -534,7 +534,8 @@
                         most-recent (take-last 1)           ; it's important that 'most-recent' is evaluated last
                         :always (map :name))
 
-      :nemesis [:nemesis])))
+      :nemesis [:nemesis]
+      [area])))
 
 (effects/register-options {:nemesis options-from-nemesis})
 

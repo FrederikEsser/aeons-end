@@ -14,7 +14,7 @@
 
 (defn do-after-effects [game]
   (-> game
-      (push-effect-stack {:effects [[::rageborne/after-effects]]})
+      (push-effect-stack {:effects [[::rageborne/at-end-turn]]})
       check-stack))
 
 (deftest rageborne-test

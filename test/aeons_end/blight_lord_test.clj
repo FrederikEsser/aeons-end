@@ -14,6 +14,16 @@
 
 (use-fixtures :each fixture)
 
+(defn do-start-turn [game]
+  (-> game
+      (push-effect-stack {:effects [[::blight-lord/at-start-turn]]})
+      check-stack))
+
+(defn do-advance-tainted-track-test [game]
+  (-> game
+      (do-advance-tainted-track {})
+      check-stack))
+
 (deftest tainted-jade-test
   (testing "Tainted Jade"
     (let [tainted-jade (assoc tainted-jade :id 1)]
@@ -72,4 +82,99 @@
                    (choose {:player-no 0}))
                {:nemesis {:tainted-jades []
                           :unleash       [[::blight-lord/unleash]]}
-                :players [{:life 9}]}))))))
+                :players [{:life 9}]}))))
+    (testing "Start of turn"
+      (is (= (-> {:nemesis {:tainted-jades [tainted-jade tainted-jade]
+                            :tainted-track {:tainted-level 1}}}
+                 do-start-turn)
+             {:nemesis {:tainted-jades [tainted-jade tainted-jade]
+                        :tainted-track {:tainted-level 1}}}))
+      (is (= (-> {:nemesis {:tainted-jades [tainted-jade]
+                            :tainted-track {:tainted-level 1}}}
+                 do-start-turn
+                 (choose :tainted-track))
+             {:nemesis {:tainted-jades [tainted-jade]
+                        :tainted-track {:tainted-level 2}}}))
+      (is (= (-> {:nemesis {:tainted-jades []
+                            :tainted-track {:tainted-level 1}}}
+                 do-start-turn
+                 (choose :tainted-track)
+                 (choose :tainted-track))
+             {:nemesis {:tainted-jades []
+                        :tainted-track {:tainted-level 3}}})))
+    (testing "Tainted Track"
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   1
+                                            :tainted-effects tainted-effects}}}
+                 do-advance-tainted-track-test)
+             {:nemesis {:tainted-track {:tainted-level   2
+                                        :tainted-effects tainted-effects}}}))
+      (is (= (-> {:nemesis   {:tainted-track {:tainted-level   2
+                                              :tainted-effects tainted-effects}}
+                  :gravehold {:life 30}}
+                 do-advance-tainted-track-test)
+             {:nemesis   {:tainted-track {:tainted-level   3
+                                          :tainted-effects tainted-effects}}
+              :gravehold {:life 23}}))
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   3
+                                            :tainted-effects tainted-effects}}}
+                 do-advance-tainted-track-test)
+             {:nemesis {:tainted-track {:tainted-level   4
+                                        :tainted-effects tainted-effects}}}))
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   4
+                                            :tainted-effects tainted-effects}}
+                  :players [{:life 9}
+                            {:life 10}]}
+                 do-advance-tainted-track-test
+                 (choose {:player-no 0}))
+             {:nemesis {:tainted-track {:tainted-level   5
+                                        :tainted-effects tainted-effects}}
+              :players [{:life 5}
+                        {:life 10}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:tainted-track {:tainted-level   4
+                                                           :tainted-effects tainted-effects}}
+                                 :players [{:life 9}
+                                           {:life 10}]}
+                                do-advance-tainted-track-test
+                                (choose {:player-no 1}))))
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   5
+                                            :tainted-effects tainted-effects}}}
+                 do-advance-tainted-track-test)
+             {:nemesis {:tainted-track {:tainted-level   6
+                                        :tainted-effects tainted-effects}}}))
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   6
+                                            :tainted-effects tainted-effects}
+                            :life          50
+                            :max-life      70}}
+                 do-advance-tainted-track-test)
+             {:nemesis {:tainted-track {:tainted-level   7
+                                        :tainted-effects tainted-effects}
+                        :life          60
+                        :max-life      70}}))
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   6
+                                            :tainted-effects tainted-effects}
+                            :life          61
+                            :max-life      70}}
+                 do-advance-tainted-track-test)
+             {:nemesis {:tainted-track {:tainted-level   7
+                                        :tainted-effects tainted-effects}
+                        :life          70
+                        :max-life      70}}))
+      (is (= (-> {:nemesis {:tainted-track {:tainted-level   7
+                                            :tainted-effects tainted-effects}}}
+                 do-advance-tainted-track-test)
+             {:nemesis {:tainted-track {:tainted-level   8
+                                        :tainted-effects tainted-effects}}}))
+      (is (= (-> {:real-game? true
+                  :nemesis    {:tainted-track     {:tainted-level   8
+                                                   :tainted-effects tainted-effects}
+                               :victory-condition ::blight-lord/victory-condition}}
+                 do-advance-tainted-track-test
+                 (update :game-over dissoc :text))
+             {:real-game? true
+              :resolving  :tainted-track
+              :nemesis    {:tainted-track     {:tainted-level    9
+                                               :totally-tainted? true
+                                               :tainted-effects  tainted-effects}
+                           :victory-condition ::blight-lord/victory-condition}
+              :game-over  {:conclusion :defeat}})))))

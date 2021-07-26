@@ -47,7 +47,7 @@
   (swap! state update :selection remove-idx idx))
 
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
-  (let [inverse? (or (#{:nemesis :sigil :husks} type)
+  (let [inverse? (or (#{:nemesis :sigil :husks :tainted} type)
                      (<= 2 (:player-no type))
                      (#{:closed :focused :openable} status))]
     {:color            (cond
@@ -66,6 +66,7 @@
                          (= :minion type) "#aadfef"
                          (= :strike type) "#b79171"
                          (= :husks type) "#5f5356"
+                         (= :tainted type) "#5b863f"
                          (= :corruption type) "#9dcb6b"
                          (= :breach type) (cond
                                             (= :opened status) "#f8e238"
@@ -89,6 +90,7 @@
                          (= :minion type) "#49c4e9"
                          (= :strike type) "#5e3628"
                          (= :husks type) "#232122"
+                         (= :tainted type) "#40512c"
                          (= :corruption type) "#34971c"
                          (#{:breach :sigil} type) (cond
                                                     (#{:closed :openable} status) "#434f64"
@@ -519,7 +521,8 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks tainted-jades corruptions interaction choice-value]} (-> @state :game :nemesis)]
+             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks
+                           tainted-jades tainted-track corruptions interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
@@ -562,7 +565,27 @@
                                                :padding-top "3px"}}
                                  "Corruptions: " corruptions])
                               [:hr]
-                              (format-text unleash-text "UNLEASH")]])]]
+                              (format-text unleash-text "UNLEASH")]])
+                          (when tainted-track
+                            (let [{:keys [tainted-level title next-tainted-level next-tainted-text interaction choice-value status]} tainted-track
+                                  disabled (nil? interaction)]
+                              [:button {:style    (merge (button-style :type :tainted
+                                                                       :status status
+                                                                       :disabled disabled)
+                                                         {:width      "150px"
+                                                          :min-height "170px"})
+                                        :title    (format-title {:text title})
+                                        :disabled disabled
+                                        :on-click (when interaction
+                                                    (fn [] (case interaction
+                                                             :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value :tainted-track))))))}
+                               [:div
+                                [:div {:style {:font-size "1.4em"}}
+                                 "Tainted Track"]
+                                [:div {:style {:font-size "1.1em"}}
+                                 (format-text tainted-level "Current space")]
+                                [:div {:style {:font-size "1.1em"}}
+                                 (format-text next-tainted-text (str "Space " next-tainted-level))]]]))]]
                         [:td [:div
                               (when husks
                                 (let [{:keys [number-of-husks title swarm-text swarm-interval interaction choice-value]} husks

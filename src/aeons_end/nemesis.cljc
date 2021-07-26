@@ -57,8 +57,7 @@
 (defn resolve-nemesis-cards-in-play [{:keys [current-player nemesis] :as game} _]
   (-> game
       (cond->
-        current-player (assoc :current-player :nemesis)
-        (:phase nemesis) (assoc-in [:nemesis :phase] :main))
+        current-player (assoc :current-player :nemesis))
       (push-effect-stack {:effects (->> (:play-area nemesis)
                                         (map (fn [{:keys [type name power]}]
                                                [:give-choice {:title   (ut/format-name (:name nemesis))
@@ -126,13 +125,20 @@
                    :resolve-nemesis-card resolve-nemesis-card
                    :draw-nemesis-card    draw-nemesis-card})
 
-(defn after-effects [{:keys [nemesis] :as game} _]
-  (let [{:keys [after-effects]} nemesis]
+(defn at-start-turn [{:keys [nemesis] :as game} _]
+  (let [{:keys [at-start-turn]} nemesis]
+    (cond-> game
+            (:phase nemesis) (assoc-in [:nemesis :phase] :main)
+            at-start-turn (push-effect-stack {:effects at-start-turn}))))
+
+(defn at-end-turn [{:keys [nemesis] :as game} _]
+  (let [{:keys [at-end-turn]} nemesis]
     (cond-> game
             (:phase nemesis) (assoc-in [:nemesis :phase] :out-of-turn)
-            after-effects (push-effect-stack {:effects after-effects}))))
+            at-end-turn (push-effect-stack {:effects at-end-turn}))))
 
-(effects/register {:after-effects after-effects})
+(effects/register {::at-start-turn at-start-turn
+                   ::at-end-turn   at-end-turn})
 
 (defn deal-damage-to-nemesis [{:keys [nemesis] :as game} {:keys [damage]}]
   (if (pos? damage)
