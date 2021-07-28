@@ -193,6 +193,34 @@
                       :tainted-track {:tainted-level 2}}
             :players [{:hand [tainted-jade]}]}))))
 
+(deftest ossify-test
+  (testing "Ossify"
+    (is (= (-> {:nemesis {:deck          [ossify]
+                          :tainted-jades [tainted-jade tainted-jade tainted-jade]}
+                :players [{}
+                          {}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 0}
+                        {:player-no 1}]))
+           {:nemesis {:discard       [ossify]
+                      :tainted-jades []}
+            :players [{:deck [tainted-jade tainted-jade]}
+                      {:deck [tainted-jade]}]}))
+    (is (= (-> {:nemesis {:deck          [ossify]
+                          :tainted-jades [tainted-jade]}
+                :players [{:life 10}
+                          {:life 10}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 0}
+                        {:player-no 1}]))
+           {:nemesis {:discard       [ossify]
+                      :tainted-jades []}
+            :players [{:deck [tainted-jade]
+                       :life 9}
+                      {:life 9}]}))))
+
 (deftest shard-spitter-test
   (testing "Shard Spitter"
     (is (= (-> {:nemesis   {:play-area     [shard-spitter]

@@ -70,6 +70,15 @@
                 (push-effect-stack game {:player-no player-no
                                          :effects   [[:damage-player 1]]}))))))
 
+(defn collectively-gain-tainted-jades [game {:keys [player-card-names to]}]
+  (->> player-card-names
+       (map :player-no)
+       reverse
+       (reduce (fn [game player-no]
+                 (push-effect-stack game {:player-no player-no
+                                          :effects   [[::gain-tainted-jade {:to to}]]}))
+               game)))
+
 (defn do-unleash [game args]
   (let [title (keyword (or (:resolving args)
                            (:resolving game))
@@ -81,8 +90,9 @@
                                                       :min     1
                                                       :max     1}]]})))
 
-(effects/register {::gain-tainted-jade gain-tainted-jade
-                   ::unleash           do-unleash})
+(effects/register {::gain-tainted-jade               gain-tainted-jade
+                   ::collectively-gain-tainted-jades collectively-gain-tainted-jades
+                   ::unleash                         do-unleash})
 
 (defn setup [{:keys [players difficulty] :as game} _]
   (let [number-of-players (count players)
@@ -203,6 +213,19 @@
                                           [::advance-tainted-track]]}
                    :quote      "'If it just touches your arm, count yourself lucky. Just chop the limb off before it's too late.' Reeve, Breach Mage Elite"})
 
+(def ossify {:name    :ossify
+             :type    :attack
+             :tier    2
+             :text    "The players collectively gain three Tainted Jades and place them on top of their decks."
+             :effects [[:give-choice {:title       :ossify
+                                      :text        "The players collectively gain three Tainted Jades and place them on top of their decks."
+                                      :choice      [::collectively-gain-tainted-jades {:to :deck}]
+                                      :options     [:players]
+                                      :min         3
+                                      :max         3
+                                      :repeatable? true}]]
+             :quote   "'The Blight Lord's touch is enough to crystallize anything, living or otherwise.'"})
+
 (def shard-spitter {:name       :shard-spitter
                     :type       :minion
                     :tier       1
@@ -218,24 +241,13 @@
                                                           :max     1}]]}
                     :quote      "'Renny Mumbast lost both eyes to these wretched things. So now, when the warning bells sound the Blight Lord's call, we wear goggles.' Mist, Breach Mage Dagger Captain"})
 
-(defn vitrify-gain-tainted-jades [game {:keys [player-card-names]}]
-  (->> player-card-names
-       (map :player-no)
-       reverse
-       (reduce (fn [game player-no]
-                 (push-effect-stack game {:player-no player-no
-                                          :effects   [[::gain-tainted-jade {:to :hand}]]}))
-               game)))
-
-(effects/register {::vitrify-gain-tainted-jades vitrify-gain-tainted-jades})
-
 (def vitrify {:name    :vitrify
               :type    :attack
               :tier    1
               :text    "The players collectively gain two Tainted Jades and place them into their hands."
               :effects [[:give-choice {:title       :vitrify
                                        :text        "The players collectively gain two Tainted Jades and place them into their hands."
-                                       :choice      ::vitrify-gain-tainted-jades
+                                       :choice      [::collectively-gain-tainted-jades {:to :hand}]
                                        :options     [:players]
                                        :min         2
                                        :max         2
@@ -257,5 +269,5 @@
                   :tainted-track     {:tainted-level   1
                                       :tainted-effects tainted-effects}
                   :cards             [creeping-viridian shard-spitter vitrify
-                                      dread-plinth (attack/generic 2) (minion/generic 2)
+                                      dread-plinth ossify (minion/generic 2)
                                       (power/generic 3) (attack/generic 3) (minion/generic 3)]})
