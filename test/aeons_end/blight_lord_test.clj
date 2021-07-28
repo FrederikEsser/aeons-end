@@ -234,6 +234,26 @@
             :gravehold {:life 28}
             :players   [{:deck [tainted-jade]}]}))))
 
+(deftest verdigra-test
+  (testing "Verdigra"
+    (is (= (-> {:nemesis {:play-area     [verdigra]
+                          :tainted-track {:tainted-level 1}}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area     [verdigra]
+                      :tainted-track {:tainted-level 1}}
+            :players [{:life 7}]}))
+    (is (= (-> {:nemesis {:play-area     [(assoc verdigra :life 8)]
+                          :tainted-track {:tainted-level 1}}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0})
+               (choose :tainted-track))
+           {:nemesis {:play-area     [(assoc verdigra :life 8)]
+                      :tainted-track {:tainted-level 2}}
+            :players [{:life 7}]}))))
+
 (deftest vitrify-test
   (testing "Vitrify"
     (is (= (-> {:nemesis {:deck          [vitrify]

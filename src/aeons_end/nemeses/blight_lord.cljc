@@ -241,6 +241,28 @@
                                                           :max     1}]]}
                     :quote      "'Renny Mumbast lost both eyes to these wretched things. So now, when the warning bells sound the Blight Lord's call, we wear goggles.' Mist, Breach Mage Dagger Captain"})
 
+(defn verdigra-advance-tainted-track [game _]
+  (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :verdigra})]
+    (cond-> game
+            (<= life 8) (push-effect-stack {:effects [[::advance-tainted-track]]}))))
+
+(effects/register {::verdigra-advance-tainted-track verdigra-advance-tainted-track})
+
+(def verdigra {:name       :verdigra
+               :type       :minion
+               :tier       2
+               :life       9
+               :persistent {:text    ["Any player suffers 3 damage."
+                                      "If this minion has 8 or less life, advance the Tainted Track."]
+                            :effects [[:give-choice {:title   :verdigra
+                                                     :text    "Any player suffers 3 damage."
+                                                     :choice  [:damage-player {:arg 3}]
+                                                     :options [:players]
+                                                     :min     1
+                                                     :max     1}]
+                                      [::verdigra-advance-tainted-track]]}
+               :quote      "'It's great that they shatter so easily, but not so much when they explode.' Lash, Breach Mage Scout"})
+
 (def vitrify {:name    :vitrify
               :type    :attack
               :tier    1
@@ -269,5 +291,5 @@
                   :tainted-track     {:tainted-level   1
                                       :tainted-effects tainted-effects}
                   :cards             [creeping-viridian shard-spitter vitrify
-                                      dread-plinth ossify (minion/generic 2)
+                                      dread-plinth ossify verdigra
                                       (power/generic 3) (attack/generic 3) (minion/generic 3)]})
