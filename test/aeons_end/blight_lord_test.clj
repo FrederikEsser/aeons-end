@@ -221,6 +221,27 @@
                        :life 9}
                       {:life 9}]}))))
 
+(deftest petrify-test
+  (testing "Petrify"
+    (is (= (-> {:nemesis   {:deck          [petrify]
+                            :tainted-track {:tainted-level 1}}
+                :gravehold {:life 30}}
+               draw-nemesis-card
+               (choose :advance)
+               (choose :tainted-track)
+               (choose :tainted-track))
+           {:nemesis   {:discard       [petrify]
+                        :tainted-track {:tainted-level 3}}
+            :gravehold {:life 30}}))
+    (is (= (-> {:nemesis   {:deck          [petrify]
+                            :tainted-track {:tainted-level 1}}
+                :gravehold {:life 30}}
+               draw-nemesis-card
+               (choose :damage))
+           {:nemesis   {:discard       [petrify]
+                        :tainted-track {:tainted-level 1}}
+            :gravehold {:life 22}}))))
+
 (deftest shard-spitter-test
   (testing "Shard Spitter"
     (is (= (-> {:nemesis   {:play-area     [shard-spitter]

@@ -226,6 +226,29 @@
                                       :repeatable? true}]]
              :quote   "'The Blight Lord's touch is enough to crystallize anything, living or otherwise.'"})
 
+(defn petrify-choice [game {:keys [choice]}]
+  (push-effect-stack game {:effects (case choice
+                                      :advance [[::advance-tainted-track]
+                                                [::advance-tainted-track]]
+                                      :damage [[:damage-gravehold 8]])}))
+
+(effects/register {::petrify-choice petrify-choice})
+
+(def petrify {:name    :petrify
+              :type    :attack
+              :tier    3
+              :text    ["Advance the Tainted Track twice."
+                        "OR"
+                        "Gravehold suffers 8 damage."]
+              :effects [[:give-choice {:title   :petrify
+                                       :choice  ::petrify-choice
+                                       :options [:special
+                                                 {:option :advance :text "Advance the Tainted Track twice."}
+                                                 {:option :damage :text "Gravehold suffers 8 damage"}]
+                                       :min     1
+                                       :max     1}]]
+              :quote   "'The elders say all worlds are born of dust. Perhaps it is fitting that we return to such.' Xaxos, Breach Mage Adept"})
+
 (def shard-spitter {:name       :shard-spitter
                     :type       :minion
                     :tier       1
@@ -292,4 +315,4 @@
                                       :tainted-effects tainted-effects}
                   :cards             [creeping-viridian shard-spitter vitrify
                                       dread-plinth ossify verdigra
-                                      (power/generic 3) (attack/generic 3) (minion/generic 3)]})
+                                      (power/generic 3) petrify (minion/generic 3)]})
