@@ -219,6 +219,42 @@
                                           [::advance-tainted-track]]}
                    :quote      "'If it just touches your arm, count yourself lucky. Just chop the limb off before it's too late.' Reeve, Breach Mage Elite"})
 
+(defn glittering-doom-discard [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :glittering-doom
+                                                      :text    "Discards three cards in hand."
+                                                      :choice  :discard-from-hand
+                                                      :options [:player :hand]
+                                                      :min     3
+                                                      :max     3}]
+                                       [::gain-tainted-jades {:number-of-cards 3 :to :hand}]]}))
+
+(defn glittering-doom-choice [{:keys [players] :as game} _]
+  (let [max-cards (->> players
+                       (map ut/count-cards-in-hand)
+                       (apply max 0))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :glittering-doom
+                                                      :text    "Any player discards three cards in hand and then gains three Tainted Jades and places them into their hand."
+                                                      :choice  ::glittering-doom-discard
+                                                      :options [:players {:min-hand (min 3 max-cards)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::glittering-doom-discard glittering-doom-discard
+                   ::glittering-doom-choice  glittering-doom-choice})
+
+(def glittering-doom {:name       :glittering-doom
+                      :type       :power
+                      :tier       3
+                      :to-discard {:text      "Spend 8 Aether."
+                                   :predicate [::power/can-afford? {:amount 8}]
+                                   :effects   [[:pay {:amount 8
+                                                      :type   :discard-power-card}]]}
+                      :power      {:power   2
+                                   :text    "Any player discards three cards in hand and then gains three Tainted Jades and places them into their hand."
+                                   :effects [[::glittering-doom-choice]]}
+                      :quote      "'Just outside the city walls there are men and women, frozen in green horror, like monuments to the Blight Lord's coming.' Z'hana, Breach Mage Renegade"})
+
 (def ossify {:name    :ossify
              :type    :attack
              :tier    2
@@ -336,4 +372,4 @@
                                       :tainted-effects tainted-effects}
                   :cards             [creeping-viridian shard-spitter vitrify
                                       dread-plinth ossify verdigra
-                                      (power/generic 3) petrify slag-horror]})
+                                      glittering-doom petrify slag-horror]})

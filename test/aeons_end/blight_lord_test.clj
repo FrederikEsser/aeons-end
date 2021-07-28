@@ -193,6 +193,41 @@
                       :tainted-track {:tainted-level 2}}
             :players [{:hand [tainted-jade]}]}))))
 
+(deftest glittering-doom-test
+  (testing "Glittering Doom"
+    (is (= (-> {:nemesis {:play-area     [(assoc-in glittering-doom [:power :power] 1)]
+                          :tainted-jades [tainted-jade tainted-jade tainted-jade]}
+                :players [{:hand [crystal crystal tainted-jade spark spark]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose [:crystal :spark :tainted-jade]))
+           {:nemesis {:discard       [(assoc-in glittering-doom [:power :power] 0)]
+                      :tainted-jades []}
+            :players [{:hand    [crystal spark tainted-jade tainted-jade tainted-jade]
+                       :discard [crystal spark tainted-jade]}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area     [(assoc-in glittering-doom [:power :power] 1)]
+                                         :tainted-jades [tainted-jade]}
+                               :players [{:hand [crystal crystal]
+                                          :life 10}
+                                         {:hand [crystal crystal crystal]}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 0}))))
+    (is (= (-> {:nemesis {:play-area     [(assoc-in glittering-doom [:power :power] 1)]
+                          :tainted-jades [tainted-jade]}
+                :players [{:hand [crystal crystal]
+                           :life 10}
+                          {:hand [crystal crystal]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose [:crystal :crystal]))
+           {:nemesis {:discard       [(assoc-in glittering-doom [:power :power] 0)]
+                      :tainted-jades []}
+            :players [{:hand    [tainted-jade]
+                       :discard [crystal crystal]
+                       :life    8}
+                      {:hand [crystal crystal]}]}))))
+
 (deftest ossify-test
   (testing "Ossify"
     (is (= (-> {:nemesis {:deck          [ossify]
