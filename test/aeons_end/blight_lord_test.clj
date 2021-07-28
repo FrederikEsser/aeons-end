@@ -255,6 +255,20 @@
             :gravehold {:life 28}
             :players   [{:deck [tainted-jade]}]}))))
 
+(deftest slag-horror-test
+  (testing "Slag Horror"
+    (is (= (-> {:nemesis {:play-area     [slag-horror]
+                          :tainted-jades [tainted-jade tainted-jade]
+                          :tainted-track {:tainted-level 1}}
+                :players [{}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0})
+               (choose :tainted-track))
+           {:nemesis {:play-area     [slag-horror]
+                      :tainted-jades []
+                      :tainted-track {:tainted-level 2}}
+            :players [{:discard [tainted-jade tainted-jade]}]}))))
+
 (deftest verdigra-test
   (testing "Verdigra"
     (is (= (-> {:nemesis {:play-area     [verdigra]

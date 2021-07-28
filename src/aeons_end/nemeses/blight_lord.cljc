@@ -70,6 +70,11 @@
                 (push-effect-stack game {:player-no player-no
                                          :effects   [[:damage-player 1]]}))))))
 
+(defn gain-tainted-jades [game {:keys [player-no number-of-cards to]
+                                :or   {to :discard}}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (repeat number-of-cards [::gain-tainted-jade {:to to}])}))
+
 (defn collectively-gain-tainted-jades [game {:keys [player-card-names to]}]
   (->> player-card-names
        (map :player-no)
@@ -91,6 +96,7 @@
                                                       :max     1}]]})))
 
 (effects/register {::gain-tainted-jade               gain-tainted-jade
+                   ::gain-tainted-jades              gain-tainted-jades
                    ::collectively-gain-tainted-jades collectively-gain-tainted-jades
                    ::unleash                         do-unleash})
 
@@ -264,6 +270,21 @@
                                                           :max     1}]]}
                     :quote      "'Renny Mumbast lost both eyes to these wretched things. So now, when the warning bells sound the Blight Lord's call, we wear goggles.' Mist, Breach Mage Dagger Captain"})
 
+(def slag-horror {:name       :slag-horror
+                  :type       :minion
+                  :tier       3
+                  :life       18
+                  :persistent {:text    ["Any player gains two Tainted Jades."
+                                         "Advance the Tainted Track."]
+                               :effects [[:give-choice {:title   :slag-horror
+                                                        :text    "Any player gains two Tainted Jades."
+                                                        :choice  [::gain-tainted-jades {:number-of-cards 2}]
+                                                        :options [:players]
+                                                        :min     1
+                                                        :max     1}]
+                                         [::advance-tainted-track]]}
+                  :quote      "'The Nameless bring with them legions of monstrosities. But the Blight Lord's favorites are the ones he breathes to life from the cave walls' Kadir, Breach Mage Delver"})
+
 (defn verdigra-advance-tainted-track [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :verdigra})]
     (cond-> game
@@ -315,4 +336,4 @@
                                       :tainted-effects tainted-effects}
                   :cards             [creeping-viridian shard-spitter vitrify
                                       dread-plinth ossify verdigra
-                                      (power/generic 3) petrify (minion/generic 3)]})
+                                      (power/generic 3) petrify slag-horror]})
