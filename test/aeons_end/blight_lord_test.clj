@@ -205,3 +205,37 @@
                         :tainted-jades []}
             :gravehold {:life 28}
             :players   [{:deck [tainted-jade]}]}))))
+
+(deftest vitrify-test
+  (testing "Vitrify"
+    (is (= (-> {:nemesis {:deck          [vitrify]
+                          :tainted-jades [tainted-jade tainted-jade]}
+                :players [{}
+                          {}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 0}]))
+           {:nemesis {:discard       [vitrify]
+                      :tainted-jades []}
+            :players [{:hand [tainted-jade tainted-jade]}
+                      {}]}))
+    (is (= (-> {:nemesis {:deck          [vitrify]
+                          :tainted-jades [tainted-jade tainted-jade]}
+                :players [{}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 0}]))
+           {:nemesis {:discard       [vitrify]
+                      :tainted-jades []}
+            :players [{:hand [tainted-jade tainted-jade]}]}))
+    (is (= (-> {:nemesis {:deck          [vitrify]
+                          :tainted-jades [tainted-jade]}
+                :players [{}
+                          {:life 10}]}
+               draw-nemesis-card
+               (choose [{:player-no 0}
+                        {:player-no 1}]))
+           {:nemesis {:discard       [vitrify]
+                      :tainted-jades []}
+            :players [{:hand [tainted-jade]}
+                      {:life 9}]}))))

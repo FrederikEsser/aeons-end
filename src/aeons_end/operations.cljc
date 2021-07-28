@@ -858,7 +858,7 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? choice-opts bonus-damage]
+(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? repeatable? choice-opts bonus-damage]
                                             [opt-name :as option] :options
                                             {:keys [effects]}     :or-choice
                                             :as                   choice}]
@@ -872,14 +872,17 @@
                                          (assoc :options options
                                                 :source opt-name
                                                 :area area)
-                                         (cond-> min (update :min clojure.core/min (count options))
-                                                 max (update :max clojure.core/min (count options))))
+                                         (cond-> (not repeatable?)
+                                                 (cond-> min (update :min clojure.core/min (count options))
+                                                         max (update :max clojure.core/min (count options)))))
         swiftable (and (= :swift mode)
                        (not-empty options)
                        (or (apply = options)
                            (<= (count options) min))
                        (= min (or max (count options)))
-                       (not optional?))]
+                       (not optional?)
+                       (or (not repeatable?)
+                           (apply = options)))]
     (cond
       (not-empty options) (-> game
                               (push-effect-stack {:player-no player-no

@@ -205,6 +205,30 @@
                                                           :max     1}]]}
                     :quote      "'Renny Mumbast lost both eyes to these wretched things. So now, when the warning bells sound the Blight Lord's call, we wear goggles.' Mist, Breach Mage Dagger Captain"})
 
+(defn vitrify-gain-tainted-jades [game {:keys [player-card-names]}]
+  (->> player-card-names
+       (map :player-no)
+       reverse
+       (reduce (fn [game player-no]
+                 (push-effect-stack game {:player-no player-no
+                                          :effects   [[::gain-tainted-jade {:to :hand}]]}))
+               game)))
+
+(effects/register {::vitrify-gain-tainted-jades vitrify-gain-tainted-jades})
+
+(def vitrify {:name    :vitrify
+              :type    :attack
+              :tier    1
+              :text    "The players collectively gain two Tainted Jades and place them into their hands."
+              :effects [[:give-choice {:title       :vitrify
+                                       :text        "The players collectively gain two Tainted Jades and place them into their hands."
+                                       :choice      ::vitrify-gain-tainted-jades
+                                       :options     [:players]
+                                       :min         2
+                                       :max         2
+                                       :repeatable? true}]]
+              :quote   "'The elders of Gravehold thought it wise to pave the streets of the dirt market in tumbled breach glass.'"})
+
 (def blight-lord {:name              :blight-lord
                   :level             5
                   :life              70
@@ -219,6 +243,6 @@
                   :at-start-turn     [[::at-start-turn]]
                   :tainted-track     {:tainted-level   1
                                       :tainted-effects tainted-effects}
-                  :cards             [creeping-viridian shard-spitter (attack/generic 1)
+                  :cards             [creeping-viridian shard-spitter vitrify
                                       (power/generic 2) (attack/generic 2) (minion/generic 2)
                                       (power/generic 3) (attack/generic 3) (minion/generic 3)]})
