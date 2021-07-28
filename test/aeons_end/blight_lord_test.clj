@@ -192,3 +192,16 @@
                       :tainted-jades []
                       :tainted-track {:tainted-level 2}}
             :players [{:hand [tainted-jade]}]}))))
+
+(deftest shard-spitter-test
+  (testing "Shard Spitter"
+    (is (= (-> {:nemesis   {:play-area     [shard-spitter]
+                            :tainted-jades [tainted-jade]}
+                :gravehold {:life 30}
+                :players   [{}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis   {:play-area     [shard-spitter]
+                        :tainted-jades []}
+            :gravehold {:life 28}
+            :players   [{:deck [tainted-jade]}]}))))

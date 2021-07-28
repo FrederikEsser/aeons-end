@@ -190,6 +190,21 @@
                                                [::advance-tainted-track]]}
                         :quote      "'Just outside the city walls there are men and women, frozen in green horror, like monuments to the Blight Lord's coming.' Z'hana, Breach Mage Renegade"})
 
+(def shard-spitter {:name       :shard-spitter
+                    :type       :minion
+                    :tier       1
+                    :life       5
+                    :persistent {:text    ["Gravehold suffers 2 damage."
+                                           "Any player gains a Tainted Jade and places it on top of their deck."]
+                                 :effects [[:damage-gravehold 2]
+                                           [:give-choice {:title   :shard-spitter
+                                                          :text    "Any player gains a Tainted Jade and places it on top of their deck."
+                                                          :choice  [::gain-tainted-jade {:to :deck}]
+                                                          :options [:players]
+                                                          :min     1
+                                                          :max     1}]]}
+                    :quote      "'Renny Mumbast lost both eyes to these wretched things. So now, when the warning bells sound the Blight Lord's call, we wear goggles.' Mist, Breach Mage Dagger Captain"})
+
 (def blight-lord {:name              :blight-lord
                   :level             5
                   :life              70
@@ -204,6 +219,6 @@
                   :at-start-turn     [[::at-start-turn]]
                   :tainted-track     {:tainted-level   1
                                       :tainted-effects tainted-effects}
-                  :cards             [creeping-viridian (minion/generic 1) (attack/generic 1)
+                  :cards             [creeping-viridian shard-spitter (attack/generic 1)
                                       (power/generic 2) (attack/generic 2) (minion/generic 2)
                                       (power/generic 3) (attack/generic 3) (minion/generic 3)]})
