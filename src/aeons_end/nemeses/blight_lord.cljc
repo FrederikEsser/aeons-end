@@ -190,6 +190,19 @@
                                                [::advance-tainted-track]]}
                         :quote      "'Just outside the city walls there are men and women, frozen in green horror, like monuments to the Blight Lord's coming.' Z'hana, Breach Mage Renegade"})
 
+(def dread-plinth {:name       :dread-plinth
+                   :type       :power
+                   :tier       2
+                   :to-discard {:text      "Spend 8 Aether."
+                                :predicate [::power/can-afford? {:amount 8}]
+                                :effects   [[:pay {:amount 8
+                                                   :type   :discard-power-card}]]}
+                   :power      {:power   2
+                                :text    "Advance the Tainted Track twice."
+                                :effects [[::advance-tainted-track]
+                                          [::advance-tainted-track]]}
+                   :quote      "'If it just touches your arm, count yourself lucky. Just chop the limb off before it's too late.' Reeve, Breach Mage Elite"})
+
 (def shard-spitter {:name       :shard-spitter
                     :type       :minion
                     :tier       1
@@ -244,5 +257,5 @@
                   :tainted-track     {:tainted-level   1
                                       :tainted-effects tainted-effects}
                   :cards             [creeping-viridian shard-spitter vitrify
-                                      (power/generic 2) (attack/generic 2) (minion/generic 2)
+                                      dread-plinth (attack/generic 2) (minion/generic 2)
                                       (power/generic 3) (attack/generic 3) (minion/generic 3)]})
