@@ -171,6 +171,25 @@
 
 (effects/register-predicates {::victory-condition victory-condition})
 
+(def creeping-viridian {:name       :creeping-viridian
+                        :type       :power
+                        :tier       1
+                        :to-discard {:text      "Spend 7 Aether."
+                                     :predicate [::power/can-afford? {:amount 7}]
+                                     :effects   [[:pay {:amount 7
+                                                        :type   :discard-power-card}]]}
+                        :power      {:power   3
+                                     :text    ["Any player gains a Tainted Jade and places it in their hand."
+                                               "Advance the Tainted Track."]
+                                     :effects [[:give-choice {:title   :creeping-viridian
+                                                              :text    "Any player gains a Tainted Jade and places it in their hand."
+                                                              :choice  [::gain-tainted-jade {:to :hand}]
+                                                              :options [:players]
+                                                              :min     1
+                                                              :max     1}]
+                                               [::advance-tainted-track]]}
+                        :quote      "'Just outside the city walls there are men and women, frozen in green horror, like monuments to the Blight Lord's coming.' Z'hana, Breach Mage Renegade"})
+
 (def blight-lord {:name              :blight-lord
                   :level             5
                   :life              70
@@ -185,6 +204,6 @@
                   :at-start-turn     [[::at-start-turn]]
                   :tainted-track     {:tainted-level   1
                                       :tainted-effects tainted-effects}
-                  :cards             [(attack/generic 1) (minion/generic 1) (power/generic 1)
-                                      (attack/generic 2) (minion/generic 2) (power/generic 2)
-                                      (attack/generic 3) (minion/generic 3) (power/generic 3)]})
+                  :cards             [creeping-viridian (minion/generic 1) (attack/generic 1)
+                                      (power/generic 2) (attack/generic 2) (minion/generic 2)
+                                      (power/generic 3) (attack/generic 3) (minion/generic 3)]})

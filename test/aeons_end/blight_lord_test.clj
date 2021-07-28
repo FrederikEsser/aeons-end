@@ -178,3 +178,17 @@
                                                :tainted-effects  tainted-effects}
                            :victory-condition ::blight-lord/victory-condition}
               :game-over  {:conclusion :defeat}})))))
+
+(deftest creeping-viridian-test
+  (testing "Creeping Viridian"
+    (is (= (-> {:nemesis {:play-area     [(assoc-in creeping-viridian [:power :power] 1)]
+                          :tainted-jades [tainted-jade]
+                          :tainted-track {:tainted-level 1}}
+                :players [{}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose :tainted-track))
+           {:nemesis {:discard       [(assoc-in creeping-viridian [:power :power] 0)]
+                      :tainted-jades []
+                      :tainted-track {:tainted-level 2}}
+            :players [{:hand [tainted-jade]}]}))))

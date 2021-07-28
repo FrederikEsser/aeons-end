@@ -94,10 +94,10 @@
                                    (= :hand area)
                                    (not choice)
                                    (#{:casting :main} phase))
-                          (if (#{:gem :relic} type)
-                            {:interaction :playable}
-                            (when open-breach?
-                              {:interaction :prepable})))
+                          (cond
+                            (#{:gem :relic} type) {:interaction :playable}
+                            (and (#{:spell} type)
+                                 open-breach?) {:interaction :prepable}))
                         (when (and active?
                                    (= :play-area area)
                                    (not choice))
