@@ -257,6 +257,10 @@
               magus-of-cloaks])
 
 (def basic-cards (concat
+                   ; AE Tier 1
+                   [attack/slaughter
+                    power/eye-of-nothing
+                    minion/bane-sire]
                    ; WE Tier 1
                    [attack/afflict
                     attack/encroach
@@ -276,6 +280,9 @@
                     power/aphotic-sun
                     power/chaos-flail
                     power/morbid-gyre]
+                   ; AE Tier 3
+                   [attack/topple
+                    power/doom-aegis]
                    ; WE Tier 3
                    [attack/banish
                     attack/engulf

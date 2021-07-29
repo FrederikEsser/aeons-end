@@ -188,6 +188,15 @@
                                      :max     1}]]
             :quote   "'The Nameless hunger for the same thing we do; an end to this war.' Garu, Oathsworn Protector"})
 
+(def slaughter {:name    :slaughter
+                :type    :attack
+                :tier    1
+                :text    ["Unleash"
+                          "Gravehold suffers 3 damage."]
+                :effects [[:unleash]
+                          [:damage-gravehold 3]]
+                :quote   "'We have nothing left to lose but our lives' Mist, Breach Mage Dagger Captain"})
+
 (def smite {:name    :smite
             :type    :attack
             :tier    2
@@ -267,6 +276,16 @@
                          [:unleash]
                          [::throttle-choice]]
                :quote   "'Were I made of muscle and blood like the others, the impact would have surely ended me.' Remnant, Aetherial Entity"})
+
+(def topple {:name    :topple
+             :type    :attack
+             :tier    3
+             :text    ["Unleash twice."
+                       "Gravehold suffers 4 damage."]
+             :effects [[:unleash]
+                       [:unleash]
+                       [:damage-gravehold 4]]
+             :quote   "'LOOK OU--' Last words of Quilion Rafe, Far Hollow watchman"})
 
 (defn generic [tier & [idx]]
   (let [name (str (case tier

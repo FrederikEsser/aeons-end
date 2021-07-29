@@ -148,6 +148,42 @@
                                                           :min     1
                                                           :max     1}]]}})
 
+(defn doom-aegis-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 4]
+                                       [:spend-charges]]}))
+
+(effects/register {::doom-aegis-damage doom-aegis-damage})
+
+(def doom-aegis {:name       :doom-aegis
+                 :type       :power
+                 :tier       3
+                 :to-discard {:text      "Spend 7 Aether."
+                              :predicate [::can-afford? {:amount 7}]
+                              :effects   [[:pay {:amount 7
+                                                 :type   :discard-power-card}]]}
+                 :power      {:power   1
+                              :text    ["The player with the most charges suffers 4 damage and loses all of their charges."]
+                              :effects [[:give-choice {:title   :doom-aegis
+                                                       :text    "The player with the most charges suffers 4 damage and loses all of their charges."
+                                                       :choice  ::doom-aegis-damage
+                                                       :options [:players {:most-charges true}]
+                                                       :min     1
+                                                       :max     1}]]}
+                 :quote      "'There is a saying: all wars must end.' Nerva, Survivor"})
+
+(def eye-of-nothing {:name       :eye-of-nothing
+                     :type       :power
+                     :tier       1
+                     :to-discard {:text      "Spend 6 Aether."
+                                  :predicate [::can-afford? {:amount 6}]
+                                  :effects   [[:pay {:amount 6 :type :discard-power-card}]]}
+                     :power      {:power   2
+                                  :text    "Unleash twice."
+                                  :effects [[:unleash]
+                                            [:unleash]]}
+                     :quote      "'We toy with forces we barely comprehend.' Z'hana, Breach Mage Renegade"})
+
 (def heart-of-nothing {:name       :heart-of-nothing
                        :type       :power
                        :tier       1

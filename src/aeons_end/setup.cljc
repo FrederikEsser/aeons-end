@@ -37,6 +37,8 @@
                           (mapcat (fn [tier]
                                     (->> nemesis/basic-cards
                                          (filter (comp #{tier} :tier))
+                                         (group-by :type)
+                                         (mapcat (comp #(take-nth 2 %) shuffle second))
                                          shuffle
                                          (take (get-in basic-nemesis-cards [number-of-players tier]))
                                          (concat (->> cards

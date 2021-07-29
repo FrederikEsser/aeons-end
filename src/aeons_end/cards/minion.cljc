@@ -3,6 +3,14 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
+(def bane-sire {:name       :bane-sire
+                :type       :minion
+                :tier       1
+                :life       6
+                :persistent {:text    "Unleash."
+                             :effects [[:unleash]]}
+                :quote      "'Best to kill these first.' Reeve, Breach Mage Elite"})
+
 (def catacomb-drone {:name       :catacomb-drone
                      :type       :minion
                      :tier       1
