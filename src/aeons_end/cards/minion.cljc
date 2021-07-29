@@ -21,6 +21,49 @@
                                             [:damage-gravehold 1]]}
                      :quote      "'Kadir remains convinced the drones were once merely creatures from The Depths.'"})
 
+(defn cauterizer-modify-damage [_ damage]
+  (min damage 1))
+
+(effects/register-predicates {::cauterizer-modify-damage cauterizer-modify-damage})
+
+(defn cauterizer-damage [game _]
+  (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :cauterizer})]
+    (push-effect-stack game {:effects [[:give-choice {:title   :cauterizer
+                                                      :text    (str "Any player suffers " life " damage.")
+                                                      :choice  [:damage-player {:arg 2}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::cauterizer-damage cauterizer-damage})
+
+(def cauterizer {:name          :cauterizer
+                 :type          :minion
+                 :tier          2
+                 :life          3
+                 :text          "When damage is dealt to this minion, reduce that damage to 1."
+                 :modify-damage ::cauterizer-modify-damage
+                 :persistent    {:text    "Any player suffers damage equal to this minion's current life."
+                                 :effects [[::cauterizer-damage]]}
+                 :quote         "'Hack away all you like, youngling. It will only grow back another... whatever that part is.' Adelheim, Breach Mage Weaponsmith"})
+
+(defn haze-spewer-damage [game _]
+  (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :haze-spewer})]
+    (push-effect-stack game {:effects [[:damage-gravehold life]]})))
+
+(effects/register {::haze-spewer-damage haze-spewer-damage})
+
+(def haze-spewer {:name       :haze-spewer
+                  :type       :minion
+                  :tier       1
+                  :life       5
+                  :persistent {:text    ["Gravehold suffers damage equal to this minion's current life."
+                                         "Then, this minion suffers 1 damage."]
+                               :effects [[::haze-spewer-damage]
+                                         [:deal-damage-to-minion {:card-name :haze-spewer
+                                                                  :damage    1}]]}
+                  :quote      "'The fumes they belch are so caustic that they rarely live long themselves.'"})
+
 (def howling-spinners {:name       :howling-spinners
                        :type       :minion
                        :tier       1
@@ -105,6 +148,14 @@
                            :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
                                            :effects [[::monstrosity-of-omens-damage]]}
                            :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' Yan Magda, Enlightened Exile"})
+
+(def needlemaw {:name       :needlemaw
+                :type       :minion
+                :tier       2
+                :life       11
+                :persistent {:text    "Gravehold suffers 2 damage."
+                             :effects [[:damage-gravehold 2]]}
+                :quote      "'The teeth of this beast make a fine trophy. The trick is keeping all your fingers in the taking of them.' Reeve, Breach Mage Elite"})
 
 (def null-scion {:name       :null-scion
                  :type       :minion

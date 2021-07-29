@@ -16,6 +16,56 @@
 (effects/register-predicates {::can-afford?    can-afford?
                               ::cards-in-hand? cards-in-hand?})
 
+(defn agony-field-can-discard? [game {:keys [player-no]}]
+  (->> (get-in game [:players player-no :hand])
+       (some (fn [{:keys [cost]}]
+               (and cost
+                    (>= cost 2))))))
+
+(effects/register-predicates {::agony-field-can-discard? agony-field-can-discard?})
+
+(defn agony-field-discard [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :agony-field
+                                                      :text    "Discards three cards in hand."
+                                                      :choice  :discard-from-hand
+                                                      :options [:player :hand]
+                                                      :min     3
+                                                      :max     3}]
+                                       [:draw 1]]}))
+
+(defn agony-field-choice [{:keys [players] :as game} _]
+  (let [max-cards (->> players
+                       (map ut/count-cards-in-hand)
+                       (apply max 0))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :agony-field
+                                                      :text    "Any player discards three cards in hand and then draws one card."
+                                                      :choice  ::agony-field-discard
+                                                      :options [:players {:min-hand (min 3 max-cards)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::agony-field-discard agony-field-discard
+                   ::agony-field-choice  agony-field-choice})
+
+(def agony-field {:name       :agony-field
+                  :type       :power
+                  :tier       1
+                  :to-discard {:text      "Destroy a card in hand that costs 2 Aether or more."
+                               :predicate ::agony-field-can-discard?
+                               :effects   [[:give-choice {:title   :agony-field
+                                                          :text    "Destroy a card in hand that costs 2 Aether or more."
+                                                          :choice  :destroy-from-hand
+                                                          :options [:player :hand {:min-cost 2}]
+                                                          :min     1
+                                                          :max     1}]]}
+                  :power      {:power   2
+                               :text    ["Unleash"
+                                         "Any player discards three cards in hand and then draws one card."]
+                               :effects [[:unleash]
+                                         [::agony-field-choice]]}
+                  :quote      "'Every breath is torment.' Nerva, Survivor"})
+
 (defn apocalypse-ritual-damage [game _]
   (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
                                      (filter (comp #{:nemesis} :type))

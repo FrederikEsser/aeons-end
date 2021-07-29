@@ -188,6 +188,27 @@
                                      :max     1}]]
             :quote   "'The Nameless hunger for the same thing we do; an end to this war.' Garu, Oathsworn Protector"})
 
+(defn skewer-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 3]
+                                       [:draw 1]]}))
+
+(effects/register {::skewer-damage skewer-damage})
+
+(def skewer {:name    :skewer
+             :type    :attack
+             :tier    1
+             :text    ["Unleash"
+                       "Any player suffers 3 damage and draws a card."]
+             :effects [[:unleash]
+                       [:give-choice {:title   :skewer
+                                      :text    "Any player suffers 3 damage and draws a card."
+                                      :choice  ::skewer-damage
+                                      :options [:players]
+                                      :min     1
+                                      :max     1}]]
+             :quote   "'It takes years to train a breach mage properly, but only a second to snuff one out.' Malastar, Breach Mage Mentor"})
+
 (def slaughter {:name    :slaughter
                 :type    :attack
                 :tier    1

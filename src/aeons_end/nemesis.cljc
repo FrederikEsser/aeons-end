@@ -258,9 +258,12 @@
 
 (def basic-cards (concat
                    ; AE Tier 1
-                   [attack/slaughter
+                   [attack/skewer
+                    attack/slaughter
+                    power/agony-field
                     power/eye-of-nothing
-                    minion/bane-sire]
+                    minion/bane-sire
+                    minion/haze-spewer]
                    ; WE Tier 1
                    [attack/afflict
                     attack/encroach
@@ -271,6 +274,9 @@
                     power/heart-of-nothing
                     power/night-unending
                     power/planar-collision]
+                   ; AE Tier 2
+                   [minion/cauterizer
+                    minion/needlemaw]
                    ; WE Tier 2
                    [attack/mutilate
                     attack/smite
