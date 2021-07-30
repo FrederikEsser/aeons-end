@@ -325,9 +325,7 @@
                      :as                       game}]
   (merge {:name-ui          (ut/format-name name)
           :life             life
-          :deck             (if (empty? deck)
-                              {}
-                              {:number-of-cards (count deck)})
+          :deck             {:number-of-cards (count deck)}
           :unleash-text     (get-value game unleash-text)
           :additional-rules (str "Additional Rules:\n"
                                  (->> (get-value game additional-rules)
