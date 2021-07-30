@@ -176,8 +176,15 @@
 (defn plus [n m]
   (if n (+ n m) m))
 
+(defn gt [a b]
+  (> (or a -1) (or b -1)))
+
 (defn and' [a b]
   (and a b))
+
+(defn max' [& coll]
+  (when (not-empty coll)
+    (apply max coll)))
 
 (defn- minus-cost [cost reduction]
   (if (< cost reduction) 0 (- cost reduction)))
@@ -364,7 +371,7 @@
     (let [cards        (get-in game [:players player-no area])
           highest-cost (->> cards
                             (keep :cost)
-                            (apply max 0))]
+                            (apply max'))]
       (cond->> cards
                type (filter (comp #{type} :type))
                not-type (remove (comp #{not-type} :type))
@@ -375,7 +382,7 @@
                max-cost (filter (fn [{:keys [cost]}]
                                   (and cost
                                        (<= cost max-cost))))
-               most-expensive (filter (comp #{highest-cost} :cost))
+               most-expensive (filter (comp #(= highest-cost %) :cost))
                (#{:discard} area) (map (fn [{:keys [id]}]
                                          {:player-no player-no
                                           :card-id   id}))

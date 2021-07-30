@@ -284,13 +284,13 @@
 
 (defn throttle-destroy-cards [game {:keys [player-no]}]
   (let [sorted-hand          (->> (get-in game [:players player-no :hand])
-                                  (sort-by :cost >))
+                                  (sort-by :cost ut/gt))
         [_ _ cost-3 cost-4] (map :cost sorted-hand)
         auto-destroy-cards   (cond
                                (<= (count sorted-hand) 3) sorted-hand
                                (not= cost-3 cost-4) (take 3 sorted-hand)
                                :else (->> sorted-hand
-                                          (filter (comp #(> % cost-3) :cost))))
+                                          (filter (comp #(ut/gt % cost-3) :cost))))
         manual-destroy-count (- (min 3 (count sorted-hand))
                                 (count auto-destroy-cards))]
     (push-effect-stack game {:player-no player-no

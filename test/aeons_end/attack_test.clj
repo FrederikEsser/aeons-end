@@ -432,7 +432,20 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 29}
             :players   [{:life 10}
-                        {:life 9}]}))))
+                        {:life 9}]}))
+    (is (= (-> {:nemesis   {:deck    [nix]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [{:name :no-cost}]
+                             :life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :no-cost))
+           {:nemesis   {:discard [nix]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 29}
+            :players   [{:discard [{:name :no-cost}]
+                         :life    9}]}))))
 
 (deftest throttle-test
   (testing "Throttle"
@@ -547,4 +560,27 @@
             :gravehold {:life 28}
             :players   [{:hand [crystal spark]}
                         {}]
-            :trash     [crystal crystal]}))))
+            :trash     [crystal crystal]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal spark {:name :no-cost} {:name :no-cost}]}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose :no-cost))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [{:name :no-cost}]}]
+            :trash     [crystal spark {:name :no-cost}]}))
+    (is (= (-> {:nemesis   {:deck    [throttle]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand [crystal spark crystal {:name :no-cost}]}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [throttle]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand [{:name :no-cost}]}]
+            :trash     [crystal spark crystal]}))))

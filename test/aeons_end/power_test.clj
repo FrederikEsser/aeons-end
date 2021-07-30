@@ -184,7 +184,33 @@
             :gravehold {:life 28}
             :players   [{}
                         {}]
-            :trash     [crystal]}))))
+            :trash     [crystal]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:deck [crystal {:name :no-cost}]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose :crystal))
+           {:nemesis   {:discard [(assoc-in chaos-flail [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:deck           [{:name :no-cost}]
+                         :revealed-cards 1}]
+            :trash     [crystal]}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in chaos-flail [:power :power] 1)]
+                            :unleash   [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:deck [{:name :no-cost} {:name :no-cost}]}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0})
+               (choose :no-cost))
+           {:nemesis   {:discard [(assoc-in chaos-flail [:power :power] 0)]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:deck           [{:name :no-cost}]
+                         :revealed-cards 1}]
+            :trash     [{:name :no-cost}]}))))
 
 (deftest dire-abbatoir-test
   (testing "Dire Abbatoir"
