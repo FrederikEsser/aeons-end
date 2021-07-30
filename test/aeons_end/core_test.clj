@@ -11,7 +11,6 @@
             [aeons-end.turn-order :as turn-order]))
 
 (defn fixture [f]
-  #_(ut/reset-ids!)
   (with-rand-seed 123 (f)))
 
 (use-fixtures :each fixture)

@@ -136,6 +136,42 @@
              :effects [[::engulf-attack]]
              :quote   "'The Nameless rarely attack in the same fashion twice. It would seem today is an exception.' Dezmodia, Voidborn Prodigy"})
 
+(defn gathering-darkness-destroy [game {:keys [player-no]}]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:shuffle-discard-into-deck]
+                                      [:reveal-from-deck 4]
+                                      [:give-choice {:title   :gathering-darkness
+                                                     :text    "Destroy the top four cards of your deck."
+                                                     :choice  :trash-from-revealed
+                                                     :options [:player :revealed]
+                                                     :min     4
+                                                     :max     4}]]})))
+
+(defn gathering-darkness-choice [{:keys [players] :as game} _]
+  (let [max-deck+discard (->> players
+                              (map ut/count-cards-in-deck-and-discard)
+                              (apply max))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :gathering-darkness
+                                                      :text    "Any player places their discard pile on top of their deck, shuffles it, and then destroys the top four cards of their deck."
+                                                      :choice  ::gathering-darkness-destroy
+                                                      :options [:players {:min-deck+discard (min 4 max-deck+discard)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::gathering-darkness-destroy gathering-darkness-destroy
+                   ::gathering-darkness-choice  gathering-darkness-choice})
+
+(def gathering-darkness {:name    :gathering-darkness
+                         :type    :attack
+                         :tier    3
+                         :text    ["Any player places their discard pile on top of their deck, shuffles it, and then destroys the top four cards of their deck."
+                                   "Then, Unleash twice."]
+                         :effects [[::gathering-darkness-choice]
+                                   [:unleash]
+                                   [:unleash]]
+                         :quote   "'The Nameless do not die, for they themselves are death.' Xaxos, Breach Mage Adept"})
+
 (def lay-waste {:name    :lay-waste
                 :type    :attack
                 :tier    2

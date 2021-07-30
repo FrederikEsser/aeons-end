@@ -290,9 +290,11 @@
                     power/chaos-flail
                     power/morbid-gyre]
                    ; AE Tier 3
-                   [attack/topple
+                   [attack/gathering-darkness
+                    attack/topple
                     minion/jagged-one
-                    power/doom-aegis]
+                    power/doom-aegis
+                    power/reality-rupture]
                    ; WE Tier 3
                    [attack/banish
                     attack/engulf

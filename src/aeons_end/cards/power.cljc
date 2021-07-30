@@ -114,6 +114,7 @@
 
 (defn cataclysmic-fate-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
+                            (filter (comp #{:opened} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
                             (mapcat :prepped-spells))]
     (some (comp #(>= % 5) :cost) prepped-spells)))
 
@@ -298,7 +299,7 @@
 
 (defn planar-collision-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
-                            (remove (comp #{:closed} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
+                            (filter (comp #{:opened} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
                             (mapcat :prepped-spells)
                             count)]
     (>= prepped-spells 2)))
@@ -343,6 +344,34 @@
                                                        :options [:players :hand {:type :gem}]
                                                        :max     6}]]}
                       :quote "'The ground absorbed the latent energy left by the first breaches ever opened. Without this fuel our spells, out fate would be certain.' Malastar, Breach Mage Mentor"})
+
+(defn reality-rupture-can-discard? [game {:keys [player-no]}]
+  (->> (get-in game [:players player-no :breaches])
+       (filter (comp #{:opened} :status))                   ; spells prepped in closed breaches have to be cast before entering the Main phase
+       (mapcat :prepped-spells)
+       (filter (comp #(>= % 3) :cost))
+       count
+       (<= 2)))
+
+(effects/register-predicates {::reality-rupture-can-discard? reality-rupture-can-discard?})
+
+(def reality-rupture {:name       :reality-rupture
+                      :type       :power
+                      :tier       3
+                      :to-discard {:text      "Destroy two prepped spells that each cost 3 Aether or more."
+                                   :predicate ::reality-rupture-can-discard?
+                                   :effects   [[:give-choice {:title   :reality-rupture
+                                                              :text    "Destroy two prepped spells that each cost 3 Aether or more."
+                                                              :choice  :destroy-prepped-spells
+                                                              :options [:player :prepped-spells {:min-cost 3}]
+                                                              :min     2
+                                                              :max     2}]]}
+                      :power      {:power   1
+                                   :text    "Unleash three times"
+                                   :effects [[:unleash]
+                                             [:unleash]
+                                             [:unleash]]}
+                      :quote      "'The world shattered in a blink, and in the ruin I glimpsed the other side of the void.' Phaedraxa, Breach Mage Seer"})
 
 (defn withering-beam-destroy-spells [{:keys [players] :as game} _]
   (let [sorted-spells        (->> players

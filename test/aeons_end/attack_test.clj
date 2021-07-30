@@ -9,6 +9,11 @@
             [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]
             [aeons-end.turn-order :as turn-order]))
 
+(defn fixture [f]
+  (with-rand-seed 42 (f)))
+
+(use-fixtures :each fixture)
+
 (deftest afflict-test
   (testing "Afflict"
     (let [crystal (assoc crystal :id 1)]
@@ -114,6 +119,86 @@
                               draw-nemesis-card
                               (choose {:player-no 0 :breach-no 0 :card-name :spark}))))))
 
+(deftest banish-test
+  (testing "Banish"
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{}]
+                             :life     10}
+                            {:breaches [{}]
+                             :life     10}]}
+               draw-nemesis-card)
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]
+                         :life     10}
+                        {:breaches [{}]
+                         :life     10}]}))
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]
+                             :life     10}
+                            {:breaches [{}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}]
+                         :life     9}
+                        {:breaches [{}]
+                         :life     10}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [banish]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:breaches [{:prepped-spells [spark]}]
+                                            :life     10}
+                                           {:breaches [{}]
+                                            :life     10}]}
+                              draw-nemesis-card
+                              (choose {:player-no 1}))))
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark spark]}]
+                         :life     8}
+                        {:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [spark]}]
+                         :life     10}]}))
+    (is (= (-> {:nemesis   {:deck    [banish]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark spark]}]
+                             :life     10}
+                            {:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]
+                             :life     10}]}
+               draw-nemesis-card
+               (choose {:player-no 1}))
+           {:nemesis   {:discard [banish]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark spark]}]
+                         :life     10}
+                        {:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [spark]}]
+                         :life     8}]}))))
+
 (deftest encroach-test
   (testing "Encroach"
     (is (= (-> {:nemesis    {:deck    [encroach]
@@ -212,85 +297,57 @@
                           :unleash [[:damage-gravehold 1]]}
               :gravehold {:life 30}})))))
 
-(deftest banish-test
-  (testing "Banish"
-    (is (= (-> {:nemesis   {:deck    [banish]
+(deftest gathering-darkness-test
+  (testing "Gathering Darkness"
+    (is (= (-> {:nemesis   {:deck    [gathering-darkness]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
-                :players   [{:breaches [{}]
-                             :life     10}
-                            {:breaches [{}]
-                             :life     10}]}
-               draw-nemesis-card)
-           {:nemesis   {:discard [banish]
-                        :unleash [[:damage-gravehold 1]]}
-            :gravehold {:life 28}
-            :players   [{:breaches [{}]
-                         :life     10}
-                        {:breaches [{}]
-                         :life     10}]}))
-    (is (= (-> {:nemesis   {:deck    [banish]
-                            :unleash [[:damage-gravehold 1]]}
-                :gravehold {:life 30}
-                :players   [{:breaches [{:prepped-spells [spark]}]
-                             :life     10}
-                            {:breaches [{}]
-                             :life     10}]}
+                :players   [{:deck    [crystal crystal crystal]
+                             :discard [spark spark]}]}
                draw-nemesis-card
-               (choose {:player-no 0}))
-           {:nemesis   {:discard [banish]
+               (choose {:player-no 0})
+               (choose [:spark :crystal :crystal :crystal]))
+           {:nemesis   {:discard [gathering-darkness]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
-            :players   [{:breaches [{:prepped-spells [spark]}]
-                         :life     9}
-                        {:breaches [{}]
-                         :life     10}]}))
+            :players   [{:deck [spark]}]
+            :trash     [spark crystal crystal crystal]}))
+    (is (= (-> {:nemesis   {:deck    [gathering-darkness]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:deck [crystal crystal crystal crystal]}
+                            {:deck [crystal crystal crystal]}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose [:crystal :crystal :crystal :crystal]))
+           {:nemesis   {:discard [gathering-darkness]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{}
+                        {:deck [crystal crystal crystal]}]
+            :trash     [crystal crystal crystal crystal]}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis   {:deck    [banish]
+                          (-> {:nemesis   {:deck    [gathering-darkness]
                                            :unleash [[:damage-gravehold 1]]}
                                :gravehold {:life 30}
-                               :players   [{:breaches [{:prepped-spells [spark]}]
-                                            :life     10}
-                                           {:breaches [{}]
-                                            :life     10}]}
+                               :players   [{:deck [crystal crystal crystal crystal]}
+                                           {:deck [crystal crystal crystal]}]}
                               draw-nemesis-card
                               (choose {:player-no 1}))))
-    (is (= (-> {:nemesis   {:deck    [banish]
+    (is (= (-> {:nemesis   {:deck    [gathering-darkness]
                             :unleash [[:damage-gravehold 1]]}
                 :gravehold {:life 30}
-                :players   [{:breaches [{:prepped-spells [spark spark]}]
-                             :life     10}
-                            {:breaches [{:prepped-spells [spark]}
-                                        {:prepped-spells [spark]}]
-                             :life     10}]}
+                :players   [{:deck [crystal crystal crystal]}
+                            {:deck [crystal crystal crystal]}]}
                draw-nemesis-card
-               (choose {:player-no 0}))
-           {:nemesis   {:discard [banish]
+               (choose {:player-no 0})
+               (choose [:crystal :crystal :crystal]))
+           {:nemesis   {:discard [gathering-darkness]
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}
-            :players   [{:breaches [{:prepped-spells [spark spark]}]
-                         :life     8}
-                        {:breaches [{:prepped-spells [spark]}
-                                    {:prepped-spells [spark]}]
-                         :life     10}]}))
-    (is (= (-> {:nemesis   {:deck    [banish]
-                            :unleash [[:damage-gravehold 1]]}
-                :gravehold {:life 30}
-                :players   [{:breaches [{:prepped-spells [spark spark]}]
-                             :life     10}
-                            {:breaches [{:prepped-spells [spark]}
-                                        {:prepped-spells [spark]}]
-                             :life     10}]}
-               draw-nemesis-card
-               (choose {:player-no 1}))
-           {:nemesis   {:discard [banish]
-                        :unleash [[:damage-gravehold 1]]}
-            :gravehold {:life 28}
-            :players   [{:breaches [{:prepped-spells [spark spark]}]
-                         :life     10}
-                        {:breaches [{:prepped-spells [spark]}
-                                    {:prepped-spells [spark]}]
-                         :life     8}]}))))
+            :players   [{}
+                        {:deck [crystal crystal crystal]}]
+            :trash     [crystal crystal crystal]}))))
 
 (deftest mutilate-test
   (testing "Mutilate"

@@ -9,7 +9,6 @@
             [aeons-end.cards.spell :refer [amplify-vision dark-fire ignite]]))
 
 (defn fixture [f]
-  #_(ut/reset-ids!)
   (with-rand-seed 42 (f)))
 
 (use-fixtures :each fixture)
@@ -67,7 +66,8 @@
 (deftest cataclysmic-fate-test
   (testing "Cataclysmic Fate"
     (is (= (-> {:nemesis {:play-area [cataclysmic-fate]}
-                :players [{:breaches [{:prepped-spells [dark-fire]}]}]}
+                :players [{:breaches [{:status         :opened
+                                       :prepped-spells [dark-fire]}]}]}
                (discard-power-card 0 :cataclysmic-fate)
                (choose {:player-no 0 :breach-no 0 :card-name :dark-fire}))
            {:nemesis {:discard [cataclysmic-fate]}
@@ -79,15 +79,20 @@
                               (discard-power-card 0 :cataclysmic-fate))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
                           (-> {:nemesis {:play-area [cataclysmic-fate]}
-                               :players [{:breaches [{:prepped-spells [ignite]}
-                                                     {:prepped-spells [dark-fire]}]}]}
+                               :players [{:breaches [{:status         :opened
+                                                      :prepped-spells [ignite]}
+                                                     {:status         :opened
+                                                      :prepped-spells [dark-fire]}]}]}
                               (discard-power-card 0 :cataclysmic-fate)
                               (choose {:player-no 0 :breach-no 0 :card-name :ignite}))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
                           (-> {:nemesis {:play-area [cataclysmic-fate]}
-                               :players [{:breaches [{:prepped-spells [ignite]}
-                                                     {:prepped-spells [dark-fire]}]}
-                                         {:breaches [{:prepped-spells [dark-fire]}]}]}
+                               :players [{:breaches [{:status         :opened
+                                                      :prepped-spells [ignite]}
+                                                     {:status         :opened
+                                                      :prepped-spells [dark-fire]}]}
+                                         {:breaches [{:status         :opened
+                                                      :prepped-spells [dark-fire]}]}]}
                               (discard-power-card 0 :cataclysmic-fate)
                               (choose {:player-no 1 :breach-no 0 :card-name :dark-fire}))))
     (is (= (-> {:nemesis {:play-area [(assoc-in cataclysmic-fate [:power :power] 1)]}
@@ -356,8 +361,10 @@
 (deftest planar-collision-test
   (testing "Planar Collision"
     (is (= (-> {:nemesis {:play-area [planar-collision]}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}]}]}
+                :players [{:breaches [{:status         :opened
+                                       :prepped-spells [spark]}
+                                      {:status         :opened
+                                       :prepped-spells [spark]}]}]}
                (discard-power-card 0 :planar-collision)
                (choose [{:player-no 0
                          :breach-no 0
@@ -366,8 +373,8 @@
                          :breach-no 1
                          :card-name :spark}]))
            {:nemesis {:discard [planar-collision]}
-            :players [{:breaches [{}
-                                  {}]
+            :players [{:breaches [{:status :opened}
+                                  {:status :opened}]
                        :discard  [spark spark]}]}))
     (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
                           (-> {:nemesis {:play-area [planar-collision]}
@@ -381,17 +388,22 @@
                               (discard-power-card 1 :planar-collision))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
                           (-> {:nemesis {:play-area [planar-collision]}
-                               :players [{:breaches [{:prepped-spells [spark]}
-                                                     {:prepped-spells [spark]}]}]}
+                               :players [{:breaches [{:status         :opened
+                                                      :prepped-spells [spark]}
+                                                     {:status         :opened
+                                                      :prepped-spells [spark]}]}]}
                               (discard-power-card 0 :planar-collision)
                               (choose [{:player-no 0
                                         :breach-no 0
                                         :card-name :spark}]))))
     (is (thrown-with-msg? AssertionError #"Choose error:"
                           (-> {:nemesis {:play-area [planar-collision]}
-                               :players [{:breaches [{:prepped-spells [spark]}
-                                                     {:prepped-spells [spark]}]}
-                                         {:breaches [{:prepped-spells [spark]}]}]}
+                               :players [{:breaches [{:status         :opened
+                                                      :prepped-spells [spark]}
+                                                     {:status         :opened
+                                                      :prepped-spells [spark]}]}
+                                         {:breaches [{:status         :opened
+                                                      :prepped-spells [spark]}]}]}
                               (discard-power-card 0 :planar-collision)
                               (choose [{:player-no 0
                                         :breach-no 0
@@ -443,6 +455,28 @@
                         {:hand    [spark spark]
                          :discard [crystal crystal crystal]}]
             :gravehold {:life 30}}))))
+
+(deftest reality-rupture-test
+  (testing "Reality Rapture"
+    (is (= (-> {:nemesis {:play-area [reality-rupture]}
+                :players [{:breaches [{:status         :opened
+                                       :prepped-spells [ignite]}
+                                      {:status         :opened
+                                       :prepped-spells [ignite]}]}]}
+               (discard-power-card 0 :reality-rupture)
+               (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
+                        {:player-no 0 :breach-no 1 :card-name :ignite}]))
+           {:nemesis {:discard [reality-rupture]}
+            :players [{:breaches [{:status :opened}
+                                  {:status :opened}]}]
+            :trash   [ignite ignite]}))
+    (is (thrown-with-msg? AssertionError #"Resolve TO DISCARD error:"
+                          (-> {:nemesis {:play-area [reality-rupture]}
+                               :players [{:breaches [{:status         :opened
+                                                      :prepped-spells [spark]}
+                                                     {:status         :opened
+                                                      :prepped-spells [ignite]}]}]}
+                              (discard-power-card 0 :reality-rupture))))))
 
 (deftest withering-beam-test
   (testing "Withering Beam"
