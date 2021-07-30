@@ -275,7 +275,8 @@
                     power/night-unending
                     power/planar-collision]
                    ; AE Tier 2
-                   [attack/lay-waste
+                   [attack/awaken
+                    attack/lay-waste
                     minion/cauterizer
                     minion/needlemaw
                     power/pulverizing-ray]

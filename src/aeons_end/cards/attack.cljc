@@ -43,6 +43,31 @@
                                       :max     1}]]
              :quote   "'For as massive as they are, they are quick.' Sparrow, Breach Mage Soldier"})
 
+(defn awaken-revive-minion [game {:keys [card-name]}]
+  (-> game
+      (push-effect-stack {:effects [[:move-card {:card-name card-name
+                                                 :from      :discard
+                                                 :to        :play-area}]]})))
+
+(effects/register {::awaken-revive-minion awaken-revive-minion})
+
+(def awaken {:name    :awaken
+             :type    :attack
+             :tier    2
+             :text    ["Place the most recently discarded minion in the nemesis discard pile back into play."
+                       "OR"
+                       "Unleash twice and Gravehold suffers 3 damage."]
+             :effects [[:give-choice {:title     :awaken
+                                      :text      "Place the most recently discarded minion in the nemesis discard pile back into play."
+                                      :choice    ::awaken-revive-minion
+                                      :or-choice {:text    "Unleash twice and Gravehold suffers 3 damage."
+                                                  :effects [[:unleash]
+                                                            [:unleash]
+                                                            [:damage-gravehold 3]]}
+                                      :options   [:nemesis :discard {:type :minion :most-recent true}]
+                                      :max       1}]]
+             :quote   "'They were always just outside the edge of our knowing, sitting there in some quiet abyss just waiting to visit ruin upon us.' Z'hana, Breach Mage Renegade"})
+
 (defn banish-damage [{:keys [players] :as game} _]
   (let [most-prepped-spells (->> players
                                  (map ut/count-prepped-spells)
