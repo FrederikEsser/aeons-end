@@ -77,6 +77,15 @@
                                                              :max     1}]]}
                        :quote      "'The sound they make as they weave echoes through the cave is like the otherworldly throes of our lost companions.' Ges, Breach Mage Adviser"})
 
+(def jagged-one {:name       :jagged-one
+                 :type       :minion
+                 :tier       3
+                 :life       14
+                 :persistent {:text    "Unleash twice."
+                              :effects [[:unleash]
+                                        [:unleash]]}
+                 :quote      "'Jagged Ones are heralds of The Nameless, leading legions in legions in siege after siege of Gravehold.'"})
+
 (defn labyrinth-wisp-choice [game {:keys [player-no area breach-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case area

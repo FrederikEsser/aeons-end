@@ -381,6 +381,43 @@
                         :unleash [[:damage-gravehold 1]]}
             :gravehold {:life 28}}))))
 
+(deftest pulverizing-ray-test
+  (testing "Pulverizing Ray"
+    (is (= (-> {:nemesis   {:play-area [(assoc-in pulverizing-ray [:power :power] 1)]}
+                :players   [{:hand [spark spark]}]
+                :gravehold {:life 30}}
+               resolve-nemesis-cards-in-play)
+           {:nemesis   {:discard [(assoc-in pulverizing-ray [:power :power] 0)]}
+            :players   [{:hand [spark spark]}]
+            :gravehold {:life 12}}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in pulverizing-ray [:power :power] 1)]}
+                :players   [{:hand [crystal crystal crystal spark spark]}]
+                :gravehold {:life 30}}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}
+                        {:player-no 0 :card-name :crystal}]))
+           {:nemesis   {:discard [(assoc-in pulverizing-ray [:power :power] 0)]}
+            :players   [{:hand    [crystal spark spark]
+                         :discard [crystal crystal]}]
+            :gravehold {:life 18}}))
+    (is (= (-> {:nemesis   {:play-area [(assoc-in pulverizing-ray [:power :power] 1)]}
+                :players   [{:hand [crystal crystal crystal spark spark]}
+                            {:hand [crystal crystal crystal spark spark]}]
+                :gravehold {:life 30}}
+               resolve-nemesis-cards-in-play
+               (choose [{:player-no 0 :card-name :crystal}
+                        {:player-no 0 :card-name :crystal}
+                        {:player-no 0 :card-name :crystal}
+                        {:player-no 1 :card-name :crystal}
+                        {:player-no 1 :card-name :crystal}
+                        {:player-no 1 :card-name :crystal}]))
+           {:nemesis   {:discard [(assoc-in pulverizing-ray [:power :power] 0)]}
+            :players   [{:hand    [spark spark]
+                         :discard [crystal crystal crystal]}
+                        {:hand    [spark spark]
+                         :discard [crystal crystal crystal]}]
+            :gravehold {:life 30}}))))
+
 (deftest withering-beam-test
   (testing "Withering Beam"
     (is (= (-> {:nemesis   {:play-area [(assoc-in withering-beam [:power :power] 1)]

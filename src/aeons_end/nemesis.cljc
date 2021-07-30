@@ -260,10 +260,10 @@
                    ; AE Tier 1
                    [attack/skewer
                     attack/slaughter
-                    power/agony-field
-                    power/eye-of-nothing
                     minion/bane-sire
-                    minion/haze-spewer]
+                    minion/haze-spewer
+                    power/agony-field
+                    power/eye-of-nothing]
                    ; WE Tier 1
                    [attack/afflict
                     attack/encroach
@@ -275,8 +275,10 @@
                     power/night-unending
                     power/planar-collision]
                    ; AE Tier 2
-                   [minion/cauterizer
-                    minion/needlemaw]
+                   [attack/lay-waste
+                    minion/cauterizer
+                    minion/needlemaw
+                    power/pulverizing-ray]
                    ; WE Tier 2
                    [attack/mutilate
                     attack/smite
@@ -288,6 +290,7 @@
                     power/morbid-gyre]
                    ; AE Tier 3
                    [attack/topple
+                    minion/jagged-one
                     power/doom-aegis]
                    ; WE Tier 3
                    [attack/banish

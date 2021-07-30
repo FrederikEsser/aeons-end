@@ -1,5 +1,6 @@
 (ns aeons-end.cards.power
   (:require [aeons-end.operations :refer [push-effect-stack]]
+            [aeons-end.cards.common :refer [collective-discard-from-hand]]
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]))
 
@@ -320,6 +321,28 @@
                                     :effects [[:unleash]
                                               [:unleash]]}
                        :quote      "'None remembered the true name of The World That Was until Yan Magda spoke it aloud: Khasad Vol.'"})
+
+(defn pulverizing-ray-damage [game {:keys [card-name player-card-names] :as args}]
+  (let [number-of-gems (cond player-card-names (count player-card-names)
+                             card-name 1
+                             :else 0)]
+    (cond-> game
+            (pos? number-of-gems) (collective-discard-from-hand args)
+            (< number-of-gems 6) (push-effect-stack {:effects [[:damage-gravehold (- 18 (* 3 number-of-gems))]]}))))
+
+(effects/register {::pulverizing-ray-damage pulverizing-ray-damage})
+
+(def pulverizing-ray {:name  :pulverizing-ray
+                      :type  :power
+                      :tier  2
+                      :power {:power   1
+                              :text    "Gravehold suffers 18 damage. The players may collectively discard up to six gems. For each gem discarded this way, prevent 3 of that damage."
+                              :effects [[:give-choice {:title   :pulverizing-ray
+                                                       :text    "Gravehold suffers 18 damage. The players may collectively discard up to six gems. For each gem discarded this way, prevent 3 of that damage."
+                                                       :choice  ::pulverizing-ray-damage
+                                                       :options [:players :hand {:type :gem}]
+                                                       :max     6}]]}
+                      :quote "'The ground absorbed the latent energy left by the first breaches ever opened. Without this fuel our spells, out fate would be certain.' Malastar, Breach Mage Mentor"})
 
 (defn withering-beam-destroy-spells [{:keys [players] :as game} _]
   (let [sorted-spells        (->> players

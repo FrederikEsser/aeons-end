@@ -111,6 +111,21 @@
              :effects [[::engulf-attack]]
              :quote   "'The Nameless rarely attack in the same fashion twice. It would seem today is an exception.' Dezmodia, Voidborn Prodigy"})
 
+(def lay-waste {:name    :lay-waste
+                :type    :attack
+                :tier    2
+                :text    ["Unleash twice."
+                          "Any player suffers 2 damage."]
+                :effects [[:unleash]
+                          [:unleash]
+                          [:give-choice {:title   :lay-waste
+                                         :text    "Any player suffers 2 damage."
+                                         :choice  [:damage-player {:arg 2}]
+                                         :options [:players]
+                                         :min     1
+                                         :max     1}]]
+                :quote   "'Gravehold sat silent and forgotten for a thousand ages before The Nameless came. No one remembers for whom this vast city was built. Those stories lay in the ash outside the cave with the bones of those who once told them.'"})
+
 (def mutilate {:name    :mutilate
                :type    :attack
                :tier    2
@@ -198,7 +213,7 @@
 (def skewer {:name    :skewer
              :type    :attack
              :tier    1
-             :text    ["Unleash"
+             :text    ["Unleash."
                        "Any player suffers 3 damage and draws a card."]
              :effects [[:unleash]
                        [:give-choice {:title   :skewer
@@ -212,7 +227,7 @@
 (def slaughter {:name    :slaughter
                 :type    :attack
                 :tier    1
-                :text    ["Unleash"
+                :text    ["Unleash."
                           "Gravehold suffers 3 damage."]
                 :effects [[:unleash]
                           [:damage-gravehold 3]]
