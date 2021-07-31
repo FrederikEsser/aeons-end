@@ -430,6 +430,13 @@
 
 (effects/register {::coal-shard-effects coal-shard-effects})
 
+(def coal-shard {:name    :coal-shard
+                 :type    :gem
+                 :cost    0
+                 :text    ["If you have 2 life or less, destroy this."
+                           "Otherwise, gain 3 Aether, gain 1 charge, and suffer 2 damage."]
+                 :effects [[::coal-shard-effects]]})
+
 (defn eidolon-shroud-heal [game {:keys [player-no]}]
   (let [{:keys [life]} (get-in game [:players player-no])]
     (push-effect-stack game {:player-no player-no
@@ -451,13 +458,6 @@
                                    "If you are exhausted, any ally gains 5 life instead."]
                      :effects     [[::eidolon-shroud-heal]]})
 
-(def coal-shard {:name    :coal-shard
-                 :type    :gem
-                 :cost    0
-                 :text    ["If you have 2 life or less, destroy this."
-                           "Otherwise, gain 3 Aether, gain 1 charge, and suffer 2 damage."]
-                 :effects [[::coal-shard-effects]]})
-
 (def ulgimor {:name     :ulgimor
               :title    "Shadowkin Beast"
               :breaches [{}
@@ -468,6 +468,70 @@
               :deck     [crystal crystal crystal spark spark]
               :ability  eidolon-shroud})
 
+(defn illuminate-while-prepped [{:keys [current-player] :as game} {:keys [player-no]}]
+  (cond-> game
+          (= current-player player-no) (push-effect-stack {:player-no player-no
+                                                           :effects   [[:deal-damage 1]]})))
+
+(effects/register {::illuminate-while-prepped illuminate-while-prepped})
+
+(def illuminate {:name          :illuminate
+                 :type          :spell
+                 :cost          0
+                 :text          "While prepped, when you focus or open one of your breaches during your turn, deal 1 damage."
+                 :cast          "Deal 1 damage."
+                 :while-prepped {:at-focus-breach [[::illuminate-while-prepped]]
+                                 :at-open-breach  [[::illuminate-while-prepped]]}
+                 :effects       [[:deal-damage 1]]})
+
+(defn imperium-ritual-gain [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :imperium-ritual
+                                                      :text    "Gain a card from any supply pile and places it on top of your deck."
+                                                      :choice  [:gain {:to          :deck
+                                                                       :to-position :top}]
+                                                      :options [:supply]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(defn imperium-ritual-check-breaches [game {:keys [player-no]}]
+  (let [opened-breaches (->> (get-in game [:players player-no :breaches])
+                             (filter (comp #{:opened} :status))
+                             count)]
+    (cond-> game
+            (= 4 opened-breaches) (push-effect-stack {:player-no player-no
+                                                      :effects   [[:give-choice {:title   :imperium-ritual
+                                                                                 :text    "Any ally gains a card from any supply pile and places it on top of their deck."
+                                                                                 :choice  ::imperium-ritual-gain
+                                                                                 :options [:players {:ally true}]
+                                                                                 :min     1
+                                                                                 :max     1}]]}))))
+
+(effects/register {::imperium-ritual-gain           imperium-ritual-gain
+                   ::imperium-ritual-check-breaches imperium-ritual-check-breaches})
+
+(def imperium-ritual {:name        :imperium-ritual
+                      :activation  :your-main-phase
+                      :charge-cost 5
+                      :text        "Gain a card from any supply pile. If you have four opened breaches, any ally gains a card from any supply pile and places it on top of their deck."
+                      :effects     [[:give-choice {:title   :imperium-ritual
+                                                   :text    "Gain a card from any supply pile."
+                                                   :choice  :gain
+                                                   :options [:supply]
+                                                   :min     1
+                                                   :max     1}]
+                                    [::imperium-ritual-check-breaches]]})
+
+(def yan-magda {:name     :yan-magda
+                :title    "Enlightened Exile"
+                :breaches [{}
+                           {:stage 0}
+                           {:stage 0}
+                           {:stage 0}]
+                :hand     [illuminate crystal crystal crystal crystal]
+                :deck     [crystal crystal crystal crystal spark]
+                :ability  imperium-ritual})
+
 (def mages [adelheim
             brama
             dezmodia
@@ -477,4 +541,5 @@
             lash
             mist
             quilius
-            ulgimor])
+            ulgimor
+            yan-magda])

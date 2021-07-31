@@ -4,8 +4,8 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
-            [aeons-end.cards.relic :refer [blasting-staff]]
-            [aeons-end.cards.spell :refer [ignite]]
+            [aeons-end.cards.relic :refer [blasting-staff focusing-orb]]
+            [aeons-end.cards.spell :refer [ignite radiance]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
             [aeons-end.mages :refer :all]
@@ -746,3 +746,116 @@
              {:players [{:ability (assoc eidolon-shroud :charges 0)
                          :life    0}
                         {:life 8}]})))))
+
+(deftest yan-magda-test
+  (testing "Yan Magda"
+    (testing "Illuminate"
+      (is (= (-> {:current-player 0
+                  :players        [{:breaches [{:status         :closed
+                                                :focus-cost     2
+                                                :open-costs     [5 4 3 2]
+                                                :stage          0
+                                                :prepped-spells [illuminate]}]
+                                    :hand     [focusing-orb]}]
+                  :nemesis        {:life 50}}
+                 (play 0 :focusing-orb)
+                 (choose {:player-no 0 :breach-no 0}))
+             {:current-player 0
+              :players        [{:breaches  [{:status         :focused
+                                             :focus-cost     2
+                                             :open-costs     [5 4 3 2]
+                                             :stage          1
+                                             :prepped-spells [illuminate]}]
+                                :play-area [focusing-orb]}]
+              :nemesis        {:life 49}}))
+      (is (= (-> {:current-player 0
+                  :players        [{:breaches [{:status         :closed
+                                                :focus-cost     2
+                                                :open-costs     [5 4 3 2]
+                                                :stage          3
+                                                :prepped-spells [illuminate]}]
+                                    :hand     [focusing-orb]}]
+                  :nemesis        {:life 50}}
+                 (play 0 :focusing-orb)
+                 (choose {:player-no 0 :breach-no 0}))
+             {:current-player 0
+              :players        [{:breaches  [{:status         :opened
+                                             :prepped-spells [illuminate]}]
+                                :play-area [focusing-orb]}]
+              :nemesis        {:life 49}}))
+      (is (= (-> {:current-player 1
+                  :players        [{:breaches [{:status         :closed
+                                                :focus-cost     2
+                                                :open-costs     [5 4 3 2]
+                                                :stage          0
+                                                :prepped-spells [illuminate]}]}
+                                   {:hand [focusing-orb]}]
+                  :nemesis        {:life 50}}
+                 (play 1 :focusing-orb)
+                 (choose {:player-no 0 :breach-no 0}))
+             {:current-player 1
+              :players        [{:breaches [{:status         :closed
+                                            :focus-cost     2
+                                            :open-costs     [5 4 3 2]
+                                            :stage          1
+                                            :prepped-spells [illuminate]}]}
+                               {:play-area [focusing-orb]}]
+              :nemesis        {:life 50}}))
+      (is (= (-> {:current-player 0
+                  :players        [{:breaches [{:status         :closed
+                                                :focus-cost     2
+                                                :open-costs     [5 4 3 2]
+                                                :stage          0
+                                                :prepped-spells [illuminate]}]
+                                    :aether   5}]
+                  :nemesis        {:life 50}}
+                 (open-breach 0 0))
+             {:current-player 0
+              :players        [{:breaches [{:status         :opened
+                                            :prepped-spells [illuminate]}]
+                                :aether   0}]
+              :nemesis        {:life 49}})))
+    (testing "Imperium Ritual"
+      (let [radiance (assoc radiance :id 1)]
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability (assoc imperium-ritual :charges 5)}]}
+                   (activate-ability 0)
+                   (choose :radiance))
+               {:supply  [{:card radiance :pile-size 4}]
+                :players [{:ability (assoc imperium-ritual :charges 0)
+                           :discard [radiance]}]}))
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability  (assoc imperium-ritual :charges 5)
+                               :breaches (repeat 4 {:status :opened})}
+                              {}]}
+                   (activate-ability 0)
+                   (choose :radiance)
+                   (choose {:player-no 1})
+                   (choose :radiance))
+               {:supply  [{:card radiance :pile-size 3}]
+                :players [{:ability  (assoc imperium-ritual :charges 0)
+                           :breaches (repeat 4 {:status :opened})
+                           :discard  [radiance]}
+                          {:deck           [radiance]
+                           :revealed-cards 1}]}))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:supply  [{:card radiance :pile-size 5}]
+                                   :players [{:ability  (assoc imperium-ritual :charges 5)
+                                              :breaches (repeat 4 {:status :opened})}
+                                             {}]}
+                                  (activate-ability 0)
+                                  (choose :radiance)
+                                  (choose {:player-no 0}))))
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability  (assoc imperium-ritual :charges 5)
+                               :breaches (repeat 4 {:status :opened})}]}
+                   (activate-ability 0)
+                   (choose :radiance)
+                   (choose {:player-no 0})
+                   (choose :radiance))
+               {:supply  [{:card radiance :pile-size 3}]
+                :players [{:ability        (assoc imperium-ritual :charges 0)
+                           :breaches       (repeat 4 {:status :opened})
+                           :discard        [radiance]
+                           :deck           [radiance]
+                           :revealed-cards 1}]}))))))

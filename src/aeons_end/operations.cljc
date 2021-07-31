@@ -477,21 +477,31 @@
 (effects/register {:activate-ability activate-ability})
 
 (defn open-breach [game {:keys [player-no breach-no]}]
-  (let [{:keys [status]} (get-in game [:players player-no :breaches breach-no])]
+  (let [{:keys [status]} (get-in game [:players player-no :breaches breach-no])
+        while-prepped-effects (->> (get-in game [:players player-no :breaches])
+                                   (mapcat :prepped-spells)
+                                   (mapcat (comp :at-open-breach :while-prepped)))]
     (assert (#{:closed :focused} status) (str "Open error: Breach " breach-no " has status " status "."))
     (-> game
         (assoc-in [:players player-no :breaches breach-no :status] :opened)
-        (update-in [:players player-no :breaches breach-no] dissoc :focus-cost :open-costs :stage))))
+        (update-in [:players player-no :breaches breach-no] dissoc :focus-cost :open-costs :stage)
+        (cond-> while-prepped-effects (push-effect-stack {:player-no player-no
+                                                          :effects   while-prepped-effects})))))
 
 (defn focus-breach [{:keys [current-player] :as game} {:keys [player-no breach-no]}]
   (let [{:keys [status stage]} (get-in game [:players player-no :breaches breach-no])
-        current-player? (or (nil? current-player)
-                            (= current-player player-no))]
+        current-player?       (or (nil? current-player)
+                                  (= current-player player-no))
+        while-prepped-effects (->> (get-in game [:players player-no :breaches])
+                                   (mapcat :prepped-spells)
+                                   (mapcat (comp :at-focus-breach :while-prepped)))]
     (assert (#{:closed :focused} status) (str "Focus error: Breach " breach-no " has status " status "."))
     (if (< stage 3)
       (-> game
           (update-in [:players player-no :breaches breach-no :stage] ut/plus 1)
-          (cond-> current-player? (assoc-in [:players player-no :breaches breach-no :status] :focused)))
+          (cond-> current-player? (assoc-in [:players player-no :breaches breach-no :status] :focused)
+                  while-prepped-effects (push-effect-stack {:player-no player-no
+                                                            :effects   while-prepped-effects})))
       (-> game
           (open-breach {:player-no player-no
                         :breach-no breach-no})))))
