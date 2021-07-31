@@ -680,6 +680,23 @@
                                                                      :breach-no breach-no
                                                                      :to        :discard}]]}))))
 
+(defn cast-spell-in-hand [{:keys [:real-game?] :as game} {:keys [player-no card-name additional-damage]}]
+  (let [{{:keys [id effects]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (cond-> game
+            card-name (push-effect-stack {:player-no player-no
+                                          :card-id   id
+                                          :args      {:bonus-damage (or additional-damage 0)}
+                                          :effects   (concat [[:move-card {:card-name card-name
+                                                                           :from      :hand
+                                                                           :to        :discard}]]
+                                                             effects
+                                                             (when real-game?
+                                                               [[:track-this-turn {:cast card-name}]]))}))))
+
+(effects/register {:spell-effect       spell-effect
+                   :cast-spell         cast-spell
+                   :cast-spell-in-hand cast-spell-in-hand})
+
 (defn call-predicate [game {:keys [player-no predicate]}]
   (let [{:keys [pred args]} (if (vector? predicate)
                               {:pred (first predicate)
@@ -690,9 +707,6 @@
     (when pred-fn
       (pred-fn game (merge {:player-no player-no}
                            args)))))
-
-(effects/register {:spell-effect spell-effect
-                   :cast-spell   cast-spell})
 
 (defn can-use-while-prepped? [game {:keys [player-no card]}]
   (let [{:keys [phase this-turn]} (get-in game [:players player-no])

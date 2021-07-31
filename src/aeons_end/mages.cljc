@@ -184,6 +184,57 @@
           :deck     [crystal crystal crystal crystal spark]
           :ability  vimcraft-oath})
 
+(def twin-opal {:name    :twin-opal
+                :type    :gem
+                :cost    0
+                :text    ["Gain 1 Aether."
+                          "You may cast a spell in hand."]
+                :effects [[:gain-aether 1]
+                          [:give-choice {:title   :twin-opal
+                                         :text    "You may cast a spell in hand."
+                                         :choice  :cast-spell-in-hand
+                                         :options [:player :hand {:type :spell}]
+                                         :max     1}]]})
+
+(defn pyromancers-guile-cast [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:cast-spell-in-hand {:card-name         card-name
+                                                                          :additional-damage 1}]
+                                                    [:give-choice {:title   :pyromancer's-guile
+                                                                   :text    "Cast any number of spells in hand. Those spells each deal 1 additional damage."
+                                                                   :choice  ::pyromancer's-guile-cast
+                                                                   :options [:player :hand {:type :spell}]
+                                                                   :max     1}]]})))
+
+(effects/register {::pyromancer's-guile-cast pyromancers-guile-cast})
+
+(def pyromancers-guile {:name        :pyromancer's-guile
+                        :activation  :your-main-phase
+                        :charge-cost 4
+                        :text        ["Cast any number of spells in hand. Those spells each deal 1 additional damage."
+                                      "You may destroy a card in your discard pile."]
+                        :effects     [[:give-choice {:title   :pyromancer's-guile
+                                                     :text    "Cast any number of spells in hand. Those spells each deal 1 additional damage."
+                                                     :choice  ::pyromancer's-guile-cast
+                                                     :options [:player :hand {:type :spell}]
+                                                     :max     1}]
+                                      [:give-choice {:title   :pyromancer's-guile
+                                                     :text    "You may destroy a card in your discard pile."
+                                                     :choice  :destroy-from-discard
+                                                     :options [:player :discard]
+                                                     :max     1}]]})
+
+(def indira {:name     :indira
+             :title    "Breach Apprentice"
+             :breaches [{:status :destroyed}
+                        {:status :destroyed}
+                        {:stage 1}
+                        {:status :destroyed}]
+             :hand     [crystal crystal crystal twin-opal spark]
+             :deck     [crystal crystal crystal twin-opal spark]
+             :ability  pyromancers-guile})
+
 (defn quartz-shard-move-turn-order-card [game {:keys [choice]}]
   (cond-> game
           (= :bottom choice) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
@@ -421,6 +472,7 @@
             brama
             dezmodia
             gex
+            indira
             jian
             lash
             mist

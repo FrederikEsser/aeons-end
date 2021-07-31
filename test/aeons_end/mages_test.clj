@@ -346,6 +346,85 @@
                  {:players [{:ability (assoc vimcraft-oath :charges 0)}
                             {:life 9}]})))))))
 
+(deftest indira-test
+  (testing "Indira"
+    (testing "Twin Opal"
+      (is (= (-> {:players [{:hand [twin-opal spark]}]
+                  :nemesis {:life 50}}
+                 (play 0 :twin-opal)
+                 (choose :spark))
+             {:players [{:play-area [twin-opal]
+                         :discard   [spark]
+                         :aether    1}]
+              :nemesis {:life 49}}))
+      (is (= (-> {:players [{:hand [twin-opal spark]}]
+                  :nemesis {:life 50}}
+                 (play 0 :twin-opal)
+                 (choose nil))
+             {:players [{:hand      [spark]
+                         :play-area [twin-opal]
+                         :aether    1}]
+              :nemesis {:life 50}}))
+      (is (= (-> {:players [{:hand [twin-opal crystal]}]
+                  :nemesis {:life 50}}
+                 (play 0 :twin-opal))
+             {:players [{:hand      [crystal]
+                         :play-area [twin-opal]
+                         :aether    1}]
+              :nemesis {:life 50}})))
+    (testing "Pyromancer's Guile"
+      (let [spark   (assoc spark :id 1)
+            crystal (assoc crystal :id 2)]
+        (is (= (-> {:players [{:ability (assoc pyromancers-guile :charges 4)
+                               :hand    [spark]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose :spark)
+                   (choose nil))
+               {:players [{:ability (assoc pyromancers-guile :charges 0)
+                           :discard [spark]}]
+                :nemesis {:life 48}}))
+        (is (= (-> {:players [{:ability (assoc pyromancers-guile :charges 4)
+                               :hand    [spark]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose :spark)
+                   (choose {:player-no 0 :card-id 1}))
+               {:players [{:ability (assoc pyromancers-guile :charges 0)}]
+                :nemesis {:life 48}
+                :trash   [spark]}))
+        (is (= (-> {:players [{:ability (assoc pyromancers-guile :charges 4)
+                               :hand    [spark]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose nil))
+               {:players [{:ability (assoc pyromancers-guile :charges 0)
+                           :hand    [spark]}]
+                :nemesis {:life 50}}))
+        (is (= (-> {:players [{:ability (assoc pyromancers-guile :charges 4)
+                               :hand    [spark spark]
+                               :discard [crystal]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose :spark)
+                   (choose :spark)
+                   (choose {:player-no 0 :card-id 2}))
+               {:players [{:ability (assoc pyromancers-guile :charges 0)
+                           :discard [spark spark]}]
+                :nemesis {:life 46}
+                :trash   [crystal]}))
+        (is (= (-> {:players [{:ability (assoc pyromancers-guile :charges 4)
+                               :hand    [spark spark]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose :spark)
+                   (choose nil)
+                   (choose nil))
+               {:players [{:ability (assoc pyromancers-guile :charges 0)
+                           :hand    [spark]
+                           :discard [spark]}]
+                :nemesis {:life 48}}))))))
+
 (deftest lash-test
   (testing "Lash"
     (testing "Quartz Shard"
