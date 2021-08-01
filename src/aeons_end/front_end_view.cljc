@@ -238,8 +238,8 @@
                                           focus-cost
                                           open-cost)
                                  {:interactions (cond-> #{}
-                                                        (ut/can-afford? player focus-cost :focus-breach) (conj :focusable)
-                                                        (ut/can-afford? player open-cost :open-breach) (conj :openable))})
+                                                        (ut/can-afford? player focus-cost :breach) (conj :focusable)
+                                                        (ut/can-afford? player open-cost :breach) (conj :openable))})
                                (choice-interaction {:area      :breaches
                                                     :player-no player-no
                                                     :breach-no idx} choice)))))))

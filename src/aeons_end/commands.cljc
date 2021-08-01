@@ -118,7 +118,7 @@
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
                                            [:pay {:amount focus-cost
-                                                  :type   :focus-breach}]
+                                                  :type   :breach}]
                                            [:focus-breach {:breach-no breach-no}]]})
         op/check-stack)))
 
@@ -130,7 +130,7 @@
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
                                            [:pay {:amount open-cost
-                                                  :type   :open-breach}]
+                                                  :type   :breach}]
                                            [:open-breach {:breach-no breach-no}]]})
         op/check-stack)))
 

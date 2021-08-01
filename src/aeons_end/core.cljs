@@ -49,11 +49,13 @@
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
   (let [inverse? (or (#{:nemesis :sigil :husks :tainted} type)
                      (<= 2 (:player-no type))
-                     (#{:closed :focused :openable} status))]
+                     (#{:closed :focused} status))]
     {:color            (cond
                          inverse? (cond disabled "#ddd"
-                                        (= :openable status) "#f8e238"
                                         :else :white)
+                         (= :openable status) (case type
+                                                :breach "#f8e238"
+                                                :aethereal "#bfedee")
                          (= :destroyed status) "#d66"
                          (not disabled) :black
                          (= :strike type) "#444"
@@ -68,11 +70,14 @@
                          (= :husks type) "#5f5356"
                          (= :tainted type) "#5b863f"
                          (= :corruption type) "#9dcb6b"
+                         (= :destroyed status) :white
                          (= :breach type) (cond
                                             (= :opened status) "#f8e238"
-                                            (= :destroyed status) :white
                                             :else "#506f9a")
                          (= :sigil type) "#5d328a"
+                         (= :aethereal type) (cond
+                                               (= :opened status) "#a9ddd1"
+                                               :else "#2579a5")
                          (= :ability type) (if (= :charged status)
                                              "#f5bb11" #_"#f9e395"
                                              "#f9e395" #_"#b4afa2")
@@ -92,10 +97,12 @@
                          (= :husks type) "#232122"
                          (= :tainted type) "#40512c"
                          (= :corruption type) "#34971c"
+                         (= :destroyed status) "#ccc"
+                         (= :focused status) "#f9cf23"
                          (#{:breach :sigil} type) (cond
                                                     (#{:closed :openable} status) "#434f64"
-                                                    (#{:destroyed} status) "#ccc"
                                                     :else "#f9cf23")
+                         (= :aethereal type) "#67c19c"
                          (= :ability type) "#c0895e"
                          (= {:player-no 0} type) "#9d8c42"
                          (= {:player-no 1} type) "#a1642b"
@@ -261,9 +268,10 @@
                                      (:quick-choosable interactions) (swap! state assoc :game (cmd/choose (or choice-value breach-no))))))}
        (str name-ui
             (when (= :opened status)
-              (if bonus-damage
-                (str " (+" bonus-damage " dmg)")
-                " (open)"))
+              (cond
+                bonus-damage (str " (+" bonus-damage " dmg)")
+                (= :aethereal type) " (+$1)"
+                :else " (open)"))
             (when (or focus-cost open-cost) (str " (" (ut/format-cost focus-cost) "/" (ut/format-cost open-cost) ")")))]]
      [:td {:style {:border         :none
                    :vertical-align :top}}

@@ -418,6 +418,52 @@
               :ability  quietus-vow
               :trophies 0})
 
+(def void-shard {:name    :void-shard
+                 :type    :gem
+                 :cost    0
+                 :text    ["Gain 1 Aether."
+                           "Gain an additional 1 Aether that can only be used to focus or open a breach."]
+                 :effects [[:gain-aether 1]
+                           [:gain-aether {:arg 1 :earmark #{:breach}}]]})
+
+(defn ephemera-masque-return-cards [game {:keys [player-no] :as args}]
+  (cond-> game
+          player-no (push-effect-stack {:player-no player-no
+                                        :effects   [[:give-choice {:title   :ephemera-masque
+                                                                   :text    "Returns two cards in your discard pile to your hand."
+                                                                   :choice  :take-from-discard
+                                                                   :options [:player :discard]
+                                                                   :min     2
+                                                                   :max     2}]]})))
+
+(effects/register {::ephemera-masque-return-cards ephemera-masque-return-cards})
+
+(def ephemera-masque {:name        :ephemera-masque
+                      :activation  :your-main-phase
+                      :charge-cost 5
+                      :text        ["Any ally returns two cards in their discard pile to their hand."
+                                    "OR"
+                                    "Gravehold gains 5 life."]
+                      :effects     [[:give-choice {:title     :ephemera-masque
+                                                   :text      "Any ally returns two cards in their discard pile to their hand."
+                                                   :choice    ::ephemera-masque-return-cards
+                                                   :or-choice {:text    "Gravehold gains 5 life."
+                                                               :effects [[:heal-gravehold 5]]}
+                                                   :options   [:players {:ally true}]
+                                                   :max       1}]]})
+
+(def remnant {:name     :remnant
+              :title    "Aethereal Entity"
+              :breaches [{}
+                         {:stage          0
+                          :type           :aethereal
+                          :opened-effects [[:gain-aether 1]]}
+                         {:stage 0}
+                         {:stage 1}]
+              :hand     [void-shard crystal crystal spark spark]
+              :deck     [crystal crystal crystal crystal spark]
+              :ability  ephemera-masque})
+
 (defn coal-shard-effects [game {:keys [player-no card-id]}]
   (let [{:keys [life]} (get-in game [:players player-no])]
     (push-effect-stack game {:player-no player-no
@@ -541,5 +587,6 @@
             lash
             mist
             quilius
+            remnant
             ulgimor
             yan-magda])

@@ -668,16 +668,19 @@
 
 (defn spell-effect [{:keys [:real-game?] :as game} {:keys [player-no breach-no card-name caster additional-damage]}]
   (let [{{:keys [id effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
-        {:keys [status bonus-damage]} (get-in game [:players player-no :breaches breach-no])
+        {:keys [status bonus-damage opened-effects]} (get-in game [:players player-no :breaches breach-no])
+        opened?      (= :opened status)
         bonus-damage (cond-> 0
                              additional-damage (+ additional-damage)
-                             (and (= :opened status)
+                             (and opened?
                                   bonus-damage) (+ bonus-damage))]
     (-> game
         (push-effect-stack {:player-no (or caster player-no)
                             :card-id   id
                             :args      {:bonus-damage bonus-damage}
-                            :effects   (concat effects
+                            :effects   (concat (when opened?
+                                                 opened-effects)
+                                               effects
                                                (when real-game?
                                                  [[:track-this-turn {:cast card-name}]]))}))))
 

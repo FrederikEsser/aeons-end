@@ -126,12 +126,17 @@
 
 (effects/register {:collective-discard-prepped-spells collective-discard-prepped-spells})
 
-(defn take-from-discard [game {:keys [player-no card-id]}]
-  (cond-> game
-          card-id (push-effect-stack {:player-no player-no
-                                      :effects   [[:move-card {:move-card-id card-id
-                                                               :from         :discard
-                                                               :to           :hand}]]})))
+(defn take-from-discard [game {:keys [player-no card-id card-ids] :as args}]
+  (let [card-ids (or (some->> card-ids
+                              (map :card-id))
+                     (when card-id
+                       [card-id]))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (->> card-ids
+                                             (map (fn [id]
+                                                    [:move-card {:move-card-id id
+                                                                 :from         :discard
+                                                                 :to           :hand}])))})))
 
 (effects/register {:take-from-discard take-from-discard})
 
