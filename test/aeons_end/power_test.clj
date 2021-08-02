@@ -63,6 +63,51 @@
                               resolve-nemesis-cards-in-play
                               (choose {:player-no 1}))))))
 
+(deftest bleed-static-test
+  (testing "Bleed Static"
+    (is (= (-> {:nemesis {:play-area [(assoc-in bleed-static [:power :power] 1)]}
+                :players [{:breaches [{:prepped-spells [spark]}]
+                           :life     10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard [(assoc-in bleed-static [:power :power] 0)]}
+            :players [{:breaches [{:prepped-spells [spark]}]
+                       :life     8}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in bleed-static [:power :power] 1)]}
+                :players [{:breaches [{:prepped-spells [spark]}]
+                           :life     10}
+                          {:breaches [{:prepped-spells [spark spark]}
+                                      {:prepped-spells [spark]}
+                                      {:prepped-spells []}]
+                           :life     10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 1}))
+           {:nemesis {:discard [(assoc-in bleed-static [:power :power] 0)]}
+            :players [{:breaches [{:prepped-spells [spark]}]
+                       :life     10}
+                      {:breaches [{:prepped-spells [spark spark]}
+                                  {:prepped-spells [spark]}
+                                  {:prepped-spells []}]
+                       :life     4}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:play-area [(assoc-in bleed-static [:power :power] 1)]}
+                               :players [{:breaches [{:prepped-spells [spark]}]
+                                          :life     10}
+                                         {:breaches [{:prepped-spells [spark spark]}
+                                                     {:prepped-spells [spark]}
+                                                     {:prepped-spells []}]
+                                          :life     10}]}
+                              resolve-nemesis-cards-in-play
+                              (choose {:player-no 0}))))
+    (is (= (-> {:nemesis {:play-area [(assoc-in bleed-static [:power :power] 1)]}
+                :players [{:breaches [{}]
+                           :life     10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard [(assoc-in bleed-static [:power :power] 0)]}
+            :players [{:breaches [{}]
+                       :life     10}]}))))
+
 (deftest cataclysmic-fate-test
   (testing "Cataclysmic Fate"
     (is (= (-> {:nemesis {:play-area [cataclysmic-fate]}

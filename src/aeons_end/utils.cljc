@@ -419,52 +419,57 @@
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        min-number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach min-deck+discard
-                                       last type cost min-cost max-cost most-expensive most-opened-breaches lowest-focus-cost most-crystals
+                                       last type cost min-cost max-cost
+                                       most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
                                        opened max-breach-no min-non-corruption]}]]
-  (let [solo-play?     (= 1 (count players))
-        highest-charge (->> players
-                            (map #(get-in % [:ability :charges] 0))
-                            (apply max 0))
-        highest-opened (->> players
-                            (map count-opened-breaches)
-                            (apply max 0))
-        low-life       (if solo-play?
-                         (-> players first :life)
-                         (->> players
-                              (keep :life)
-                              (filter pos?)                 ; Exhausted players are spared
-                              (apply min 20)))
-        high-life      (->> players
-                            (keep :life)
-                            (apply max 0))
-        max-crystals   (->> players
-                            (map count-crystals)
-                            (apply max 0))
-        valid-players  (cond->> (map-indexed (fn [player-no player]
-                                               (assoc player :player-no player-no)) players)
-                                (and ally
-                                     (not solo-play?)) (remove (comp #{player-no} :player-no))
-                                min-charges (filter (comp #(>= % min-charges) :charges :ability))
-                                most-charges (filter (comp #{highest-charge} :charges :ability))
-                                activation (filter (comp #{activation} :activation :ability))
-                                fully-charged (filter (fn [{{:keys [charges charge-cost]} :ability}]
-                                                        (>= charges charge-cost)))
-                                (false? fully-charged) (remove (fn [{{:keys [charges charge-cost]} :ability}]
-                                                                 (>= charges charge-cost)))
-                                most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
-                                min-number-of-prepped-spells (filter (comp #(>= % min-number-of-prepped-spells) count-prepped-spells))
-                                min-hand (filter (comp #(<= min-hand %) count-cards-in-hand))
-                                min-non-corruption (filter (comp #(<= min-non-corruption %) count-non-corruption))
-                                min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))
-                                least-life (filter (comp #{low-life} :life))
-                                most-life (filter (comp #{high-life} :life))
-                                most-crystals (filter (comp #{max-crystals} count-crystals))
-                                not-exhausted (filter (comp pos? :life))
-                                empty-breach (filter (fn [{:keys [breaches]}]
-                                                       (->> breaches
-                                                            (remove (comp #{:destroyed} :status))
-                                                            (filter (comp empty? :prepped-spells))
-                                                            not-empty))))]
+  (let [solo-play?      (= 1 (count players))
+        highest-charge  (->> players
+                             (map #(get-in % [:ability :charges] 0))
+                             (apply max 0))
+        highest-opened  (->> players
+                             (map count-opened-breaches)
+                             (apply max 0))
+        highest-prepped (->> players
+                             (map count-prepped-spells)
+                             (apply max 0))
+        low-life        (if solo-play?
+                          (-> players first :life)
+                          (->> players
+                               (keep :life)
+                               (filter pos?)                ; Exhausted players are spared
+                               (apply min 20)))
+        high-life       (->> players
+                             (keep :life)
+                             (apply max 0))
+        max-crystals    (->> players
+                             (map count-crystals)
+                             (apply max 0))
+        valid-players   (cond->> (map-indexed (fn [player-no player]
+                                                (assoc player :player-no player-no)) players)
+                                 (and ally
+                                      (not solo-play?)) (remove (comp #{player-no} :player-no))
+                                 min-charges (filter (comp #(>= % min-charges) :charges :ability))
+                                 most-charges (filter (comp #{highest-charge} :charges :ability))
+                                 activation (filter (comp #{activation} :activation :ability))
+                                 fully-charged (filter (fn [{{:keys [charges charge-cost]} :ability}]
+                                                         (>= charges charge-cost)))
+                                 (false? fully-charged) (remove (fn [{{:keys [charges charge-cost]} :ability}]
+                                                                  (>= charges charge-cost)))
+                                 most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
+                                 most-prepped-spells (filter (comp #{highest-prepped} count-prepped-spells))
+                                 min-number-of-prepped-spells (filter (comp #(>= % min-number-of-prepped-spells) count-prepped-spells))
+                                 min-hand (filter (comp #(<= min-hand %) count-cards-in-hand))
+                                 min-non-corruption (filter (comp #(<= min-non-corruption %) count-non-corruption))
+                                 min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))
+                                 least-life (filter (comp #{low-life} :life))
+                                 most-life (filter (comp #{high-life} :life))
+                                 most-crystals (filter (comp #{max-crystals} count-crystals))
+                                 not-exhausted (filter (comp pos? :life))
+                                 empty-breach (filter (fn [{:keys [breaches]}]
+                                                        (->> breaches
+                                                             (remove (comp #{:destroyed} :status))
+                                                             (filter (comp empty? :prepped-spells))
+                                                             not-empty))))]
     (cond
       (#{:players :ability} area) (->> valid-players
                                        (map #(select-keys % [:player-no])))

@@ -30,7 +30,7 @@
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :cauterizer})]
     (push-effect-stack game {:effects [[:give-choice {:title   :cauterizer
                                                       :text    (str "Any player suffers " life " damage.")
-                                                      :choice  [:damage-player {:arg 2}]
+                                                      :choice  [:damage-player {:arg life}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))

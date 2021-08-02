@@ -92,6 +92,22 @@
                        [::banish-damage]]
              :quote   "'Get down! It's ejecting back at us!' Ohat, Dirt Merchant"})
 
+(def dispel {:name    :dispel
+             :type    :attack
+             :tier    2
+             :text    ["Unleash twice."
+                       "The player with the most prepped spells discards their most expensive prepped spell."]
+             :effects [[:unleash]
+                       [:unleash]
+                       [:give-choice {:title   :dispel
+                                      :text    "The player with the most prepped spells discards their most expensive prepped spell."
+                                      :choice  :discard-prepped-spells
+                                      :options [:players :prepped-spells {:most-prepped-spells true
+                                                                          :most-expensive      true}]
+                                      :min     1
+                                      :max     1}]]
+             :quote   "'The words and gestures needed left him, and the breach grew dim.' Nerva, Survivor"})
+
 (defn encroach-damage [game _]
   (let [{:keys [player-no] :as type} (-> game :turn-order :deck first :type)]
     (cond

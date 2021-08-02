@@ -112,6 +112,26 @@
                                                         :max     1}]]}
                   :quote      "'The harsh light of the dead star burned away the dark as it crept through the breach. And around it I saw ravaged worlds The Nameless had already claimed.' Indira, Breach Mage Apprentice"})
 
+(defn bleed-static-damage [game {:keys [player-no]}]
+  (let [prepped-spells (ut/count-prepped-spells (get-in game [:players player-no]))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:damage-player (* 2 prepped-spells)]]})))
+
+(effects/register {::bleed-static-damage bleed-static-damage})
+
+(def bleed-static {:name  :bleed-static
+                   :type  :power
+                   :tier  1
+                   :power {:power   3
+                           :text    "The player with the most prepped spells suffers 2 damage for each of their prepped spells."
+                           :effects [[:give-choice {:title   :bleed-static
+                                                    :text    "The player with the most prepped spells suffers 2 damage for each of their prepped spells."
+                                                    :choice  ::bleed-static-damage
+                                                    :options [:players {:most-prepped-spells true}]
+                                                    :min     1
+                                                    :max     1}]]}
+                   :quote "'There are no words to describe the sound of a breach opening. Only the screams echoing off the walls after.' Z'hana, Breach Mage Renegade"})
+
 (defn cataclysmic-fate-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
                             (filter (comp #{:opened} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
@@ -424,6 +444,29 @@
                                        [:unleash]
                                        [::withering-beam-destroy-spells]]}
                      :quote "'I watched a fellow merchant atrophy and fall to the ground in ash as the beam hit his cart.' Ohat, Dirt Merchant"})
+
+(def woven-sky {:name       :woven-sky
+                :type       :power
+                :tier       1
+                :to-discard {:text      "Discard three cards in hand."
+                             :predicate [::cards-in-hand? {:amount 3}]
+                             :effects   [[:give-choice {:title   :woven-sky
+                                                        :text    "Discard three cards in hand."
+                                                        :choice  :discard-from-hand
+                                                        :options [:player :hand]
+                                                        :min     3
+                                                        :max     3}]]}
+                :power      {:power   2
+                             :text    ["Unleash."
+                                       "Any player suffers 4 damage."]
+                             :effects [[:unleash]
+                                       [:give-choice {:title   :woven-sky
+                                                      :text    "Any player suffers 4 damage."
+                                                      :choice  [:damage-player {:arg 4}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]}
+                :quote      "Nym looked up in awe as Malastar pointed to the rolling air at the dome of the cave. 'Those, boy, are stars.'"})
 
 (defn generic [tier & [idx]]
   (let [name (str (case tier

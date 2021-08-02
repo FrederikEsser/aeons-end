@@ -54,24 +54,21 @@
                                               effects
                                               [[:clear-resolving]])})))
 
-(defn resolve-nemesis-cards-in-play [{:keys [current-player nemesis] :as game} _]
-  (-> game
-      (cond->
-        current-player (assoc :current-player :nemesis))
-      (push-effect-stack {:effects (->> (:play-area nemesis)
-                                        (map (fn [{:keys [type name power]}]
-                                               [:give-choice {:title   (ut/format-name (:name nemesis))
-                                                              :text    (case type
-                                                                         :power (if (< 1 (:power power))
-                                                                                  (str (ut/format-name name) " powers up.") #_(str (ut/format-name (:name nemesis)) " powers up " (ut/format-name name) ".")
-                                                                                  (str (ut/format-name name) " is fully powered!") #_(str (ut/format-name (:name nemesis)) " activates the fully powered " (ut/format-name name) "."))
-                                                                         :minion (str (ut/format-name name) " attacks!") #_"Minion attacks.")
-                                                              :choice  (case type
-                                                                         :power :resolve-power-card
-                                                                         :minion :resolve-minion-card)
-                                                              :options [:nemesis :play-area {:name name}]
-                                                              :min     1
-                                                              :max     1}])))})))
+(defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
+  (push-effect-stack game {:effects (->> (:play-area nemesis)
+                                         (map (fn [{:keys [type name power]}]
+                                                [:give-choice {:title   (ut/format-name (:name nemesis))
+                                                               :text    (case type
+                                                                          :power (if (< 1 (:power power))
+                                                                                   (str (ut/format-name name) " powers up.") #_(str (ut/format-name (:name nemesis)) " powers up " (ut/format-name name) ".")
+                                                                                   (str (ut/format-name name) " is fully powered!") #_(str (ut/format-name (:name nemesis)) " activates the fully powered " (ut/format-name name) "."))
+                                                                          :minion (str (ut/format-name name) " attacks!") #_"Minion attacks.")
+                                                               :choice  (case type
+                                                                          :power :resolve-power-card
+                                                                          :minion :resolve-minion-card)
+                                                               :options [:nemesis :play-area {:name name}]
+                                                               :min     1
+                                                               :max     1}])))}))
 
 (effects/register {:resolve-power-card            resolve-power-card
                    :resolve-minion-card           resolve-minion-card
@@ -127,9 +124,10 @@
 
 (defn at-start-turn [{:keys [nemesis] :as game} _]
   (let [{:keys [at-start-turn]} nemesis]
-    (cond-> game
-            (:phase nemesis) (assoc-in [:nemesis :phase] :main)
-            at-start-turn (push-effect-stack {:effects at-start-turn}))))
+    (-> game
+        (assoc :current-player :nemesis)
+        (cond-> (:phase nemesis) (assoc-in [:nemesis :phase] :main)
+                at-start-turn (push-effect-stack {:effects at-start-turn})))))
 
 (defn at-end-turn [{:keys [nemesis] :as game} _]
   (let [{:keys [at-end-turn]} nemesis]
@@ -263,7 +261,9 @@
                     minion/bane-sire
                     minion/haze-spewer
                     power/agony-field
-                    power/eye-of-nothing]
+                    power/bleed-static
+                    power/eye-of-nothing
+                    power/woven-sky]
                    ; WE Tier 1
                    [attack/afflict
                     attack/encroach
@@ -276,6 +276,7 @@
                     power/planar-collision]
                    ; AE Tier 2
                    [attack/awaken
+                    attack/dispel
                     attack/lay-waste
                     minion/cauterizer
                     minion/needlemaw
