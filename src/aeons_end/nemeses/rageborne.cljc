@@ -221,7 +221,7 @@
                  :effects [[:give-choice {:title   :eviscerate
                                           :text    "The player with the lowest life suffers 2 damage."
                                           :choice  [:damage-player {:arg 2}]
-                                          :options [:players {:least-life true}]
+                                          :options [:players {:lowest-life true}]
                                           :min     1
                                           :max     1}]]
                  :quote   "'The breach commander Thraxir was split in twain with a single blow, his armor twisted and glowing like a brand. I have never seen such a thing before or since.' Mist, Breach Mage Dagger Captain"})

@@ -280,6 +280,7 @@
                     attack/lay-waste
                     minion/cauterizer
                     minion/needlemaw
+                    minion/venomite
                     power/pulverizing-ray]
                    ; WE Tier 2
                    [attack/mutilate
@@ -292,6 +293,8 @@
                     power/morbid-gyre]
                    ; AE Tier 3
                    [attack/gathering-darkness
+                    attack/obliterate
+                    attack/sunder
                     attack/topple
                     minion/jagged-one
                     power/doom-aegis

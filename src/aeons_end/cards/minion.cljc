@@ -174,6 +174,32 @@
                               :effects [[:unleash]]}
                  :quote      "'Qiulius's first blow glanced off its carapace like breath, but her second blow carved it in twain.' Dezmodia, Voidborn Prodigy"})
 
+(defn venomite-choice [game {:keys [area player-no breach-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :players [[:damage-player 2]]
+                                        :prepped-spells [[:discard-prepped-spells {:breach-no breach-no
+                                                                                   :card-name card-name}]])}))
+
+(effects/register {::venomite-choice venomite-choice})
+
+(def venomite {:name       :venomite
+               :type       :minion
+               :tier       2
+               :life       9
+               :persistent {:text    ["The player with the lowest life suffers 2 damage."
+                                      "OR"
+                                      "Any player discards a prepped spell that costs 3 Aether or more."]
+                            :effects [[:give-choice {:title   :venomite
+                                                     :text    "The player with the lowest life suffers 2 damage."
+                                                     :choice  ::venomite-choice
+                                                     :options [:mixed
+                                                               [:players {:lowest-life true}]
+                                                               [:players :prepped-spells {:min-cost 3}]]
+                                                     :min     1
+                                                     :max     1}]]}
+               :quote      "'In The World That Was, there were many creatures that used poison as a means of survival. But these things ARE poison.' Lash, Breach Mage Scout"})
+
 (defn generic [tier & [idx]]
   (let [name (str (case tier
                     1 "Small"

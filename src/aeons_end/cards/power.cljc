@@ -165,7 +165,7 @@
                                     :effects [[:give-choice {:title   :cataclysmic-fate
                                                              :text    "The player with the lowest life suffers 4 damage."
                                                              :choice  [:damage-player {:arg 4}]
-                                                             :options [:players {:least-life true}]
+                                                             :options [:players {:lowest-life true}]
                                                              :min     1
                                                              :max     1}]]}})
 

@@ -256,6 +256,35 @@
                     [::nix-choice]]
           :quote   "'It's as if the world itself is screaming.' Nerva, Survivor"})
 
+(defn obliterate-player [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title     :obliterate
+                                                      :text      "Destroy four cards in hand."
+                                                      :choice    :destroy-from-hand
+                                                      :or-choice {:text    "Suffer 4 damage"
+                                                                  :effects [[:damage-player 4]]}
+                                                      :options   [:player :hand]
+                                                      :min       4
+                                                      :max       4
+                                                      :optional? true}]]}))
+
+(effects/register {::obliterate-player obliterate-player})
+
+(def obliterate {:name    :obliterate
+                 :type    :attack
+                 :tier    3
+                 :text    ["Unleash twice."
+                           "The player with the most opened breaches destroys four cards in hand or suffers 4 damage."]
+                 :effects [[:unleash]
+                           [:unleash]
+                           [:give-choice {:title   :obliterate
+                                          :text    "The player with the most opened breaches destroys four cards in hand or suffers 4 damage."
+                                          :choice  ::obliterate-player
+                                          :options [:players {:most-opened-breaches true}]
+                                          :min     1
+                                          :max     1}]]
+                 :quote   "'While the breaches amplify our magic a thousandfold, it comes at the highest ransom imaginable' ― Brama, Breach Mage Elder"})
+
 (defn quell-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
                                       :damage [[:damage-gravehold 7]]
@@ -319,6 +348,38 @@
                       [:unleash]
                       [:damage-gravehold 2]]
             :quote   "'One side of this struggle must fall for the other to truly live.' Xaxos, Voidbringer"})
+
+(defn sunder-choice [game {:keys [area player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :players [[:damage-player 4]
+                                                  [:damage-gravehold 4]]
+                                        :discard (->> (get-in game [:turn-order :discard])
+                                                      (filter (comp #{:nemesis} :type))
+                                                      (map (fn [{:keys [name]}]
+                                                             [:shuffle-into-turn-order-deck {:card-name name}]))))}))
+
+(effects/register {::sunder-choice sunder-choice})
+
+(def sunder {:name    :sunder
+             :type    :attack
+             :tier    3
+             :text    ["The player with the lowest life suffers 4 damage and"
+                       "Gravehold suffers 4 damage."
+                       "OR"
+                       "Shuffle all of the nemesis turn order cards into the turn order deck."]
+             :effects [[:give-choice {:title   :sunder
+                                      :text    ["The player with the lowest life suffers 4 damage and"
+                                                "Gravehold suffers 4 damage."
+                                                "OR"
+                                                "Shuffle all of the nemesis turn order cards into the turn order deck."]
+                                      :choice  ::sunder-choice
+                                      :options [:mixed
+                                                [:players {:lowest-life true}]
+                                                [:turn-order :discard {:type :nemesis}]]
+                                      :min     1
+                                      :max     1}]]
+             :quote   "'We fight for the lingering hope of returning to The World That Was, but in our hearts we know our future lies within these caves.' Z'hana, Breach Mage Renegade"})
 
 (def thrash {:name    :thrash
              :type    :attack

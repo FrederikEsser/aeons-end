@@ -418,7 +418,7 @@
 
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
-                                       min-number-of-prepped-spells min-hand least-life most-life not-exhausted empty-breach min-deck+discard
+                                       min-number-of-prepped-spells min-hand lowest-life most-life not-exhausted empty-breach min-deck+discard
                                        last type cost min-cost max-cost
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
                                        opened max-breach-no min-non-corruption]}]]
@@ -461,7 +461,7 @@
                                  min-hand (filter (comp #(<= min-hand %) count-cards-in-hand))
                                  min-non-corruption (filter (comp #(<= min-non-corruption %) count-non-corruption))
                                  min-deck+discard (filter (comp #(<= min-deck+discard %) count-cards-in-deck-and-discard))
-                                 least-life (filter (comp #{low-life} :life))
+                                 lowest-life (filter (comp #{low-life} :life))
                                  most-life (filter (comp #{high-life} :life))
                                  most-crystals (filter (comp #{max-crystals} count-crystals))
                                  not-exhausted (filter (comp pos? :life))
@@ -551,13 +551,14 @@
 
 (effects/register-options {:nemesis options-from-nemesis})
 
-(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]} & [{:keys [not-type player-non-wild]}]]
+(defn options-from-turn-order [{:keys [turn-order]} {:keys [area]} & [{:keys [type not-type player-non-wild]}]]
   (let [{:keys [deck revealed-cards]} turn-order
         cards (if (and (= :revealed area)
                        revealed-cards)
                 (take revealed-cards deck)
                 (get turn-order area))]
     (cond->> cards
+             type (filter (comp #{type} :type))
              not-type (remove (comp #{not-type} :type))
              player-non-wild (filter (comp int? :player-no :type))
              :always (map :name))))

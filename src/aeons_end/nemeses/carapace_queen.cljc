@@ -115,7 +115,7 @@
                      :effects   [[:give-choice {:title   :swarm
                                                 :text    "The player with the lowest life suffers 3 damage."
                                                 :choice  [:damage-player {:arg 3}]
-                                                :options [:players {:least-life true}]
+                                                :options [:players {:lowest-life true}]
                                                 :min     1
                                                 :max     1}]
                                  [::kill-husks 1]]}
