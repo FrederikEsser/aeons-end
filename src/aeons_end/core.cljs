@@ -168,25 +168,31 @@
                                (and (:unique choice-opts)
                                     (->> selection (map :option) (some #{name choice-value})))
                                (and (:similar choice-opts)
-                                    (->> selection (map :option) (some (comp not #{name choice-value})))))]
+                                    (->> selection (map :option) (some (comp not #{name choice-value})))))
+           prepable        (= :prepable interaction)]
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))
          [:div
-          [:button {:style    (button-style :disabled disabled
-                                            :type type
-                                            :number-of-cards number-of-cards)
-                    :title    (format-title card)
-                    :disabled disabled
-                    :on-click (when interaction
-                                (fn [] (case interaction
-                                         :playable (swap! state assoc :game (cmd/play name))
-                                         :choosable (select! choice-value name)
-                                         :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
-                                         :buyable (swap! state assoc :game (cmd/buy name))
-                                         :discardable (swap! state assoc :game (cmd/discard name))
-                                         :prepable (swap! state assoc :game (cmd/prep-spell breach-no name))
-                                         :castable (swap! state assoc :game (cmd/cast-spell breach-no name))
-                                         :while-preppedable (swap! state assoc :game (cmd/use-while-prepped breach-no name)))))}
+          [:button {:style         (button-style :disabled disabled
+                                                 :type type
+                                                 :number-of-cards number-of-cards)
+                    :title         (format-title card)
+                    :disabled      disabled
+                    :on-click      (when interaction
+                                     (fn [] (case interaction
+                                              :playable (swap! state assoc :game (cmd/play name))
+                                              :choosable (select! choice-value name)
+                                              :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
+                                              :buyable (swap! state assoc :game (cmd/buy name))
+                                              :discardable (swap! state assoc :game (cmd/discard name))
+                                              :prepable (swap! state assoc :game (cmd/prep-spell breach-no name))
+                                              :castable (swap! state assoc :game (cmd/cast-spell breach-no name))
+                                              :while-preppedable (swap! state assoc :game (cmd/use-while-prepped breach-no name)))))
+                    :draggable     prepable
+                    :on-drag-start (when prepable
+                                     #(swap! state assoc :dragging name))
+                    :on-drag-end   (when prepable
+                                     #(swap! state dissoc :dragging))}
            (str name-ui
                 (when cost (str " (" (ut/format-cost cost) ")"))
                 (when number-of-cards (str " x" number-of-cards)))]]))
@@ -252,20 +258,28 @@
   (let [interactions (if interaction
                        #{interaction}
                        interactions)
-        disabled     (empty? interactions)]
+        disabled     (empty? interactions)
+        prepable     (and (#{:opened :focused} status)
+                          (empty? prepped-spells))]
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
-      [:button {:style    (button-style :disabled disabled
-                                        :type (or type :breach)
-                                        :status (or (get interactions :openable)
-                                                    status)
-                                        :min-width 88)
-                :disabled disabled
-                :on-click (when (not-empty interactions)
-                            (fn [] (cond
-                                     (:openable interactions) (swap! state assoc :game (cmd/open-breach breach-no))
-                                     (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no))
-                                     (:quick-choosable interactions) (swap! state assoc :game (cmd/choose (or choice-value breach-no))))))}
+      [:button {:style        (button-style :disabled disabled
+                                            :type (or type :breach)
+                                            :status (or (get interactions :openable)
+                                                        status)
+                                            :min-width 88)
+                :disabled     disabled
+                :on-click     (when (not-empty interactions)
+                                (fn [] (cond
+                                         (:openable interactions) (swap! state assoc :game (cmd/open-breach breach-no))
+                                         (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no))
+                                         (:quick-choosable interactions) (swap! state assoc :game (cmd/choose (or choice-value breach-no))))))
+                :on-drag-over (when prepable
+                                (fn [e] (.preventDefault e)))
+                :on-drop      (when prepable
+                                (fn []
+                                  (let [card-name (get @state :dragging)]
+                                    (swap! state assoc :game (cmd/prep-spell breach-no card-name)))))}
        (str name-ui
             (when (= :opened status)
               (cond
@@ -449,7 +463,6 @@
     (let [{:keys [setup-game?]} @state
           started? (-> @cmd/game-state :game count (> 1))]
       [:div [:h2 "Aeon's End"]
-
        [:div
         (cond
           setup-game? [:button {:style    (button-style)
