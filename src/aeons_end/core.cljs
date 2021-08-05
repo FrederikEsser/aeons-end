@@ -263,30 +263,38 @@
                           (empty? prepped-spells))]
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
-      [:button {:style        (button-style :disabled disabled
-                                            :type (or type :breach)
-                                            :status (or (get interactions :openable)
-                                                        status)
-                                            :min-width 88)
-                :disabled     disabled
-                :on-click     (when (not-empty interactions)
-                                (fn [] (cond
-                                         (:openable interactions) (swap! state assoc :game (cmd/open-breach breach-no))
-                                         (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no))
-                                         (:quick-choosable interactions) (swap! state assoc :game (cmd/choose (or choice-value breach-no))))))
-                :on-drag-over (when prepable
-                                (fn [e] (.preventDefault e)))
-                :on-drop      (when prepable
-                                (fn []
-                                  (let [card-name (get @state :dragging)]
-                                    (swap! state assoc :game (cmd/prep-spell breach-no card-name)))))}
-       (str name-ui
-            (when (= :opened status)
-              (cond
-                bonus-damage (str " (+" bonus-damage " dmg)")
-                (= :aethereal type) " (+$1)"
-                :else " (open)"))
-            (when (or focus-cost open-cost) (str " (" (ut/format-cost focus-cost) "/" (ut/format-cost open-cost) ")")))]]
+      (let [focusing? (atom false)]
+        [:button {:style           (button-style :disabled disabled
+                                                 :type (or type :breach)
+                                                 :status (or (get interactions :openable)
+                                                             status)
+                                                 :min-width 88)
+                  :disabled        disabled
+                  :on-click        (when (not-empty interactions)
+                                     (fn [] (cond
+                                              (:openable interactions) (when (compare-and-set! focusing? false true)
+                                                                         (js/setTimeout (fn [] (when @focusing?
+                                                                                                 (swap! state assoc :game (cmd/focus-breach breach-no))
+                                                                                                 (reset! focusing? false)))
+                                                                                        250))
+                                              (:focusable interactions) (swap! state assoc :game (cmd/focus-breach breach-no))
+                                              (:quick-choosable interactions) (swap! state assoc :game (cmd/choose (or choice-value breach-no))))))
+                  :on-double-click (when (:openable interactions)
+                                     #(do (reset! focusing? false)
+                                          (swap! state assoc :game (cmd/open-breach breach-no))))
+                  :on-drag-over    (when prepable
+                                     (fn [e] (.preventDefault e)))
+                  :on-drop         (when prepable
+                                     (fn []
+                                       (let [card-name (get @state :dragging)]
+                                         (swap! state assoc :game (cmd/prep-spell breach-no card-name)))))}
+         (str name-ui
+              (when (= :opened status)
+                (cond
+                  bonus-damage (str " (+" bonus-damage " dmg)")
+                  (= :aethereal type) " (+$1)"
+                  :else " (open)"))
+              (when (or focus-cost open-cost) (str " (" (ut/format-cost focus-cost) "/" (ut/format-cost open-cost) ")")))])]
      [:td {:style {:border         :none
                    :vertical-align :top}}
       (->> prepped-spells
