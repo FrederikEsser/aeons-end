@@ -306,10 +306,11 @@
                       :effects [[:gain-aether 1]
                                 [:gain-aether {:arg 1 :earmark #{:gem}}]]})
 
-(defn black-mirror-cast [game {:keys [player-no] :as args}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:spell-effect args]
-                                       [:cast-spell args]]}))
+(defn black-mirror-cast [game {:keys [player-no breach-no card-name] :as args}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:spell-effect args]
+                                         [:cast-spell (assoc args :card card)]]})))
 
 (defn black-mirror-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no

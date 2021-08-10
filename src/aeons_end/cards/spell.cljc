@@ -148,6 +148,32 @@
                                                                   :max     1}]]}]]
            :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
 
+(defn conjure-the-lost-destroy [game {:keys [player-no area card-id] :as args}]
+  (cond-> game
+          area (push-effect-stack {:player-no player-no
+                                   :effects   (concat
+                                                (case area
+                                                  :discard [[:destroy-from-discard {:card-id card-id}]]
+                                                  :prepped-spells [[:destroy-prepped-spells args]])
+                                                [[:heal-gravehold 4]])})))
+
+(effects/register {::conjure-the-lost-destroy conjure-the-lost-destroy})
+
+(def conjure-the-lost {:name    :conjure-the-lost
+                       :type    :spell
+                       :cost    6
+                       :cast    ["Deal 5 damage."
+                                 "You may destroy this. If you do, Gravehold gains 4 life."]
+                       :effects [[:deal-damage 5]
+                                 [:give-choice {:title   :conjure-the-lost
+                                                :text    "You may destroy this. If you do, Gravehold gains 4 life."
+                                                :choice  ::conjure-the-lost-destroy
+                                                :options [:mixed
+                                                          [:players :discard {:this true}]
+                                                          [:players :prepped-spells {:this true}]]
+                                                :max     1}]]
+                       :quote   "'We would all gladly give our lives for Gravehold to live but another day.' Indira, Breach Apprentice"})
+
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
   (let [card-count (cond card-name 1
                          card-names (count card-names)
@@ -461,6 +487,7 @@
             catalyst
             celestial-spire
             char
+            conjure-the-lost
             dark-fire
             essence-theft
             feedback-aura

@@ -666,8 +666,9 @@
 
 (effects/register {:track-this-turn track-this-turn})
 
-(defn spell-effect [{:keys [:real-game?] :as game} {:keys [player-no breach-no card-name caster additional-damage]}]
-  (let [{{:keys [id effects]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})
+(defn spell-effect [{:keys [:real-game?] :as game} {:keys [player-no breach-no card-name card caster additional-damage]}]
+  (let [{:keys [id effects]} (or card
+                                 (:card (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})))
         {:keys [status bonus-damage opened-effects]} (get-in game [:players player-no :breaches breach-no])
         opened?      (= :opened status)
         bonus-damage (cond-> 0
@@ -685,13 +686,14 @@
                                                  [[:track-this-turn {:cast card-name}]]))}))))
 
 (defn cast-spell [game {:keys [player-no breach-no card-name] :as args}]
-  (cond-> game
-          card-name (-> (spell-effect args)
-                        (push-effect-stack {:player-no player-no
-                                            :effects   [[:move-card {:card-name card-name
-                                                                     :from      :breach
-                                                                     :breach-no breach-no
-                                                                     :to        :discard}]]}))))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+    (cond-> game
+            card-name (spell-effect args)
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:move-card {:card-name card-name
+                                                              :from      :breach
+                                                              :breach-no breach-no
+                                                              :to        :discard}]]}))))
 
 (defn cast-spell-in-hand [{:keys [:real-game?] :as game} {:keys [player-no card-name additional-damage]}]
   (let [{{:keys [id effects]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]

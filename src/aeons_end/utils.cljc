@@ -327,8 +327,8 @@
                       (string/join))]
     (count all-text)))
 
-(defn options-from-player [game {:keys [player-no area]}
-                           & [{:keys [type not-type cost min-cost max-cost most-expensive lowest-focus-cost opened
+(defn options-from-player [game {:keys [player-no area card-id]}
+                           & [{:keys [this type not-type cost min-cost max-cost most-expensive lowest-focus-cost opened
                                       min-charges prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
@@ -373,6 +373,7 @@
                             (keep :cost)
                             (apply max'))]
       (cond->> cards
+               this (filter (comp #{card-id} :id))
                type (filter (comp #{type} :type))
                not-type (remove (comp #{not-type} :type))
                cost (filter (comp #(= % cost) :cost))
@@ -416,10 +417,10 @@
        (filter (comp #{:crystal} :name))
        count))
 
-(defn options-from-players [{:keys [players] :as game} {:keys [player-no area]}
+(defn options-from-players [{:keys [players] :as game} {:keys [player-no area card-id]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
                                        min-number-of-prepped-spells min-hand lowest-life most-life not-exhausted empty-breach min-deck+discard
-                                       last type cost min-cost max-cost
+                                       this last type cost min-cost max-cost
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
                                        opened max-breach-no min-non-corruption]}]]
   (let [solo-play?      (= 1 (count players))
@@ -519,6 +520,7 @@
                                     (keep :cost)
                                     (apply max 0))]
               (cond->> options
+                       this (filter (comp #{card-id} :id))
                        type (filter (comp #{type} :type))
                        cost (filter (comp #{cost} :cost))
                        min-cost (filter (comp #(>= % min-cost) :cost))

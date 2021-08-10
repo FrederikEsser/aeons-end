@@ -6,7 +6,7 @@
             [aeons-end.mages :refer [black-mirror]]
             [aeons-end.cards.spell :refer :all]
             [aeons-end.cards.gem :refer [jade]]
-            [aeons-end.cards.relic :refer [cairn-compass temporal-helix]]
+            [aeons-end.cards.relic :refer [cairn-compass temporal-helix vortex-gauntlet]]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.mages :refer [garnet-shard]])
   (:refer-clojure :exclude [char]))
@@ -263,6 +263,77 @@
                       {:hand [crystal]
                        :deck [crystal]}]
             :nemesis {:life 47}}))))
+
+(deftest conjure-the-lost-test
+  (let [conjure-the-lost (assoc conjure-the-lost :id 1)]
+    (testing "Conjure the Lost"
+      (is (= (-> {:players   [{:breaches [{:prepped-spells [conjure-the-lost]}]}]
+                  :nemesis   {:life 50}
+                  :gravehold {:life 20}}
+                 (cast-spell 0 0 :conjure-the-lost)
+                 (choose nil))
+             {:players   [{:breaches [{}]
+                           :discard  [conjure-the-lost]}]
+              :nemesis   {:life 45}
+              :gravehold {:life 20}}))
+      (is (= (-> {:players   [{:breaches [{:prepped-spells [conjure-the-lost]}]}]
+                  :nemesis   {:life 50}
+                  :gravehold {:life 20}}
+                 (cast-spell 0 0 :conjure-the-lost)
+                 (choose {:area :discard :player-no 0 :card-id 1}))
+             {:players   [{:breaches [{}]}]
+              :nemesis   {:life 45}
+              :gravehold {:life 24}
+              :trash     [conjure-the-lost]}))
+      (is (= (-> {:players   [{:breaches [{:prepped-spells [conjure-the-lost]}]
+                               :hand     [vortex-gauntlet]}]
+                  :nemesis   {:life 50}
+                  :gravehold {:life 20}}
+                 (play 0 :vortex-gauntlet)
+                 (choose {:player-no 0 :breach-no 0 :card-name :conjure-the-lost})
+                 (choose {:area :discard :player-no 0 :card-id 1}))
+             {:players   [{:breaches  [{}]
+                           :play-area [vortex-gauntlet]}]
+              :nemesis   {:life 45}
+              :gravehold {:life 24}
+              :trash     [conjure-the-lost]}))
+      (is (= (-> {:players   [{:breaches [{:prepped-spells [conjure-the-lost]}]
+                               :hand     [temporal-helix]}]
+                  :nemesis   {:life 50}
+                  :gravehold {:life 20}}
+                 (play 0 :temporal-helix)
+                 (choose {:player-no 0 :breach-no 0 :card-name :conjure-the-lost})
+                 (choose {:area :prepped-spells :player-no 0 :breach-no 0 :card-name :conjure-the-lost}))
+             {:players   [{:breaches  [{}]
+                           :play-area [temporal-helix]}]
+              :nemesis   {:life 45}
+              :gravehold {:life 24}
+              :trash     [conjure-the-lost]}))
+      (is (= (-> {:players   [{:ability  (assoc black-mirror :charges 4)
+                               :breaches [{:prepped-spells [conjure-the-lost]}]}]
+                  :nemesis   {:life 50}
+                  :gravehold {:life 20}}
+                 (activate-ability 0)
+                 (choose {:player-no 0 :breach-no 0 :card-name :conjure-the-lost})
+                 (choose nil)
+                 (choose {:area :discard :player-no 0 :card-id 1}))
+             {:players   [{:ability  (assoc black-mirror :charges 0)
+                           :breaches [{}]}]
+              :nemesis   {:life 40}
+              :gravehold {:life 24}
+              :trash     [conjure-the-lost]}))
+      (is (= (-> {:players   [{:ability  (assoc black-mirror :charges 4)
+                               :breaches [{:prepped-spells [conjure-the-lost]}]}]
+                  :nemesis   {:life 50}
+                  :gravehold {:life 20}}
+                 (activate-ability 0)
+                 (choose {:player-no 0 :breach-no 0 :card-name :conjure-the-lost})
+                 (choose {:area :prepped-spells :player-no 0 :breach-no 0 :card-name :conjure-the-lost}))
+             {:players   [{:ability  (assoc black-mirror :charges 0)
+                           :breaches [{}]}]
+              :nemesis   {:life 40}
+              :gravehold {:life 24}
+              :trash     [conjure-the-lost]})))))
 
 (deftest dark-fire-test
   (testing "Dark Fire"
