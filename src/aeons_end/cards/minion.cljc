@@ -191,7 +191,9 @@
                                       "OR"
                                       "Any player discards a prepped spell that costs 3 Aether or more."]
                             :effects [[:give-choice {:title   :venomite
-                                                     :text    "The player with the lowest life suffers 2 damage."
+                                                     :text    ["The player with the lowest life suffers 2 damage."
+                                                               "OR"
+                                                               "Any player discards a prepped spell that costs 3 Aether or more."]
                                                      :choice  ::venomite-choice
                                                      :options [:mixed
                                                                [:players {:lowest-life true}]

@@ -449,6 +449,25 @@
                                              :max     1}]]
                     :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
 
+(defn thoughtform-familiar-damage [game {:keys [player-no card-id] :as args}]
+  (let [other-prepped-spells (->> (get-in game [:players player-no :breaches])
+                                  (mapcat :prepped-spells)
+                                  (remove (comp #{card-id} :id))
+                                  count)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (+ 2 other-prepped-spells)]]})))
+
+(effects/register {::thoughtform-familiar-damage thoughtform-familiar-damage})
+
+(def thoughtform-familiar {:name    :thoughtform-familiar
+                           :type    :spell
+                           :cost    3
+                           :cast    ["Deal 2 damage."
+                                     "Deal 1 additional damage for each of your other prepped spells."]
+                           :effects [[::thoughtform-familiar-damage]]
+                           :quote   "'We make nothing. We simply call it forth.' Yan Magda, Enlightened Exile"})
+
 (defn wildfire-whip-can-use? [game {:keys [player-no]}]
   (let [{:keys [aether]} (get-in game [:players player-no])]
     (and aether
@@ -502,4 +521,5 @@
             radiance
             scorch
             spectral-echo
+            thoughtform-familiar
             wildfire-whip])

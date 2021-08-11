@@ -283,7 +283,7 @@
                                           :options [:players {:most-opened-breaches true}]
                                           :min     1
                                           :max     1}]]
-                 :quote   "'While the breaches amplify our magic a thousandfold, it comes at the highest ransom imaginable' ― Brama, Breach Mage Elder"})
+                 :quote   "'While the breaches amplify our magic a thousandfold, it comes at the highest ransom imaginable' Brama, Breach Mage Elder"})
 
 (defn quell-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
