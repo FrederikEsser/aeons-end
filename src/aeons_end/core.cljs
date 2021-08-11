@@ -21,6 +21,10 @@
                       {:type :relic :max-cost 4} {:type :relic :min-cost 4} {:type :spell}
                       {:type :spell :max-cost 4} {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 6}])
 
+(def low-budget-market [{:type :gem :max-cost 3} {:type :gem :min-cost 4 :max-cost 4} {:type :gem :max-cost 5}
+                        {:type :relic :max-cost 3} {:type :relic :max-cost 5} {:type :spell :max-cost 6}
+                        {:type :spell :max-cost 3} {:type :spell :max-cost 4} {:type :spell :max-cost 5}])
+
 (def prosperous-market [{:type :gem :max-cost 3} {:type :gem :min-cost 4 :max-cost 4} {:type :gem :min-cost 5}
                         {:type :relic :max-cost 4} {:type :relic :min-cost 5} {:type :spell}
                         {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 5 :max-cost 6} {:type :spell :min-cost 7}])
@@ -832,6 +836,7 @@
                    value          (cond
                                     (= supply random-market) :random
                                     (= supply balanced-market) :balanced
+                                    (= supply low-budget-market) :low-budget
                                     (= supply prosperous-market) :prosperous
                                     :else :custom)
                    selected-cards (->> supply
@@ -844,11 +849,13 @@
                                                               (case value
                                                                 :random (swap! state assoc-in [:game-setup :supply] random-market)
                                                                 :balanced (swap! state assoc-in [:game-setup :supply] balanced-market)
+                                                                :low-budget (swap! state assoc-in [:game-setup :supply] low-budget-market)
                                                                 :prosperous (swap! state assoc-in [:game-setup :supply] prosperous-market)
                                                                 :custom nil)))}
                                       [:<>
                                        [:option {:value :random} "All random"]
                                        [:option {:value :balanced} "Balanced"]
+                                       [:option {:value :low-budget} "Low budget"]
                                        [:option {:value :prosperous} "Prosperous"]
                                        (when (= :custom value)
                                          [:option {:value :custom} "Custom"])]]
