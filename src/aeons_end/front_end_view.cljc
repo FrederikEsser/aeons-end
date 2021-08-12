@@ -68,22 +68,19 @@
               (let [top-card (view-supply-card game pile)]
                 {:card top-card})))))
 
-(defn- type-sort-order [type]
+(defn- type-sort-order [{:keys [type]}]
   (cond (= :gem type) 1
         (= :relic type) 2
         (= :spell type) 3))
 
-(defn view-area [area {{:keys [phase player-no breaches] :as player} :player
-                       choice                                        :choice
-                       active?                                       :active-player?
-                       :as                                           game}
+(defn view-area [area {{:keys [phase player-no] :as player} :player
+                       choice                               :choice
+                       active?                              :active-player?
+                       :as                                  game}
                  & [position number-of-cards]]
-  (let [take-fn      (if (= :bottom position) take-last take)
-        cards        (cond->> (get player area)
-                              number-of-cards (take-fn number-of-cards))
-        open-breach? (->> breaches
-                          (filter (comp #{:opened :focused} :status))
-                          (some (comp empty? :prepped-spells)))]
+  (let [take-fn (if (= :bottom position) take-last take)
+        cards   (cond->> (get player area)
+                         number-of-cards (take-fn number-of-cards))]
     (-> cards
         (->>
           (map (fn [{:keys [name type] :as card}]
@@ -97,7 +94,10 @@
                           (cond
                             (#{:gem :relic} type) {:interaction :playable}
                             (and (#{:spell} type)
-                                 open-breach?) {:interaction :prepable}))
+                                 (ut/can-prep? game {:player-no player-no
+                                                     :card      card})) {:interaction       :prepable
+                                                                         :prepable-breaches (ut/prepable-breaches game {:player-no player-no
+                                                                                                                        :card      card})}))
                         (when (and active?
                                    (= :play-area area)
                                    (not choice))
@@ -109,8 +109,7 @@
           (map (fn [[card number-of-cards]]
                  (cond-> card
                          (< 1 number-of-cards) (assoc :number-of-cards number-of-cards)))))
-        (cond->> (not number-of-cards) (sort-by (juxt (comp type-sort-order :type)
-                                                      :name))))))
+        (cond->> (not number-of-cards) (sort-by (juxt type-sort-order :name))))))
 
 (defn view-deck [{{:keys [deck
                           revealed
@@ -163,9 +162,7 @@
        (map (fn [[card number-of-cards]]
               (cond-> card
                       (< 1 number-of-cards) (assoc :number-of-cards number-of-cards))))
-       (sort-by (juxt (comp type-sort-order :type)
-                      :cost
-                      :name))))
+       (sort-by (juxt type-sort-order :cost :name))))
 
 (defn view-options [options]
   (->> options

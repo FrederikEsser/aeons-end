@@ -281,17 +281,9 @@
 
 (defn prep-from-discard [game {:keys [player-no card-id closed-breaches?]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:id card-id})
-        breaches     (->> (get-in game [:players player-no :breaches])
-                          (map-indexed (fn [breach-no breach]
-                                         (assoc breach :breach-no breach-no))))
-        breach-stati (cond-> #{:opened :focused}
-                             closed-breaches? (conj :closed))
-        breach-no    (->> breaches
-                          (filter (comp breach-stati :status))
-                          (filter (comp empty? :prepped-spells))
-                          (sort-by (juxt :status :bonus-damage))
-                          last
-                          :breach-no)]
+        [breach-no] (ut/prepable-breaches game {:player-no        player-no
+                                                :card             card
+                                                :closed-breaches? closed-breaches?})]
     (cond-> game
             (and card-id
                  breach-no) (push-effect-stack {:player-no player-no

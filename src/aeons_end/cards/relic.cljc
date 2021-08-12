@@ -53,9 +53,9 @@
                     :effects [[:give-choice {:title   :cairn-compass
                                              :text    "Any ally may prep a spell in their discard pile to their opened or closed breach(es)."
                                              :choice  [:prep-from-discard {:closed-breaches? true}]
-                                             :options [:players :discard {:ally         true
-                                                                          :type         :spell
-                                                                          :empty-breach true}]
+                                             :options [:players :discard {:ally     true
+                                                                          :type     :spell
+                                                                          :can-prep {:closed-breaches? true}}]
                                              :max     1}]]
                     :quote   "'Being lost down there once was more than enough.' Indira, Breach Apprentice"})
 

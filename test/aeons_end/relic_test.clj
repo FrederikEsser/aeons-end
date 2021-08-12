@@ -249,6 +249,16 @@
                                      :bonus-damage 1}]}]}))
       (is (= (-> {:players [{:hand [cairn-compass]}
                             {:discard  [spark]
+                             :breaches [{:status :focused}
+                                        {:status :closed}]}]}
+                 (play 0 :cairn-compass)
+                 (choose {:player-no 1 :card-id 2}))
+             {:players [{:play-area [cairn-compass]}
+                        {:breaches [{:status :focused}
+                                    {:status         :closed
+                                     :prepped-spells [spark]}]}]}))
+      (is (= (-> {:players [{:hand [cairn-compass]}
+                            {:discard  [spark]
                              :breaches [{:status :opened}
                                         {:status       :opened
                                          :bonus-damage 1}]}]}

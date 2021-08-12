@@ -321,6 +321,38 @@
                              (apply +)))]
     (>= valid-aether cost)))
 
+(defn can-prep? [game {:keys [player-no breach-no closed-breaches?] :as args}]
+  (if breach-no
+    (let [{:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
+          breach-stati (cond-> #{:opened :focused}
+                               closed-breaches? (conj :closed))]
+      (and (contains? breach-stati status)
+           (empty? prepped-spells)))
+    (let [number-of-breaches (->> (get-in game [:players player-no :breaches])
+                                  count)]
+      (->> (range number-of-breaches)
+           (some (fn [breach-no]
+                   (can-prep? game (assoc args :breach-no breach-no))))))))
+
+(defn- status-sort-order [{:keys [status]}]
+  (case status
+    :focused 1
+    :closed 2
+    :opened 3))
+
+(defn prepable-breaches [game {:keys [player-no card closed-breaches?]}]
+  (->> (get-in game [:players player-no :breaches])
+       (keep-indexed (fn [breach-no breach]
+                       (when (can-prep? game {:player-no        player-no
+                                              :breach-no        breach-no
+                                              :card             card
+                                              :closed-breaches? closed-breaches?})
+                         (assoc breach :breach-no breach-no))))
+
+       (sort-by (juxt status-sort-order :bonus-damage))
+       reverse
+       (map :breach-no)))
+
 (defn get-card-strength [{:keys [text cast]}]
   (let [all-text (->> (ensure-coll text)
                       (concat (ensure-coll cast))
@@ -419,8 +451,8 @@
 
 (defn options-from-players [{:keys [players] :as game} {:keys [player-no area card-id]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
-                                       min-number-of-prepped-spells min-hand lowest-life most-life not-exhausted empty-breach min-deck+discard
-                                       this last type cost min-cost max-cost
+                                       min-number-of-prepped-spells min-hand lowest-life most-life not-exhausted min-deck+discard
+                                       this last type cost min-cost max-cost can-prep
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
                                        opened max-breach-no min-non-corruption]}]]
   (let [solo-play?      (= 1 (count players))
@@ -465,12 +497,7 @@
                                  lowest-life (filter (comp #{low-life} :life))
                                  most-life (filter (comp #{high-life} :life))
                                  most-crystals (filter (comp #{max-crystals} count-crystals))
-                                 not-exhausted (filter (comp pos? :life))
-                                 empty-breach (filter (fn [{:keys [breaches]}]
-                                                        (->> breaches
-                                                             (remove (comp #{:destroyed} :status))
-                                                             (filter (comp empty? :prepped-spells))
-                                                             not-empty))))]
+                                 not-exhausted (filter (comp pos? :life)))]
     (cond
       (#{:players :ability} area) (->> valid-players
                                        (map #(select-keys % [:player-no])))
@@ -526,6 +553,10 @@
                        min-cost (filter (comp #(>= % min-cost) :cost))
                        max-cost (filter (comp #(<= % max-cost) :cost))
                        most-expensive (filter (comp #{highest-cost} :cost))
+                       can-prep (filter (fn [{{:keys [player-no]} :option :as card}]
+                                          (can-prep? game (merge {:player-no player-no
+                                                                  :card      card}
+                                                                 can-prep))))
                        :always (map :option))))))
 
 (effects/register-options {:players options-from-players})

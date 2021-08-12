@@ -157,7 +157,7 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui choice-value choice-opts type cost number-of-cards breach-no interaction] :as card}]
+  ([max {:keys [name name-ui choice-value choice-opts type cost number-of-cards breach-no interaction prepable-breaches] :as card}]
    (if (map? card)
      (let [selection       (:selection @state)
            num-selected    (->> selection (filter (comp #{name choice-value} :option)) count)
@@ -189,12 +189,13 @@
                                               :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name)))
                                               :buyable (swap! state assoc :game (cmd/buy name))
                                               :discardable (swap! state assoc :game (cmd/discard name))
-                                              :prepable (swap! state assoc :game (cmd/prep-spell breach-no name))
+                                              :prepable (swap! state assoc :game (cmd/prep-spell (first prepable-breaches) name))
                                               :castable (swap! state assoc :game (cmd/cast-spell breach-no name))
                                               :while-preppedable (swap! state assoc :game (cmd/use-while-prepped breach-no name)))))
                     :draggable     prepable
                     :on-drag-start (when prepable
-                                     #(swap! state assoc :dragging name))
+                                     #(swap! state assoc :dragging {:card-name         name
+                                                                    :prepable-breaches (set prepable-breaches)}))
                     :on-drag-end   (when prepable
                                      #(swap! state dissoc :dragging))}
            (str name-ui
@@ -263,8 +264,7 @@
                        #{interaction}
                        interactions)
         disabled     (empty? interactions)
-        prepable     (and (#{:opened :focused} status)
-                          (empty? prepped-spells))]
+        prepable     (contains? (get-in @state [:dragging :prepable-breaches]) breach-no)]
     [:tr {:style {:border :none}}
      [:td {:style {:border :none}}
       (let [focusing? (atom false)]
@@ -290,7 +290,7 @@
                                      (fn [e] (.preventDefault e)))
                   :on-drop         (when prepable
                                      (fn []
-                                       (let [card-name (get @state :dragging)]
+                                       (let [{:keys [card-name]} (get @state :dragging)]
                                          (swap! state assoc :game (cmd/prep-spell breach-no card-name)))))}
          (str name-ui
               (when (= :opened status)
@@ -744,16 +744,7 @@
                   [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard" (when show-purchased? "Purchased")])]
                   (->> players
                        (mapk-indexed (fn [player-no {:keys [name name-ui title type life ability aether breaches hand play-area deck discard purchased trophies active? choice-value interaction]}]
-                                       (let [{:keys [max repeatable?]} (get-in @state [:game :choice])
-                                             breach-no     (->> breaches
-                                                                (filter (comp #{:opened :focused} :status))
-                                                                (filter (comp empty? :prepped-spells))
-                                                                (sort-by (juxt :status :bonus-damage))
-                                                                last
-                                                                :breach-no)
-                                             add-breach-no (fn [{:keys [type] :as card}]
-                                                             (cond-> card
-                                                                     (= :spell type) (assoc :breach-no breach-no)))]
+                                       (let [{:keys [max repeatable?]} (get-in @state [:game :choice])]
                                          [:tr
                                           [:td
                                            [:div
@@ -800,9 +791,7 @@
                                                                   :on-click (fn [] (swap! state assoc :game (cmd/play-all-gems)))}
                                                          "Play all Gems"]
                                                    [:hr]])
-                                                (->> hand
-                                                     (map add-breach-no)
-                                                     (mapk (partial view-card max)))]]
+                                                (mapk (partial view-card max) hand)]]
                                           [:td [:div
                                                 (when (and active? (get-in @state [:game :commands :can-discard-all?]))
                                                   [:div

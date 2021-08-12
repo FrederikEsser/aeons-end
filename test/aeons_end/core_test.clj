@@ -99,11 +99,11 @@
              {:players [{:breaches [{:status         :focused
                                      :prepped-spells [spark]}]
                          :phase    :main}]}))
-      (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 with status Closed"
+      (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status :closed}]}]}
                                 (prep-spell 0 0 :spark))))
-      (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0 which already has prepped spells"
+      (is (thrown-with-msg? AssertionError #"Prep error: You can't prep Spark to breach 0"
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status         :opened
                                                         :prepped-spells [spark]}]}]}
