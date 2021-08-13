@@ -240,6 +240,15 @@
                     :effects [[::feedback-aura-deal-damage]]
                     :quote   "'The void flows through me now; I am one with nothing.' Xaxos, Voidbringer"})
 
+(def feral-lightning {:name     :feral-lightning
+                      :type     :spell
+                      :cost     5
+                      :text     "This spell may be prepped to a closed breach without focusing it."
+                      :cast     "Deal 3 damage."
+                      :preps-to :closed-breach
+                      :effects  [[:deal-damage 3]]
+                      :quote    "'All things can be tamed.' Lash, Breach Mage Scout"})
+
 (def ignite {:name    :ignite
              :type    :spell
              :cost    4
@@ -510,6 +519,7 @@
             dark-fire
             essence-theft
             feedback-aura
+            feral-lightning
             ignite
             jagged-lightning
             lava-tendril

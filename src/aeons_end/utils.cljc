@@ -321,11 +321,13 @@
                              (apply +)))]
     (>= valid-aether cost)))
 
-(defn can-prep? [game {:keys [player-no breach-no closed-breaches?] :as args}]
+(defn can-prep? [game {:keys [player-no breach-no card closed-breaches?] :as args}]
   (if breach-no
     (let [{:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
+          {:keys [preps-to]} card
           breach-stati (cond-> #{:opened :focused}
-                               closed-breaches? (conj :closed))]
+                               (or (= :closed-breach preps-to)
+                                   closed-breaches?) (conj :closed))]
       (and (contains? breach-stati status)
            (empty? prepped-spells)))
     (let [number-of-breaches (->> (get-in game [:players player-no :breaches])

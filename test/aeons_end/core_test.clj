@@ -107,7 +107,18 @@
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status         :opened
                                                         :prepped-spells [spark]}]}]}
-                                (prep-spell 0 0 :spark)))))
+                                (prep-spell 0 0 :spark))))
+      (let [spark (assoc spark :preps-to :closed-breach)]
+        (is (= (-> {:players [{:hand     [spark]
+                               :breaches [{:status :closed}]}]}
+                   (prep-spell 0 0 :spark))
+               {:players [{:breaches [{:status         :closed
+                                       :prepped-spells [spark]}]}]}))
+        (is (= (-> {:players [{:hand     [spark]
+                               :breaches [{:status :opened}]}]}
+                   (prep-spell 0 0 :spark))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [spark]}]}]}))))
     (testing "Casting"
       (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
                              :phase    :casting}]
