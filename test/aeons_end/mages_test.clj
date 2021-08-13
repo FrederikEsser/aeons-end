@@ -125,8 +125,7 @@
                          :life    10}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
                              :life    10}]}
-                 (activate-ability 0)
-                 (choose {:player-no 0}))
+                 (activate-ability 0))
              {:players [{:ability (assoc brink-siphon :charges 0)
                          :life    10}]}))
       (is (= (-> {:players [{:ability (assoc brink-siphon :charges 5)
@@ -424,6 +423,82 @@
                            :hand    [spark]
                            :discard [spark]}]
                 :nemesis {:life 48}}))))))
+
+(deftest kadir-test
+  (testing "Kadir"
+    (testing "Otherworldly Gate"
+      (let [spark  (assoc spark :id 1)
+            ignite (assoc ignite :id 2)]
+        (is (= (-> {:current-player 1
+                    :players        [{:ability (assoc otherworldly-gate :charges 5)}
+                                     {:discard [crystal spark spark ignite ignite crystal]}]}
+                   (activate-ability 0)
+                   (choose [{:player-no 1 :card-id 2}
+                            {:player-no 1 :card-id 2}
+                            {:player-no 1 :card-id 1}]))
+               {:current-player 1
+                :players        [{:ability (assoc otherworldly-gate :charges 0)}
+                                 {:hand            [ignite ignite spark]
+                                  :discard         [crystal spark crystal]
+                                  :breach-capacity 2}]}))
+        (is (= (-> {:current-player 1
+                    :players        [{:ability (assoc otherworldly-gate :charges 5)}
+                                     {:discard [crystal spark crystal]}]}
+                   (activate-ability 0)
+                   (choose {:player-no 1 :card-id 1}))
+               {:current-player 1
+                :players        [{:ability (assoc otherworldly-gate :charges 0)}
+                                 {:hand            [spark]
+                                  :discard         [crystal crystal]
+                                  :breach-capacity 2}]}))
+        (is (= (-> {:current-player 1
+                    :players        [{:ability (assoc otherworldly-gate :charges 5)}
+                                     {:discard [crystal crystal]}]}
+                   (activate-ability 0))
+               {:current-player 1
+                :players        [{:ability (assoc otherworldly-gate :charges 0)}
+                                 {:discard         [crystal crystal]
+                                  :breach-capacity 2}]}))
+        (is (= (-> {:players [{:hand            [ignite]
+                               :breach-capacity 2
+                               :breaches        [{:status         :opened
+                                                  :prepped-spells [spark]}]}]}
+                   (prep-spell 0 0 :ignite))
+               {:players [{:breach-capacity 2
+                           :breaches        [{:status         :opened
+                                              :prepped-spells [spark ignite]}]}]}))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand            [ignite]
+                                              :breach-capacity 2
+                                              :breaches        [{:status         :focused
+                                                                 :prepped-spells [spark]}]}]}
+                                  (prep-spell 0 0 :ignite))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand            [spark]
+                                              :breach-capacity 2
+                                              :breaches        [{:status         :opened
+                                                                 :prepped-spells [spark ignite]}]}]}
+                                  (prep-spell 0 0 :spark))))
+        (is (= (-> {:players [{:hand            [ignite]
+                               :breach-capacity 2
+                               :breaches        [{:status         :opened
+                                                  :prepped-spells [spark spark]}
+                                                 {:status         :opened
+                                                  :prepped-spells [spark]}]}]}
+                   (prep-spell 0 1 :ignite))
+               {:players [{:breach-capacity 2
+                           :breaches        [{:status         :opened
+                                              :prepped-spells [spark spark]}
+                                             {:status         :opened
+                                              :prepped-spells [spark ignite]}]}]}))
+        (is (= (-> {:players [{:breach-capacity 2
+                               :breaches        [{:status         :opened
+                                                  :prepped-spells [spark spark]}]
+                               :phase           :main}]}
+                   (end-turn 0))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [spark spark]}]
+                           :phase    :out-of-turn}]}))))))
 
 (deftest lash-test
   (testing "Lash"

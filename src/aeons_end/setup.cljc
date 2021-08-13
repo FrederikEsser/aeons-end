@@ -1,6 +1,6 @@
 (ns aeons-end.setup
   (:require [aeons-end.operations :refer [push-effect-stack check-stack]]
-            [aeons-end.cards.common :refer [player-starting-life gravehold-starting-life]]
+            [aeons-end.cards.common]
             [aeons-end.nemesis :as nemesis]
             [aeons-end.cards.gem :as gem]
             [aeons-end.cards.relic :as relic]
@@ -10,7 +10,7 @@
             [aeons-end.cards.power :as power]
             [aeons-end.mages :as mages]
             [aeons-end.turn-order :as turn-order]
-            [aeons-end.utils :as ut]))
+            [aeons-end.utils :as ut :refer [player-starting-life gravehold-starting-life]]))
 
 (def basic-nemesis-cards {1 {1 1
                              2 3

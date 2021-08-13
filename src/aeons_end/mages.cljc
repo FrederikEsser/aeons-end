@@ -66,7 +66,7 @@
                    :effects     [[:give-choice {:title   :brink-siphon
                                                 :text    "Any player gains 4 life."
                                                 :choice  [:heal {:life 4}]
-                                                :options [:players {:not-exhausted true}]
+                                                :options [:players {:can-heal true}]
                                                 :min     1
                                                 :max     1}]]})
 
@@ -235,6 +235,49 @@
              :deck     [crystal crystal crystal twin-opal spark]
              :ability  pyromancers-guile})
 
+(def emerald-shard {:name            :emerald-shard
+                    :type            :gem
+                    :cost            0
+                    :auto-play-index 1
+                    :text            ["Any player gains 1 life."
+                                      "OR"
+                                      "Gain 1 Aether."]
+                    :effects         [[:give-choice {:title     :emerald-shard
+                                                     :text      "Any player gains 1 life."
+                                                     :choice    [:heal {:life 1}]
+                                                     :options   [:players {:can-heal true}]
+                                                     :or-choice {:text    "Gain 1 Aether"
+                                                                 :effects [[:gain-aether 1]]}
+                                                     :max       1}]]})
+
+(defn otherworldly-gate-effects [{:keys [current-player] :as game} _]
+  (-> game
+      (assoc-in [:players current-player :breach-capacity] 2)
+      (push-effect-stack {:player-no current-player
+                          :effects   [[:give-choice {:title   :otherworldly-gate
+                                                     :text    "You may return up to three spells in your discard pile to your hand."
+                                                     :choice  :take-from-discard
+                                                     :options [:player :discard {:type :spell}]
+                                                     :max     3}]]})))
+
+(effects/register {::otherworldly-gate-effects otherworldly-gate-effects})
+
+(def otherworldly-gate {:name        :otherworldly-gate
+                        :activation  :any-main-phase
+                        :charge-cost 5
+                        :text        "That player may return up to three spells in their discard pile to their hand. That player may prep up to two spells to each of their opened breaches this turn."
+                        :effects     [[::otherworldly-gate-effects]]})
+
+(def kadir {:name     :kadir
+            :title    "Breach Mage Delver"
+            :breaches [{}
+                       {:stage 2}
+                       {:stage 1}
+                       {:stage 2}]
+            :hand     [emerald-shard crystal crystal crystal spark]
+            :deck     [crystal crystal crystal spark spark]
+            :ability  otherworldly-gate})
+
 (defn quartz-shard-move-turn-order-card [game {:keys [choice]}]
   (cond-> game
           (= :bottom choice) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
@@ -356,7 +399,9 @@
                    :type            :gem
                    :cost            0
                    :auto-play-index 1
-                   :text            "Gain 1 Aether. OR Cast any player's prepped spell."
+                   :text            ["Cast any player's prepped spell."
+                                     "OR"
+                                     "Gain 1 Aether."]
                    :effects         [[::garnet-shard-choice]]})
 
 (def divine-augury {:name        :divine-augury
@@ -492,7 +537,7 @@
                                           [[:give-choice {:title   :eidolon-shroud
                                                           :text    "Any ally gains 5 life."
                                                           :choice  [:heal {:life 5}]
-                                                          :options [:players {:ally true :not-exhausted true}]
+                                                          :options [:players {:ally true :can-heal true}]
                                                           :min     1
                                                           :max     1}]])})))
 
@@ -585,6 +630,7 @@
             gex
             indira
             jian
+            kadir
             lash
             mist
             quilius

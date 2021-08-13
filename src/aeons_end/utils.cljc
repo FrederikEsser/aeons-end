@@ -323,13 +323,16 @@
 
 (defn can-prep? [game {:keys [player-no breach-no card closed-breaches?] :as args}]
   (if breach-no
-    (let [{:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
+    (let [{:keys [breach-capacity] :or {breach-capacity 1}} (get-in game [:players player-no])
+          {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
           {:keys [preps-to]} card
           breach-stati (cond-> #{:opened :focused}
                                (or (= :closed-breach preps-to)
                                    closed-breaches?) (conj :closed))]
-      (and (contains? breach-stati status)
-           (empty? prepped-spells)))
+      (or (and (contains? breach-stati status)
+               (empty? prepped-spells))
+          (and (= :opened status)
+               (< (count prepped-spells) breach-capacity))))
     (let [number-of-breaches (->> (get-in game [:players player-no :breaches])
                                   count)]
       (->> (range number-of-breaches)
@@ -354,6 +357,18 @@
        (sort-by (juxt status-sort-order :bonus-damage))
        reverse
        (map :breach-no)))
+
+(defn player-starting-life [difficulty]
+  (case difficulty
+    :beginner 12
+    :extinction 8
+    10))
+
+(defn gravehold-starting-life [difficulty]
+  (case difficulty
+    :beginner 35
+    :extinction 25
+    30))
 
 (defn get-card-strength [{:keys [text cast]}]
   (let [all-text (->> (ensure-coll text)
@@ -451,9 +466,9 @@
        (filter (comp #{:crystal} :name))
        count))
 
-(defn options-from-players [{:keys [players] :as game} {:keys [player-no area card-id]}
+(defn options-from-players [{:keys [players difficulty] :as game} {:keys [player-no area card-id]}
                             & [{:keys [ally most-charges min-charges activation fully-charged
-                                       min-number-of-prepped-spells min-hand lowest-life most-life not-exhausted min-deck+discard
+                                       min-number-of-prepped-spells min-hand lowest-life most-life can-heal min-deck+discard
                                        this last type cost min-cost max-cost can-prep
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
                                        opened max-breach-no min-non-corruption]}]]
@@ -499,7 +514,8 @@
                                  lowest-life (filter (comp #{low-life} :life))
                                  most-life (filter (comp #{high-life} :life))
                                  most-crystals (filter (comp #{max-crystals} count-crystals))
-                                 not-exhausted (filter (comp pos? :life)))]
+                                 can-heal (filter (fn [{:keys [life]}]
+                                                    (< 0 life (player-starting-life difficulty)))))]
     (cond
       (#{:players :ability} area) (->> valid-players
                                        (map #(select-keys % [:player-no])))

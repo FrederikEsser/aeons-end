@@ -305,7 +305,7 @@
            (map #(assoc % :breach-no breach-no))
            (mapk (partial view-card max)))]]))
 
-(defn view-ability [{:keys [name-ui text type charges charge-cost interaction choice-value]} player-no]
+(defn view-ability [{:keys [name-ui text activation-text charges charge-cost interaction choice-value]} player-no]
   (let [disabled (nil? interaction)]
     [:div {:style {:padding-top "3px"}}
      [:button {:style    (button-style :disabled disabled
@@ -319,10 +319,14 @@
                                     :chargeable (swap! state assoc :game (cmd/charge-ability))
                                     :activatable (swap! state assoc :game (cmd/activate-ability player-no)))))}
       [:div
-       [:div {:style {:font-size "1.3em"}}
+       [:div {:style {:font-size "1.2em"}}
         name-ui]
        [:div {:style {:font-size "1.1em"}}
         (str "Charges: " charges "/" charge-cost)]
+       [:hr {:style {:margin "1px"}}]
+       [:div {:style {:padding-top "3px"
+                      :font-size   "0.9em"}}
+        activation-text]
        (format-text text)]]]))
 
 (defn view-player-pile [pile max]

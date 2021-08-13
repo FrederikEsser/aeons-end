@@ -946,7 +946,7 @@
 (defn clear-player [{:keys [current-player] :as game} {:keys [player-no]}]
   (-> game
       (cond-> current-player (assoc :current-player :no-one))
-      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn)
+      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn :breach-capacity)
       (medley/update-existing-in [:players player-no :breaches]
                                  (partial mapv (fn [{:keys [status] :as breach}]
                                                  (cond-> breach

@@ -249,10 +249,14 @@
                 charges
                 charge-cost]} ability
         {:keys [phase]} (get-in game [:players current-player])]
-    (merge {:name-ui     (ut/format-name name)
-            :text        text
-            :charges     charges
-            :charge-cost charge-cost}
+    (merge {:name-ui         (ut/format-name name)
+            :text            text
+            :charges         charges
+            :charge-cost     charge-cost
+            :activation-text (case activation
+                               :your-main-phase "Activate during your main phase:"
+                               :any-main-phase "Activate during any player's main phase:"
+                               :nemesis-draw "Activate during the nemesis draw phase:")}
            (cond
              (and (= current-player player-no)
                   (not choice)

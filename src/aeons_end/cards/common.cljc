@@ -4,18 +4,6 @@
             [aeons-end.effects :as effects]
             [medley.core :as medley]))
 
-(defn player-starting-life [difficulty]
-  (case difficulty
-    :beginner 12
-    :extinction 8
-    10))
-
-(defn gravehold-starting-life [difficulty]
-  (case difficulty
-    :beginner 35
-    :extinction 25
-    30))
-
 (defn gain-aether [{:keys [current-player] :as game} {:keys [player-no arg earmark restrict]}]
   (let [current-player? (or (nil? current-player)
                             (= current-player player-no))]
@@ -33,14 +21,14 @@
 (effects/register {:gain-aether gain-aether})
 
 (defn heal [{:keys [difficulty] :as game} {:keys [player-no life]}]
-  (let [player-starting-life (player-starting-life difficulty)
+  (let [player-starting-life (ut/player-starting-life difficulty)
         current-life         (get-in game [:players player-no :life])]
     (cond-> game
             (pos? current-life) (assoc-in [:players player-no :life] (min (+ current-life life)
                                                                           player-starting-life)))))
 
 (defn heal-gravehold [{:keys [difficulty] :as game} {:keys [arg]}]
-  (let [gravehold-starting-life (gravehold-starting-life difficulty)
+  (let [gravehold-starting-life (ut/gravehold-starting-life difficulty)
         current-life            (get-in game [:gravehold :life])]
     (-> game
         (assoc-in [:gravehold :life] (min (+ current-life arg)

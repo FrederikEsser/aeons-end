@@ -143,7 +143,7 @@
                                     :kill-effects [[:give-choice {:title   :char
                                                                   :text    "Any player gains 2 life."
                                                                   :choice  [:heal {:life 2}]
-                                                                  :options [:players {:not-exhausted true}]
+                                                                  :options [:players {:can-heal true}]
                                                                   :min     1
                                                                   :max     1}]]}]]
            :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
@@ -204,7 +204,7 @@
                                                     [:give-choice {:title   :essence-theft
                                                                    :text    "Any player gains 1 life."
                                                                    :choice  [:heal {:life 1}]
-                                                                   :options [:players {:not-exhausted true}]
+                                                                   :options [:players {:can-heal true}]
                                                                    :min     1
                                                                    :max     1}]]})))
 
