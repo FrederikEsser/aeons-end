@@ -195,12 +195,12 @@
                       active?                    :active-player?
                       :as                        game}]
   (->> breaches
-       (map-indexed (fn view-breach [idx {:keys [status prepped-spells focus-cost open-costs stage bonus-damage type]}]
+       (map-indexed (fn view-breach [breach-no {:keys [status prepped-spells focus-cost open-costs stage bonus-damage type]}]
                       (let [open-cost (when (and open-costs stage) (get open-costs stage))]
                         (merge {:name-ui   (if (= :destroyed status)
                                              "X"
-                                             (ut/format-breach-no idx))
-                                :breach-no idx
+                                             (ut/format-breach-no breach-no))
+                                :breach-no breach-no
                                 :status    status}
                                (when (not-empty prepped-spells)
                                  {:prepped-spells (->> prepped-spells
@@ -214,11 +214,12 @@
                                                                      (when (and active?
                                                                                 (not choice)
                                                                                 (op/can-use-while-prepped? game {:player-no player-no
+                                                                                                                 :breach-no breach-no
                                                                                                                  :card      card}))
                                                                        {:interaction :while-preppedable})
                                                                      (choice-interaction {:area      :prepped-spells
                                                                                           :player-no player-no
-                                                                                          :breach-no idx
+                                                                                          :breach-no breach-no
                                                                                           :card-name name} choice)))))})
                                (when (and (= :opened status)
                                           bonus-damage)
@@ -239,7 +240,7 @@
                                                         (ut/can-afford? player open-cost :breach) (conj :openable))})
                                (choice-interaction {:area      :breaches
                                                     :player-no player-no
-                                                    :breach-no idx} choice)))))))
+                                                    :breach-no breach-no} choice)))))))
 
 (defn view-ability [{:keys [player current-player choice] :as game}]
   (let [{:keys [player-no ability]} player

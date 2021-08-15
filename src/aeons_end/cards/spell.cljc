@@ -289,6 +289,36 @@
                                                 :max     1}]]
                        :quote   "'Let us hope it hurts.' Sparrow, Breach Mage Soldier"})
 
+(defn kindle-can-use? [game {:keys [player-no breach-no]}]
+  (and (->> (get-in game [:players player-no :breaches breach-no :prepped-spells])
+            (not-any? (comp #{:spark} :name)))
+       (->> (get-in game [:players player-no :hand])
+            (some (comp #{:spark} :name)))))
+
+(effects/register-predicates {::kindle-can-use? kindle-can-use?})
+
+(defn kindle-prep-spark [game {:keys [player-no breach-no]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name :spark})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:move-card {:card-name :spark
+                                                      :from      :hand
+                                                      :to        :breach
+                                                      :breach-no breach-no}]
+                                         [:on-prep-spell {:card card}]]})))
+
+(effects/register {::kindle-prep-spark kindle-prep-spark})
+
+(def kindle {:name          :kindle
+             :type          :spell
+             :cost          4
+             :text          "While prepped, during your main phase you may also prep one Spark to the breach this spell is prepped to."
+             :cast          "Deal 4 damage."
+             :while-prepped {:phase    :main
+                             :can-use? ::kindle-can-use?
+                             :effects  [[::kindle-prep-spark]]}
+             :effects       [[:deal-damage 3]]
+             :quote         "'Let them burn along with us.' Garu, Oathsworn Protector"})
+
 (def lava-tendril {:name          :lava-tendril
                    :type          :spell
                    :cost          4
@@ -522,6 +552,7 @@
             feral-lightning
             ignite
             jagged-lightning
+            kindle
             lava-tendril
             nether-conduit
             nova-forge
