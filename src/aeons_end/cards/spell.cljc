@@ -24,31 +24,45 @@
                                [::amplify-vision-damage]]
                      :quote   "'The breaches are merely a mirror through which worlds whisper.' Phaedraxa, Breach Mage Seer"})
 
+(defn arcane-nexus-can-use? [game {:keys [player-no]}]
+  (->> (get-in game [:players player-no :play-area])
+       (some (comp #{:gem} :type))))
+
+(effects/register-predicates {::arcane-nexus-can-use? arcane-nexus-can-use?})
+
 (def arcane-nexus {:name          :arcane-nexus
                    :type          :spell
                    :cost          7
                    :text          "While prepped, once per turn during your main phase you may return a gem you played this turn to your hand."
                    :cast          "Deal 4 damage."
-                   :while-prepped {:phase   :main
-                                   :once    true
-                                   :effects [[:give-choice {:title   :arcane-nexus
-                                                            :text    "Return a gem you played this turn to your hand."
-                                                            :choice  [:move-card {:from :play-area
-                                                                                  :to   :hand}]
-                                                            :options [:player :play-area {:type :gem}]
-                                                            :min     1
-                                                            :max     1}]]}
+                   :while-prepped {:phase    :main
+                                   :once     true
+                                   :can-use? ::arcane-nexus-can-use?
+                                   :effects  [[:give-choice {:title   :arcane-nexus
+                                                             :text    "Return a gem you played this turn to your hand."
+                                                             :choice  [:move-card {:from :play-area
+                                                                                   :to   :hand}]
+                                                             :options [:player :play-area {:type :gem}]
+                                                             :min     1
+                                                             :max     1}]]}
                    :effects       [[:deal-damage 4]]
                    :quote         "'The taint of aether clings to everything in Gravehold. And we that survived near-extinction reek with it, too.' Nerva, Survivor"})
+
+(defn aurora-can-use? [game {:keys [player-no]}]
+  (let [{:keys [charges charge-cost]} (get-in game [:players player-no :ability])]
+    (< charges charge-cost)))
+
+(effects/register-predicates {::aurora-can-use? aurora-can-use?})
 
 (def aurora {:name          :aurora
              :type          :spell
              :cost          5
-             :text          "While prepped, once per turn during your main plase you may gain 1 charge."
+             :text          "While prepped, once per turn during your main phase you may gain 1 charge."
              :cast          "Deal 3 damage."
-             :while-prepped {:phase   :main
-                             :once    true
-                             :effects [[:gain-charge]]}
+             :while-prepped {:phase    :main
+                             :once     true
+                             :can-use? ::aurora-can-use?
+                             :effects  [[:gain-charge]]}
              :effects       [[:deal-damage 3]]
              :quote         "'It is only natural that they question my being here. But let my answer be written in fire.' Yan Magda, Enlightened Exile"})
 
