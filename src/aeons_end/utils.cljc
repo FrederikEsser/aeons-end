@@ -339,6 +339,18 @@
            (some (fn [breach-no]
                    (can-prep? game (assoc args :breach-no breach-no))))))))
 
+(defn get-spells-in-closed-breaches [game player-no]
+  (->> (get-in game [:players player-no :breaches])
+       (remove (comp #{:opened} :status))
+       (mapcat :prepped-spells)))
+
+(defn can-main? [game player-no]
+  (let [{:keys [phase]} (get-in game [:players player-no])]
+    (case phase
+      :main true
+      :casting (empty? (get-spells-in-closed-breaches game player-no))
+      false)))
+
 (defn- status-sort-order [{:keys [status]}]
   (case status
     :focused 1

@@ -42,9 +42,9 @@
          (when quote
            {:quote quote})))
 
-(defn view-supply-card [{{:keys [phase] :as player} :player
-                         choice                     :choice
-                         :as                        game}
+(defn view-supply-card [{{:keys [player-no] :as player} :player
+                         choice                         :choice
+                         :as                            game}
                         {{:keys [name type cost] :as card} :card
                          :keys                             [pile-size total-pile-size]
                          :or                               {pile-size 0}}]
@@ -54,7 +54,7 @@
          (when (and total-pile-size
                     (> total-pile-size pile-size))
            {:total-number-of-cards total-pile-size})
-         (when (and (#{:casting :main} phase)
+         (when (and (ut/can-main? game player-no)
                     (not choice)
                     (pos? pile-size)
                     (ut/can-afford? player cost type))
@@ -90,7 +90,7 @@
                         (when (and active?
                                    (= :hand area)
                                    (not choice)
-                                   (#{:casting :main} phase))
+                                   (ut/can-main? game player-no))
                           (cond
                             (#{:gem :relic} type) {:interaction :playable}
                             (and (#{:spell} type)
@@ -232,7 +232,7 @@
                                  {:type type})
                                (when (and active?
                                           (not choice)
-                                          (#{:casting :main} phase)
+                                          (ut/can-main? game player-no)
                                           focus-cost
                                           open-cost)
                                  {:interactions (cond-> #{}
@@ -261,7 +261,7 @@
            (cond
              (and (= current-player player-no)
                   (not choice)
-                  (#{:casting :main} phase)
+                  (ut/can-main? game player-no)
                   (ut/can-afford? player 2 :charge-ability)
                   (not (>= charges charge-cost))) {:interaction :chargeable}
              (and (or (and (= current-player player-no)
@@ -269,7 +269,7 @@
                       (and (int? current-player)
                            (= :any-main-phase activation)))
                   (not choice)
-                  (#{:casting :main} phase)
+                  (ut/can-main? game player-no)
                   (>= charges charge-cost)) {:interaction :activatable})
            (choice-interaction {:area      :ability
                                 :player-no player-no}
@@ -353,7 +353,7 @@
                                               {:life life})
                                             (when (and can-discard?
                                                        (not choice)
-                                                       (#{:casting :main} phase))
+                                                       (ut/can-main? game player-no))
                                               {:interaction :discardable})
                                             (choice-interaction {:area      :play-area
                                                                  :card-name name} choice)
@@ -476,13 +476,14 @@
      :can-discard-all?   (boolean (and (not choice)
                                        (not-empty play-area)))
      :can-play-all-gems? (boolean (and (not choice)
-                                       (#{:casting :main} phase)
+                                       (ut/can-main? game current-player)
                                        (some (comp #{:gem} :type) hand)))
      :can-end-turn?      (and (not choice)
                               (empty? play-area)
-                              (not= phase :end-of-game))
+                              (or (ut/can-main? game current-player)
+                                  (= :draw phase)))
      :confirm-end-turn   (cond (<= 2 aether) "You can spend aether."
-                               (and (#{:casting :main} phase)
+                               (and (ut/can-main? game current-player)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
 (defn view-turn-order [{:keys [deck discard revealed-cards]} {:keys [source area options] :as choice}]

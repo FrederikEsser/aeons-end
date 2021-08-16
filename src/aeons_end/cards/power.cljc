@@ -134,7 +134,6 @@
 
 (defn cataclysmic-fate-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
-                            (filter (comp #{:opened} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
                             (mapcat :prepped-spells))]
     (some (comp #(>= % 5) :cost) prepped-spells)))
 
@@ -319,7 +318,6 @@
 
 (defn planar-collision-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
-                            (filter (comp #{:opened} :status)) ; spells prepped in closed breaches have to be cast before entering the Main phase
                             (mapcat :prepped-spells)
                             count)]
     (>= prepped-spells 2)))
@@ -367,7 +365,6 @@
 
 (defn reality-rupture-can-discard? [game {:keys [player-no]}]
   (->> (get-in game [:players player-no :breaches])
-       (filter (comp #{:opened} :status))                   ; spells prepped in closed breaches have to be cast before entering the Main phase
        (mapcat :prepped-spells)
        (filter (comp #(>= % 3) :cost))
        count

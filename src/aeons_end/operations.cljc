@@ -172,9 +172,7 @@
                                             (#{:casting} current-phase) :at-end-casting
                                             (#{:main} current-phase) :at-end-main
                                             (#{:draw} current-phase) :at-end-draw)
-            spells-in-closed-breaches (->> (get-in game [:players player-no :breaches])
-                                           (remove (comp #{:opened} :status))
-                                           (mapcat :prepped-spells))]
+            spells-in-closed-breaches (ut/get-spells-in-closed-breaches game player-no)]
         (assert (-> (drop-while (comp not #(= current-phase %)) phase-order)
                     set
                     (contains? phase)) (str "Phase error: You can't go from the " (ut/format-name current-phase)
