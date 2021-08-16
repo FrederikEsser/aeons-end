@@ -107,18 +107,7 @@
                             (-> {:players [{:hand     [spark]
                                             :breaches [{:status         :opened
                                                         :prepped-spells [spark]}]}]}
-                                (prep-spell 0 0 :spark))))
-      (let [spark (assoc spark :preps-to :closed-breach)]
-        (is (= (-> {:players [{:hand     [spark]
-                               :breaches [{:status :closed}]}]}
-                   (prep-spell 0 0 :spark))
-               {:players [{:breaches [{:status         :closed
-                                       :prepped-spells [spark]}]}]}))
-        (is (= (-> {:players [{:hand     [spark]
-                               :breaches [{:status :opened}]}]}
-                   (prep-spell 0 0 :spark))
-               {:players [{:breaches [{:status         :opened
-                                       :prepped-spells [spark]}]}]}))))
+                                (prep-spell 0 0 :spark)))))
     (testing "Casting"
       (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
                              :phase    :casting}]
@@ -171,6 +160,230 @@
                                                         :prepped-spells [spark]}]
                                             :phase    :casting}]}
                                 (play 0 :crystal)))))))
+
+(deftest dual-breach-spells-test
+  (testing "Dual breach spells"
+    (let [dual-breach-spell {:id          1
+                             :name        :dual-breach-spell
+                             :type        :spell
+                             :dual-breach true
+                             :effects     [[:deal-damage 1]]}]
+      (testing "Prepping"
+        (is (= (-> {:players [{:hand     [dual-breach-spell]
+                               :breaches [{:status :opened}
+                                          {:status :opened}]}]}
+                   (prep-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [dual-breach-spell]}
+                                      {:status :opened}]}]}))
+        (is (= (-> {:players [{:hand     [dual-breach-spell]
+                               :breaches [{:status :opened}
+                                          {:status :focused}]}]}
+                   (prep-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [dual-breach-spell]}
+                                      {:status :focused}]}]}))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [dual-breach-spell]
+                                              :breaches [{:status :opened}
+                                                         {:status :closed}]}]}
+                                  (prep-spell 0 0 :dual-breach-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [dual-breach-spell]
+                                              :breaches [{:status :opened}
+                                                         {:status :opened}]}]}
+                                  (prep-spell 0 1 :dual-breach-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [dual-breach-spell]
+                                              :breaches [{:status :opened}
+                                                         {:status :closed}
+                                                         {:status :opened}]}]}
+                                  (prep-spell 0 0 :dual-breach-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [dual-breach-spell]
+                                              :breaches [{:status :opened}
+                                                         {:status :destroyed}
+                                                         {:status :opened}]}]}
+                                  (prep-spell 0 0 :dual-breach-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [dual-breach-spell]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [spark]}
+                                                         {:status :opened}]}]}
+                                  (prep-spell 0 0 :dual-breach-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [dual-breach-spell]
+                                              :breaches [{:status :opened}
+                                                         {:status         :opened
+                                                          :prepped-spells [spark]}]}]}
+                                  (prep-spell 0 0 :dual-breach-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [spark]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [dual-breach-spell]}
+                                                         {:status :opened}]}]}
+                                  (prep-spell 0 0 :spark))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [spark]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [dual-breach-spell]}
+                                                         {:status :opened}]}]}
+                                  (prep-spell 0 1 :spark))))
+        (is (= (-> {:players [{:hand            [dual-breach-spell]
+                               :breaches        [{:status         :opened
+                                                  :prepped-spells [spark]}
+                                                 {:status         :opened
+                                                  :prepped-spells [spark]}]
+                               :breach-capacity 2}]}
+                   (prep-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches        [{:status         :opened
+                                              :prepped-spells [spark dual-breach-spell]}
+                                             {:status         :opened
+                                              :prepped-spells [spark]}]
+                           :breach-capacity 2}]}))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand            [dual-breach-spell]
+                                              :breaches        [{:status         :opened
+                                                                 :prepped-spells [spark]}
+                                                                {:status         :focused
+                                                                 :prepped-spells [spark]}]
+                                              :breach-capacity 2}]}
+                                  (prep-spell 0 0 :dual-breach-spell))))
+        (is (= (-> {:players [{:hand            [dual-breach-spell]
+                               :breaches        [{:status         :opened
+                                                  :prepped-spells [spark]}
+                                                 {:status :opened}]
+                               :breach-capacity 2}]}
+                   (prep-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches        [{:status         :opened
+                                              :prepped-spells [spark dual-breach-spell]}
+                                             {:status :opened}]
+                           :breach-capacity 2}]}))
+        (let [dual-breach-spell-2 (assoc dual-breach-spell :id 2)]
+          (is (= (-> {:players [{:hand            [dual-breach-spell-2]
+                                 :breaches        [{:status         :opened
+                                                    :prepped-spells [spark dual-breach-spell]}
+                                                   {:status :opened}
+                                                   {:status         :opened
+                                                    :prepped-spells [spark]}]
+                                 :breach-capacity 2}]}
+                     (prep-spell 0 1 :dual-breach-spell))
+                 {:players [{:breaches        [{:status         :opened
+                                                :prepped-spells [spark dual-breach-spell]}
+                                               {:status         :opened
+                                                :prepped-spells [dual-breach-spell-2]}
+                                               {:status         :opened
+                                                :prepped-spells [spark]}]
+                             :breach-capacity 2}]}))
+          (is (thrown-with-msg? AssertionError #"Prep error:"
+                                (-> {:players [{:hand            [spark]
+                                                :breaches        [{:status         :opened
+                                                                   :prepped-spells [spark dual-breach-spell]}
+                                                                  {:status         :opened
+                                                                   :prepped-spells [dual-breach-spell-2]}
+                                                                  {:status         :opened
+                                                                   :prepped-spells [spark]}]
+                                                :breach-capacity 2}]}
+                                    (prep-spell 0 1 :spark))))
+          (is (thrown-with-msg? AssertionError #"Prep error:"
+                                (-> {:players [{:hand            [spark]
+                                                :breaches        [{:status         :opened
+                                                                   :prepped-spells [spark dual-breach-spell]}
+                                                                  {:status         :opened
+                                                                   :prepped-spells [dual-breach-spell-2]}
+                                                                  {:status         :opened
+                                                                   :prepped-spells [spark]}]
+                                                :breach-capacity 2}]}
+                                    (prep-spell 0 2 :spark)))))
+        (is (thrown-with-msg? AssertionError #"Phase error:"
+                              (-> {:players [{:hand     [crystal]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [dual-breach-spell]}
+                                                         {:status :closed}]
+                                              :phase    :casting}]}
+                                  (play 0 :crystal)))))
+      (testing "Casting"
+        (is (= (-> {:players [{:breaches [{:prepped-spells [dual-breach-spell]}
+                                          {}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{}
+                                      {}]
+                           :discard  [dual-breach-spell]}]
+                :nemesis {:life 49}}))
+        (is (= (-> {:players [{:breaches [{:status         :opened
+                                           :bonus-damage   1
+                                           :prepped-spells [dual-breach-spell]}
+                                          {:status       :closed
+                                           :bonus-damage 1}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{:status       :opened
+                                       :bonus-damage 1}
+                                      {:status       :closed
+                                       :bonus-damage 1}]
+                           :discard  [dual-breach-spell]}]
+                :nemesis {:life 48}}))
+        (is (= (-> {:players [{:breaches [{:status         :opened
+                                           :bonus-damage   1
+                                           :prepped-spells [dual-breach-spell]}
+                                          {:status       :opened
+                                           :bonus-damage 1}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{:status       :opened
+                                       :bonus-damage 1}
+                                      {:status       :opened
+                                       :bonus-damage 1}]
+                           :discard  [dual-breach-spell]}]
+                :nemesis {:life 47}}))
+        (is (= (-> {:players [{:breaches [{:status         :opened
+                                           :opened-effects [[:gain-aether 1]]
+                                           :prepped-spells [dual-breach-spell]}
+                                          {}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{:status         :opened
+                                       :opened-effects [[:gain-aether 1]]}
+                                      {}]
+                           :discard  [dual-breach-spell]
+                           :aether   1}]
+                :nemesis {:life 49}}))
+        (is (= (-> {:players [{:breaches [{:prepped-spells [dual-breach-spell]}
+                                          {:status         :opened
+                                           :opened-effects [[:gain-aether 1]]}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :dual-breach-spell))
+               {:players [{:breaches [{}
+                                      {:status         :opened
+                                       :opened-effects [[:gain-aether 1]]}]
+                           :discard  [dual-breach-spell]
+                           :aether   1}]
+                :nemesis {:life 49}})))
+      (testing "Destroy breach"
+        (is (= (-> {:players [{:breaches [{:status         :opened
+                                           :prepped-spells [dual-breach-spell]}
+                                          {:status :closed}]}]}
+                   (destroy-breach 0 0))
+               {:players [{:breaches [{:status :destroyed}
+                                      {:status :closed}]
+                           :discard  [dual-breach-spell]}]}))
+        (is (= (-> {:players [{:breaches [{:status         :opened
+                                           :prepped-spells [dual-breach-spell]}
+                                          {:status :closed}]}]}
+                   (destroy-breach 0 1))
+               {:players [{:breaches [{:status :opened}
+                                      {:status :destroyed}]
+                           :discard  [dual-breach-spell]}]}))
+        (is (= (-> {:players [{:breaches [{:status         :opened
+                                           :prepped-spells [dual-breach-spell]}
+                                          {:status :closed}
+                                          {:status :closed}]}]}
+                   (destroy-breach 0 2))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [dual-breach-spell]}
+                                      {:status :closed}
+                                      {:status :destroyed}]}]}))))))
 
 (deftest buy-card-test
   (testing "Buy card"

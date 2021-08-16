@@ -5,8 +5,13 @@
             [aeons-end.utils :as ut]))
 
 (defn alien-element-gain-aether [game {:keys [player-no]}]
-  (let [breaches-with-prepped-spells (->> (get-in game [:players player-no :breaches])
-                                          (filter (comp not-empty :prepped-spells))
+  (let [number-of-breaches           (->> (get-in game [:players player-no :breaches])
+                                          count)
+        breaches-with-prepped-spells (->> (range number-of-breaches)
+                                          (keep (fn [breach-no]
+                                                  (->> (ut/get-prepped-spells game {:player-no player-no
+                                                                                    :breach-no breach-no})
+                                                       not-empty)))
                                           count)]
     (gain-aether game {:player-no player-no
                        :arg       (inc breaches-with-prepped-spells)})))

@@ -408,6 +408,19 @@
                        :discard  [dark-fire]}]
             :nemesis {:life 49}}))))
 
+(deftest feral-lightning-test
+  (testing "Feral Lightning"
+    (is (= (-> {:players [{:hand     [feral-lightning]
+                           :breaches [{:status :closed}]}]}
+               (prep-spell 0 0 :feral-lightning))
+           {:players [{:breaches [{:status         :closed
+                                   :prepped-spells [feral-lightning]}]}]}))
+    (is (= (-> {:players [{:hand     [feral-lightning]
+                           :breaches [{:status :opened}]}]}
+               (prep-spell 0 0 :feral-lightning))
+           {:players [{:breaches [{:status         :opened
+                                   :prepped-spells [feral-lightning]}]}]}))))
+
 (deftest ignite-test
   (testing "Ignite"
     (is (= (-> {:players [{:breaches [{:prepped-spells [ignite]}]}

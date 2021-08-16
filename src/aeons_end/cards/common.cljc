@@ -194,10 +194,20 @@
 (effects/register {:destroy-prepped-spells destroy-prepped-spells})
 
 (defn destroy-breach [game {:keys [player-no breach-no put-prepped-spells-in]}]
-  (let [{:keys [prepped-spells]} (get-in game [:players player-no :breaches breach-no])]
+  (let [{:keys [prepped-spells]} (get-in game [:players player-no :breaches breach-no])
+        dual-breach-spells (when (pos? breach-no)
+                             (->> (get-in game [:players player-no :breaches (dec breach-no) :prepped-spells])
+                                  (filter :dual-breach)))]
     (-> game
         (assoc-in [:players player-no :breaches breach-no] {:status :destroyed})
-        (cond-> (not-empty prepped-spells) (update-in [:players player-no put-prepped-spells-in] concat prepped-spells)))))
+        (cond-> (not-empty prepped-spells) (update-in [:players player-no put-prepped-spells-in] concat prepped-spells)
+                (not-empty dual-breach-spells) (push-effect-stack {:player-no player-no
+                                                                   :effects   (->> dual-breach-spells
+                                                                                   (map (fn [{:keys [name]}]
+                                                                                          [:move-card {:card-name name
+                                                                                                       :from      :breach
+                                                                                                       :breach-no (dec breach-no)
+                                                                                                       :to        put-prepped-spells-in}])))})))))
 
 (effects/register {:destroy-breach destroy-breach})
 

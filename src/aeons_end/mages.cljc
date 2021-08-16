@@ -96,8 +96,9 @@
                                                                   :bonus-damage 2}}]
                                        [:give-choice {:title   :tempest-sigil
                                                       :text    "You may prep a spell from your hand to a breach."
-                                                      :choice  [:prep-spell {:breach-no breach-no}]
-                                                      :options [:player :hand {:type :spell}]
+                                                      :choice  [:prep-spell]
+                                                      :options [:player :hand {:type     :spell
+                                                                               :can-prep {}}]
                                                       :max     1}]]}))
 
 (effects/register {::tempest-sigil-replace-breach tempest-sigil-replace-breach})

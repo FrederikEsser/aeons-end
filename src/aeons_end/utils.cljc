@@ -321,28 +321,41 @@
                              (apply +)))]
     (>= valid-aether cost)))
 
+(defn get-prepped-spells [game {:keys [player-no breach-no]}]
+  (concat (get-in game [:players player-no :breaches breach-no :prepped-spells])
+          (when (pos? breach-no)
+            (->> (get-in game [:players player-no :breaches (dec breach-no) :prepped-spells])
+                 (filter :dual-breach)))))
+
+(defn get-spells-in-closed-breaches [game player-no]
+  (->> (get-in game [:players player-no :breaches])
+       (keep-indexed (fn [breach-no {:keys [status]}]
+                       (when (#{:closed :focused} status)
+                         (get-prepped-spells game {:player-no player-no
+                                                   :breach-no breach-no}))))
+       (apply concat)))
+
 (defn can-prep? [game {:keys [player-no breach-no card closed-breaches?] :as args}]
   (if breach-no
     (let [{:keys [breach-capacity] :or {breach-capacity 1}} (get-in game [:players player-no])
-          {:keys [status prepped-spells]} (get-in game [:players player-no :breaches breach-no])
-          {:keys [preps-to]} card
-          breach-stati (cond-> #{:opened :focused}
-                               (or (= :closed-breach preps-to)
-                                   closed-breaches?) (conj :closed))]
-      (or (and (contains? breach-stati status)
-               (empty? prepped-spells))
-          (and (= :opened status)
-               (< (count prepped-spells) breach-capacity))))
+          {:keys [status]} (get-in game [:players player-no :breaches breach-no])
+          {:keys [dual-breach may-prep-to-closed-breach]} card
+          breach-stati   (cond-> #{:opened :focused}
+                                 (or may-prep-to-closed-breach
+                                     closed-breaches?) (conj :closed))
+          prepped-spells (get-prepped-spells game {:player-no player-no
+                                                   :breach-no breach-no})]
+      (cond-> (or (and (contains? breach-stati status)
+                       (empty? prepped-spells))
+                  (and (= :opened status)
+                       (< (count prepped-spells) breach-capacity)))
+              dual-breach (and' (can-prep? game {:player-no player-no
+                                                 :breach-no (inc breach-no)}))))
     (let [number-of-breaches (->> (get-in game [:players player-no :breaches])
                                   count)]
       (->> (range number-of-breaches)
            (some (fn [breach-no]
                    (can-prep? game (assoc args :breach-no breach-no))))))))
-
-(defn get-spells-in-closed-breaches [game player-no]
-  (->> (get-in game [:players player-no :breaches])
-       (remove (comp #{:opened} :status))
-       (mapcat :prepped-spells)))
 
 (defn can-main? [game player-no]
   (let [{:keys [phase]} (get-in game [:players player-no])]
@@ -351,24 +364,41 @@
       :casting (empty? (get-spells-in-closed-breaches game player-no))
       false)))
 
-(defn- status-sort-order [{:keys [status]}]
+(defn- status-sort-order [status]
   (case status
+    :destroyed 0
     :focused 1
     :closed 2
     :opened 3))
 
-(defn prepable-breaches [game {:keys [player-no card closed-breaches?]}]
-  (->> (get-in game [:players player-no :breaches])
-       (keep-indexed (fn [breach-no breach]
-                       (when (can-prep? game {:player-no        player-no
-                                              :breach-no        breach-no
-                                              :card             card
-                                              :closed-breaches? closed-breaches?})
-                         (assoc breach :breach-no breach-no))))
+(defn- breach-no-sort-order [breach-no]
+  (case breach-no
+    0 2
+    1 0
+    2 1
+    3 2))
 
-       (sort-by (juxt status-sort-order :bonus-damage))
-       reverse
-       (map :breach-no)))
+(defn prepable-breaches [game {:keys [player-no card closed-breaches?]}]
+  (let [breach-sort-values (->> (get-in game [:players player-no :breaches])
+                                (map-indexed (fn [breach-no {:keys [status bonus-damage opened-effects]
+                                                             :or   {bonus-damage 0}}]
+                                               [(if (= :opened status) bonus-damage 0)
+                                                (if (= :opened status) (count opened-effects) 0)
+                                                (status-sort-order status)
+                                                (breach-no-sort-order breach-no)]))
+                                vec)]
+    (->> (get-in game [:players player-no :breaches])
+         (keep-indexed (fn [breach-no breach]
+                         (when (can-prep? game {:player-no        player-no
+                                                :breach-no        breach-no
+                                                :card             card
+                                                :closed-breaches? closed-breaches?})
+                           (assoc breach :breach-no breach-no))))
+         (sort-by (fn [{:keys [breach-no]}]
+                    (cond->> (get breach-sort-values breach-no)
+                             (:dual-breach card) (mapv + (get breach-sort-values (inc breach-no))))))
+         reverse
+         (map :breach-no))))
 
 (defn player-starting-life [difficulty]
   (case difficulty
@@ -389,8 +419,8 @@
     (count all-text)))
 
 (defn options-from-player [game {:keys [player-no area card-id]}
-                           & [{:keys [this type not-type cost min-cost max-cost most-expensive lowest-focus-cost opened
-                                      min-charges prepped-this-turn]}]]
+                           & [{:keys [this type not-type cost min-cost max-cost most-expensive can-prep
+                                      lowest-focus-cost opened min-charges prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
                                   (keep-indexed (fn [breach-no {:keys [status] :as breach}]
@@ -445,6 +475,10 @@
                                   (and cost
                                        (<= cost max-cost))))
                most-expensive (filter (comp #(= highest-cost %) :cost))
+               can-prep (filter (fn [card]
+                                  (can-prep? game (merge {:player-no player-no
+                                                          :card      card}
+                                                         can-prep))))
                (#{:discard} area) (map (fn [{:keys [id]}]
                                          {:player-no player-no
                                           :card-id   id}))

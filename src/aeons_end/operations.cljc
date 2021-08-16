@@ -643,7 +643,10 @@
 
 (defn prep-spell [game {:keys [player-no breach-no card-name]}]
   (if card-name
-    (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+          breach-no (or breach-no
+                        (first (ut/prepable-breaches game {:player-no player-no
+                                                           :card      card})))]
       (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
       (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
       (-> game
@@ -664,21 +667,29 @@
 
 (effects/register {:track-this-turn track-this-turn})
 
+(defn- get-breach-effects [{:keys [status bonus-damage opened-effects]}]
+  {:bonus-damage   (or (and (= :opened status)
+                            bonus-damage)
+                       0)
+   :opened-effects (when (= :opened status)
+                     opened-effects)})
+
 (defn spell-effect [{:keys [:real-game?] :as game} {:keys [player-no breach-no card-name card caster additional-damage]}]
-  (let [{:keys [id effects]} (or card
-                                 (:card (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})))
-        {:keys [status bonus-damage opened-effects]} (get-in game [:players player-no :breaches breach-no])
-        opened?      (= :opened status)
-        bonus-damage (cond-> 0
-                             additional-damage (+ additional-damage)
-                             (and opened?
-                                  bonus-damage) (+ bonus-damage))]
+  (let [{:keys [id effects dual-breach]} (or card
+                                             (:card (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})))
+        {:keys [bonus-damage opened-effects]} (get-breach-effects (get-in game [:players player-no :breaches breach-no]))
+        adjacent-breach (when dual-breach
+                          (get-breach-effects (get-in game [:players player-no :breaches (inc breach-no)])))
+        bonus-damage    (cond-> bonus-damage
+                                additional-damage (+ additional-damage)
+                                dual-breach (+ (:bonus-damage adjacent-breach)))]
     (-> game
         (push-effect-stack {:player-no (or caster player-no)
                             :card-id   id
                             :args      {:bonus-damage bonus-damage}
-                            :effects   (concat (when opened?
-                                                 opened-effects)
+                            :effects   (concat opened-effects
+                                               (when dual-breach
+                                                 (:opened-effects adjacent-breach))
                                                effects
                                                (when real-game?
                                                  [[:track-this-turn {:cast card-name}]]))}))))

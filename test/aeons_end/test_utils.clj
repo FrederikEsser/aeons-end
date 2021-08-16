@@ -80,6 +80,13 @@
                           :effects   [[:set-phase {:phase phase}]]})
       check-stack))
 
+(defn destroy-breach [game player-no breach-no]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:destroy-breach {:breach-no             breach-no
+                                                        :put-prepped-spells-in :discard}]]})
+      check-stack))
+
 (defn get-trigger [{:keys [id name trigger]} & [trigger-id]]
   (merge {:id (or trigger-id 1)}
          (when id {:card-id id})
