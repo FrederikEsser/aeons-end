@@ -466,6 +466,20 @@
                 :effects [[::pyromancy-give-choice]]
                 :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
 
+(def pyrotechnic-surge {:name        :pyrotechnic-surge
+                        :type        :spell
+                        :dual-breach true
+                        :cost        4
+                        :text        "This spell must be prepped to two adjacent breaches. This fully occupies both breaches."
+                        :cast        ["Deal 4 damage."
+                                      "You may destroy a card in your discard pile."]
+                        :effects     [[:deal-damage 4]
+                                      [:give-choice {:title   :pyrotechnic-surge
+                                                     :text    "You may destroy a card in your discard pile."
+                                                     :choice  :destroy-from-discard
+                                                     :options [:player :discard]
+                                                     :max     1}]]})
+
 (def radiance {:name    :radiance
                :type    :spell
                :cost    8
@@ -573,6 +587,7 @@
             phoenix-flame
             planar-insight
             pyromancy
+            pyrotechnic-surge
             radiance
             scorch
             spectral-echo

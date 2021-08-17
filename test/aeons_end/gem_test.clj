@@ -4,6 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.gem :refer :all]
+            [aeons-end.cards.spell :refer [pyrotechnic-surge]]
             [aeons-end.cards.starter :refer [crystal spark]]))
 
 (deftest alien-element-test
@@ -14,12 +15,22 @@
            {:players [{:breaches  [{:status :opened}]
                        :play-area [alien-element]
                        :aether    1}]}))
-    (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}]
+    (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}
+                                      {:status :closed}]
                            :hand     [alien-element]}]}
                (play 0 :alien-element))
-           {:players [{:breaches  [{:prepped-spells [spark]}]
+           {:players [{:breaches  [{:prepped-spells [spark]}
+                                   {:status :closed}]
                        :play-area [alien-element]
                        :aether    2}]}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [pyrotechnic-surge]}
+                                      {:status :closed}]
+                           :hand     [alien-element]}]}
+               (play 0 :alien-element))
+           {:players [{:breaches  [{:prepped-spells [pyrotechnic-surge]}
+                                   {:status :closed}]
+                       :play-area [alien-element]
+                       :aether    3}]}))
     (is (= (-> {:players [{:breaches [{:prepped-spells [spark spark]}
                                       {:status         :closed
                                        :prepped-spells [spark]}]
