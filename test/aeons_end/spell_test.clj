@@ -856,6 +856,32 @@
                        :discard  [planar-insight]}]
             :nemesis {:life 45}}))))
 
+(deftest sages-brand-test
+  (testing "Sage's Brand"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [sages-brand]}
+                                      {}]
+                           :deck     (repeat 7 crystal)
+                           :phase    :main}]}
+               (end-turn 0))
+           {:players [{:breaches [{:prepped-spells [sages-brand]}
+                                  {}]
+                       :hand     (repeat 6 crystal)
+                       :deck     (repeat 1 crystal)
+                       :phase    :out-of-turn}]}))
+    (is (= (-> {:players [{:breaches [{:prepped-spells [sages-brand]}
+                                      {}
+                                      {:prepped-spells [sages-brand]}
+                                      {}]
+                           :deck     (repeat 7 crystal)
+                           :phase    :main}]}
+               (end-turn 0))
+           {:players [{:breaches [{:prepped-spells [sages-brand]}
+                                  {}
+                                  {:prepped-spells [sages-brand]}
+                                  {}]
+                       :hand     (repeat 7 crystal)
+                       :phase    :out-of-turn}]}))))
+
 (deftest scorch-test
   (testing "Scorch"
     (is (= (-> {:players [{:breaches [{:prepped-spells [scorch]}]}

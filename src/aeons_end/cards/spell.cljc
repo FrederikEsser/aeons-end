@@ -489,6 +489,17 @@
                          [:other-players {:effects [[:draw 1]]}]]
                :quote   "'All of us, together. For apart we are doomed.' Brama, Breach Mage Elder"})
 
+(def sages-brand {:name          :sage's-brand
+                  :type          :spell
+                  :dual-breach   true
+                  :cost          7
+                  :text          ["This spell must be prepped to two adjacent breaches. This fully occupies both breaches."
+                                  "While prepped, draw an additional card during your draw phase."]
+                  :while-prepped {:at-end-draw [[:draw 1]]}
+                  :cast          "Deal 6 damage."
+                  :effects       [[:deal-damage 6]]
+                  :quote         "'The mark of the void lay beneath our skin, not upon it.' Xaxos, Breach Mage Adept"})
+
 (def scorch {:name    :scorch
              :type    :spell
              :cost    5
@@ -589,6 +600,7 @@
             pyromancy
             pyrotechnic-surge
             radiance
+            sages-brand
             scorch
             spectral-echo
             thoughtform-familiar

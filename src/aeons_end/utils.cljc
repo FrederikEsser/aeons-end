@@ -340,17 +340,20 @@
     (let [{:keys [breach-capacity] :or {breach-capacity 1}} (get-in game [:players player-no])
           {:keys [status]} (get-in game [:players player-no :breaches breach-no])
           {:keys [dual-breach may-prep-to-closed-breach]} card
-          breach-stati   (cond-> #{:opened :focused}
-                                 (or may-prep-to-closed-breach
-                                     closed-breaches?) (conj :closed))
-          prepped-spells (get-prepped-spells game {:player-no player-no
-                                                   :breach-no breach-no})]
+          may-prep-to-closed-breach (or may-prep-to-closed-breach
+                                        closed-breaches?)
+          breach-stati              (cond-> #{:opened :focused}
+                                            may-prep-to-closed-breach (conj :closed))
+          prepped-spells            (get-prepped-spells game {:player-no player-no
+                                                              :breach-no breach-no})]
       (cond-> (or (and (contains? breach-stati status)
                        (empty? prepped-spells))
                   (and (= :opened status)
                        (< (count prepped-spells) breach-capacity)))
-              dual-breach (and' (can-prep? game {:player-no player-no
-                                                 :breach-no (inc breach-no)}))))
+              dual-breach (and' (can-prep? game {:player-no        player-no
+                                                 :breach-no        (inc breach-no)
+                                                 :card             {}
+                                                 :closed-breaches? may-prep-to-closed-breach}))))
     (let [number-of-breaches (->> (get-in game [:players player-no :breaches])
                                   count)]
       (->> (range number-of-breaches)
