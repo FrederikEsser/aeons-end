@@ -194,6 +194,21 @@
                                            :max     1}]]
                   :quote   "'Once, the conclave worshipped at the foot of a great tower much like this very effigy.' Yan Magda, Enlightened Exile"})
 
+(def molten-hammer {:name    :molten-hammer
+                    :type    :relic
+                    :cost    5
+                    :text    ["Gain 1 charge."
+                              "You may destroy a card in hand or on top of any player's discard pile."]
+                    :effects [[:gain-charge]
+                              [:give-choice {:title   :molten-hammer
+                                             :text    "You may destroy a card in hand or on top of any player's discard pile."
+                                             :choice  :destroy-from-area
+                                             :options [:mixed
+                                                       [:player :hand]
+                                                       [:players :discard {:last true}]]
+                                             :max     1}]]
+                    :quote   "'Some tools are meant for making, while others hold a more pernicious task.' Mist, Dagger Captain"})
+
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :temporal-helix
@@ -273,6 +288,7 @@
             focusing-orb
             mages-talisman
             mages-totem
+            molten-hammer
             temporal-helix
             vortex-gauntlet
             unstable-prism])
