@@ -46,6 +46,23 @@
                                               :max     1}]]
                      :quote   "'While appearing to be crudely fashioned, these staffs contain within them the very essence of the void.'"})
 
+(def bottled-vortex {:name    :bottled-vortex
+                     :type    :relic
+                     :cost    3
+                     :text    ["Destroy this."
+                               "Destroy up to two cards in your hand or discard pile."
+                               "Draw a card."]
+                     :effects [[:destroy-this]
+                               [:give-choice {:title   :bottled-vortex
+                                              :text    "Destroy up to two cards in your hand or discard pile."
+                                              :choice  :destroy-from-area
+                                              :options [:mixed
+                                                        [:player :hand]
+                                                        [:player :discard]]
+                                              :max     2}]
+                               [:draw 1]]
+                     :quote   "'There are worlds within worlds, infinite realms cascading from the yawning nothing.' Phaedraxa, Breach Mage Seer"})
+
 (def cairn-compass {:name    :cairn-compass
                     :type    :relic
                     :cost    4
@@ -249,6 +266,7 @@
 
 (def cards [astral-cube
             blasting-staff
+            bottled-vortex
             cairn-compass
             conclave-scroll
             fiend-catcher
