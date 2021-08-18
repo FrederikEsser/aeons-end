@@ -335,6 +335,20 @@
               :gravehold {:life 24}
               :trash     [conjure-the-lost]})))))
 
+(deftest crystallize-test
+  (testing "Crystallize"
+    (is (= (-> {:players [{:breaches [{:prepped-spells [crystallize]}
+                                      {}]}
+                          {:hand [crystal crystal spark]}]
+                :nemesis {:life 50}}
+               (cast-spell 0 0 :crystallize)
+               (choose {:player-no 1}))
+           {:players [{:breaches [{}
+                                  {}]
+                       :discard  [crystallize]}
+                      {:hand [crystal crystal spark]}]
+            :nemesis {:life 46}}))))
+
 (deftest dark-fire-test
   (testing "Dark Fire"
     (is (= (-> {:players [{:breaches [{:prepped-spells [dark-fire]}]

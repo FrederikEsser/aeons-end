@@ -188,6 +188,36 @@
                                                 :max     1}]]
                        :quote   "'We would all gladly give our lives for Gravehold to live but another day.' Indira, Breach Apprentice"})
 
+(defn crystallize-reveal [game {:keys [player-no caster] :as args}]
+  (let [number-of-gems (->> (get-in game [:players player-no :hand])
+                            (filter (comp #{:gem} :type))
+                            count)]
+    (push-effect-stack game (merge {:player-no caster
+                                    :args      args         ; bonus-damage
+                                    :effects   [[:deal-damage (* 2 number-of-gems)]]}))))
+
+(defn crystallize-give-choice [game {:keys [player-no] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :args      args                  ; bonus-damage
+                           :effects   [[:give-choice {:title   :crystallize
+                                                      :text    "Any ally reveals their hand. Deal 2 damage for each gem in that ally's hand."
+                                                      :choice  [::crystallize-reveal {:caster player-no}]
+                                                      :options [:players {:ally true}]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::crystallize-reveal      crystallize-reveal
+                   ::crystallize-give-choice crystallize-give-choice})
+
+(def crystallize {:name        :crystallize
+                  :type        :spell
+                  :dual-breach true
+                  :cost        8
+                  :text        "This spell must be prepped to two adjacent breaches. This fully occupies both breaches."
+                  :cast        "Any ally reveals their hand. Deal 2 damage for each gem in that ally's hand."
+                  :effects     [[::crystallize-give-choice]]
+                  :quote       "'Born is dirt, buried in dirt.' Henge Mystic Gospel"})
+
 (defn dark-fire-discard [game {:keys [player-no card-name card-names] :as args}]
   (let [card-count (cond card-name 1
                          card-names (count card-names)
@@ -585,6 +615,7 @@
             celestial-spire
             char
             conjure-the-lost
+            crystallize
             dark-fire
             essence-theft
             feedback-aura
