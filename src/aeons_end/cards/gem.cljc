@@ -86,6 +86,29 @@
                                                     :max     1}]]
                    :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
 
+(defn dread-diamond-discard [game {:keys [player-no breach-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:discard-prepped-spells {:breach-no breach-no
+                                                                              :card-name card-name}]
+                                                    [:gain-aether 1]]})))
+
+(effects/register {::dread-diamond-discard dread-diamond-discard})
+
+(def dread-diamond {:name            :dread-diamond
+                    :type            :gem
+                    :cost            3
+                    :auto-play-index 1
+                    :text            ["Gain 2 Aether."
+                                      "You may discard a prepped spell. If you do, gain an additional 1 Aether."]
+                    :effects         [[:gain-aether 2]
+                                      [:give-choice {:title   :dread-diamond
+                                                     :text    "You may discard a prepped spell. If you do, gain an additional 1 Aether."
+                                                     :choice  ::dread-diamond-discard
+                                                     :options [:player :prepped-spells]
+                                                     :max     1}]]
+                    :quote           "'There is a cruelty within this stone, a hunger veiled as beauty' Xaxos, Voidbringer"})
+
 (defn erratic-ingot-gain-aether [game {:keys [player-no]}]
   (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
                                      (filter (comp #{:nemesis} :type))
@@ -244,6 +267,7 @@
             bloodstone-jewel
             breach-ore
             burning-opal
+            dread-diamond
             erratic-ingot
             haunted-berylite
             jade
