@@ -4,6 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.gem :refer :all]
+            [aeons-end.cards.relic :refer [unstable-prism]]
             [aeons-end.cards.spell :refer [pyrotechnic-surge]]
             [aeons-end.cards.starter :refer [crystal spark]]))
 
@@ -138,6 +139,55 @@
                        :discard   [crystal]
                        :aether    3}
                       {:hand [crystal]}]}))))
+
+(deftest diamond-cluster-test
+  (testing "Diamond Cluster"
+    (is (= (-> {:real-game? true
+                :players    [{:hand [diamond-cluster]}]}
+               (play 0 :diamond-cluster))
+           {:real-game? true
+            :players    [{:play-area [diamond-cluster]
+                          :aether    2
+                          :this-turn [{:play :diamond-cluster}]}]}))
+    (is (= (-> {:real-game? true
+                :players    [{:hand [diamond-cluster diamond-cluster]}]}
+               (play 0 :diamond-cluster)
+               (play 0 :diamond-cluster))
+           {:real-game? true
+            :players    [{:play-area [diamond-cluster diamond-cluster]
+                          :aether    6
+                          :this-turn [{:play :diamond-cluster}
+                                      {:play :diamond-cluster}]}]}))
+    (is (= (-> {:real-game? true
+                :players    [{:hand [diamond-cluster diamond-cluster]}]}
+               (play-all-gems 0))
+           {:real-game? true
+            :players    [{:play-area [diamond-cluster diamond-cluster]
+                          :aether    6
+                          :this-turn [{:play :diamond-cluster}
+                                      {:play :diamond-cluster}]}]}))
+    (is (= (-> {:real-game? true
+                :players    [{:hand [diamond-cluster diamond-cluster diamond-cluster]}]}
+               (play 0 :diamond-cluster)
+               (play 0 :diamond-cluster)
+               (play 0 :diamond-cluster))
+           {:real-game? true
+            :players    [{:play-area [diamond-cluster diamond-cluster diamond-cluster]
+                          :aether    8
+                          :this-turn [{:play :diamond-cluster}
+                                      {:play :diamond-cluster}
+                                      {:play :diamond-cluster}]}]}))
+    (is (= (-> {:real-game? true
+                :players    [{:hand [unstable-prism diamond-cluster]}]}
+               (play 0 :unstable-prism)
+               (choose :diamond-cluster))
+           {:real-game? true
+            :players    [{:play-area [unstable-prism]
+                          :aether    6
+                          :this-turn [{:play :unstable-prism}
+                                      {:play :diamond-cluster}
+                                      {:play :diamond-cluster}]}]
+            :trash      [diamond-cluster]}))))
 
 (deftest haunted-berylite-test
   (testing "Haunted Berylite"

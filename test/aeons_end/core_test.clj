@@ -1250,7 +1250,14 @@
              {:real-game? true
               :players    [{:breaches  [{:status         :opened
                                          :prepped-spells [spark]}]
-                            :this-turn [{:prep :spark :id 1}]}]})))))
+                            :this-turn [{:prep :spark :id 1}]}]})))
+    (is (= (-> {:real-game? true
+                :players    [{:hand [crystal]}]}
+               (play 0 :crystal))
+           {:real-game? true
+            :players    [{:play-area [crystal]
+                          :aether    1
+                          :this-turn [{:play :crystal}]}]}))))
 
 (deftest while-prepped-test
   (testing "While prepped"
@@ -1362,5 +1369,6 @@
                                          :prepped-spells [{:name :spell
                                                            :id   1
                                                            :type :spell}]}]
-                            :this-turn [{:prep :spell :id 1}]
+                            :this-turn [{:play :cairn-compass}
+                                        {:prep :spell :id 1}]
                             :phase     :main}]})))))

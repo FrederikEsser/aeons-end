@@ -947,9 +947,10 @@
 
 (effects/register {:give-choice give-choice})
 
-(defn card-effect [game {:keys [player-no card]}]
+(defn card-effect [{:keys [real-game?] :as game} {:keys [player-no card]}]
   (let [{:keys [id effects]} card]
     (-> game
+        (cond-> real-game? (update-in [:players player-no :this-turn] concat [{:play (:name card)}]))
         (push-effect-stack {:player-no player-no
                             :card-id   id
                             :effects   effects}))))

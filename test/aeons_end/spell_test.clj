@@ -175,7 +175,8 @@
                {:real-game? true
                 :players    [{:breaches  [{:prepped-spells [blaze]}]
                               :play-area [temporal-helix]
-                              :this-turn [{:cast :blaze}]}]
+                              :this-turn [{:play :temporal-helix}
+                                          {:cast :blaze}]}]
                 :nemesis    {:life 48
                              :deck [{}]}}))
         (is (= (-> {:real-game? true

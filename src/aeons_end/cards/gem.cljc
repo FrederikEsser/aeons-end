@@ -86,6 +86,25 @@
                                                     :max     1}]]
                    :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
 
+(defn diamond-cluster-gain-aether [game {:keys [player-no]}]
+  (let [diamond-clusters-played (->> (get-in game [:players player-no :this-turn])
+                                     (filter (comp #{:diamond-cluster} :play))
+                                     count)]
+    (cond-> game
+            (= 2 diamond-clusters-played) (push-effect-stack {:player-no player-no
+                                                              :effects   [[:gain-aether 2]]}))))
+
+(effects/register {::diamond-cluster-gain-aether diamond-cluster-gain-aether})
+
+(def diamond-cluster {:name    :diamond-cluster
+                      :type    :gem
+                      :cost    4
+                      :text    ["Gain 2 Aether."
+                                "If this is the second time you have played Diamond Cluster this turn, gain an additional 2 Aether."]
+                      :effects [[:gain-aether 2]
+                                [::diamond-cluster-gain-aether]]
+                      :quote   "'These gems were once the most precious, the most scarce. Now they line the walls of caves like shimmering fangs.'"})
+
 (defn dread-diamond-discard [game {:keys [player-no breach-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -267,6 +286,7 @@
             bloodstone-jewel
             breach-ore
             burning-opal
+            diamond-cluster
             dread-diamond
             erratic-ingot
             haunted-berylite
