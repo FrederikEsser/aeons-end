@@ -86,6 +86,30 @@
                                                     :max     1}]]
                    :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
 
+(defn clouded-sapphire-gain-charge [game {:keys [player-no]}]
+  (let [clouded-sapphires-played (->> (get-in game [:players player-no :this-turn])
+                                      (filter (comp #{:clouded-sapphire} :play))
+                                      count)]
+    (cond-> game
+            (= 1 clouded-sapphires-played) (push-effect-stack {:player-no player-no
+                                                               :effects   [[:give-choice {:title   :clouded-sapphire
+                                                                                          :text    "Any ally gains 1 charge"
+                                                                                          :choice  :gain-charge
+                                                                                          :options [:players :ability {:ally true :fully-charged false}]
+                                                                                          :min     1
+                                                                                          :max     1}]]}))))
+
+(effects/register {::clouded-sapphire-gain-charge clouded-sapphire-gain-charge})
+
+(def clouded-sapphire {:name    :clouded-sapphire
+                       :type    :gem
+                       :cost    6
+                       :text    ["Gain 3 Aether."
+                                 "If this is the first time you have played Clouded Sapphire this turn, any ally gains 1 charge."]
+                       :effects [[:gain-aether 3]
+                                 [::clouded-sapphire-gain-charge]]
+                       :quote   "'They say if you look closely, the shadow of The World That Was is imprisoned within.' Phaedraxa, Breach Mage Seer"})
+
 (defn diamond-cluster-gain-aether [game {:keys [player-no]}]
   (let [diamond-clusters-played (->> (get-in game [:players player-no :this-turn])
                                      (filter (comp #{:diamond-cluster} :play))
@@ -286,6 +310,7 @@
             bloodstone-jewel
             breach-ore
             burning-opal
+            clouded-sapphire
             diamond-cluster
             dread-diamond
             erratic-ingot
