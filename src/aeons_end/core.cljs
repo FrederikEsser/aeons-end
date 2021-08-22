@@ -30,10 +30,11 @@
                         {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 5 :max-cost 6} {:type :spell :min-cost 7}])
 
 (defonce state (r/atom {:setup-game? true
-                        :game-setup  {:difficulty :fit
-                                      :nemesis    {:min-level 5 :max-level 6}
-                                      :players    [{} {}]
-                                      :supply     balanced-market}
+                        :game-setup  {:difficulty          :fit
+                                      :nemesis             {:min-level 5 :max-level 6}
+                                      :players             [{} {}]
+                                      :turn-order-variant? false
+                                      :supply              balanced-market}
                         :selection   []
                         :expanded?   {:market true}}))
 
@@ -53,6 +54,7 @@
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
   (let [inverse? (or (#{:nemesis :sigil :husks :tainted} type)
                      (<= 2 (:player-no type))
+                     (= #{2 3} (:player-nos type))
                      (#{:closed :focused} status))]
     {:color            (cond
                          inverse? (cond disabled "#ddd"
@@ -180,6 +182,10 @@
           [:button {:style         (button-style :disabled disabled
                                                  :type type
                                                  :number-of-cards number-of-cards)
+                    :class         (case (:player-nos type)
+                                     #{0 1} "player-1-2"
+                                     #{2 3} "player-3-4"
+                                     nil)
                     :title         (format-title card)
                     :disabled      disabled
                     :on-click      (when interaction
@@ -669,9 +675,12 @@
                                     (let [disabled (nil? interaction)]
                                       [:div
                                        "[ "
-                                       [:button {:style    (button-style :disabled disabled
-                                                                         :type type)
-                                                 :disabled disabled
+                                       [:button {:style (button-style :disabled disabled
+                                                                      :type type)
+                                                 :class (case (:player-nos type)
+                                                          #{0 1} "player-1-2"
+                                                          #{2 3} "player-3-4"
+                                                          nil) :disabled disabled
                                                  :on-click (when interaction
                                                              (fn [] (case interaction
                                                                       :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
@@ -724,6 +733,12 @@
                                    [:<> (->> (range 1 5)
                                              (mapk (fn [n]
                                                      [:option {:value n} n])))]]]
+                (when (= 4 (count players))
+                  (let [turn-order-variant? (get-in @state [:game-setup :turn-order-variant?])]
+                    [:div "Variant "
+                     [:input {:type     :checkbox
+                              :checked  turn-order-variant?
+                              :on-click #(swap! state update-in [:game-setup :turn-order-variant?] not)}]]))
                 (->> players
                      (mapk-indexed (fn [player-no {:keys [name]}]
                                      [:div [:select {:value     (or name :random)
@@ -747,7 +762,8 @@
                  [:tbody
                   [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard" (when show-purchased? "Purchased")])]
                   (->> players
-                       (mapk-indexed (fn [player-no {:keys [name name-ui title type life ability aether breaches hand play-area deck discard purchased trophies active? choice-value interaction]}]
+                       (mapk-indexed (fn [player-no {:keys [name name-ui turn-order-token title type life ability aether breaches
+                                                            hand play-area deck discard purchased trophies active? choice-value interaction]}]
                                        (let [{:keys [max repeatable?]} (get-in @state [:game :choice])]
                                          [:tr
                                           [:td
@@ -767,7 +783,21 @@
                                                                              :choosable (select! choice-value name)
                                                                              :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))}
                                                [:div
-                                                [:div {:style {:font-size "1.4em"}} name-ui]
+                                                [:div {:style {:font-size "1.4em"}}
+                                                 (when turn-order-token
+                                                   [:div {:style {:float        :left
+                                                                  :border-width "1px"
+                                                                  :width        "16px"
+                                                                  :height       "16px"}}])
+                                                 name-ui
+                                                 (when turn-order-token
+                                                   [:div {:style {:float        :right
+                                                                  :border-style :groove
+                                                                  :border-color "#666"
+                                                                  :border-width "1px"
+                                                                  :width        "16px"
+                                                                  :height       "16px"}
+                                                          :class turn-order-token}])]
                                                 [:div {:style {:font-size   "0.9em"
                                                                :font-weight :normal
                                                                :padding-top "1px"}}

@@ -35,3 +35,11 @@ a:hover {
 th, td {
   border: 1px solid grey;
 }
+
+.player-1-2 {
+background: linear-gradient(to right bottom, #f2f057 50%, #ea8f23 50.3%);
+}
+
+.player-3-4 {
+background: linear-gradient(to right bottom, #3aacb4 50%, #a7326d 50.3%);
+}

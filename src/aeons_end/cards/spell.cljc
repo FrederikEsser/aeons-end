@@ -152,7 +152,7 @@
            :type    :spell
            :cost    8
            :cast    ["Deal 6 damage."
-                     "If this damage causes a minion from the nemesis deck to the discarded, any player gains 2 life."]
+                     "If this damage causes a minion from the nemesis deck to be discarded, any player gains 2 life."]
            :effects [[:deal-damage {:arg          6
                                     :kill-effects [[:give-choice {:title   :char
                                                                   :text    "Any player gains 2 life."
@@ -356,7 +356,7 @@
              :type          :spell
              :cost          4
              :text          "While prepped, during your main phase you may also prep one Spark to the breach this spell is prepped to."
-             :cast          "Deal 4 damage."
+             :cast          "Deal 3 damage."
              :while-prepped {:phase    :main
                              :can-use? ::kindle-can-use?
                              :effects  [[::kindle-prep-spark]]}
@@ -534,7 +534,7 @@
              :type    :spell
              :cost    5
              :cast    ["Deal 4 damage."
-                       "If this damage causes a minion from the nemesis deck to the discarded, any ally gains 2 charges."]
+                       "If this damage causes a minion from the nemesis deck to be discarded, any ally gains 2 charges."]
              :effects [[:deal-damage {:arg          4
                                       :kill-effects [[:give-choice {:title   :scorch
                                                                     :text    "Any ally gains 2 charges."

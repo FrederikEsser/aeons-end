@@ -275,7 +275,7 @@
                                 :player-no player-no}
                                choice))))
 
-(defn view-player [{{:keys [player-no name title life trophies]
+(defn view-player [{{:keys [player-no name turn-order-token title life trophies]
                      :as   player} :player
                     :keys          [choice
                                     active-player?]
@@ -294,6 +294,8 @@
           :purchased (view-purchased player)
           :life      life
           :aether    (ut/format-aether player)}
+         (when turn-order-token
+           {:turn-order-token turn-order-token})
          (when trophies
            {:trophies trophies})
          (choice-interaction {:area      :players

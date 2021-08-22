@@ -966,9 +966,10 @@
                                                  (cond-> breach
                                                          (#{:focused} status) (assoc :status :closed)))))))
 
-(defn set-current-player [game {:keys [player-no]}]
+(defn set-current-player [game {:keys [player-no turn-order-token]}]
   (-> game
       (assoc :current-player player-no)
+      (cond-> turn-order-token (assoc-in [:players player-no :turn-order-token] turn-order-token))
       (set-phase {:player-no player-no
                   :phase     :casting})))
 

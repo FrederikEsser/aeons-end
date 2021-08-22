@@ -5,7 +5,7 @@
             [aeons-end.utils :as ut]))
 
 (defn astral-cube-heal [game _]
-  (let [{:keys [player-no] :as type} (-> game :turn-order :deck first :type)]
+  (let [{:keys [player-no player-nos] :as type} (-> game :turn-order :deck first :type)]
     (cond
       (= :wild type) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
                                                                        :text    "Any player gains 1 life."
@@ -15,6 +15,16 @@
                                                                        :max     1}]]})
       player-no (push-effect-stack game {:player-no player-no
                                          :effects   [[:heal {:life 1}]]})
+      player-nos (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
+                                                                   :text    (str "Player "
+                                                                                 (case player-nos
+                                                                                   #{0 1} "1 or 2"
+                                                                                   #{2 3} "3 or 4")
+                                                                                 " gains 1 life.")
+                                                                   :choice  [:heal {:life 1}]
+                                                                   :options [:players {:player-nos player-nos}]
+                                                                   :min     1
+                                                                   :max     1}]]})
       :else game)))
 
 (effects/register {::astral-cube-heal astral-cube-heal})

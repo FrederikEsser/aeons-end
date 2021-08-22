@@ -4,6 +4,14 @@
             [aeons-end.utils :as ut]
             [aeons-end.nemesis :as nemesis]))
 
+(def nemesis {:name    :nemesis
+              :type    :nemesis
+              :effects [[::nemesis/at-start-turn]
+                        [:resolve-nemesis-cards-in-play]
+                        [:draw-nemesis-card]
+                        [::nemesis/at-end-turn]
+                        [:next-turn]]})
+
 (def player-1 {:name    :player-1
                :type    {:player-no 0}
                :effects [[:set-current-player {:player-no 0}]]})
@@ -29,13 +37,42 @@
                                     :min     1
                                     :max     1}]]})
 
-(def nemesis {:name    :nemesis
-              :type    :nemesis
-              :effects [[::nemesis/at-start-turn]
-                        [:resolve-nemesis-cards-in-play]
-                        [:draw-nemesis-card]
-                        [::nemesis/at-end-turn]
-                        [:next-turn]]})
+(defn cloose-player [{:keys [players] :as game} {:keys [player-nos]}]
+  (let [player-with-token (->> players
+                               (keep-indexed (fn [player-no {:keys [turn-order-token]}]
+                                               (when (and (contains? player-nos player-no)
+                                                          turn-order-token)
+                                                 player-no)))
+                               first)]
+    (if player-with-token
+      (let [next-player (-> player-nos
+                            (clojure.set/difference #{player-with-token})
+                            first)]
+        (-> game
+            (update-in [:players player-with-token] dissoc :turn-order-token)
+            (push-effect-stack {:effects [[:set-current-player {:player-no next-player}]]})))
+      (push-effect-stack game {:effects [[:give-choice {:title   :turn-order
+                                                        :text    (str "Player "
+                                                                      (case player-nos
+                                                                        #{0 1} "1 or 2"
+                                                                        #{2 3} "3 or 4")
+                                                                      " takes a turn.")
+                                                        :choice  [:set-current-player {:turn-order-token (case player-nos
+                                                                                                           #{0 1} :player-1-2
+                                                                                                           #{2 3} :player-3-4)}]
+                                                        :options [:players {:player-nos player-nos}]
+                                                        :min     1
+                                                        :max     1}]]}))))
+
+(effects/register {::cloose-player cloose-player})
+
+(def player-1-2 {:name    "Player 1 / 2"
+                 :type    {:player-nos #{0 1}}
+                 :effects [[::cloose-player {:player-nos #{0 1}}]]})
+
+(def player-3-4 {:name    "Player 3 / 4"
+                 :type    {:player-nos #{2 3}}
+                 :effects [[::cloose-player {:player-nos #{2 3}}]]})
 
 (defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
   (if (empty? deck)

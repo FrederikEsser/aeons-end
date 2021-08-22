@@ -516,7 +516,7 @@
        count))
 
 (defn options-from-players [{:keys [players difficulty] :as game} {:keys [player-no area card-id]}
-                            & [{:keys [ally most-charges min-charges activation fully-charged
+                            & [{:keys [ally player-nos most-charges min-charges activation fully-charged
                                        min-number-of-prepped-spells min-hand lowest-life most-life can-heal min-deck+discard
                                        this last type cost min-cost max-cost can-prep
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
@@ -547,6 +547,7 @@
                                                 (assoc player :player-no player-no)) players)
                                  (and ally
                                       (not solo-play?)) (remove (comp #{player-no} :player-no))
+                                 player-nos (filter (comp player-nos :player-no))
                                  min-charges (filter (comp #(>= % min-charges) :charges :ability))
                                  most-charges (filter (comp #{highest-charge} :charges :ability))
                                  activation (filter (comp #{activation} :activation :ability))
