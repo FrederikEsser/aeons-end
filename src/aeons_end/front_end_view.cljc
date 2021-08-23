@@ -190,13 +190,17 @@
 
 (defn view-breaches [{{:keys [player-no
                               breaches
+                              breach-cost-reduction
                               phase] :as player} :player
                       choice                     :choice
                       active?                    :active-player?
                       :as                        game}]
   (->> breaches
        (map-indexed (fn view-breach [breach-no {:keys [status prepped-spells focus-cost open-costs stage bonus-damage type]}]
-                      (let [open-cost (when (and open-costs stage) (get open-costs stage))]
+                      (let [focus-cost (when focus-cost
+                                         (ut/minus-cost focus-cost breach-cost-reduction))
+                            open-cost  (when (and open-costs stage)
+                                         (ut/minus-cost (get open-costs stage) breach-cost-reduction))]
                         (merge {:name-ui   (if (= :destroyed status)
                                              "X"
                                              (ut/format-breach-no breach-no))

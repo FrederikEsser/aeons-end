@@ -140,6 +140,35 @@
                               [::fiend-catcher-choice]]
                     :quote   "'It's as good a place as any for a world-swallowing beast.' Garu, Oathsworn Protector"})
 
+(defn flexing-dagger-destroy [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:card-name card-name
+                                                                 :from      :play-area
+                                                                 :to        :trash}]
+                                                    [:deal-damage 1]]})))
+
+(defn flexing-dagger-cost-reduction [game {:keys [player-no]}]
+  (update-in game [:players player-no :breach-cost-reduction] ut/plus 3))
+
+(effects/register {::flexing-dagger-destroy        flexing-dagger-destroy
+                   ::flexing-dagger-cost-reduction flexing-dagger-cost-reduction})
+
+(def flexing-dagger {:name    :flexing-dagger
+                     :type    :relic
+                     :cost    2
+                     :text    ["The next time you focus or open a breach this turn, it costs 3 Aether less."
+                               "OR"
+                               "Destroy this. Deal 1 damage."]
+                     :effects [[:give-choice {:title     :flexing-dagger
+                                              :text      "Destroy this. Deal 1 damage."
+                                              :choice    ::flexing-dagger-destroy
+                                              :options   [:player :play-area {:this true}]
+                                              :or-choice {:text    "The next time you focus or open a breach this turn, it costs 3 Aether less."
+                                                          :effects [[::flexing-dagger-cost-reduction]]}
+                                              :max       1}]]
+                     :quote   "'Forged from unstable void ore, the blade shifts with the will of its wielder.' Adelheim, Breach Mage Weaponsmith"})
+
 (defn focusing-orb-destroy [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:move-card {:card-name :focusing-orb
@@ -295,6 +324,7 @@
             cairn-compass
             conclave-scroll
             fiend-catcher
+            flexing-dagger
             focusing-orb
             mages-talisman
             mages-totem

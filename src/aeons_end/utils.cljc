@@ -186,8 +186,9 @@
   (when (not-empty coll)
     (apply max coll)))
 
-(defn- minus-cost [cost reduction]
-  (if (< cost reduction) 0 (- cost reduction)))
+(defn minus-cost [cost reduction]
+  (let [reduction (or reduction 0)]
+    (if (< cost reduction) 0 (- cost reduction))))
 
 (defn capitalism-get-types [{:keys [name types effects trigger] :as card}]
   (if (and

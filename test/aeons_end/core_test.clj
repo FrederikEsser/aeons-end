@@ -724,7 +724,28 @@
                                      :focus-cost 3
                                      :open-costs [9 7 5 3]
                                      :stage      1}]
-                         :aether   0}]})))
+                         :aether   0}]}))
+      (testing "cost reduction"
+        (is (= (-> {:players [{:breaches              [{:status     :closed
+                                                        :focus-cost 2
+                                                        :stage      0}]
+                               :breach-cost-reduction 3
+                               :aether                2}]}
+                   (focus-breach 0 0))
+               {:players [{:breaches [{:status     :focused
+                                       :focus-cost 2
+                                       :stage      1}]
+                           :aether   2}]}))
+        (is (= (-> {:players [{:breaches              [{:status     :closed
+                                                        :focus-cost 4
+                                                        :stage      0}]
+                               :breach-cost-reduction 3
+                               :aether                2}]}
+                   (focus-breach 0 0))
+               {:players [{:breaches [{:status     :focused
+                                       :focus-cost 4
+                                       :stage      1}]
+                           :aether   1}]}))))
     (testing "Open"
       (is (= (-> {:players [{:breaches [{:status     :closed
                                          :focus-cost 2
@@ -758,7 +779,26 @@
                  (open-breach 0 1))
              {:players [{:breaches [{:status :opened}
                                     {:status :opened}]
-                         :aether   0}]})))))
+                         :aether   0}]}))
+      (testing "cost reduction"
+        (is (= (-> {:players [{:breaches              [{:status     :closed
+                                                        :focus-cost 2
+                                                        :open-costs [5 4 3 2]
+                                                        :stage      0}]
+                               :breach-cost-reduction 3
+                               :aether                5}]}
+                   (open-breach 0 0))
+               {:players [{:breaches [{:status :opened}]
+                           :aether   3}]}))
+        (is (= (-> {:players [{:breaches              [{:status     :closed
+                                                        :focus-cost 4
+                                                        :open-costs [13 10 7 4]
+                                                        :stage      2}]
+                               :breach-cost-reduction 3
+                               :aether                5}]}
+                   (open-breach 0 0))
+               {:players [{:breaches [{:status :opened}]
+                           :aether   1}]}))))))
 
 (deftest discard-test
   (testing "Discard"
@@ -882,6 +922,10 @@
             :players        [{} {} {} {}]}))
     (is (= (-> {:players [{:this-turn [{:gain :jade}]
                            :phase     :draw}]}
+               (end-turn 0))
+           {:players [{:phase :out-of-turn}]}))
+    (is (= (-> {:players [{:breach-cost-reduction 3
+                           :phase                 :draw}]}
                (end-turn 0))
            {:players [{:phase :out-of-turn}]}))))
 

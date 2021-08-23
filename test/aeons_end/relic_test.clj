@@ -344,6 +344,32 @@
                            :revealed-cards 1}
               :trash      [spark]})))))
 
+(deftest flexing-dagger-test
+  (testing "Flexing Dagger"
+    (let [flexing-dagger (assoc flexing-dagger :id 1)]
+      (is (= (-> {:players [{:hand [flexing-dagger]}]
+                  :nemesis {:life 50}}
+                 (play 0 :flexing-dagger)
+                 (choose :flexing-dagger))
+             {:players [{}]
+              :nemesis {:life 49}
+              :trash   [flexing-dagger]}))
+      (is (= (-> {:players [{:hand [flexing-dagger]}]
+                  :nemesis {:life 50}}
+                 (play 0 :flexing-dagger)
+                 (choose nil))
+             {:players [{:play-area             [flexing-dagger]
+                         :breach-cost-reduction 3}]
+              :nemesis {:life 50}}))
+      (is (= (-> {:players [{:hand                  [flexing-dagger]
+                             :breach-cost-reduction 3}]
+                  :nemesis {:life 50}}
+                 (play 0 :flexing-dagger)
+                 (choose nil))
+             {:players [{:play-area             [flexing-dagger]
+                         :breach-cost-reduction 6}]
+              :nemesis {:life 50}})))))
+
 (deftest mages-totem-test
   (testing "Mage's Totem"
     (let [mages-totem (assoc mages-totem :id 1)]

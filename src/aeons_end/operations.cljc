@@ -483,6 +483,7 @@
     (-> game
         (assoc-in [:players player-no :breaches breach-no :status] :opened)
         (update-in [:players player-no :breaches breach-no] dissoc :focus-cost :open-costs :stage)
+        (update-in [:players player-no] dissoc :breach-cost-reduction)
         (cond-> while-prepped-effects (push-effect-stack {:player-no player-no
                                                           :effects   while-prepped-effects})))))
 
@@ -497,6 +498,7 @@
     (if (< stage 3)
       (-> game
           (update-in [:players player-no :breaches breach-no :stage] ut/plus 1)
+          (update-in [:players player-no] dissoc :breach-cost-reduction)
           (cond-> current-player? (assoc-in [:players player-no :breaches breach-no :status] :focused)
                   while-prepped-effects (push-effect-stack {:player-no player-no
                                                             :effects   while-prepped-effects})))
@@ -960,7 +962,7 @@
 (defn clear-player [{:keys [current-player] :as game} {:keys [player-no]}]
   (-> game
       (cond-> current-player (assoc :current-player :no-one))
-      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn :breach-capacity)
+      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn :breach-capacity :breach-cost-reduction)
       (medley/update-existing-in [:players player-no :breaches]
                                  (partial mapv (fn [{:keys [status] :as breach}]
                                                  (cond-> breach

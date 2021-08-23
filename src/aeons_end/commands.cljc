@@ -115,11 +115,12 @@
 
 (defn focus-breach [game player-no breach-no]
   (check-command "Focus" game player-no)
-  (let [{:keys [focus-cost]} (get-in game [:players player-no :breaches breach-no])]
+  (let [{:keys [focus-cost]} (get-in game [:players player-no :breaches breach-no])
+        {:keys [breach-cost-reduction]} (get-in game [:players player-no])]
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
-                                           [:pay {:amount focus-cost
+                                           [:pay {:amount (ut/minus-cost focus-cost breach-cost-reduction)
                                                   :type   :breach}]
                                            [:focus-breach {:breach-no breach-no}]]})
         op/check-stack)))
@@ -127,11 +128,12 @@
 (defn open-breach [game player-no breach-no]
   (check-command "Open" game player-no)
   (let [{:keys [open-costs stage]} (get-in game [:players player-no :breaches breach-no])
-        open-cost (get open-costs stage)]
+        open-cost (get open-costs stage)
+        {:keys [breach-cost-reduction]} (get-in game [:players player-no])]
     (-> game
         (op/push-effect-stack {:player-no player-no
                                :effects   [[:set-phase {:phase :main}]
-                                           [:pay {:amount open-cost
+                                           [:pay {:amount (ut/minus-cost open-cost breach-cost-reduction)
                                                   :type   :breach}]
                                            [:open-breach {:breach-no breach-no}]]})
         op/check-stack)))
