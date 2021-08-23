@@ -248,6 +248,30 @@
                                              :max     1}]]
                     :quote   "'Some tools are meant for making, while others hold a more pernicious task.' Mist, Dagger Captain"})
 
+(defn primordial-fetish-destroy [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:move-card {:card-name :primordial-fetish
+                                                    :from      :play-area
+                                                    :to        :trash}]
+                                       [:heal {:life 3}]]}))
+
+(effects/register {::primordial-fetish-destroy primordial-fetish-destroy})
+
+(def primordial-fetish {:name    :primordial-fetish
+                        :type    :relic
+                        :cost    4
+                        :text    ["Focus any player's breach."
+                                  "OR"
+                                  "Destroy this. Gain 3 life."]
+                        :effects [[:give-choice {:title     :primordial-fetish
+                                                 :text      "Focus any player's breach."
+                                                 :choice    :focus-breach
+                                                 :options   [:players :breaches {:opened false}]
+                                                 :or-choice {:text    "Destroy this. Gain 3 life."
+                                                             :effects [[::primordial-fetish-destroy]]}
+                                                 :max       1}]]
+                        :quote   "'The child rose from the dust and opened its eyes. The Conclave revere this child, for she was the first of their kind.' Mazahaedron, Henge Mystic"})
+
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :temporal-helix
@@ -329,6 +353,7 @@
             mages-talisman
             mages-totem
             molten-hammer
+            primordial-fetish
             temporal-helix
             vortex-gauntlet
             unstable-prism])
