@@ -412,6 +412,52 @@
                  :effects       [[:deal-damage 4]]
                  :quote         "'As I have said before, the breach is my anvil, Adelheim.' Gex, Breach Mage Adviser"})
 
+(defn oblivion-swell-damage [game {:keys [player-no area damage card-name] :as args}]
+  (let [{{:keys [cost]
+          :or   {cost 0}} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (= :hand area)
+                                          [[:discard-from-hand {:card-name card-name}]
+                                           [:deal-damage (+ cost damage)]]
+                                          [[:deal-damage-to-target args]])})))
+
+(defn oblivion-swell-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]
+                                                         :or   {bonus-damage 0}}]
+  (let [{:keys [name]} nemesis
+        damage (+ 2 bonus-damage)
+        gems?  (->> (get-in game [:players player-no :hand])
+                    (some (fn [{:keys [type cost]}]
+                            (and (= :gem type)
+                                 (or (nil? cost)
+                                     (pos? cost))))))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title   :oblivion-swell
+                                                        :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
+                                                                         (when gems?
+                                                                           ["You may discard a gem. If you do, deal additional damage equal to its cost."]))
+                                                        :choice  [::oblivion-swell-damage {:damage damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]
+                                                                  [:player :hand {:type :gem}]]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::oblivion-swell-damage oblivion-swell-damage
+                   ::oblivion-swell-choice oblivion-swell-choice})
+
+(def oblivion-swell {:name          :oblivion-swell
+                     :type          :spell
+                     :cost          5
+                     :text          "While prepped, once per turn during your main phase you may gain 1 Aether."
+                     :cast          ["Deal 2 damage."
+                                     "You may discard a gem. If you do, deal additional damage equal to its cost."]
+                     :while-prepped {:phase   :main
+                                     :once    true
+                                     :effects [[:gain-aether 1]]}
+                     :effects       [[::oblivion-swell-choice]]
+                     :quote         "'Many folk have made their fortune harvesting gems. The very breaches through which The Nameless come bestow the stones with strange properties.'"})
+
 (defn phoenix-flame-damage [game {:keys [player-no area damage] :as args}]
   (push-effect-stack game {:player-no player-no
                            :effects   (if (= :ability area)
@@ -626,6 +672,7 @@
             lava-tendril
             nether-conduit
             nova-forge
+            oblivion-swell
             phoenix-flame
             planar-insight
             pyromancy
