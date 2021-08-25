@@ -114,7 +114,7 @@
 
 (effects/register {:collective-discard-prepped-spells collective-discard-prepped-spells})
 
-(defn take-from-discard [game {:keys [player-no card-id card-ids] :as args}]
+(defn take-from-discard [game {:keys [player-no card-id card-ids]}]
   (let [card-ids (or (some->> card-ids
                               (map :card-id))
                      (when card-id

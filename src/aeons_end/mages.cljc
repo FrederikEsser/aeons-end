@@ -473,7 +473,7 @@
                  :effects [[:gain-aether 1]
                            [:gain-aether {:arg 1 :earmark #{:breach}}]]})
 
-(defn ephemera-masque-return-cards [game {:keys [player-no] :as args}]
+(defn ephemera-masque-return-cards [game {:keys [player-no]}]
   (cond-> game
           player-no (push-effect-stack {:player-no player-no
                                         :effects   [[:give-choice {:title   :ephemera-masque
@@ -561,6 +561,69 @@
               :deck     [crystal crystal crystal spark spark]
               :ability  eidolon-shroud})
 
+(defn flare-damage [game {:keys [player-no] :as args}]
+  (let [{:keys [type]} (-> game :turn-order :deck first)
+        damage (if (= :nemesis type) 1 3)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage damage]]})))
+
+(effects/register {::flare-damage flare-damage})
+
+(def flare {:name    :flare
+            :type    :spell
+            :cost    0
+            :cast    "Reveal the top card of the turn order deck, and then place it back on top of the deck. If you revealed a player turn order card, deal 3 damage. Otherwise, deal 1 damage"
+            :effects [[:reveal-top-turn-order]
+                      [::flare-damage]]})
+
+(def metaphysical-link {:name        :metaphysical-link
+                        :activation  :any-main-phase
+                        :charge-cost 5
+                        :text        ["Allies collectively gain 4 charges."
+                                      "Reveal the turn order deck and return the revealed cards in any order."]
+                        :effects     [[:give-choice {:title   :metaphysical-link
+                                                     :text    "Allies collectively gain 4 charges."
+                                                     :choice  :gain-charge
+                                                     :options [:players :ability {:ally true :fully-charged false}]
+                                                     :min     1
+                                                     :max     1}]
+                                      [:give-choice {:title   :metaphysical-link
+                                                     :text    "Allies collectively gain 3 more charges."
+                                                     :choice  :gain-charge
+                                                     :options [:players :ability {:ally true :fully-charged false}]
+                                                     :min     1
+                                                     :max     1}]
+                                      [:give-choice {:title   :metaphysical-link
+                                                     :text    "Allies collectively gain 2 more charges."
+                                                     :choice  :gain-charge
+                                                     :options [:players :ability {:ally true :fully-charged false}]
+                                                     :min     1
+                                                     :max     1}]
+                                      [:give-choice {:title   :metaphysical-link
+                                                     :text    "Allies collectively gain 1 more charge."
+                                                     :choice  :gain-charge
+                                                     :options [:players :ability {:ally true :fully-charged false}]
+                                                     :min     1
+                                                     :max     1}]
+                                      [:reveal-turn-order-deck]
+                                      [:give-choice {:title   :metaphysical-link
+                                                     :text    "Return the revealed turn order cards in any order (top to bottom)."
+                                                     :choice  :topdeck-revealed-turn-order-cards
+                                                     :options [:turn-order :revealed]
+                                                     :min     6
+                                                     :max     6}]]})
+
+(def xaxos {:name     :xaxos
+            :title    "Breach Mage Adept"
+            :breaches [{}
+                       {:stage 0}
+                       {:stage 0}
+                       {:stage 1}]
+            :hand     [flare crystal crystal crystal crystal]
+            :deck     [crystal crystal crystal crystal spark]
+            :ability  metaphysical-link})
+
 (defn illuminate-while-prepped [{:keys [current-player] :as game} {:keys [player-no]}]
   (cond-> game
           (= current-player player-no) (push-effect-stack {:player-no player-no
@@ -637,4 +700,5 @@
             quilius
             remnant
             ulgimor
+            xaxos
             yan-magda])

@@ -426,10 +426,7 @@
   (let [{:keys [name]} nemesis
         damage (+ 2 bonus-damage)
         gems?  (->> (get-in game [:players player-no :hand])
-                    (some (fn [{:keys [type cost]}]
-                            (and (= :gem type)
-                                 (or (nil? cost)
-                                     (pos? cost))))))]
+                    (some (comp #{:gem} :type)))]
     (push-effect-stack game {:player-no player-no
                              :effects   [[:give-choice {:title   :oblivion-swell
                                                         :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]

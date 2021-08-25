@@ -670,8 +670,13 @@
                                 (str "Turn order x" number-of-cards)
                                 "(empty)")]}]
                      (when (:visible-cards deck)
-                       (->> (:visible-cards deck)
-                            (mapk (fn [{:keys [name name-ui type interaction]}]
+                       (->> (reduce (fn [cards {:keys [option]}]
+                                      (let [pre (take-while (comp not #{option} :name) cards)
+                                            post (drop (inc (count pre)) cards)]
+                                        (vec (concat pre post))))
+                                    (:visible-cards deck)
+                                    (:selection @state))
+                            (mapk (fn [{:keys [name name-ui type interaction choice-value]}]
                                     (let [disabled (nil? interaction)]
                                       [:div
                                        "[ "
@@ -683,6 +688,7 @@
                                                           nil) :disabled disabled
                                                  :on-click (when interaction
                                                              (fn [] (case interaction
+                                                                      :choosable (select! choice-value name)
                                                                       :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
                                         name-ui]
                                        " ]"])))))])]
@@ -706,7 +712,9 @@
                    (let [disabled (-> @state :game :commands :can-undo? not)]
                      [:button {:style    (button-style :disabled disabled)
                                :disabled disabled
-                               :on-click (fn [] (swap! state assoc :game (cmd/undo) :selection []))}
+                               :on-click (fn [] (swap! state assoc
+                                                       :game (cmd/undo)
+                                                       :selection []))}
                       [:div {:style {:font-size "2em"
                                      :padding   "10px"}}
                        "Undo"]])]]]]]])

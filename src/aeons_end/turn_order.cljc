@@ -104,6 +104,32 @@
 
 (effects/register {:reveal-top-turn-order reveal-top-turn-order})
 
+(defn reveal-turn-order-deck [{{:keys [deck]} :turn-order :as game} _]
+  (-> game
+      (assoc-in [:turn-order :revealed] deck)
+      (update :turn-order dissoc :deck :revealed-cards)))
+
+(effects/register {:reveal-turn-order-deck reveal-turn-order-deck})
+
+(defn topdeck-revealed-turn-order-cards [game {:keys [card-name card-names]}]
+  (let [card-names (or card-names
+                       (when card-name
+                         [card-name]))
+        {:keys [revealed deck]} (get game :turn-order)
+        new-deck   (->> card-names
+                        (map (fn [card-name]
+                               (->> revealed
+                                    (filter (comp #{card-name} :name))
+                                    first)))
+                        (concat deck))]
+    (assert (= (sort card-names) (->> revealed (map :name) sort)))
+    (-> game
+        (assoc-in [:turn-order :revealed-cards] (count revealed))
+        (assoc-in [:turn-order :deck] new-deck)
+        (update :turn-order dissoc :revealed))))
+
+(effects/register {:topdeck-revealed-turn-order-cards topdeck-revealed-turn-order-cards})
+
 (defn put-turn-order-top-to-bottom [game _]
   (let [[top & deck] (get-in game [:turn-order :deck])]
     (-> game

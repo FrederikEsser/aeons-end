@@ -822,6 +822,74 @@
                          :life    0}
                         {:life 8}]})))))
 
+(deftest xaxos-test
+  (testing "Xaxos"
+    (testing "Metaphysical Link"
+      (is (= (-> {:players    [{:ability (assoc metaphysical-link :charges 5)}
+                               {:ability {:charges     0
+                                          :charge-cost 5}}]
+                  :turn-order {:deck    [turn-order/player-1
+                                         turn-order/player-2
+                                         turn-order/nemesis
+                                         turn-order/player-2]
+                               :discard [turn-order/nemesis
+                                         turn-order/player-1]}}
+                 (activate-ability 0)
+                 (choose {:player-no 1})                    ; gain charge
+                 (choose {:player-no 1})                    ; gain charge
+                 (choose {:player-no 1})                    ; gain charge
+                 (choose {:player-no 1})                    ; gain charge
+                 (choose [:player-2 :player-1 :player-2 :nemesis]))
+             {:players    [{:ability (assoc metaphysical-link :charges 0)}
+                           {:ability {:charges     4
+                                      :charge-cost 5}}]
+              :turn-order {:deck           [turn-order/player-2
+                                            turn-order/player-1
+                                            turn-order/player-2
+                                            turn-order/nemesis]
+                           :discard        [turn-order/nemesis
+                                            turn-order/player-1]
+                           :revealed-cards 4}}))
+      (is (= (-> {:players    [{:ability (assoc metaphysical-link :charges 5)}
+                               {:ability {:charges     5
+                                          :charge-cost 5}}]
+                  :turn-order {:deck    [turn-order/player-2]
+                               :discard [turn-order/nemesis
+                                         turn-order/player-1
+                                         turn-order/player-1
+                                         turn-order/player-2
+                                         turn-order/nemesis]}}
+                 (activate-ability 0)
+                 (choose :player-2))
+             {:players    [{:ability (assoc metaphysical-link :charges 0)}
+                           {:ability {:charges     5
+                                      :charge-cost 5}}]
+              :turn-order {:deck           [turn-order/player-2]
+                           :discard        [turn-order/nemesis
+                                            turn-order/player-1
+                                            turn-order/player-1
+                                            turn-order/player-2
+                                            turn-order/nemesis]
+                           :revealed-cards 1}}))
+      (is (= (-> {:players    [{:ability (assoc metaphysical-link :charges 5)}]
+                  :turn-order {:discard [turn-order/nemesis
+                                         turn-order/player-1
+                                         turn-order/player-1
+                                         turn-order/nemesis
+                                         turn-order/player-1]}}
+                 (activate-ability 0)
+                 (choose {:player-no 0})                    ; gain charge
+                 (choose {:player-no 0})                    ; gain charge
+                 (choose {:player-no 0})                    ; gain charge
+                 (choose {:player-no 0})                    ; gain charge)
+                 {:players    [{:ability (assoc metaphysical-link :charges 4)}]
+                  :turn-order {:discard        [turn-order/nemesis
+                                                turn-order/player-1
+                                                turn-order/player-1
+                                                turn-order/nemesis
+                                                turn-order/player-1]
+                               :revealed-cards 0}}))))))
+
 (deftest yan-magda-test
   (testing "Yan Magda"
     (testing "Illuminate"

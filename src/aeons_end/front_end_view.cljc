@@ -252,8 +252,7 @@
                 text
                 activation
                 charges
-                charge-cost]} ability
-        {:keys [phase]} (get-in game [:players current-player])]
+                charge-cost]} ability]
     (merge {:name-ui         (ut/format-name name)
             :text            text
             :charges         charges
@@ -273,7 +272,7 @@
                       (and (int? current-player)
                            (= :any-main-phase activation)))
                   (not choice)
-                  (ut/can-main? game player-no)
+                  (ut/can-main? game current-player)
                   (>= charges charge-cost)) {:interaction :activatable})
            (choice-interaction {:area      :ability
                                 :player-no player-no}
@@ -492,13 +491,14 @@
                                (and (ut/can-main? game current-player)
                                     (not-empty hand)) "You still have cards in your hand.")}))
 
-(defn view-turn-order [{:keys [deck discard revealed-cards]} {:keys [source area options] :as choice}]
-  {:deck    (if (empty? deck)
+(defn view-turn-order [{:keys [deck discard revealed revealed-cards]} {:keys [source area options max] :as choice}]
+  {:deck    (if (empty? (concat revealed deck))
               {}
-              (merge {:number-of-cards (count deck)}
-                     (when revealed-cards
-                       {:visible-cards (->> deck
-                                            (take revealed-cards)
+              (merge {:number-of-cards (+ (count deck) (count revealed))}
+                     (when (or revealed revealed-cards)
+                       {:visible-cards (->> (if revealed
+                                              revealed
+                                              (take revealed-cards deck))
                                             (map (fn [{:keys [name type]}]
                                                    (merge {:name    name
                                                            :name-ui (ut/format-name name)
@@ -506,7 +506,9 @@
                                                           (when (and (= :turn-order source)
                                                                      (= :revealed area)
                                                                      (some #{name} options))
-                                                            {:interaction :quick-choosable})))))})))
+                                                            (if (= 1 (or max (count options)))
+                                                              {:interaction :quick-choosable}
+                                                              {:interaction :choosable}))))))})))
    :discard (merge
               (when (not-empty discard)
                 {:card (let [{:keys [name type]} (last discard)]
