@@ -148,6 +148,29 @@
                                 [::celestial-spire-draw]]
                       :quote   "'The spires are beacons in the spaces in between.' Mist, Voidbringer"})
 
+(defn chaos-arc-damage [game {:keys [player-no breach-player-no breach-no] :as args}]
+  (let [adjacent-spells (->> (get-in game [:players breach-player-no :breaches])
+                             (keep-indexed (fn [idx _]
+                                             (when (or (= idx (dec breach-no))
+                                                       (= idx (inc breach-no)))
+                                               (ut/get-prepped-spells game {:player-no breach-player-no
+                                                                            :breach-no idx}))))
+                             (apply concat)
+                             count)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (+ 3 (* 2 adjacent-spells))]]})))
+
+(effects/register {::chaos-arc-damage chaos-arc-damage})
+
+(def chaos-arc {:name    :chaos-arc
+                :type    :spell
+                :cost    6
+                :cast    ["Deal 3 damage."
+                          "Deal 2 additional damage for each prepped spell in an adjacent breach."]
+                :effects [[::chaos-arc-damage]]
+                :quote   "'Even the blind can see what little is left of our world' Phaedraxa, Breach Mage Seer"})
+
 (def char {:name    :char
            :type    :spell
            :cost    8
@@ -679,6 +702,7 @@
             blaze
             catalyst
             celestial-spire
+            chaos-arc
             char
             conjure-the-lost
             consuming-void

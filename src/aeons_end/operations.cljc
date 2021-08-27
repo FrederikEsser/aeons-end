@@ -690,7 +690,9 @@
     (-> game
         (push-effect-stack {:player-no (or caster player-no)
                             :card-id   id
-                            :args      {:bonus-damage bonus-damage}
+                            :args      {:bonus-damage     bonus-damage
+                                        :breach-player-no player-no
+                                        :breach-no        breach-no}
                             :effects   (concat opened-effects
                                                (when dual-breach
                                                  (:opened-effects adjacent-breach))

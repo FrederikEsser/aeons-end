@@ -265,6 +265,70 @@
                        :deck [crystal]}]
             :nemesis {:life 47}}))))
 
+(deftest chaos-arc-test
+  (let [chaos-arc (assoc chaos-arc :id 1)]
+    (testing "Chaos Arc"
+      (is (= (-> {:players [{:breaches [{:prepped-spells [chaos-arc]}
+                                        {}
+                                        {:prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :chaos-arc))
+             {:players [{:breaches [{}
+                                    {}
+                                    {:prepped-spells [spark]}]
+                         :discard  [chaos-arc]}]
+              :nemesis {:life 47}}))
+      (is (= (-> {:players [{:breaches [{:status :destroyed}
+                                        {:prepped-spells [chaos-arc]}
+                                        {:prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 1 :chaos-arc))
+             {:players [{:breaches [{:status :destroyed}
+                                    {}
+                                    {:prepped-spells [spark]}]
+                         :discard  [chaos-arc]}]
+              :nemesis {:life 45}}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [chaos-arc]}
+                                        {:prepped-spells [spark spark]}
+                                        {:prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 1 :chaos-arc))
+             {:players [{:breaches [{:prepped-spells [spark]}
+                                    {}
+                                    {:prepped-spells [spark spark]}
+                                    {:prepped-spells [spark]}]
+                         :discard  [chaos-arc]}]
+              :nemesis {:life 41}}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [pyrotechnic-surge]}
+                                        {}
+                                        {:prepped-spells [chaos-arc]
+                                         :status         :opened
+                                         :bonus-damage   1}
+                                        {:status :destroyed}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 2 :chaos-arc))
+             {:players [{:breaches [{:prepped-spells [pyrotechnic-surge]}
+                                    {}
+                                    {:status       :opened
+                                     :bonus-damage 1}
+                                    {:status :destroyed}]
+                         :discard  [chaos-arc]}]
+              :nemesis {:life 44}}))
+      (is (= (-> {:players [{:hand     [vortex-gauntlet]
+                             :breaches [{} {}]}
+                            {:breaches [{:prepped-spells [chaos-arc]}
+                                        {:prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (play 0 :vortex-gauntlet)
+                 (choose {:player-no 1 :breach-no 0 :card-name :chaos-arc}))
+             {:players [{:play-area [vortex-gauntlet]
+                         :breaches  [{} {}]}
+                        {:hand     [chaos-arc]
+                         :breaches [{}
+                                    {:prepped-spells [spark]}]}]
+              :nemesis {:life 45}})))))
+
 (deftest conjure-the-lost-test
   (let [conjure-the-lost (assoc conjure-the-lost :id 1)]
     (testing "Conjure the Lost"
