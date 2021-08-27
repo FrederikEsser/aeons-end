@@ -188,6 +188,29 @@
                                                 :max     1}]]
                        :quote   "'We would all gladly give our lives for Gravehold to live but another day.' Indira, Breach Apprentice"})
 
+(defn consuming-void-destroy [game {:keys [player-no card-name card-names] :as args}]
+  (let [card-count (cond card-name 1
+                         card-names (count card-names)
+                         :else 0)]
+    (push-effect-stack game (merge {:player-no player-no
+                                    :args      args         ; bonus-damage
+                                    :effects   [[:destroy-from-hand args]
+                                                [:deal-damage (* 3 card-count)]]}))))
+
+(effects/register {::consuming-void-destroy consuming-void-destroy})
+
+(def consuming-void {:name    :consuming-void
+                     :type    :spell
+                     :cost    7
+                     :cast    ["Destroy up to two cards in hand."
+                               "Deal 3 damage for each card destroyed this way."]
+                     :effects [[:give-choice {:title   :consuming-void
+                                              :text    "Destroy up to two cards in hand."
+                                              :choice  ::consuming-void-destroy
+                                              :options [:player :hand]
+                                              :max     2}]]
+                     :quote   "'The Far Hollow hovels still smolder from the last time a mage lost his wits and will to the void.' Ghan, Gem Scavenger"})
+
 (defn crystallize-reveal [game {:keys [player-no caster] :as args}]
   (let [number-of-gems (->> (get-in game [:players player-no :hand])
                             (filter (comp #{:gem} :type))
@@ -658,6 +681,7 @@
             celestial-spire
             char
             conjure-the-lost
+            consuming-void
             crystallize
             dark-fire
             essence-theft
