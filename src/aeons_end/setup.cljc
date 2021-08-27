@@ -130,9 +130,10 @@
                 shuffle
                 (partial sort-by :name))]
     (->> players
-         (map (fn [{:keys [name]}]
+         (map (fn [{:keys [name set]}]
                 {:possible-mages (cond->> mages/mages
                                           name (filter (comp #{name} :name))
+                                          set (filter (comp #{set} :set))
                                           turn-order-variant? (remove (comp #{:lash} :name)))}))
          (sort-by (comp count :possible-mages))
          (reduce (fn [mages {:keys [possible-mages]}]

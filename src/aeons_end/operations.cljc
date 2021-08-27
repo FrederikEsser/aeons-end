@@ -266,7 +266,7 @@
             (and (= :trash from)
                  (-> game :trash empty?)) (dissoc :trash))))
 
-(defn- get-card [game {:keys [player-no card-name move-card-id from from-position breach-no] :as args}]
+(defn- get-card [game {:keys [player-no card-name move-card-id from from-position from-player breach-no] :as args}]
   (assert (or card-name move-card-id from-position) (str "Can't move unspecified card: " args))
   (when (= :breach from)
     (assert breach-no (str "Can't move card from breach without breach-no: " args)))
@@ -276,7 +276,8 @@
         {:card      (ut/give-id! card)
          :from-path from
          :idx       idx}))
-    (let [from-path (cond
+    (let [player-no (or from-player player-no)
+          from-path (cond
                       (= :trash from) [:trash]
                       (and player-no
                            (= :breach from)) [:players player-no :breaches breach-no :prepped-spells]
@@ -530,7 +531,7 @@
 
 (effects/register {:peek-deck peek-deck})
 
-(defn do-move-card [game {:keys [player-no card from-path idx card-name from to to-position to-player breach-no]}]
+(defn do-move-card [game {:keys [player-no card from-path idx card-name from from-player to to-position to-player breach-no]}]
   (let [to-path (if player-no
                   (case to
                     :breach [:players (or to-player player-no) :breaches breach-no :prepped-spells]
@@ -543,7 +544,7 @@
     (cond-> game
             card (-> (remove-card from-path idx)
                      (add-card to-path to-position card)
-                     (state-maintenance player-no from to)))))
+                     (state-maintenance (or from-player player-no) from to)))))
 
 (defn handle-on-trash [game {:keys [player-no card-id card-name destroyed-by] :as args}]
   (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})
@@ -643,12 +644,13 @@
             real-game? (update-in [:players player-no :this-turn] concat [{:prep name :id id}])
             this-turn (update-in [:players player-no :this-turn] (partial remove (comp #{id} :while-prepped))))))
 
-(defn prep-spell [game {:keys [player-no breach-no card-name]}]
+(defn prep-spell [game {:keys [player-no breach-no card-name closed-breaches?]}]
   (if card-name
     (let [{{:keys [type] :as card} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
           breach-no (or breach-no
-                        (first (ut/prepable-breaches game {:player-no player-no
-                                                           :card      card})))]
+                        (first (ut/prepable-breaches game {:player-no        player-no
+                                                           :card             card
+                                                           :closed-breaches? closed-breaches?})))]
       (assert card (str "Prep error: There is no " (ut/format-name card-name) " in your Hand."))
       (assert (= :spell type) (str "Prep error: You can't prep " (ut/format-name card-name) ", which has type " (ut/format-name type) "."))
       (-> game
@@ -902,7 +904,7 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? repeatable? choice-opts bonus-damage]
+(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? repeatable? unswift? choice-opts bonus-damage]
                                             [opt-name :as option] :options
                                             {:keys [effects]}     :or-choice
                                             :as                   choice}]
@@ -920,6 +922,7 @@
                                                  (cond-> min (update :min clojure.core/min (count options))
                                                          max (update :max clojure.core/min (count options)))))
         swiftable (and (= :swift mode)
+                       (not unswift?)
                        (not-empty options)
                        (or (apply = options)
                            (<= (count options) min))

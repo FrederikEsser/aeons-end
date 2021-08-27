@@ -480,6 +480,17 @@
                                         diff-mod
                                         ")")))]))
 
+(defn mage->string [{:keys [name set]}]
+  (when name
+    (cond-> (clojure.core/name name)
+            set (str "/" (clojure.core/name set)))))
+
+(defn string->mage [mage-name]
+  (let [[name set] (string/split mage-name #"/")]
+    (when (not-empty name)
+      (medley.core/assoc-some {:name (keyword name)}
+                              :set (keyword set)))))
+
 (defn home-page []
   (fn []
     (let [{:keys [setup-game?]} @state
@@ -671,7 +682,7 @@
                                 "(empty)")]}]
                      (when (:visible-cards deck)
                        (->> (reduce (fn [cards {:keys [option]}]
-                                      (let [pre (take-while (comp not #{option} :name) cards)
+                                      (let [pre  (take-while (comp not #{option} :name) cards)
                                             post (drop (inc (count pre)) cards)]
                                         (vec (concat pre post))))
                                     (:visible-cards deck)
@@ -748,21 +759,24 @@
                               :checked  turn-order-variant?
                               :on-click #(swap! state update-in [:game-setup :turn-order-variant?] not)}]]))
                 (->> players
-                     (mapk-indexed (fn [player-no {:keys [name]}]
-                                     [:div [:select {:value     (or name :random)
+                     (mapk-indexed (fn [player-no {:keys [name] :as mage}]
+                                     [:div [:select {:value     (or (mage->string mage) "random")
                                                      :on-change (fn [event]
-                                                                  (let [value (keyword (.. event -target -value))]
-                                                                    (if (= :random value)
-                                                                      (swap! state update-in [:game-setup :players player-no] dissoc :name)
-                                                                      (swap! state assoc-in [:game-setup :players player-no :name] value))))}
+                                                                  (let [value (.. event -target -value)]
+                                                                    (swap! state assoc-in [:game-setup :players player-no] (if (= "random" value)
+                                                                                                                             {}
+                                                                                                                             (string->mage value)))))}
                                             [:<>
-                                             [:option {:value :random} "Any mage"]
+                                             [:option {:value "random"} "Any mage"]
                                              [:hr]
                                              (->> mages/mages
                                                   (remove (comp (clojure.set/difference selected-players #{name}) :name))
                                                   (sort-by :name)
-                                                  (mapk (fn [{:keys [name]}]
-                                                          [:option {:value name} (ut/format-name name)])))]]])))])
+                                                  (mapk (fn [mage]
+                                                          (let [{:keys [name set]} mage]
+                                                            [:option {:value (mage->string mage)}
+                                                             (cond-> (ut/format-name name)
+                                                                     set (str " (" (ut/format-name-short set) ")"))]))))]]])))])
              (let [show-purchased? (get-in @state [:expanded? :purchased])
                    players         (get-in @state [:game :players])]
                [:div

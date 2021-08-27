@@ -5,7 +5,7 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.cards.relic :refer [blasting-staff focusing-orb]]
-            [aeons-end.cards.spell :refer [ignite radiance]]
+            [aeons-end.cards.spell :refer [aurora ignite radiance]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
             [aeons-end.mages :refer :all]
@@ -601,7 +601,7 @@
                                          turn-order/wild]}})))))
 
 (deftest mist-test
-  (testing "Mist"
+  (testing "Mist (AE)"
     (testing "Garnet Shard"
       (is (= (-> {:players [{:hand [garnet-shard]}]}
                  (play 0 :garnet-shard))
@@ -672,6 +672,83 @@
              {:players [{:ability (assoc divine-augury :charges 0)
                          :hand    [crystal crystal crystal crystal crystal spark spark spark spark]
                          :deck    [spark]}]})))))
+
+(deftest mist-we-test
+  (testing "Mist (WE)"
+    (testing "Exalted Brand"
+      (let [spark  (assoc spark :id 1)
+            aurora (assoc aurora :id 2)]
+        (is (= (-> {:players [{:ability  (assoc exalted-brand :charges 6)
+                               :breaches [{:prepped-spells [spark]}]}
+                              {:breaches [{:prepped-spells [spark]}
+                                          {:prepped-spells [spark]}]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose [{:player-no 1 :breach-no 0 :card-name :spark}
+                            {:player-no 1 :breach-no 1 :card-name :spark}
+                            {:player-no 0 :breach-no 0 :card-name :spark}])
+                   (choose {:player-no 1})
+                   (choose {:player-no 1})
+                   (choose {:player-no 1}))
+               {:players [{:ability  (assoc exalted-brand :charges 0)
+                           :breaches [{}]}
+                          {:hand     [spark spark spark]
+                           :breaches [{}
+                                      {}]}]
+                :nemesis {:life 47}}))
+        (is (= (-> {:players [{:ability (assoc exalted-brand :charges 6)}
+                              {:breaches [{:prepped-spells [aurora]}]}
+                              {:breaches [{:prepped-spells [spark]}]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose [{:player-no 1 :breach-no 0 :card-name :aurora}
+                            {:player-no 2 :breach-no 0 :card-name :spark}])
+                   (choose {:player-no 2})
+                   (choose {:player-no 1}))
+               {:players [{:ability (assoc exalted-brand :charges 0)}
+                          {:hand     [spark]
+                           :breaches [{}]}
+                          {:hand     [aurora]
+                           :breaches [{}]}]
+                :nemesis {:life 46}}))
+        (is (= (-> {:players [{:ability  (assoc exalted-brand :charges 6)
+                               :breaches [{:prepped-spells [spark]}]}
+                              {}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+                   (choose {:player-no 1}))
+               {:players [{:ability  (assoc exalted-brand :charges 0)
+                           :breaches [{}]}
+                          {:hand [spark]}]
+                :nemesis {:life 49}}))
+        (is (= (-> {:players [{:ability  (assoc exalted-brand :charges 6)
+                               :breaches [{:prepped-spells [spark]}
+                                          {:prepped-spells [spark]}
+                                          {:prepped-spells [spark]}]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                            {:player-no 0 :breach-no 1 :card-name :spark}
+                            {:player-no 0 :breach-no 2 :card-name :spark}])
+                   (choose {:player-no 0})
+                   (choose {:player-no 0})
+                   (choose {:player-no 0}))
+               {:players [{:ability  (assoc exalted-brand :charges 0)
+                           :hand     [spark spark spark]
+                           :breaches [{} {} {}]}]
+                :nemesis {:life 47}}))
+        (is (= (-> {:players [{:ability (assoc exalted-brand :charges 6)}
+                              {:breaches [{:prepped-spells [radiance]}]
+                               :discard  [crystal]}]
+                    :nemesis {:life 50}}
+                   (activate-ability 0)
+                   (choose [{:player-no 1 :breach-no 0 :card-name :radiance}]))
+               {:players [{:ability (assoc exalted-brand :charges 0)}
+                          {:breaches [{}]
+                           :hand     [crystal]
+                           :deck     [radiance]}]
+                :nemesis {:life 45}}))))))
 
 (deftest quilius-test
   (testing "Quilius"

@@ -410,21 +410,93 @@
                     :charge-cost 5
                     :text        "Any ally draws four cards."
                     :effects     [[:give-choice {:title   :divine-augury
-                                                 :text    "Any ally draws four cards"
+                                                 :text    "Any ally draws four cards."
                                                  :choice  [:draw {:arg 4}]
                                                  :options [:players {:ally true}]
                                                  :min     1
                                                  :max     1}]]})
 
-(def mist {:name     :mist
-           :title    "Dagger Captain"
-           :breaches [{}
-                      {:stage 2}
-                      {:stage 1}
-                      {:stage 1}]
-           :hand     [garnet-shard crystal crystal crystal spark]
-           :deck     [crystal crystal crystal spark spark]
-           :ability  divine-augury})
+(def mist-ae {:name     :mist
+              :set      :aeon's-end
+              :title    "Dagger Captain"
+              :breaches [{}
+                         {:stage 2}
+                         {:stage 1}
+                         {:stage 1}]
+              :hand     [garnet-shard crystal crystal crystal spark]
+              :deck     [crystal crystal crystal spark spark]
+              :ability  divine-augury})
+
+(def amethyst-paragon {:name    :amethyst-paragon
+                       :type    :gem
+                       :cost    0
+                       :text    ["Gain 1 Aether."
+                                 "Any ally may prep a spell in hand to their opened or closed breach(es)."]
+                       :effects [[:gain-aether 1]
+                                 [:give-choice {:title   :amethyst-paragon
+                                                :text    "Any ally may prep a spell in hand to their opened or closed breach(es)."
+                                                :choice  [:prep-spell {:closed-breaches? true}]
+                                                :options [:players :hand {:ally     true
+                                                                          :type     :spell
+                                                                          :can-prep {:closed-breaches? true}}]
+                                                :max     1}]]})
+
+(defn exalted-brand-give-spell [game {:keys [player-no from-player card-id]}]
+  (let [{{:keys [name] :as card} :card} (ut/get-card-idx game [:players from-player :discard] {:id card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:give-choice {:title   :exalted-brand
+                                                                :text    (str "Place the " (ut/format-name name) " into any ally's hand.")
+                                                                :choice  [:move-card {:move-card-id card-id
+                                                                                      :from-player  from-player
+                                                                                      :from         :discard
+                                                                                      :to           :hand}]
+                                                                :options [:players {:ally true}]
+                                                                :min     1
+                                                                :max     1}]]}))))
+
+(defn exalted-brand-cast [game {:keys [caster player-no breach-no card-name spells]}]
+  (-> game
+      (push-effect-stack {:player-no caster
+                          :effects   (->> (or spells
+                                              (when (and player-no breach-no card-name)
+                                                [{:player-no player-no
+                                                  :breach-no breach-no
+                                                  :card-name card-name}]))
+                                          (mapcat (fn [{:keys [player-no breach-no card-name] :as args}]
+                                                    (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+                                                      [[:cast-spell (assoc args :caster caster)]
+                                                       [::exalted-brand-give-spell {:card-id     id
+                                                                                    :from-player player-no}]]))))})))
+
+(defn exalted-brand-choice [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :exalted-brand
+                                                      :text    "Cast up to three different spells prepped by any number of players. For each spell cast this way, place that spell into any ally's hand."
+                                                      :choice  [::exalted-brand-cast {:caster player-no}]
+                                                      :options [:players :prepped-spells]
+                                                      :max     3}]]}))
+
+(effects/register {::exalted-brand-give-spell exalted-brand-give-spell
+                   ::exalted-brand-cast       exalted-brand-cast
+                   ::exalted-brand-choice     exalted-brand-choice})
+
+(def exalted-brand {:name        :exalted-brand
+                    :activation  :your-main-phase
+                    :charge-cost 6
+                    :text        "Cast up to three different spells prepped by any number of players. For each spell cast this way, place that spell into any ally's hand."
+                    :effects     [[::exalted-brand-choice]]})
+
+(def mist-we {:name     :mist
+              :set      :war-eternal
+              :title    "Voidwalker"
+              :breaches [{}
+                         {:stage 2}
+                         {:stage 1}
+                         {:stage 1}]
+              :hand     [amethyst-paragon crystal crystal crystal spark]
+              :deck     [crystal crystal crystal spark spark]
+              :ability  exalted-brand})
 
 (defn quilius-gain-trophy [game _]
   (let [{:keys [idx]} (ut/get-card-idx game [:players] {:name :quilius})]
@@ -607,12 +679,13 @@
                                                      :min     1
                                                      :max     1}]
                                       [:reveal-turn-order-deck]
-                                      [:give-choice {:title   :metaphysical-link
-                                                     :text    "Return the revealed turn order cards in any order (top to bottom)."
-                                                     :choice  :topdeck-revealed-turn-order-cards
-                                                     :options [:turn-order :revealed]
-                                                     :min     6
-                                                     :max     6}]]})
+                                      [:give-choice {:title    :metaphysical-link
+                                                     :text     "Return the revealed turn order cards in any order (top to bottom)."
+                                                     :choice   :topdeck-revealed-turn-order-cards
+                                                     :options  [:turn-order :revealed]
+                                                     :min      6
+                                                     :max      6
+                                                     :unswift? true}]]})
 
 (def xaxos {:name     :xaxos
             :title    "Breach Mage Adept"
@@ -696,7 +769,8 @@
             jian
             kadir
             lash
-            mist
+            mist-ae
+            mist-we
             quilius
             remnant
             ulgimor

@@ -423,7 +423,7 @@
     (count all-text)))
 
 (defn options-from-player [game {:keys [player-no area card-id]}
-                           & [{:keys [this type not-type cost min-cost max-cost most-expensive can-prep
+                           & [{:keys [this id type not-type cost min-cost max-cost most-expensive can-prep
                                       lowest-focus-cost opened min-charges prepped-this-turn]}]]
   (case area
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
@@ -469,6 +469,7 @@
                             (apply max'))]
       (cond->> cards
                this (filter (comp #{card-id} :id))
+               id (filter (comp #{id} :id))
                type (filter (comp #{type} :type))
                not-type (remove (comp #{not-type} :type))
                cost (filter (comp #(= % cost) :cost))
