@@ -109,7 +109,7 @@
              :quote   "'The words and gestures needed left him, and the breach grew dim.' Nerva, Survivor"})
 
 (defn encroach-damage [game _]
-  (let [{:keys [player-no] :as type} (-> game :turn-order :deck first :type)]
+  (let [{:keys [player-no player-nos] :as type} (-> game :turn-order :deck first :type)]
     (cond
       (= :wild type) (push-effect-stack game {:effects [[:give-choice {:title   :encroach
                                                                        :text    "Any player suffers 2 damage."
@@ -119,6 +119,16 @@
                                                                        :max     1}]]})
       player-no (push-effect-stack game {:player-no player-no
                                          :effects   [[:damage-player 2]]})
+      player-nos (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
+                                                                   :text    (str "Player "
+                                                                                 (case player-nos
+                                                                                   #{0 1} "1 or 2"
+                                                                                   #{2 3} "3 or 4")
+                                                                                 " suffers 2 damage.")
+                                                                   :choice  [:damage-player {:arg 2}]
+                                                                   :options [:players {:player-nos player-nos}]
+                                                                   :min     1
+                                                                   :max     1}]]})
       :else (push-effect-stack game {:effects [[:damage-gravehold 3]]}))))
 
 (effects/register {::encroach-damage encroach-damage})

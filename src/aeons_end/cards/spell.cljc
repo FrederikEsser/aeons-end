@@ -339,6 +339,28 @@
                       :effects                   [[:deal-damage 3]]
                       :quote                     "'All things can be tamed.' Lash, Breach Mage Scout"})
 
+(defn fiery-torrent-damage [{:keys [players] :as game} {:keys [player-no card-id] :as args}]
+  (let [additional-damage (->> players
+                               (mapcat :breaches)
+                               (mapcat :prepped-spells)
+                               (filter (comp #{:fiery-torrent} :name))
+                               (remove (comp #{card-id} :id))
+                               count
+                               (* 2))]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (+ 2 additional-damage)]]})))
+
+(effects/register {::fiery-torrent-damage fiery-torrent-damage})
+
+(def fiery-torrent {:name    :fiery-torrent
+                    :type    :spell
+                    :cost    5
+                    :cast    ["Deal 2 damage."
+                              "Deal 2 additional damage for each other Fiery Torrent prepped by any player."]
+                    :effects [[::fiery-torrent-damage]]
+                    :quote   "'Fire feeds fire.' Dezmodia, Voidborn Prodigy"})
+
 (def ignite {:name    :ignite
              :type    :spell
              :cost    4
@@ -711,6 +733,7 @@
             essence-theft
             feedback-aura
             feral-lightning
+            fiery-torrent
             ignite
             jagged-lightning
             kindle
