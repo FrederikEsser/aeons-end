@@ -498,6 +498,47 @@
               :deck     [crystal crystal crystal spark spark]
               :ability  exalted-brand})
 
+(defn tourmaline-shard-destroy [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:damage-player 1]
+                                                    [:destroy-from-hand {:card-name card-name}]]})))
+
+(effects/register {::tourmaline-shard-destroy tourmaline-shard-destroy})
+
+(def tourmaline-shard {:name    :tourmaline-shard
+                       :type    :gem
+                       :cost    0
+                       :text    ["Gain 1 Aether."
+                                 "Any ally may suffer 1 damage. If they do, they destroy a card in hand."]
+                       :effects [[:gain-aether 1]
+                                 [:give-choice {:title   :tourmaline-shard
+                                                :text    "Any ally may suffer 1 damage. If they do, they destroy a card in hand."
+                                                :choice  ::tourmaline-shard-destroy
+                                                :options [:players :hand {:ally true}]
+                                                :max     1}]]})
+
+(defn auspex-rune-prevent-damage [game _]
+  (assoc game :prevent-damage true))
+
+(effects/register {::auspex-rune-prevent-damage auspex-rune-prevent-damage})
+
+(def auspex-rune {:name        :auspex-rune
+                  :activation  :turn-order-drawn
+                  :charge-cost 5
+                  :text        "Prevent any damage that the players or Gravehold would suffer during that turn."
+                  :effects     [[::auspex-rune-prevent-damage]]})
+
+(def phaedraxa {:name     :phaedraxa
+                :title    "Breach Mage Seer"
+                :breaches [{:status :destroyed}
+                           {:status :opened}
+                           {:stage 1}
+                           {:stage 2}]
+                :hand     [tourmaline-shard crystal crystal crystal spark]
+                :deck     [crystal crystal crystal crystal spark]
+                :ability  auspex-rune})
+
 (defn quilius-gain-trophy [game _]
   (let [{:keys [idx]} (ut/get-card-idx game [:players] {:name :quilius})]
     (update-in game [:players idx :trophies] ut/plus 1)))
@@ -771,6 +812,7 @@
             lash
             mist-ae
             mist-we
+            phaedraxa
             quilius
             remnant
             ulgimor

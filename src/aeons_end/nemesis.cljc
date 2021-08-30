@@ -211,8 +211,9 @@
 
 (effects/register {:heal-nemesis heal-nemesis})
 
-(defn damage-gravehold [{:keys [gravehold] :as game} {:keys [arg]}]
-  (assoc-in game [:gravehold :life] (max (- (:life gravehold) arg) 0)))
+(defn damage-gravehold [{:keys [gravehold prevent-damage] :as game} {:keys [arg]}]
+  (cond-> game
+          (not prevent-damage) (assoc-in [:gravehold :life] (max (- (:life gravehold) arg) 0))))
 
 (effects/register {:damage-gravehold damage-gravehold})
 
@@ -231,18 +232,20 @@
                                                 (when (:charges ability)
                                                   [[:spend-charges]]))})))
 
-(defn damage-player [game {:keys [player-no arg]}]
-  (let [{:keys [life]} (get-in game [:players player-no])]
-    (if (< arg life)
-      (update-in game [:players player-no :life] - arg)
-      (-> game
-          (assoc-in [:players player-no :life] 0)
-          (push-effect-stack {:player-no player-no
-                              :effects   (concat
-                                           (when (> arg life)
-                                             [[:damage-gravehold (* 2 (- arg life))]])
-                                           (when (pos? life)
-                                             [[:exhaust-player]]))})))))
+(defn damage-player [{:keys [prevent-damage] :as game} {:keys [player-no arg]}]
+  (if prevent-damage
+    game
+    (let [{:keys [life]} (get-in game [:players player-no])]
+      (if (< arg life)
+        (update-in game [:players player-no :life] - arg)
+        (-> game
+            (assoc-in [:players player-no :life] 0)
+            (push-effect-stack {:player-no player-no
+                                :effects   (concat
+                                             (when (> arg life)
+                                               [[:damage-gravehold (* 2 (- arg life))]])
+                                             (when (pos? life)
+                                               [[:exhaust-player]]))}))))))
 
 (effects/register {:exhaust-player exhaust-player
                    :damage-player  damage-player})

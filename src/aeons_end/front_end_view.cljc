@@ -260,7 +260,8 @@
             :activation-text (case activation
                                :your-main-phase "Activate during your main phase:"
                                :any-main-phase "Activate during any player's main phase:"
-                               :nemesis-draw "Activate during the nemesis draw phase:")}
+                               :nemesis-draw "Activate during the nemesis draw phase:"
+                               :turn-order-drawn "Activate immediately after a turn order card is drawn:")}
            (cond
              (and (= current-player player-no)
                   (not choice)

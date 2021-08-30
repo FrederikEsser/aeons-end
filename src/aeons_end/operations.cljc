@@ -459,19 +459,23 @@
 (effects/register {:spend-charges spend-charges})
 
 (defn activate-ability [{:keys [current-player nemesis] :as game} {:keys [player-no]}]
-  (let [{:keys [ability phase]} (get-in game [:players player-no])
-        {:keys [name activation charges charge-cost effects]
-         :or   {charges 0}} ability]
-    (when phase
-      (assert (case activation
-                :your-main-phase (= :main phase)
-                :any-main-phase (= :main (get-in game [:players current-player :phase]))
-                :nemesis-draw (= :draw (:phase nemesis)))
-              (str "Activate error: " (ut/format-name name) " can't be activated in the " (ut/format-name phase) " phase.")))
-    (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
-    (push-effect-stack game {:player-no player-no
-                             :effects   (concat [[:spend-charges]]
-                                                effects)})))
+  (if player-no
+    (let [{:keys [ability phase]} (get-in game [:players player-no])
+          {:keys [name activation charges charge-cost effects]
+           :or   {charges 0}} ability]
+      (when (and phase current-player)
+        (assert (case activation
+                  :your-main-phase (= :main phase)
+                  :any-main-phase (= :main (get-in game [:players current-player :phase]))
+                  :nemesis-draw (= :draw (:phase nemesis))
+                  :turn-order-drawn (and (= :no-one current-player)
+                                         (= :out-of-turn phase)))
+                (str "Activate error: " (ut/format-name name) " can't be activated in the " (ut/format-name phase) " phase.")))
+      (assert (and charge-cost (>= charges charge-cost)) (str "Activate error: " (ut/format-name name) " is not fully charged (" charges "/" charge-cost ")"))
+      (push-effect-stack game {:player-no player-no
+                               :effects   (concat [[:spend-charges]]
+                                                  effects)}))
+    game))
 
 (effects/register {:activate-ability activate-ability})
 
@@ -964,9 +968,8 @@
 
 (effects/register {:card-effect card-effect})
 
-(defn clear-player [{:keys [current-player] :as game} {:keys [player-no]}]
+(defn clear-player [game {:keys [player-no]}]
   (-> game
-      (cond-> current-player (assoc :current-player :no-one))
       (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn :breach-capacity :breach-cost-reduction)
       (medley/update-existing-in [:players player-no :breaches]
                                  (partial mapv (fn [{:keys [status] :as breach}]

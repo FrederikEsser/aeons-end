@@ -87,10 +87,26 @@
   (let [{:keys [effects]} (last discard)]
     (push-effect-stack game {:effects effects})))
 
-(defn next-turn [{:keys [turn-order] :as game} _]
+(defn next-turn [{:keys [turn-order current-player players] :as game} _]
   (if turn-order
-    (push-effect-stack game {:effects [[:draw-turn-order]
-                                       [:start-turn]]})
+    (let [{:keys [name text]} (->> players
+                                   (map :ability)
+                                   (filter (fn [{:keys [activation charges charge-cost]}]
+                                             (and (= :turn-order-drawn activation)
+                                                  (>= charges charge-cost))))
+                                   first)]
+      (-> game
+          (cond-> current-player (assoc :current-player :no-one))
+          (dissoc :prevent-damage)
+          (push-effect-stack {:effects [[:draw-turn-order]
+                                        [:give-choice {:title   "Turn Order Card Drawn"
+                                                       :text    (str "You may activate " (ut/format-name name)
+                                                                     " to:\n" text)
+                                                       :choice  :activate-ability
+                                                       :options [:players :ability {:activation    :turn-order-drawn
+                                                                                    :fully-charged true}]
+                                                       :max     1}]
+                                        [:start-turn]]})))
     game))
 
 (effects/register {:draw-turn-order draw-turn-order
