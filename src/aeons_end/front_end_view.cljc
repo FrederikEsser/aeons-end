@@ -332,6 +332,7 @@
                      resolving                 :resolving
                      :as                       game}]
   (merge {:name-ui          (ut/format-name name)
+          :tier             (ut/get-nemesis-tier game)
           :life             life
           :deck             {:number-of-cards (count deck)}
           :unleash-text     (get-value game unleash-text)

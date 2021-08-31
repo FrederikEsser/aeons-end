@@ -119,7 +119,7 @@
                                                                        :max     1}]]})
       player-no (push-effect-stack game {:player-no player-no
                                          :effects   [[:damage-player 2]]})
-      player-nos (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
+      player-nos (push-effect-stack game {:effects [[:give-choice {:title   :encroach
                                                                    :text    (str "Player "
                                                                                  (case player-nos
                                                                                    #{0 1} "1 or 2"

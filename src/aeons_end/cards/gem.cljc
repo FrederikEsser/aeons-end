@@ -234,6 +234,21 @@
                                                   :max     1}]]
                  :quote           "'Pain is the true and only tongue of The Nameless.' Garu, Oathsworn Protector"})
 
+(defn scoria-slag-gain-aether [game {:keys [player-no]}]
+  (let [tier (ut/get-nemesis-tier game)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain-aether (if (>= tier 2) 3 2)]]})))
+
+(effects/register {::scoria-slag-gain-aether scoria-slag-gain-aether})
+
+(def scoria-slag {:name    :scoria-slag
+                  :type    :gem
+                  :cost    4
+                  :text    ["Gain 2 Aether"
+                            "If the nemesis tier is 2 or higher, gain an additional 1 Aether."]
+                  :effects [[::scoria-slag-gain-aether]]
+                  :quote   "'The cave shudders when the breaches open. And when they close, the rocks are but glowing' Nerva, Survivor"})
+
 (def searing-ruby {:name    :searing-ruby
                    :type    :gem
                    :cost    4
@@ -318,6 +333,7 @@
             jade
             leeching-agate
             pain-stone
+            scoria-slag
             searing-ruby
             sifters-pearl
             volcanic-glass

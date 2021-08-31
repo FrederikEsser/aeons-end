@@ -422,6 +422,12 @@
                       (string/join))]
     (count all-text)))
 
+(defn get-nemesis-tier [{:keys [nemesis]}]
+  (let [{:keys [play-area discard]} nemesis]
+    (->> (concat play-area discard)
+         (map :tier)
+         (apply max 0))))
+
 (defn options-from-player [game {:keys [player-no area card-id]}
                            & [{:keys [this id type not-type cost min-cost max-cost most-expensive can-prep
                                       lowest-focus-cost opened min-charges prepped-this-turn]}]]

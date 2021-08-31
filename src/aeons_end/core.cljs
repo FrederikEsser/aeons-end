@@ -575,11 +575,11 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui unleash-text additional-rules life tokens deck play-area discard fury husks
+             (let [{:keys [name name-ui tier unleash-text additional-rules life tokens deck play-area discard fury husks
                            tainted-jades tainted-track corruptions interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
-                       [:tr (map-tag :th ["Nemesis" "Play area" "Deck" "Discard"])]
+                       [:tr (map-tag :th [(str "Nemesis - tier "  tier) "Play area" "Deck" "Discard"])]
                        [:tr
                         [:td
                          [:div
