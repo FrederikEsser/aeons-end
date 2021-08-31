@@ -109,6 +109,26 @@
             :on-gain [[::blaze-on-gain]]
             :effects [[::blaze-damage]]})
 
+(defn carbonize-choice [game {:keys [player-no]}]
+  (-> game
+      (push-effect-stack {:player-no player-no
+                          :effects   [[:give-choice {:title   :carbonize
+                                                     :text    "You may place the revealed turn order card on the bottom of the turn order deck."
+                                                     :choice  :put-turn-order-top-to-bottom
+                                                     :options [:turn-order :revealed]
+                                                     :max     1}]]})))
+
+(effects/register {::carbonize-choice carbonize-choice})
+
+(def carbonize {:name    :carbonize
+                :type    :spell
+                :cost    4
+                :cast    ["Deal 3 damage."
+                          "Reveal the top card of the turn order deck. You may place that card on the bottom of the turn order deck."]
+                :effects [[:deal-damage 3]
+                          [:reveal-top-turn-order]
+                          [::carbonize-choice]]})
+
 (defn catalyst-deal-damage [game {:keys [player-no] :as args}]
   (let [{:keys [life]} (get-in game [:players player-no])
         damage (if (<= life 2) 7 2)]
@@ -722,6 +742,7 @@
             arcane-nexus
             aurora
             blaze
+            carbonize
             catalyst
             celestial-spire
             chaos-arc

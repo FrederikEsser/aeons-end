@@ -507,7 +507,7 @@
                   :turn-order {:deck [turn-order/nemesis
                                       turn-order/player-1]}}
                  (play 0 :quartz-shard)
-                 (choose :bottom))
+                 (choose :nemesis))
              {:players    [{:play-area [quartz-shard]
                             :aether    1}]
               :turn-order {:deck [turn-order/player-1
@@ -516,7 +516,7 @@
                   :turn-order {:deck [turn-order/player-1
                                       turn-order/nemesis]}}
                  (play 0 :quartz-shard)
-                 (choose :top))
+                 (choose nil))
              {:players    [{:play-area [quartz-shard]
                             :aether    2}]
               :turn-order {:deck           [turn-order/player-1
@@ -526,7 +526,7 @@
                   :turn-order {:deck [turn-order/wild
                                       turn-order/nemesis]}}
                  (play 0 :quartz-shard)
-                 (choose :bottom))
+                 (choose :wild))
              {:players    [{:play-area [quartz-shard]
                             :aether    2}]
               :turn-order {:deck [turn-order/nemesis

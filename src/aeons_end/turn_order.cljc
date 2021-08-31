@@ -146,11 +146,13 @@
 
 (effects/register {:topdeck-revealed-turn-order-cards topdeck-revealed-turn-order-cards})
 
-(defn put-turn-order-top-to-bottom [game _]
-  (let [[top & deck] (get-in game [:turn-order :deck])]
-    (-> game
-        (cond-> top (assoc-in [:turn-order :deck] (concat deck [top])))
-        (update :turn-order dissoc :revealed-cards))))
+(defn put-turn-order-top-to-bottom [game {:keys [card-name]}]
+  (if card-name
+    (let [[top & deck] (get-in game [:turn-order :deck])]
+      (-> game
+          (cond-> top (assoc-in [:turn-order :deck] (concat deck [top])))
+          (update :turn-order dissoc :revealed-cards)))
+    game))
 
 (effects/register {:put-turn-order-top-to-bottom put-turn-order-top-to-bottom})
 

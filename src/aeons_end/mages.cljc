@@ -279,27 +279,19 @@
             :deck     [crystal crystal crystal spark spark]
             :ability  otherworldly-gate})
 
-(defn quartz-shard-move-turn-order-card [game {:keys [choice]}]
-  (cond-> game
-          (= :bottom choice) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
-
 (defn quartz-shard-choice [game {:keys [player-no]}]
   (let [{:keys [type]} (-> game :turn-order :deck first)]
     (-> game
         (push-effect-stack {:player-no player-no
                             :effects   (concat [[:give-choice {:title   :quartz-shard
-                                                               :text    "You may place the revealed turn order card on the bottom or the top of the turn order deck."
-                                                               :choice  ::quartz-shard-move-turn-order-card
-                                                               :options [:special
-                                                                         {:option :top :text "Top"}
-                                                                         {:option :bottom :text "Bottom"}]
-                                                               :min     1
+                                                               :text    "You may place the revealed turn order card on the bottom of the turn order deck."
+                                                               :choice  :put-turn-order-top-to-bottom
+                                                               :options [:turn-order :revealed]
                                                                :max     1}]]
                                                (when-not (= :nemesis type)
                                                  [[:gain-aether 1]]))}))))
 
-(effects/register {::quartz-shard-move-turn-order-card quartz-shard-move-turn-order-card
-                   ::quartz-shard-choice               quartz-shard-choice})
+(effects/register {::quartz-shard-choice quartz-shard-choice})
 
 (def quartz-shard {:name    :quartz-shard
                    :type    :gem

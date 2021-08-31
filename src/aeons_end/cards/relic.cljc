@@ -107,22 +107,17 @@
                                 [::conclave-destroy]]
                       :quote   "'Brama and her ilk read the words and consider them answers. I see only questions.' Yan Magda, Enlightened Exile"})
 
-(defn fiend-catcher-move-nemesis-card [game {:keys [card-name]}]
-  (cond-> game
-          (= :nemesis card-name) (push-effect-stack {:effects [[:put-turn-order-top-to-bottom]]})))
-
 (defn fiend-catcher-choice [game {:keys [player-no]}]
   (let [{:keys [type]} (-> game :turn-order :deck first)]
     (cond-> game
             (= :nemesis type) (push-effect-stack {:player-no player-no
                                                   :effects   [[:give-choice {:title   :fiend-catcher
                                                                              :text    "You may place the nemesis turn order card on the bottom of the turn order deck."
-                                                                             :choice  ::fiend-catcher-move-nemesis-card
+                                                                             :choice  :put-turn-order-top-to-bottom
                                                                              :options [:turn-order :revealed]
                                                                              :max     1}]]}))))
 
-(effects/register {::fiend-catcher-move-nemesis-card fiend-catcher-move-nemesis-card
-                   ::fiend-catcher-choice            fiend-catcher-choice})
+(effects/register {::fiend-catcher-choice fiend-catcher-choice})
 
 (def fiend-catcher {:name    :fiend-catcher
                     :type    :relic
