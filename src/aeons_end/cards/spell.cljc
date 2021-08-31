@@ -254,6 +254,39 @@
                                               :max     2}]]
                      :quote   "'The Far Hollow hovels still smolder from the last time a mage lost his wits and will to the void.' Ghan, Gem Scavenger"})
 
+(defn convection-field-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]
+                                                           :or   {bonus-damage 0}}]
+  (let [{:keys [name]} nemesis
+        big-damage   (+ 4 bonus-damage)
+        small-damage (+ 2 bonus-damage)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title     :convection-field
+                                                        :text      (str "Deal " big-damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                        :choice    [:deal-damage-to-target {:damage big-damage}]
+                                                        :options   [:mixed
+                                                                    [:nemesis]
+                                                                    [:nemesis :minions]]
+                                                        :or-choice {:text    (str "Deal " small-damage " damage.\nAny ally may destroy a card in hand.")
+                                                                    :effects [[:deal-damage small-damage]
+                                                                              [:give-choice {:title   :convection-field
+                                                                                             :text    "Any ally may destroy a card in hand."
+                                                                                             :choice  :destroy-from-hand
+                                                                                             :options [:players :hand [:ally true]]
+                                                                                             :max     1}]]}
+                                                        :max       1}]]})))
+
+(effects/register {::convection-field-choice convection-field-choice})
+
+(def convection-field {:name    :convection-field
+                       :type    :spell
+                       :cost    5
+                       :cast    ["Deal 4 damage."
+                                 "OR"
+                                 "Deal 2 damage."
+                                 "Any ally may destroy a card in hand."]
+                       :effects [[::convection-field-choice]]
+                       :quote   "'Much to Ulgimor's dismay, no shadow would be cast without coward Ohat' Nerva, Survivor"})
+
 (defn crystallize-reveal [game {:keys [player-no caster] :as args}]
   (let [number-of-gems (->> (get-in game [:players player-no :hand])
                             (filter (comp #{:gem} :type))
@@ -764,6 +797,7 @@
             char
             conjure-the-lost
             consuming-void
+            convection-field
             crystallize
             dark-fire
             essence-theft
