@@ -650,6 +650,21 @@
                          [:other-players {:effects [[:draw 1]]}]]
                :quote   "'All of us, together. For apart we are doomed.' Brama, Breach Mage Elder"})
 
+(def reduce-to-ash {:name          :reduce-to-ash
+                    :type          :spell
+                    :cost          7
+                    :text          "While prepped, at the start of your casting phase reveal the top card of your deck. You may destroy the revealed card."
+                    :while-prepped {:at-start-casting [[:reveal-from-deck 1]
+                                                       [:give-choice {:title   :reduce-to-ash
+                                                                      :text    "Reveal the top card of your deck. You may destroy it."
+                                                                      :choice  :trash-from-revealed
+                                                                      :options [:player :revealed]
+                                                                      :max     1}]
+                                                       [:topdeck-all-revealed]]}
+                    :cast          "Deal 4 damage."
+                    :effects       [[:deal-damage 4]]
+                    :quote         "'Whether the shadowkin beast known as Ulgimor resides in that lump of coal or it is some part of Ohat remains a topic of controversy.'"})
+
 (def sages-brand {:name          :sage's-brand
                   :type          :spell
                   :dual-breach   true
@@ -767,6 +782,7 @@
             pyromancy
             pyrotechnic-surge
             radiance
+            reduce-to-ash
             sages-brand
             scorch
             spectral-echo
