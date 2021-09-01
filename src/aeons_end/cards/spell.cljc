@@ -340,6 +340,20 @@
                                          :max     2}]]
                 :quote   "'Xaxos always says, to come back to light, we must first visit the shadow.' Malastar, Breach Mage Mentor"})
 
+(defn equilibrium-modify-damage [damage]
+  (max (dec damage) 1))
+
+(effects/register-predicates {::equilibrium-modify-damage equilibrium-modify-damage})
+
+(def equilibrium {:name          :equilibrium
+                  :type          :spell
+                  :cost          7
+                  :text          "While prepped, when you suffer damage reduce that damage by 1, to a minimum of 1."
+                  :while-prepped {:modify-damage ::equilibrium-modify-damage}
+                  :cast          "Deal 4 damage."
+                  :effects       [[:deal-damage 4]]
+                  :quote         "'I have spun light into the dark places they fear most. But I have brought the darkness with me.' Yan Magda, Enlightened Exile"})
+
 (defn essence-theft-discard [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -800,6 +814,7 @@
             convection-field
             crystallize
             dark-fire
+            equilibrium
             essence-theft
             feedback-aura
             feral-lightning

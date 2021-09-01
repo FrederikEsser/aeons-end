@@ -487,6 +487,39 @@
                        :discard  [dark-fire]}]
             :nemesis {:life 49}}))))
 
+(deftest equilibrium-test
+  (testing "Equilibrium"
+    (testing "While prepped"
+      (is (= (-> {:players [{:breaches [{:prepped-spells [equilibrium]}]
+                             :life     10}]}
+                 (damage-player 0 3))
+             {:players [{:breaches [{:prepped-spells [equilibrium]}]
+                         :life     8}]}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [equilibrium]}]
+                             :life     10}]}
+                 (damage-player 0 2))
+             {:players [{:breaches [{:prepped-spells [equilibrium]}]
+                         :life     9}]}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [equilibrium]}]
+                             :life     10}]}
+                 (damage-player 0 1))
+             {:players [{:breaches [{:prepped-spells [equilibrium]}]
+                         :life     9}]}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [equilibrium]}
+                                        {:prepped-spells [equilibrium]}]
+                             :life     10}]}
+                 (damage-player 0 3))
+             {:players [{:breaches [{:prepped-spells [equilibrium]}
+                                    {:prepped-spells [equilibrium]}]
+                         :life     9}]}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [equilibrium]}
+                                        {:prepped-spells [equilibrium]}]
+                             :life     10}]}
+                 (damage-player 0 2))
+             {:players [{:breaches [{:prepped-spells [equilibrium]}
+                                    {:prepped-spells [equilibrium]}]
+                         :life     9}]})))))
+
 (deftest feral-lightning-test
   (testing "Feral Lightning"
     (is (= (-> {:players [{:hand     [feral-lightning]

@@ -235,15 +235,22 @@
 (defn damage-player [{:keys [prevent-damage] :as game} {:keys [player-no arg]}]
   (if prevent-damage
     game
-    (let [{:keys [life]} (get-in game [:players player-no])]
-      (if (< arg life)
-        (update-in game [:players player-no :life] - arg)
+    (let [{:keys [life breaches]} (get-in game [:players player-no])
+          damage (->> breaches
+                      (mapcat :prepped-spells)
+                      (keep (comp :modify-damage :while-prepped))
+                      (map effects/get-predicate)
+                      (reduce (fn [damage modify-damage-fn]
+                                (modify-damage-fn damage))
+                              arg))]
+      (if (< damage life)
+        (update-in game [:players player-no :life] - damage)
         (-> game
             (assoc-in [:players player-no :life] 0)
             (push-effect-stack {:player-no player-no
                                 :effects   (concat
-                                             (when (> arg life)
-                                               [[:damage-gravehold (* 2 (- arg life))]])
+                                             (when (> damage life)
+                                               [[:damage-gravehold (* 2 (- damage life))]])
                                              (when (pos? life)
                                                [[:exhaust-player]]))}))))))
 
