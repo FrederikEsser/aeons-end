@@ -103,7 +103,7 @@
                                       :text    "The player with the most prepped spells discards their most expensive prepped spell."
                                       :choice  :discard-prepped-spells
                                       :options [:players :prepped-spells {:most-prepped-spells true
-                                                                          :most-expensive      true}]
+                                                                          :most-expensive      :per-player}]
                                       :min     1
                                       :max     1}]]
              :quote   "'The words and gestures needed left him, and the breach grew dim.' Nerva, Survivor"})

@@ -199,6 +199,75 @@
                                     {:prepped-spells [spark]}]
                          :life     8}]}))))
 
+(deftest dispel-test
+  (testing "Dispel"
+    (is (= (-> {:nemesis   {:deck    [dispel]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{}]}
+               draw-nemesis-card)
+           {:nemesis   {:discard [dispel]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{}]}))
+    (is (= (-> {:nemesis   {:deck    [dispel]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]}]}
+               draw-nemesis-card
+               (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+           {:nemesis   {:discard [dispel]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]
+                         :discard  [spark]}]}))
+    (is (= (-> {:nemesis   {:deck    [dispel]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [ignite]}
+                                        {:prepped-spells [spark]}]}]}
+               draw-nemesis-card
+               (choose {:player-no 1 :breach-no 0 :card-name :ignite}))
+           {:nemesis   {:discard [dispel]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{:prepped-spells [spark]}]}
+                        {:breaches [{}
+                                    {:prepped-spells [spark]}]
+                         :discard  [ignite]}]}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [dispel]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:breaches [{:prepped-spells [ignite]}]}
+                                           {:breaches [{:prepped-spells [spark]}
+                                                       {:prepped-spells [spark]}]}]}
+                              draw-nemesis-card
+                              (choose {:player-no 0 :breach-no 0 :card-name :ignite}))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis   {:deck    [dispel]
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:life 30}
+                               :players   [{:breaches [{:prepped-spells [spark]}]}
+                                           {:breaches [{:prepped-spells [ignite]}
+                                                       {:prepped-spells [spark]}]}]}
+                              draw-nemesis-card
+                              (choose {:player-no 1 :breach-no 1 :card-name :spark}))))
+    (is (= (-> {:nemesis   {:deck    [dispel]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
+               draw-nemesis-card
+               (choose {:player-no 0 :breach-no 0 :card-name :spark}))
+           {:nemesis   {:discard [dispel]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:breaches [{}]
+                         :discard  [spark]}
+                        {:breaches [{:prepped-spells [ignite]}]}]}))))
+
 (deftest encroach-test
   (testing "Encroach"
     (is (= (-> {:nemesis    {:deck    [encroach]
