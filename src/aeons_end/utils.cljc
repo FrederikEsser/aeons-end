@@ -17,6 +17,9 @@
   (cond-> card
           (nil? id) (assoc :id (next-id!))))
 
+(defn peek-next-id []
+  (inc @id-state))
+
 (defn format-name [{:keys [card-name] :as n}]
   (cond
     card-name (format-name card-name)
@@ -337,14 +340,16 @@
                                                    :breach-no breach-no}))))
        (apply concat)))
 
-(defn can-prep? [game {:keys [player-no breach-no card closed-breaches?] :as args}]
+(defn can-prep? [game {:keys [player-no breach-no card closed-breaches? opened-breaches?] :as args}]
   (if breach-no
     (let [{:keys [breach-capacity] :or {breach-capacity 1}} (get-in game [:players player-no])
           {:keys [status]} (get-in game [:players player-no :breaches breach-no])
           {:keys [dual-breach may-prep-to-closed-breach]} card
-          may-prep-to-closed-breach (or may-prep-to-closed-breach
-                                        closed-breaches?)
-          breach-stati              (cond-> #{:opened :focused}
+          may-prep-to-closed-breach (and (or may-prep-to-closed-breach
+                                             closed-breaches?)
+                                         (not opened-breaches?))
+          breach-stati              (cond-> #{:opened}
+                                            (not opened-breaches?) (conj :focused)
                                             may-prep-to-closed-breach (conj :closed))
           prepped-spells            (get-prepped-spells game {:player-no player-no
                                                               :breach-no breach-no})]
@@ -355,7 +360,8 @@
               dual-breach (and' (can-prep? game {:player-no        player-no
                                                  :breach-no        (inc breach-no)
                                                  :card             {}
-                                                 :closed-breaches? may-prep-to-closed-breach}))))
+                                                 :closed-breaches? may-prep-to-closed-breach
+                                                 :opened-breaches? opened-breaches?}))))
     (let [number-of-breaches (->> (get-in game [:players player-no :breaches])
                                   count)]
       (->> (range number-of-breaches)
@@ -594,6 +600,9 @@
                            (cond->> options
                                     opened (filter (comp #{:opened} :status))
                                     (false? opened) (remove (comp #{:opened} :status))
+                                    can-prep (filter (fn [{:keys [option]}]
+                                                       (can-prep? game (merge option
+                                                                              can-prep))))
                                     max-breach-no (filter (comp #(<= % max-breach-no) :breach-no :option))
                                     :always (map :option)))
       :else (let [options       (case area

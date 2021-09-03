@@ -334,6 +334,66 @@
            :deck     [crystal crystal crystal spark spark]
            :ability  quicken-thought})
 
+(def immolate {:name          :immolate
+               :type          :spell
+               :cost          0
+               :text          "While prepped, when you suffer damage, gain 1 charge."
+               :while-prepped {:at-suffer-damage [[:gain-charge]]}
+               :cast          "Deal 1 damage."
+               :effects       [[:deal-damage 1]]})
+
+(defn gift-of-aether-prep [game {:keys [from-player player-no breach-no card-id]}]
+  (cond-> game
+          breach-no (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:move-card-id card-id
+                                                                 :from-player  from-player
+                                                                 :from         :discard
+                                                                 :to           :breach
+                                                                 :breach-no    breach-no}]]})))
+
+(defn gift-of-aether-on-gain [game {:keys [player-no card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:id card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:give-choice {:title   :gift-of-aether
+                                                                :text    (str "You may prep the gained " (ut/format-name (:name card)) " to any player's opened breach.")
+                                                                :choice  [::gift-of-aether-prep {:card-id     card-id
+                                                                                                 :from-player player-no}]
+                                                                :options [:players :breaches {:can-prep {:card             card
+                                                                                                         :opened-breaches? true}}]
+                                                                :max     1}]]}))))
+
+(defn gift-of-aether-gain [game {:keys [player-no card-name]}]
+  (let [card-id (ut/peek-next-id)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:gain {:card-name card-name}]
+                                         [::gift-of-aether-on-gain {:card-id card-id}]]})))
+
+(effects/register {::gift-of-aether-prep    gift-of-aether-prep
+                   ::gift-of-aether-on-gain gift-of-aether-on-gain
+                   ::gift-of-aether-gain    gift-of-aether-gain})
+
+(def gift-of-aether {:name        :gift-of-aether
+                     :activation  :your-main-phase
+                     :charge-cost 6
+                     :text        "Gain a spell from any supply pile. You may prep that spell to any player's opened breach."
+                     :effects     [[:give-choice {:title   :gift-of-aether
+                                                  :text    "Gain a spell from any supply pile."
+                                                  :choice  ::gift-of-aether-gain
+                                                  :options [:supply {:type :spell}]
+                                                  :min     1
+                                                  :max     1}]]})
+
+(def malastar {:name     :malastar
+               :title    "Breach Mage Mentor"
+               :breaches [{:status :destroyed}
+                          {:stage 0}
+                          {:stage 3}
+                          {:stage 1}]
+               :hand     [immolate crystal crystal crystal crystal]
+               :deck     [crystal crystal crystal crystal crystal]
+               :ability  gift-of-aether})
+
 (def moonstone-shard {:name    :moonstone-shard
                       :type    :gem
                       :cost    0
@@ -802,6 +862,7 @@
             jian
             kadir
             lash
+            malastar
             mist-ae
             mist-we
             phaedraxa

@@ -138,7 +138,7 @@
 
 (effects/register {:simultaneous-effects-choice simultaneous-effects-choice})
 
-(defn- get-phase-change-effects [game {:keys [player-no phase-change]}]
+(defn get-phase-change-effects [game {:keys [player-no phase-change]}]
   (when phase-change
     (let [while-prepped-effects (->> (get-in game [:players player-no :breaches])
                                      (mapcat :prepped-spells)

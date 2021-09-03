@@ -5,11 +5,12 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.cards.relic :refer [blasting-staff focusing-orb]]
-            [aeons-end.cards.spell :refer [aurora ignite radiance]]
+            [aeons-end.cards.spell :refer [aurora blaze feral-lightning ignite pyrotechnic-surge radiance]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
             [aeons-end.mages :refer :all]
-            [aeons-end.turn-order :as turn-order]))
+            [aeons-end.turn-order :as turn-order]
+            [aeons-end.utils :as ut]))
 
 (defn fixture [f]
   (with-rand-seed 123 (f)))
@@ -599,6 +600,184 @@
                                          turn-order/player-2]
                                :discard [turn-order/nemesis
                                          turn-order/wild]}})))))
+
+(deftest malastar-test
+  (testing "Malastar"
+    (testing "Immolate"
+      (testing "While prepped"
+        (is (= (-> {:players [{:breaches [{:prepped-spells [immolate]}]
+                               :ability  {:charges     0
+                                          :charge-cost 6}
+                               :life     10}]}
+                   (damage-player 0 1))
+               {:players [{:breaches [{:prepped-spells [immolate]}]
+                           :ability  {:charges     1
+                                      :charge-cost 6}
+                           :life     9}]}))
+        (is (= (-> {:players   [{:breaches [{:prepped-spells [immolate]}]
+                                 :ability  {:charges     0
+                                            :charge-cost 6}
+                                 :life     0}]
+                    :gravehold {:life 30}}
+                   (damage-player 0 1))
+               {:players   [{:breaches [{:prepped-spells [immolate]}]
+                             :ability  {:charges     1
+                                        :charge-cost 6}
+                             :life     0}]
+                :gravehold {:life 28}}))))
+    (testing "Gift of Aether"
+      (let [radiance-1          (assoc radiance :id 1)
+            pyrotechnic-surge-1 (assoc pyrotechnic-surge :id 1)
+            blaze-1             (assoc blaze :id 1)]
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :opened}]}]}
+                   (activate-ability 0)
+                   (choose :radiance)
+                   (choose {:player-no 0 :breach-no 0}))
+               {:supply  [{:card radiance :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status         :opened
+                                       :prepped-spells [radiance-1]}]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability (assoc gift-of-aether :charges 6)}
+                              {:breaches [{:status :opened}]}]}
+                   (activate-ability 0)
+                   (choose :radiance)
+                   (choose {:player-no 1 :breach-no 0}))
+               {:supply  [{:card radiance :pile-size 4}]
+                :players [{:ability (assoc gift-of-aether :charges 0)}
+                          {:breaches [{:status         :opened
+                                       :prepped-spells [radiance-1]}]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :opened}]}]}
+                   (activate-ability 0)
+                   (choose :radiance)
+                   (choose nil))
+               {:supply  [{:card radiance :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status :opened}]
+                           :discard  [radiance-1]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status         :opened
+                                           :prepped-spells [spark]}]}]}
+                   (activate-ability 0)
+                   (choose :radiance))
+               {:supply  [{:card radiance :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status         :opened
+                                       :prepped-spells [spark]}]
+                           :discard  [radiance-1]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card radiance :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :focused}]}]}
+                   (activate-ability 0)
+                   (choose :radiance))
+               {:supply  [{:card radiance :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status :focused}]
+                           :discard  [radiance-1]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card pyrotechnic-surge :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :opened}
+                                          {:status :opened}]}]}
+                   (activate-ability 0)
+                   (choose :pyrotechnic-surge)
+                   (choose {:player-no 0 :breach-no 0}))
+               {:supply  [{:card pyrotechnic-surge :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status         :opened
+                                       :prepped-spells [pyrotechnic-surge-1]}
+                                      {:status :opened}]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card pyrotechnic-surge :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :opened}
+                                          {:status :focused}]}]}
+                   (activate-ability 0)
+                   (choose :pyrotechnic-surge))
+               {:supply  [{:card pyrotechnic-surge :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status :opened}
+                                      {:status :focused}]
+                           :discard  [pyrotechnic-surge-1]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card pyrotechnic-surge :pile-size 4}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status         :opened
+                                           :prepped-spells [pyrotechnic-surge]}
+                                          {:status :opened}
+                                          {:status :opened}]}]}
+                   (activate-ability 0)
+                   (choose :pyrotechnic-surge))
+               {:supply  [{:card pyrotechnic-surge :pile-size 3}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status         :opened
+                                       :prepped-spells [pyrotechnic-surge]}
+                                      {:status :opened}
+                                      {:status :opened}]
+                           :discard  [pyrotechnic-surge-1]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card pyrotechnic-surge :pile-size 5}]
+                    :players [{:ability         (assoc gift-of-aether :charges 6)
+                               :breach-capacity 2
+                               :breaches        [{:status :opened}
+                                                 {:status         :opened
+                                                  :prepped-spells [spark]}]}]}
+                   (activate-ability 0)
+                   (choose :pyrotechnic-surge)
+                   (choose {:player-no 0 :breach-no 0}))
+               {:supply  [{:card pyrotechnic-surge :pile-size 4}]
+                :players [{:ability         (assoc gift-of-aether :charges 0)
+                           :breach-capacity 2
+                           :breaches        [{:status         :opened
+                                              :prepped-spells [pyrotechnic-surge-1]}
+                                             {:status         :opened
+                                              :prepped-spells [spark]}]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card feral-lightning :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :closed}]}]}
+                   (activate-ability 0)
+                   (choose :feral-lightning))
+               {:supply  [{:card feral-lightning :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status :closed}]
+                           :discard  [(assoc feral-lightning :id 1)]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card blaze :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :opened}]}
+                              {}]}
+                   (activate-ability 0)
+                   (choose :blaze)
+                   (choose {:player-no 1}))
+               {:supply  [{:card blaze :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status :opened}]}
+                          {:discard [blaze-1]}]}))
+        (ut/reset-ids! 0)
+        (is (= (-> {:supply  [{:card blaze :pile-size 5}]
+                    :players [{:ability  (assoc gift-of-aether :charges 6)
+                               :breaches [{:status :opened}]}
+                              {:breaches [{:status :opened}]}]}
+                   (activate-ability 0)
+                   (choose :blaze)
+                   (choose {:player-no 0})
+                   (choose {:player-no 1 :breach-no 0}))
+               {:supply  [{:card blaze :pile-size 4}]
+                :players [{:ability  (assoc gift-of-aether :charges 0)
+                           :breaches [{:status :opened}]}
+                          {:breaches [{:status         :opened
+                                       :prepped-spells [blaze-1]}]}]}))))))
 
 (deftest mist-test
   (testing "Mist (AE)"

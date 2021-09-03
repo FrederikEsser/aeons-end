@@ -112,10 +112,17 @@
                                                         :max     1}]]}
                   :quote      "'The harsh light of the dead star burned away the dark as it crept through the breach. And around it I saw ravaged worlds The Nameless had already claimed.' Indira, Breach Mage Apprentice"})
 
-(defn bleed-static-damage [game {:keys [player-no]}]
-  (let [prepped-spells (ut/count-prepped-spells (get-in game [:players player-no]))]
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:damage-player (* 2 prepped-spells)]]})))
+(defn bleed-static-damage [{:keys [players] :as game} _]
+  (let [max-prepped-spells (->> players
+                                (map ut/count-prepped-spells)
+                                (apply max 0))]
+    (cond-> game
+            (pos? max-prepped-spells) (push-effect-stack {:effects [[:give-choice {:title   :bleed-static
+                                                                                   :text    "The player with the most prepped spells suffers 2 damage for each of their prepped spells."
+                                                                                   :choice  [:damage-player {:arg (* 2 max-prepped-spells)}]
+                                                                                   :options [:players {:most-prepped-spells true}]
+                                                                                   :min     1
+                                                                                   :max     1}]]}))))
 
 (effects/register {::bleed-static-damage bleed-static-damage})
 
@@ -124,12 +131,7 @@
                    :tier  1
                    :power {:power   3
                            :text    "The player with the most prepped spells suffers 2 damage for each of their prepped spells."
-                           :effects [[:give-choice {:title   :bleed-static
-                                                    :text    "The player with the most prepped spells suffers 2 damage for each of their prepped spells."
-                                                    :choice  ::bleed-static-damage
-                                                    :options [:players {:most-prepped-spells true}]
-                                                    :min     1
-                                                    :max     1}]]}
+                           :effects [[::bleed-static-damage]]}
                    :quote "'There are no words to describe the sound of a breach opening. Only the screams echoing off the walls after.' Z'hana, Breach Mage Renegade"})
 
 (defn cataclysmic-fate-can-discard? [game {:keys [player-no]}]

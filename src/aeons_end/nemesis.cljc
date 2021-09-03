@@ -1,5 +1,5 @@
 (ns aeons-end.nemesis
-  (:require [aeons-end.operations :refer [push-effect-stack move-card]]
+  (:require [aeons-end.operations :refer [push-effect-stack move-card get-phase-change-effects]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
             [aeons-end.nemeses.rageborne :refer [rageborne]]
@@ -233,24 +233,31 @@
                                                   [[:spend-charges]]))})))
 
 (defn damage-player [{:keys [prevent-damage] :as game} {:keys [player-no arg]}]
-  (if prevent-damage
+  (if (or (zero? arg)
+          prevent-damage)
     game
     (let [{:keys [life breaches]} (get-in game [:players player-no])
-          damage (->> breaches
-                      (mapcat :prepped-spells)
-                      (keep (comp :modify-damage :while-prepped))
-                      (map effects/get-predicate)
-                      (reduce (fn [damage modify-damage-fn]
-                                (modify-damage-fn damage))
-                              arg))]
+          damage  (->> breaches
+                       (mapcat :prepped-spells)
+                       (keep (comp :modify-damage :while-prepped))
+                       (map effects/get-predicate)
+                       (reduce (fn [damage modify-damage-fn]
+                                 (modify-damage-fn damage))
+                               arg))
+          effects (get-phase-change-effects game {:player-no    player-no
+                                                  :phase-change :at-suffer-damage})]
       (if (< damage life)
-        (update-in game [:players player-no :life] - damage)
+        (-> game
+            (update-in [:players player-no :life] - damage)
+            (cond-> (not-empty effects) (push-effect-stack {:player-no player-no
+                                                            :effects   effects})))
         (-> game
             (assoc-in [:players player-no :life] 0)
             (push-effect-stack {:player-no player-no
                                 :effects   (concat
                                              (when (> damage life)
                                                [[:damage-gravehold (* 2 (- damage life))]])
+                                             effects
                                              (when (pos? life)
                                                [[:exhaust-player]]))}))))))
 

@@ -102,8 +102,7 @@
     (is (= (-> {:nemesis {:play-area [(assoc-in bleed-static [:power :power] 1)]}
                 :players [{:breaches [{}]
                            :life     10}]}
-               resolve-nemesis-cards-in-play
-               (choose {:player-no 0}))
+               resolve-nemesis-cards-in-play)
            {:nemesis {:discard [(assoc-in bleed-static [:power :power] 0)]}
             :players [{:breaches [{}]
                        :life     10}]}))))
