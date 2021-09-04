@@ -323,18 +323,37 @@
         (val-fn game)))
     val))
 
-(defn view-nemesis [{{:keys [name life play-area deck discard
+(defn view-nemesis [{{:keys [name life play-area deck revealed revealed-cards discard
                              unleash-text additional-rules
                              tokens fury husks tainted-jades tainted-track
                              corruption-deck]} :nemesis
-                     {:keys [player-no phase]} :player
+                     {:keys [player-no]}       :player
                      choice                    :choice
                      resolving                 :resolving
                      :as                       game}]
   (merge {:name-ui          (ut/format-name name)
           :tier             (ut/get-nemesis-tier game)
           :life             life
-          :deck             {:number-of-cards (count deck)}
+          :deck             (merge {:number-of-cards (count (concat deck revealed))}
+                                   (when (or revealed revealed-cards)
+                                     {:visible-cards (->> (if revealed
+                                                            revealed
+                                                            (take revealed-cards deck))
+                                                          (map (fn [{:keys [name immediately to-discard power persistent life] :as card}]
+                                                                 (merge (view-card card)
+                                                                        (when immediately
+                                                                          {:immediately-text (:text immediately)})
+                                                                        (when to-discard
+                                                                          {:to-discard-text (:text to-discard)})
+                                                                        (when power
+                                                                          {:power      (:power power)
+                                                                           :power-text (:text power)})
+                                                                        (when persistent
+                                                                          {:persistent-text (:text persistent)})
+                                                                        (when life
+                                                                          {:life life})
+                                                                        (choice-interaction {:area      :revealed
+                                                                                             :card-name name} choice)))))}))
           :unleash-text     (get-value game unleash-text)
           :additional-rules (str "Additional Rules:\n"
                                  (->> (get-value game additional-rules)

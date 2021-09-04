@@ -296,7 +296,7 @@
 (def quartz-shard {:name    :quartz-shard
                    :type    :gem
                    :cost    0
-                   :text    ["Gain 1 Aether.png."
+                   :text    ["Gain 1 Aether."
                              "Reveal the top card of the turn order deck. You may place that card on the bottom or the top of the turn order deck. If you revealed a player turn order card, gain an additional 1 Aether."]
                    :effects [[:gain-aether 1]
                              [:reveal-top-turn-order]

@@ -235,34 +235,32 @@
                    :remove-triggers remove-triggers
                    :apply-triggers  apply-triggers})
 
-(defn increase-revealed-number-of-cards [game player-no]
+(defn increase-revealed-number-of-cards [game path]
   (-> game
-      (update-in [:players player-no :revealed-cards] ut/plus 1)))
+      (update-in (conj path :revealed-cards) ut/plus 1)))
 
-(defn decrease-revealed-number-of-cards [game player-no]
-  (let [revealed-cards (get-in game [:players player-no :revealed-cards])]
+(defn decrease-revealed-number-of-cards [game path]
+  (let [revealed-cards (get-in game (conj path :revealed-cards))]
     (if (and revealed-cards
              (< 1 revealed-cards))
-      (assoc-in game [:players player-no :revealed-cards] (dec revealed-cards))
-      (update-in game [:players player-no] dissoc :revealed-cards))))
+      (assoc-in game (conj path :revealed-cards) (dec revealed-cards))
+      (update-in game path dissoc :revealed-cards))))
 
 (defn state-maintenance [game player-no from to]
-  (let [from-cards (if player-no
-                     (get-in game [:players player-no from])
-                     (get-in game [:nemesis from]))]
+  (let [path       (if player-no
+                     [:players player-no]
+                     [:nemesis])
+        from-cards (get-in game (conj path from))]
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
-            player-no (cond->
-                        (= to :deck) (increase-revealed-number-of-cards player-no)
-                        (= from :deck) (decrease-revealed-number-of-cards player-no)
-                        (empty? from-cards) (update-in [:players player-no] dissoc from)
-                        (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
-                                                                                     (->> breaches
-                                                                                          (mapv (fn [{:keys [prepped-spells] :as breach}]
-                                                                                                  (cond-> breach
-                                                                                                          (empty? prepped-spells) (dissoc :prepped-spells))))))))
-            (nil? player-no) (cond->
-                               (empty? from-cards) (update :nemesis dissoc from))
+            (= to :deck) (increase-revealed-number-of-cards path)
+            (= from :deck) (decrease-revealed-number-of-cards path)
+            (empty? from-cards) (update-in path dissoc from)
+            (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
+                                                                         (->> breaches
+                                                                              (mapv (fn [{:keys [prepped-spells] :as breach}]
+                                                                                      (cond-> breach
+                                                                                              (empty? prepped-spells) (dissoc :prepped-spells)))))))
             (and (= :trash from)
                  (-> game :trash empty?)) (dissoc :trash))))
 
@@ -302,12 +300,9 @@
                            (let [coll (vec coll)]
                              (if (empty? coll)
                                [card]
-                               (cond
-                                 (= :top to-position) (concat [card] coll)
-                                 (integer? to-position) (concat (subvec coll 0 to-position)
-                                                                [card]
-                                                                (subvec coll to-position (count coll)))
-                                 :else (vec (concat coll [card]))))))]
+                               (if (= :top to-position)
+                                 (vec (concat [card] coll))
+                                 (vec (concat coll [card]))))))]
     (if (#{:supply} to-path)
       (let [{:keys [idx]} (ut/get-pile-idx game name)]
         (update-in game [to-path idx] ut/add-top-card card))
@@ -585,7 +580,7 @@
                                                                     :card-id   (:id card)})])]})
           check-stack))))
 
-(defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position] :as args}]
+(defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position to-position] :as args}]
   (assert (or card-name
               card-names
               (and number-of-cards from-position)) (str "Can't move unspecified cards: " args))
@@ -594,15 +589,15 @@
             (pos? number-of-cards)
             (push-effect-stack {:player-no player-no
                                 :effects   (repeat number-of-cards [:move-card (dissoc args :number-of-cards)])}))
-    (let [card-names (or card-names [card-name])]
+    (let [card-names (cond-> (or card-names [card-name])
+                             (= :top to-position) reverse)]
       (cond-> game
-              (not-empty card-names)
-              (push-effect-stack {:player-no player-no
-                                  :effects   (map (fn [card-name]
-                                                    [:move-card (-> args
-                                                                    (dissoc :card-names)
-                                                                    (assoc :card-name card-name))])
-                                                  card-names)})))))
+              (not-empty card-names) (push-effect-stack {:player-no player-no
+                                                         :effects   (->> card-names
+                                                                         (map (fn [card-name]
+                                                                                [:move-card (-> args
+                                                                                                (dissoc :card-names)
+                                                                                                (assoc :card-name card-name))])))})))))
 
 (effects/register {:do-move-card do-move-card
                    :on-trash     handle-on-trash
@@ -891,8 +886,10 @@
                                        (when bonus-damage
                                          {:bonus-damage bonus-damage})
                                        {:player-no player-no
-                                        :card-id   card-id
-                                        arg-name   multi-selection})))))))
+                                        :card-id   card-id}
+                                       (if selection
+                                         {arg-name multi-selection}
+                                         {:no-choice? true}))))))))
 
 (defn choose [game selection]
   (let [[{:keys [choice options min max]}] (get game :effect-stack)

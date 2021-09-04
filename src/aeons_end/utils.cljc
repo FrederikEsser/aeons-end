@@ -666,6 +666,8 @@
       :play-area (cond->> (get-in game [:nemesis :play-area])
                           name (filter (comp #{name} :name))
                           :always (map :name))
+      :revealed (->> (get-in game [:nemesis :revealed])
+                     (map :name))
       :discard (cond->> (get-in game [:nemesis :discard])
                         type (filter (comp #{type} :type))
                         most-recent (take-last 1)           ; it's important that 'most-recent' is evaluated last

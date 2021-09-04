@@ -737,6 +737,32 @@
                                                                     :max     1}]]}]]
              :quote   "'With each beast she marks, Quilius thinks herself closer to enlightenment.' Yan Magda, Enlightened Exile"})
 
+(defn scrying-bolt-reveal [game {:keys [player-no no-choice?]}]
+  (cond-> game
+          (not no-choice?) (push-effect-stack {:effects [[:spend-charges {:player-no player-no :arg 1}]
+                                                         [:reveal-from-deck 2]
+                                                         [:give-choice {:title   :scrying-bolt
+                                                                        :text    "Return them in any order."
+                                                                        :choice  :topdeck-from-revealed
+                                                                        :options [:nemesis :revealed]
+                                                                        :min     2
+                                                                        :max     2}]]})))
+
+(effects/register {::scrying-bolt-reveal scrying-bolt-reveal})
+
+(def scrying-bolt {:name    :scrying-bolt
+                   :type    :spell
+                   :cost    6
+                   :cast    ["Deal 5 damage."
+                             "You may lose 1 charge. If you do, reveal the top two cards of the nemesis deck. Return them in any order."]
+                   :effects [[:deal-damage 5]
+                             [:give-choice {:title   :scrying-bolt
+                                            :text    "You may lose 1 charge. If you do, reveal the top two cards of the nemesis deck. Return them in any order."
+                                            :choice  ::scrying-bolt-reveal
+                                            :options [:player :ability {:min-charges 1}]
+                                            :max     1}]]
+                   :quote   "'Who would've thought you could see the future so clearly at the end of a bolt of aether.' Reeve, Breach Mage Elite"})
+
 (def spectral-echo {:name    :spectral-echo
                     :type    :spell
                     :cost    3
@@ -834,6 +860,7 @@
             reduce-to-ash
             sages-brand
             scorch
+            scrying-bolt
             spectral-echo
             thoughtform-familiar
             wildfire-whip])

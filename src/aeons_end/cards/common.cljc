@@ -61,6 +61,15 @@
 
 (effects/register {:discard-from-revealed discard-from-revealed})
 
+(defn topdeck-from-revealed [game {:keys [card-name card-names] :as args}]
+  (cond-> game
+          (or card-name
+              (not-empty card-names)) (move-cards (merge args {:from        :revealed
+                                                               :to          :deck
+                                                               :to-position :top}))))
+
+(effects/register {:topdeck-from-revealed topdeck-from-revealed})
+
 (defn trash-from-revealed [game {:keys [card-name card-names] :as args}]
   (cond-> game
           (or card-name card-names) (move-cards (merge args {:from :revealed

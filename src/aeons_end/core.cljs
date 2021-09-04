@@ -229,7 +229,9 @@
                                  immediately-text to-discard-text power power-text life persistent-text
                                  cast-text interaction] :as card}]
   (when card
-    (let [disabled (nil? interaction)]
+    (let [selected? (->> (:selection @state) (some (comp #{name choice-value} :option)))
+          disabled  (or (nil? interaction)
+                        selected?)]
       [:button {:style    (merge (button-style :disabled disabled
                                                :type type
                                                :status status
@@ -458,7 +460,10 @@
                                             :selection []))}
            (or (and (empty? selection)
                     or-text)
-               "Done")])])]))
+               (if (and (zero? min)
+                        (empty? selection))
+                 "Decline"
+                 "Done"))])])]))
 
 (defn set-selector []
   (fn [sets set-name]
@@ -579,7 +584,7 @@
                            tainted-jades tainted-track corruptions interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
-                       [:tr (map-tag :th [(str "Nemesis - tier "  tier) "Play area" "Deck" "Discard"])]
+                       [:tr (map-tag :th [(str "Nemesis - tier " tier) "Play area" (str "Deck" (when deck (str " (" (:number-of-cards deck) ")"))) "Discard"])]
                        [:tr
                         [:td
                          [:div
@@ -658,8 +663,9 @@
                                     [:div (format-text swarm-text (str "SWARM " swarm-interval))]]]))
                               (mapk view-nemesis-card play-area)]]
                         [:td [:div
-                              (when deck
-                                (str (:number-of-cards deck) " Cards"))]]
+                              (when (:visible-cards deck)
+                                (->> (:visible-cards deck)
+                                     (mapk view-nemesis-card)))]]
                         [:td [view-expandable-pile :discard/nemesis discard
                               {:nemesis? true}]]]]]]))]]
          [:tr
