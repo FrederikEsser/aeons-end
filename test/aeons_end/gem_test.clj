@@ -5,7 +5,7 @@
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.gem :refer :all]
             [aeons-end.cards.relic :refer [unstable-prism]]
-            [aeons-end.cards.spell :refer [pyrotechnic-surge]]
+            [aeons-end.cards.spell :refer [blaze pyrotechnic-surge]]
             [aeons-end.cards.starter :refer [crystal spark]]))
 
 (deftest alien-element-test
@@ -188,6 +188,105 @@
                                       {:play :diamond-cluster}
                                       {:play :diamond-cluster}]}]
             :trash      [diamond-cluster]}))))
+
+(deftest frozen-magmite-test
+  (testing "Frozen Magmite"
+    (let [frozen-magmite (assoc frozen-magmite :id 1)
+          blaze          (assoc blaze :id 2)]
+      (is (= (-> {:supply  [{:card frozen-magmite :pile-size 6}]
+                  :players [{:hand   [frozen-magmite]
+                             :aether 1}]}
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :frozen-magmite)
+                 (choose nil))
+             {:supply  [{:card frozen-magmite :pile-size 5}]
+              :players [{:play-area [frozen-magmite]
+                         :discard   [frozen-magmite]
+                         :aether    0}]}))
+      (is (= (-> {:supply  [{:card frozen-magmite :pile-size 6}]
+                  :players [{:hand   [frozen-magmite]
+                             :aether 1}]}
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :frozen-magmite)
+                 (choose :frozen-magmite))
+             {:supply  [{:card frozen-magmite :pile-size 5}]
+              :players [{:play-area      [frozen-magmite]
+                         :deck           [frozen-magmite]
+                         :revealed-cards 1
+                         :aether         0}]}))
+      (is (= (-> {:supply  [{:card frozen-magmite :pile-size 6}]
+                  :players [{:hand   [frozen-magmite]
+                             :aether 4}]}
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :frozen-magmite)
+                 (choose :frozen-magmite)
+                 (buy-card 0 :frozen-magmite))
+             {:supply  [{:card frozen-magmite :pile-size 4}]
+              :players [{:play-area      [frozen-magmite]
+                         :deck           [frozen-magmite]
+                         :discard        [frozen-magmite]
+                         :revealed-cards 1
+                         :aether         0}]}))
+      (is (= (-> {:supply  [{:card frozen-magmite :pile-size 5}]
+                  :players [{:hand   [frozen-magmite frozen-magmite]
+                             :aether 2}]}
+                 (play 0 :frozen-magmite)
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :frozen-magmite)
+                 (choose :frozen-magmite)
+                 (buy-card 0 :frozen-magmite))
+             {:supply  [{:card frozen-magmite :pile-size 3}]
+              :players [{:play-area      [frozen-magmite frozen-magmite]
+                         :deck           [frozen-magmite]
+                         :discard        [frozen-magmite]
+                         :revealed-cards 1
+                         :aether         0}]}))
+      (is (= (-> {:supply  [{:card frozen-magmite :pile-size 5}]
+                  :players [{:hand   [frozen-magmite frozen-magmite]
+                             :aether 2}]}
+                 (play 0 :frozen-magmite)
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :frozen-magmite)
+                 (choose nil)
+                 (choose nil)
+                 (buy-card 0 :frozen-magmite))
+             {:supply  [{:card frozen-magmite :pile-size 3}]
+              :players [{:play-area [frozen-magmite frozen-magmite]
+                         :discard   [frozen-magmite frozen-magmite]
+                         :aether    0}]}))
+      (is (= (-> {:supply  [{:card blaze :pile-size 5}]
+                  :players [{:hand   [frozen-magmite]
+                             :aether 2}
+                            {}]}
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :blaze)
+                 (choose :blaze))
+             {:supply  [{:card blaze :pile-size 4}]
+              :players [{:play-area      [frozen-magmite]
+                         :deck           [blaze]
+                         :revealed-cards 1
+                         :aether         0}
+                        {}]}))
+      (is (= (-> {:supply  [{:card blaze :pile-size 5}]
+                  :players [{:hand   [frozen-magmite]
+                             :aether 2}
+                            {}]}
+                 (play 0 :frozen-magmite)
+                 (buy-card 0 :blaze)
+                 (choose nil)
+                 (choose {:player-no 1}))
+             {:supply  [{:card blaze :pile-size 4}]
+              :players [{:play-area [frozen-magmite]
+                         :aether    0}
+                        {:discard [blaze]}]}))
+      (is (= (-> {:players [{:hand   [frozen-magmite]
+                             :deck   (repeat 5 crystal)
+                             :aether 1}]}
+                 (play 0 :frozen-magmite)
+                 (discard 0 :frozen-magmite)
+                 (end-turn 0))
+             {:players [{:hand    (repeat 5 crystal)
+                         :discard [frozen-magmite]}]})))))
 
 (deftest haunted-berylite-test
   (testing "Haunted Berylite"

@@ -85,8 +85,6 @@
         (->>
           (map (fn [{:keys [name type] :as card}]
                  (merge (view-card card)
-                        (when (ut/stay-in-play game player-no card)
-                          {:stay-in-play true})
                         (when (and active?
                                    (= :hand area)
                                    (not choice)

@@ -194,25 +194,16 @@
 
 (effects/register {:set-phase set-phase})
 
-(defn remove-trigger [game {:keys [player-no trigger-id card-id]}]
+(defn remove-trigger [game {:keys [player-no trigger-id]}]
   (-> game
       (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:id trigger-id})
                                                                             (comp #{:once :once-turn} :duration))))
-      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:id trigger-id})
-                                                                            (comp #{:until-empty} :duration)
-                                                                            (comp empty? :set-aside))))
-      (cond->
-        card-id (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:card-id card-id})
-                                                                                      (comp #{:attack} :duration)))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn remove-triggers [game {:keys [player-no event]}]
   (-> game
       (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:event event})
                                                                             (comp #{:once :once-turn} :duration))))
-      (update-in [:players player-no :triggers] (partial remove (every-pred (ut/match {:event event})
-                                                                            (comp #{:until-empty} :duration)
-                                                                            (comp empty? :set-aside))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
 (defn- apply-triggers
@@ -309,26 +300,19 @@
       (update-in game to-path add-card-to-coll card))))
 
 (defn get-on-gain-effects [game player-no {:keys [name on-gain] :as card}]
-  (let [{:keys [tokens]} (ut/get-pile-idx game name)
-        types                 (ut/get-types game card)
-        token-effects         (->> tokens
-                                   vals
-                                   (mapcat (fn [{:keys [number-of-tokens on-gain]}]
-                                             (when on-gain
-                                               (apply concat (repeat number-of-tokens on-gain))))))
-        while-in-play-effects (->> (get-in game [:players player-no :play-area])
+  (let [while-in-play-effects (->> (get-in game [:players player-no :play-area])
                                    (mapcat (comp :on-gain :while-in-play))
                                    (map (partial ut/add-effect-args {:card-name name})))
         trigger-effects       (->> (get-in game [:players player-no :triggers])
                                    (filter (fn [{:keys [event type]}]
                                              (and (= :on-gain event)
                                                   (or (not type)
-                                                      (contains? types type)))))
+                                                      (= (:type card) type)))))
                                    (mapcat (fn [{:keys [id card-id effects]}]
                                              (cond->> effects
                                                       card-id (map (partial ut/add-effect-args {:trigger-id id
                                                                                                 :card-id    card-id}))))))]
-    (concat on-gain while-in-play-effects trigger-effects token-effects)))
+    (concat trigger-effects on-gain while-in-play-effects)))
 
 (defn track-gain [{:keys [real-game? current-player] :as game} {:keys [player-no card]}]
   (cond-> game
@@ -967,7 +951,8 @@
 
 (defn clear-player [game {:keys [player-no]}]
   (-> game
-      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn :breach-capacity :breach-cost-reduction)
+      (update-in [:players player-no] dissoc :aether :earmarked-aether :restricted-aether :this-turn
+                 :breach-capacity :breach-cost-reduction :triggers)
       (medley/update-existing-in [:players player-no :breaches]
                                  (partial mapv (fn [{:keys [status] :as breach}]
                                                  (cond-> breach

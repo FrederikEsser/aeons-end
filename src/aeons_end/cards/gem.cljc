@@ -169,6 +169,21 @@
                     :effects [[::erratic-ingot-gain-aether]]
                     :quote   "'Hit it all you like, Adelheim. It has a mind of its own.' Gex, Breach Mage Adviser"})
 
+(def frozen-magmite {:name    :frozen-magmite
+                     :type    :gem
+                     :cost    3
+                     :text    ["Gain 2 Aether."
+                               "You may place the next card you gain this turn on top of your deck."]
+                     :effects [[:gain-aether 2]
+                               [:add-trigger {:trigger {:event    :on-gain
+                                                        :duration :once-turn
+                                                        :effects  [[:give-choice {:title   :frozen-magmite
+                                                                                  :text    "You may place the card you gained on top of your deck."
+                                                                                  :choice  :topdeck-from-gained
+                                                                                  :options [:player :gaining]
+                                                                                  :max     1}]]}}]]
+                     :quote   "'Fear not returning to the dust, younglings. Even fire must sleep.' Mazahaedron, Henge Mystic"})
+
 (defn haunted-berylite-discard [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -329,6 +344,7 @@
             diamond-cluster
             dread-diamond
             erratic-ingot
+            frozen-magmite
             haunted-berylite
             jade
             leeching-agate

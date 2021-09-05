@@ -68,20 +68,23 @@
 
 (defn blaze-move-card [game {:keys [from-player card-id player-no]}]
   (cond-> game
-          card-id (push-effect-stack {:player-no from-player
-                                      :effects   [[:move-card {:move-card-id card-id
-                                                               :from         :gaining
-                                                               :to-player    player-no
-                                                               :to           :discard}]]})))
+          (and card-id
+               (not= player-no from-player)) (push-effect-stack {:player-no from-player
+                                                                 :effects   [[:move-card {:move-card-id card-id
+                                                                                          :from         :gaining
+                                                                                          :to-player    player-no
+                                                                                          :to           :discard}]]})))
 
 (defn blaze-on-gain [game {:keys [player-no gained-card-id]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:give-choice {:title   :blaze
-                                                      :text    "You may place the gained Blaze on top of any player's discard pile."
-                                                      :choice  [::blaze-move-card {:card-id     gained-card-id
-                                                                                   :from-player player-no}]
-                                                      :options [:players]
-                                                      :max     1}]]}))
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:give-choice {:title   :blaze
+                                                                :text    "You may place the gained Blaze on top of any player's discard pile."
+                                                                :choice  [::blaze-move-card {:card-id     gained-card-id
+                                                                                             :from-player player-no}]
+                                                                :options [:players]
+                                                                :max     1}]]}))))
 
 (defn blaze-damage [game {:keys [player-no card-id] :as args}]
   (let [additional-damage (+ (->> (get-in game [:players player-no :this-turn])

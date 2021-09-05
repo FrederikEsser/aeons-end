@@ -316,3 +316,15 @@
                                           :effects   [[:focus-breach {:breach-no breach-no}]]}))))
 
 (effects/register {:focus-lowest-cost-breach focus-lowest-cost-breach})
+
+(defn add-trigger [game {:keys [player-no card-id trigger]}]
+  (let [{:keys [card]} (when card-id (ut/get-card-idx game [:players player-no :play-area] {:id card-id}))]
+    (update-in game [:players player-no :triggers] concat [(merge trigger
+                                                                  (when-not (:id trigger)
+                                                                    {:id (ut/next-id!)})
+                                                                  (when card-id
+                                                                    {:card-id card-id})
+                                                                  (when card
+                                                                    {:name (:name card)}))])))
+
+(effects/register {:add-trigger add-trigger})
