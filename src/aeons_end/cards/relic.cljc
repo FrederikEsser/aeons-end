@@ -267,6 +267,38 @@
                                                  :max       1}]]
                         :quote   "'The child rose from the dust and opened its eyes. The Conclave revere this child, for she was the first of their kind.' Mazahaedron, Henge Mystic"})
 
+(defn riddlesphere-choice [game {:keys [player-no choice]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case choice
+                                        :charge [[:gain-charge]]
+                                        :aether [[:spend-charges 2]
+                                                 [:gain-aether 5]])}))
+
+(defn riddlesphere-give-choice [game {:keys [player-no]}]
+  (let [{:keys [charges]} (get-in game [:players player-no :ability])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (>= charges 2)
+                                          [[:give-choice {:title   :riddlesphere
+                                                          :choice  ::riddlesphere-choice
+                                                          :options [:special
+                                                                    {:option :charge :text "Gain 1 charge."}
+                                                                    {:option :aether :text "You may lose 2 charges. If you do, gain 5 Aether."}]
+                                                          :min     1
+                                                          :max     1}]]
+                                          [[:gain-charge]])})))
+
+(effects/register {::riddlesphere-choice      riddlesphere-choice
+                   ::riddlesphere-give-choice riddlesphere-give-choice})
+
+(def riddlesphere {:name    :riddlesphere
+                   :type    :relic
+                   :cost    3
+                   :text    ["Gain 1 charge."
+                             "OR"
+                             "You may lose 2 charges. If you do, gain 5 Aether."]
+                   :effects [[::riddlesphere-give-choice]]
+                   :quote   "'Behold, the beginning and the end.' Dezmodia, Voidborn Prodigy"})
+
 (defn temporal-helix-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :temporal-helix
@@ -349,6 +381,7 @@
             mages-totem
             molten-hammer
             primordial-fetish
+            riddlesphere
             temporal-helix
             vortex-gauntlet
             unstable-prism])
