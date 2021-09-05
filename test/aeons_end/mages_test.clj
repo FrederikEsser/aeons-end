@@ -4,6 +4,7 @@
             [aeons-end.commands :refer :all]
             [aeons-end.operations :refer [choose]]
             [aeons-end.cards.starter :refer [crystal spark]]
+            [aeons-end.cards.gem :refer [jade]]
             [aeons-end.cards.relic :refer [blasting-staff focusing-orb]]
             [aeons-end.cards.spell :refer [aurora blaze feral-lightning ignite pyrotechnic-surge radiance]]
             [aeons-end.cards.common]
@@ -778,6 +779,51 @@
                            :breaches [{:status :opened}]}
                           {:breaches [{:status         :opened
                                        :prepped-spells [blaze-1]}]}]}))))))
+
+(deftest mazahaedron-test
+  (testing "Mazahaedron"
+    (testing "Worldheart Shard"
+      (let [jade (assoc jade :id 1)]
+        (is (= (-> {:players [{:hand [worldheart-shard]}]}
+                   (play 0 :worldheart-shard)
+                   (choose :gain-1))
+               {:players [{:play-area [worldheart-shard]
+                           :aether    1}]}))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:hand [worldheart-shard]}
+                              {}]}
+                   (play 0 :worldheart-shard)
+                   (choose :gain-2)
+                   (buy-card 0 :jade)
+                   (choose {:player-no 1}))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:play-area [worldheart-shard]}
+                          {:discard [jade]}]}))
+        (is (thrown-with-msg? AssertionError #"Pay error:"
+                              (-> {:supply  [{:card jade :pile-size 7}]
+                                   :players [{:hand    [worldheart-shard]
+                                              :ability {:charge-cost 5}}
+                                             {}]}
+                                  (play 0 :worldheart-shard)
+                                  (choose :gain-2)
+                                  (charge-ability 0))))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:supply  [{:card jade :pile-size 7}]
+                                   :players [{:hand [worldheart-shard]}
+                                             {}]}
+                                  (play 0 :worldheart-shard)
+                                  (choose :gain-2)
+                                  (buy-card 0 :jade)
+                                  (choose {:player-no 0}))))
+        (is (= (-> {:supply  [{:card jade :pile-size 7}]
+                    :players [{:hand [worldheart-shard]}]}
+                   (play 0 :worldheart-shard)
+                   (choose :gain-2)
+                   (buy-card 0 :jade)
+                   (choose {:player-no 0}))
+               {:supply  [{:card jade :pile-size 6}]
+                :players [{:play-area [worldheart-shard]
+                           :discard   [jade]}]}))))))
 
 (deftest mist-test
   (testing "Mist (AE)"

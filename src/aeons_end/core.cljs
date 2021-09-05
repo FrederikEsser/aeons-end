@@ -760,7 +760,7 @@
                                                      [:option {:value n} n])))]]]
                 (when (= 4 (count players))
                   (let [turn-order-variant? (get-in @state [:game-setup :turn-order-variant?])]
-                    [:div "Variant "
+                    [:div "4p variant "
                      [:input {:type     :checkbox
                               :checked  turn-order-variant?
                               :on-click #(swap! state update-in [:game-setup :turn-order-variant?] not)}]]))

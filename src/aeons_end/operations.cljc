@@ -237,21 +237,24 @@
       (assoc-in game (conj path :revealed-cards) (dec revealed-cards))
       (update-in game path dissoc :revealed-cards))))
 
-(defn state-maintenance [game player-no from to]
-  (let [path       (if player-no
-                     [:players player-no]
+(defn state-maintenance [game from-player to-player from to]
+  (let [from-path  (if from-player
+                     [:players from-player]
                      [:nemesis])
-        from-cards (get-in game (conj path from))]
+        to-path    (if to-player
+                     [:players to-player]
+                     [:nemesis])
+        from-cards (get-in game (conj from-path from))]
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
-            (= to :deck) (increase-revealed-number-of-cards path)
-            (= from :deck) (decrease-revealed-number-of-cards path)
-            (empty? from-cards) (update-in path dissoc from)
-            (= from :breach) (update-in [:players player-no :breaches] (fn [breaches]
-                                                                         (->> breaches
-                                                                              (mapv (fn [{:keys [prepped-spells] :as breach}]
-                                                                                      (cond-> breach
-                                                                                              (empty? prepped-spells) (dissoc :prepped-spells)))))))
+            (= to :deck) (increase-revealed-number-of-cards to-path)
+            (= from :deck) (decrease-revealed-number-of-cards from-path)
+            (empty? from-cards) (update-in from-path dissoc from)
+            (= from :breach) (update-in [:players from-player :breaches] (fn [breaches]
+                                                                           (->> breaches
+                                                                                (mapv (fn [{:keys [prepped-spells] :as breach}]
+                                                                                        (cond-> breach
+                                                                                                (empty? prepped-spells) (dissoc :prepped-spells)))))))
             (and (= :trash from)
                  (-> game :trash empty?)) (dissoc :trash))))
 
@@ -405,7 +408,7 @@
                                                                             (> aether amount) (assoc types (- aether amount)))}))
                                                    {:amount amount}))]
       (-> game
-          (update-in [:players player-no :aether] - amount)
+          (cond-> (pos? amount) (update-in [:players player-no :aether] - amount))
           (as-> game
                 (if earmarked
                   (assoc-in game [:players player-no :earmarked-aether] earmarked)
@@ -527,7 +530,7 @@
     (cond-> game
             card (-> (remove-card from-path idx)
                      (add-card to-path to-position card)
-                     (state-maintenance (or from-player player-no) from to)))))
+                     (state-maintenance (or from-player player-no) (or to-player player-no) from to)))))
 
 (defn handle-on-trash [game {:keys [player-no card-id card-name destroyed-by] :as args}]
   (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})

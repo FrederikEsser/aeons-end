@@ -236,6 +236,52 @@
              :deck     [crystal crystal crystal twin-opal spark]
              :ability  pyromancers-guile})
 
+(def moonstone-shard {:name    :moonstone-shard
+                      :type    :gem
+                      :cost    0
+                      :text    ["Gain 1 Aether."
+                                "Gain an additional 1 Aether that can only be used to gain a gem."]
+                      :effects [[:gain-aether 1]
+                                [:gain-aether {:arg 1 :earmark #{:gem}}]]})
+
+(defn black-mirror-cast [game {:keys [player-no breach-no card-name] :as args}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:spell-effect args]
+                                         [:cast-spell (assoc args :card card)]]})))
+
+(defn black-mirror-choice [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :black-mirror
+                                                      :text    ["Cast any player's prepped spell without discarding it."
+                                                                "Then cast that prepped spell again."
+                                                                "(Discard it afterward)"]
+                                                      :choice  [::black-mirror-cast {:caster player-no}]
+                                                      :options [:players :prepped-spells]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::black-mirror-cast   black-mirror-cast
+                   ::black-mirror-choice black-mirror-choice})
+
+(def black-mirror {:name        :black-mirror
+                   :activation  :your-main-phase
+                   :charge-cost 4
+                   :text        ["Cast any player's prepped spell without discarding it."
+                                 "Then cast that prepped spell again."
+                                 "(Discard it afterward)"]
+                   :effects     [[::black-mirror-choice]]})
+
+(def jian {:name     :jian
+           :title    "Breach Mage Orphan"
+           :breaches [{}
+                      {:status :opened}
+                      {:stage 0}
+                      {:stage 1}]
+           :hand     [moonstone-shard crystal crystal spark spark]
+           :deck     [crystal crystal crystal spark spark]
+           :ability  black-mirror})
+
 (def emerald-shard {:name            :emerald-shard
                     :type            :gem
                     :cost            0
@@ -356,7 +402,7 @@
     (cond-> game
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:give-choice {:title   :gift-of-aether
-                                                                :text    (str "You may prep the gained " (ut/format-name (:name card)) " to any player's opened breach.")
+                                                                :text    (str "You may prep the " (ut/format-name (:name card)) " you gained to any player's opened breach.")
                                                                 :choice  [::gift-of-aether-prep {:card-id     card-id
                                                                                                  :from-player player-no}]
                                                                 :options [:players :breaches {:can-prep {:card             card
@@ -394,47 +440,69 @@
                :deck     [crystal crystal crystal crystal crystal]
                :ability  gift-of-aether})
 
-(def moonstone-shard {:name    :moonstone-shard
-                      :type    :gem
-                      :cost    0
-                      :text    ["Gain 1 Aether."
-                                "Gain an additional 1 Aether that can only be used to gain a gem."]
-                      :effects [[:gain-aether 1]
-                                [:gain-aether {:arg 1 :earmark #{:gem}}]]})
+(defn worldheart-shard-on-gain [game {:keys [player-no card-name gained-card-id]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :gaining] {:id gained-card-id})]
+    (cond-> game
+            card (push-effect-stack {:player-no player-no
+                                     :effects   [[:give-choice {:title   :worldheart-shard
+                                                                :text    (str "Place the " (ut/format-name card-name) " you gained on top of any ally's discard pile.")
+                                                                :choice  [:move-card {:move-card-id gained-card-id
+                                                                                      :from-player  player-no
+                                                                                      :from         :gaining
+                                                                                      :to           :discard}]
+                                                                :options [:players {:ally true}]
+                                                                :min     1
+                                                                :max     1}]]}))))
 
-(defn black-mirror-cast [game {:keys [player-no breach-no card-name] :as args}]
-  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
-    (push-effect-stack game {:player-no player-no
-                             :effects   [[:spell-effect args]
-                                         [:cast-spell (assoc args :card card)]]})))
-
-(defn black-mirror-choice [game {:keys [player-no]}]
+(defn worldheart-shard-choice [game {:keys [player-no choice]}]
   (push-effect-stack game {:player-no player-no
-                           :effects   [[:give-choice {:title   :black-mirror
-                                                      :text    "Cast any player's prepped spell without discarding it.\nThen cast that prepped spell again.\n(Discard it afterward)"
-                                                      :choice  [::black-mirror-cast {:caster player-no}]
-                                                      :options [:players :prepped-spells]
-                                                      :min     1
-                                                      :max     1}]]}))
+                           :effects   (case choice
+                                        :gain-1 [[:gain-aether 1]]
+                                        :gain-2 [[:gain-aether {:arg 2 :earmark #{:gem :relic :spell}}]
+                                                 [:add-trigger {:trigger {:event    :on-gain
+                                                                          :duration :once-turn
+                                                                          :effects  [[::worldheart-shard-on-gain]]}}]])}))
 
-(effects/register {::black-mirror-cast   black-mirror-cast
-                   ::black-mirror-choice black-mirror-choice})
+(effects/register {::worldheart-shard-on-gain worldheart-shard-on-gain
+                   ::worldheart-shard-choice  worldheart-shard-choice})
 
-(def black-mirror {:name        :black-mirror
-                   :activation  :your-main-phase
-                   :charge-cost 4
-                   :text        "Cast any player's prepped spell without discarding it.\nThen cast that prepped spell again.\n(Discard it afterward)"
-                   :effects     [[::black-mirror-choice]]})
+(def worldheart-shard {:name            :worldheart-shard
+                       :type            :gem
+                       :cost            0
+                       :auto-play-index 1
+                       :text            ["Gain 1 Aether."
+                                         "OR"
+                                         "Gain 2 Aether that can only be used to gain a card."
+                                         "Place the next card you gain this turn on top of any ally's discard pile."]
+                       :effects         [[:give-choice {:title   :worldheart-shard
+                                                        :choice  ::worldheart-shard-choice
+                                                        :options [:special
+                                                                  {:option :gain-1 :text "Gain 1 Aether."}
+                                                                  {:option :gain-2 :text "Gain 2 Aether that can only be used to gain a card (to an ally)."}]
+                                                        :min     1
+                                                        :max     1}]]})
 
-(def jian {:name     :jian
-           :title    "Breach Mage Orphan"
-           :breaches [{}
-                      {:status :opened}
-                      {:stage 0}
-                      {:stage 1}]
-           :hand     [moonstone-shard crystal crystal spark spark]
-           :deck     [crystal crystal crystal spark spark]
-           :ability  black-mirror})
+(def underearth-mantra {:name        :underearth-mantra
+                        :activation  :your-main-phase
+                        :charge-cost 4
+                        :text        ["You may gain a gem that costs 4 Aether or less from any supply pile."
+                                      "Gravehold gains 4 life."]
+                        :effects     [[:give-choice {:title   :underearth-mantra
+                                                     :text    "You may gain a gem that costs 4 Aether or less from any supply pile."
+                                                     :choice  :gain
+                                                     :options [:supply {:type :gem :max-cost 4}]
+                                                     :max     1}]
+                                      [:heal-gravehold 4]]})
+
+(def mazahaedron {:name     :mazahaedron
+                  :title    "Henge Mystic"
+                  :breaches [{}
+                             {:stage 2}
+                             {:stage 1}
+                             {:stage 1}]
+                  :hand     [worldheart-shard crystal crystal spark spark]
+                  :deck     [crystal crystal crystal crystal spark]
+                  :ability  underearth-mantra})
 
 (defn garnet-shard-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -863,6 +931,7 @@
             kadir
             lash
             malastar
+            mazahaedron
             mist-ae
             mist-we
             phaedraxa
