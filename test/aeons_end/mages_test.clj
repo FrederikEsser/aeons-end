@@ -9,6 +9,7 @@
             [aeons-end.cards.spell :refer [aurora blaze feral-lightning ignite pyrotechnic-surge radiance]]
             [aeons-end.cards.common]
             [aeons-end.nemesis]
+            [aeons-end.cards.minion :refer [catacomb-drone cauterizer]]
             [aeons-end.mages :refer :all]
             [aeons-end.turn-order :as turn-order]
             [aeons-end.utils :as ut]))
@@ -213,6 +214,196 @@
                                      :bonus-damage   2
                                      :prepped-spells [ignite]}]
                          :hand     [spark]}]})))))
+
+(deftest garu-test
+  (testing "Garu"
+    (testing "Torch"
+      (is (= (-> {:players [{:breaches [{:status         :closed
+                                         :prepped-spells [torch]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :torch)
+                 (choose {:area      :nemesis
+                          :player-no 0
+                          :card-name :nemesis}))
+             {:players [{:breaches [{:status :closed}]
+                         :discard  [torch]}]
+              :nemesis {:life 49}}))
+      #_(is (= (-> {:players [{:breaches [{:status         :opened
+                                           :prepped-spells [torch]}]}]
+                    :nemesis {:life 50}}
+                   (cast-spell 0 0 :torch))
+               {:players [{:breaches [{:status :opened}]
+                           :discard  [torch]}]
+                :nemesis {:life 49}}))
+      (is (= (-> {:players [{:breaches [{:status         :closed
+                                         :stage          0
+                                         :prepped-spells [torch]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :torch)
+                 (choose {:area :breaches :player-no 0 :breach-no 0}))
+             {:players [{:breaches [{:status :focused
+                                     :stage  1}]
+                         :discard  [torch]}]
+              :nemesis {:life 50}}))
+      (is (= (-> {:players [{:breaches [{:status         :opened
+                                         :bonus-damage   1
+                                         :prepped-spells [torch]}
+                                        {:status :closed
+                                         :stage  0}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :torch)
+                 (choose {:area :breaches :player-no 0 :breach-no 1}))
+             {:players [{:breaches [{:status       :opened
+                                     :bonus-damage 1}
+                                    {:status :focused
+                                     :stage  1}]
+                         :discard  [torch]}]
+              :nemesis {:life 49}})))
+    (testing "Colossal Force"
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}]))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:life 44}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0)
+                 (choose nil))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{:prepped-spells [spark]}]}]
+              :nemesis {:life 48}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{}]}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]}]
+              :nemesis {:life 48}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:status         :opened
+                                         :bonus-damage   1
+                                         :prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}
+                          {:player-no 0 :breach-no 1 :card-name :spark}
+                          {:player-no 0 :breach-no 2 :card-name :spark}
+                          {:player-no 0 :breach-no 3 :card-name :spark}]))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{} {} {}
+                                    {:status       :opened
+                                     :bonus-damage 1}]
+                         :discard  [spark spark spark spark]}]
+              :nemesis {:life 32}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life      50
+                            :play-area [{:name :minion-1
+                                         :type :minion
+                                         :life 5}]}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+                 (choose {:area      :minions
+                          :player-no 0
+                          :card-name :minion-1}))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:life    49
+                        :discard [{:name :minion-1
+                                   :type :minion
+                                   :life 0}]}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life      50
+                            :play-area [{:name       :minion-1
+                                         :type       :minion
+                                         :life       3
+                                         :max-damage 1}]}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+                 (choose {:area      :minions
+                          :player-no 0
+                          :card-name :minion-1}))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:life      45
+                        :play-area [{:name       :minion-1
+                                     :type       :minion
+                                     :life       2
+                                     :max-damage 1}]}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life   50
+                            :shield 3}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}]))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:life   47
+                        :shield 3}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life      50
+                            :play-area [{:name   :minion-1
+                                         :type   :minion
+                                         :life   3
+                                         :shield 1}]}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+                 (choose {:area      :minions
+                          :player-no 0
+                          :card-name :minion-1}))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:life    48
+                        :discard [{:name   :minion-1
+                                   :type   :minion
+                                   :life   0
+                                   :shield 1}]}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:life      50
+                            :play-area [{:name   :minion-1
+                                         :type   :minion
+                                         :life   6
+                                         :shield 1}]}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+                 (choose {:area      :minions
+                          :player-no 0
+                          :card-name :minion-1}))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:life      50
+                        :play-area [{:name   :minion-1
+                                     :type   :minion
+                                     :life   1
+                                     :shield 1}]}}))
+      (is (= (-> {:players [{:ability  (assoc colossal-force :charges 5)
+                             :breaches [{:prepped-spells [spark]}]}]
+                  :nemesis {:husks {:number-of-husks 3}
+                            :life  50}}
+                 (activate-ability 0)
+                 (choose [{:player-no 0 :breach-no 0 :card-name :spark}])
+                 (choose {:area :minions :player-no 0 :card-name :husks}))
+             {:players [{:ability  (assoc colossal-force :charges 0)
+                         :breaches [{}]
+                         :discard  [spark]}]
+              :nemesis {:husks {:number-of-husks 0}
+                        :life  47}})))))
 
 (deftest gex-test
   (testing "Gex"

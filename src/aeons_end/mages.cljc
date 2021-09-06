@@ -2,7 +2,8 @@
   (:require [aeons-end.cards.starter :refer [crystal spark]]
             [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.effects :as effects]
-            [aeons-end.utils :as ut]))
+            [aeons-end.utils :as ut]
+            [aeons-end.nemeses.carapace-queen :as carapace-queen :refer [get-total-husk-life]]))
 
 (defn amethyst-shard-sift [game {:keys [player-no no-choice?]}]
   (cond-> game
@@ -106,7 +107,7 @@
 (def tempest-sigil {:name        :tempest-sigil
                     :activation  :your-main-phase
                     :charge-cost 6
-                    :text        ["Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."]
+                    :text        "Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."
                     :effects     [[:give-choice {:title   :tempest-sigil
                                                  :text    "Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."
                                                  :choice  ::tempest-sigil-replace-breach
@@ -124,6 +125,128 @@
                :hand     [oblivion-shard crystal crystal spark spark]
                :deck     [crystal crystal crystal crystal spark]
                :ability  tempest-sigil})
+
+(defn torch-effect [game {:keys [player-no breach-no bonus-damage area card-name]
+                          :or   {bonus-damage 0}}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (if breach-no
+                                        (concat [[:focus-breach {:breach-no breach-no}]]
+                                                (when (pos? bonus-damage)
+                                                  [[:deal-damage bonus-damage]]))
+                                        [[:deal-damage-to-target {:damage    (+ 1 bonus-damage)
+                                                                  :area      area
+                                                                  :card-name card-name}]])}))
+
+(defn torch-give-choice [{:keys [nemesis players] :as game} {:keys [player-no bonus-damage]}]
+  (let [{:keys [name]} nemesis
+        damage             (+ 1 bonus-damage)
+        unopened-breaches? (->> players
+                                (mapcat :breaches)
+                                (some (comp #{:closed :focused} :status)))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title   :torch
+                                                        :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
+                                                                         (when unopened-breaches?
+                                                                           ["OR"
+                                                                            "Focus any player's breach."]))
+                                                        :choice  [::torch-effect {:bonus-damage bonus-damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]
+                                                                  [:players :breaches {:opened false}]]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::torch-effect      torch-effect
+                   ::torch-give-choice torch-give-choice})
+
+(def torch {:name    :torch
+            :type    :spell
+            :cost    0
+            :cast    ["Deal 1 damage."
+                      "OR"
+                      "Focus any player's breach."]
+            :effects [[::torch-give-choice]]})
+
+(defn colossal-force-damage [{:keys [nemesis] :as game} {:keys [player-no damage area card-name prev-targets]}]
+  (let [enemy            (case area
+                           :nemesis nemesis
+                           :minions (:card (ut/get-card-idx game [:nemesis :play-area] {:name card-name})))
+        shield           (ut/get-value (:shield enemy) game)
+        life+shield      (cond-> (:life enemy)
+                                 shield (+ shield))
+        max-damage       (ut/get-value (:max-damage enemy) game)
+        damage-allocated (if (= :husks card-name)
+                           (min damage (get-total-husk-life game))
+                           (cond-> (min damage life+shield)
+                                   max-damage (min max-damage)))
+        damage-remaining (- damage damage-allocated)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (concat
+                                          (if (= :husks card-name)
+                                            [[::carapace-queen/damage-husks damage-allocated]]
+                                            [[:deal-damage-to-target {:damage    damage-allocated
+                                                                      :area      area
+                                                                      :card-name card-name}]])
+                                          (when (pos? damage-remaining)
+                                            [[::colossal-force-choose-target {:damage       damage-remaining
+                                                                              :prev-targets (conj prev-targets card-name)}]]))})))
+
+(defn colossal-force-choose-target [{:keys [nemesis] :as game} {:keys [player-no damage prev-targets]}]
+  (let [{:keys [name]} nemesis
+        minions (ut/options-from-nemesis game {:area :minions} {:not-names prev-targets})]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (not-empty minions)
+                                          [[:give-choice {:title   :colossal-force
+                                                          :text    (str "Deal " damage " damage divided however you choose to " (ut/format-name (or name :nemesis)) " or any number of minions.")
+                                                          :choice  [::colossal-force-damage {:damage       damage
+                                                                                             :prev-targets prev-targets}]
+                                                          :options [:mixed
+                                                                    [:nemesis {:not-names prev-targets}]
+                                                                    [:nemesis :minions {:not-names prev-targets}]]
+                                                          :min     1
+                                                          :max     1}]]
+                                          [[:deal-damage-to-nemesis {:damage damage}]])})))
+
+(defn colossal-force-discard [game {:keys [player-no breach-no card-name spells]}]
+  (let [spells (or spells
+                   (when (and player-no breach-no card-name)
+                     [{:player-no player-no
+                       :breach-no breach-no
+                       :card-name card-name}]))
+        damage (+ 2 (* 4 (count spells)))]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat
+                                         (when (not-empty spells)
+                                           [[:discard-prepped-spells {:spells spells}]])
+                                         [[::colossal-force-choose-target {:damage       damage
+                                                                           :prev-targets #{}}]])}))))
+
+(effects/register {::colossal-force-damage        colossal-force-damage
+                   ::colossal-force-choose-target colossal-force-choose-target
+                   ::colossal-force-discard       colossal-force-discard})
+
+(def colossal-force {:name        :colossal-force
+                     :activation  :your-main-phase
+                     :charge-cost 5
+                     :text        ["Discard up to four of your prepped spells."
+                                   "Deal 2 damage plus 4 additional damage for each spell you discarded divided however you choose to the nemesis or any number of minions."]
+                     :effects     [[:give-choice {:title   :colossal-force
+                                                  :text    "Discard up to four of your prepped spells."
+                                                  :choice  ::colossal-force-discard
+                                                  :options [:player :prepped-spells]
+                                                  :max     4}]]})
+
+(def garu {:name     :garu
+           :title    "Oathsworn Protector"
+           :breaches [{}
+                      {:stage 0}
+                      {:stage 1}
+                      {:stage 1}]
+           :hand     [torch crystal crystal crystal spark]
+           :deck     [crystal crystal crystal spark spark]
+           :ability  colossal-force})
 
 (defn shattered-geode-take-card [game {:keys [player-no card-id to-player]}]
   (cond-> game
@@ -925,6 +1048,7 @@
 (def mages [adelheim
             brama
             dezmodia
+            garu
             gex
             indira
             jian

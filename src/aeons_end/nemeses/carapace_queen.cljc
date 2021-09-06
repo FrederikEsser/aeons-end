@@ -25,11 +25,15 @@
     2
     1))
 
-(defn damage-husks [game {:keys [arg]}]
+(defn get-total-husk-life [game]
   (let [{:keys [number-of-husks damaged-husk?]} (get-in game [:nemesis :husks])
-        husk-life        (get-husk-life game)
-        final-husks-life (-> (* number-of-husks husk-life)
-                             (cond-> damaged-husk? (- 1))
+        husk-life (get-husk-life game)]
+    (cond-> (* number-of-husks husk-life)
+            damaged-husk? (- 1))))
+
+(defn damage-husks [game {:keys [arg]}]
+  (let [husk-life        (get-husk-life game)
+        final-husks-life (-> (get-total-husk-life game)
                              (- arg)
                              (max 0))]
     (-> game

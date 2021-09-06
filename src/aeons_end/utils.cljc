@@ -547,16 +547,18 @@
 (defn can-damage? [game {:keys [max-damage]}]
   (not= 0 (get-value max-damage game)))
 
-(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name type]}]]
+(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name not-names type]}]]
   (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])
         husks? (and number-of-husks
                     (pos? number-of-husks))]
     (case area
-      :minions (concat (->> (get-in game [:nemesis :play-area])
-                            (filter (comp #{:minion} :type))
-                            (filter (partial can-damage? game))
-                            (map :name))
-                       (when husks? [:husks]))
+      :minions (let [valid-minions (concat (->> (get-in game [:nemesis :play-area])
+                                                (filter (comp #{:minion} :type))
+                                                (filter (partial can-damage? game))
+                                                (map :name))
+                                           (when husks? [:husks]))]
+                 (cond->> valid-minions
+                          not-names (remove not-names)))
       :husks (when husks? [:husks])
       :play-area (cond->> (get-in game [:nemesis :play-area])
                           name (filter (comp #{name} :name))
@@ -568,7 +570,8 @@
                         most-recent (take-last 1)           ; it's important that 'most-recent' is evaluated last
                         :always (map :name))
 
-      :nemesis [:nemesis]
+      :nemesis (cond->> [:nemesis]
+                        not-names (remove not-names))
       [area])))
 
 (effects/register-options {:nemesis options-from-nemesis})
