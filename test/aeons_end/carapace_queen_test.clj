@@ -178,18 +178,18 @@
                    (choose {:area :minions :player-no 0 :card-name :broodwomb}))
                {:nemesis {:play-area [(assoc broodwomb :life 3)]
                           :husks     {:number-of-husks 0}}}))
-        (is (= (-> {:nemesis {:play-area [(assoc broodwomb :life 4)]
-                              :husks     {:number-of-husks 5}}}
-                   (deal-damage 1)
-                   (choose {:area :minions :player-no 0 :card-name :broodwomb}))
-               {:nemesis {:play-area [(assoc broodwomb :life 4)]
-                          :husks     {:number-of-husks 5}}}))
-        (is (= (-> {:nemesis {:play-area [(assoc broodwomb :life 4)]
-                              :husks     {:number-of-husks 1}}}
-                   (deal-damage 4)
-                   (choose {:area :minions :player-no 0 :card-name :broodwomb}))
-               {:nemesis {:play-area [(assoc broodwomb :life 4)]
-                          :husks     {:number-of-husks 1}}}))))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:nemesis {:play-area [(assoc broodwomb :life 4)]
+                                             :husks     {:number-of-husks 5}}}
+                                  (deal-damage 1)
+                                  (choose {:area :minions :player-no 0 :card-name :broodwomb}))
+                              {:nemesis {:play-area [(assoc broodwomb :life 4)]
+                                         :husks     {:number-of-husks 5}}}))
+        (is (thrown-with-msg? AssertionError #"Choose error:"
+                              (-> {:nemesis {:play-area [(assoc broodwomb :life 4)]
+                                             :husks     {:number-of-husks 1}}}
+                                  (deal-damage 4)
+                                  (choose {:area :minions :player-no 0 :card-name :broodwomb}))))))
     (testing "Foul Multitudes"
       (testing "Immediately"
         (is (= (-> {:nemesis {:deck    [foul-multitudes]

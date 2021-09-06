@@ -152,23 +152,22 @@
                                           [::swarm]]}
                    :quote      "'Were we still in The World That Was, these wretched things would envelop the very sky.' Malastar, Breach Mage Mentor"})
 
-(defn broodwomb-modify-damage [game damage]
+(defn broodwomb-max-damage [game]
   (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])]
-    (if (pos? number-of-husks)
-      0
-      damage)))
+    (when (pos? number-of-husks)
+      0)))
 
-(effects/register-predicates {::broodwomb-modify-damage broodwomb-modify-damage})
+(effects/register-predicates {::broodwomb-max-damage broodwomb-max-damage})
 
-(def broodwomb {:name          :broodwomb
-                :type          :minion
-                :tier          1
-                :life          5
-                :text          "If there is at least one husk in play, prevent all damage dealt to this minion."
-                :modify-damage ::broodwomb-modify-damage
-                :persistent    {:text    "Place 1 husk into play."
-                                :effects [[::spawn-husks 1]]}
-                :quote         "'It is the husk-mother, spewing multitudes through the void into Gravehold.'"})
+(def broodwomb {:name       :broodwomb
+                :type       :minion
+                :tier       1
+                :life       5
+                :text       "If there is at least one husk in play, prevent all damage dealt to this minion."
+                :max-damage ::broodwomb-max-damage
+                :persistent {:text    "Place 1 husk into play."
+                             :effects [[::spawn-husks 1]]}
+                :quote      "'It is the husk-mother, spewing multitudes through the void into Gravehold.'"})
 
 (def endless-throng {:name    :endless-throng
                      :type    :attack

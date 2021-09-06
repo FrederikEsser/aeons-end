@@ -44,51 +44,51 @@
                           :tokens  7}
               :gravehold {:life 28}})))
     (testing "When damaged"
-      (is (= (-> {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        4
-                            :life          35}}
+      (is (= (-> {:nemesis {:shield   ::magus-of-cloaks/shield
+                            :when-hit [[::magus-of-cloaks/when-hit]]
+                            :tokens   4
+                            :life     35}}
                  (deal-damage 4))
-             {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        3
-                        :life          35}}))
-      (is (= (-> {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        4
-                            :life          35}}
+             {:nemesis {:shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   3
+                        :life     35}}))
+      (is (= (-> {:nemesis {:shield   ::magus-of-cloaks/shield
+                            :when-hit [[::magus-of-cloaks/when-hit]]
+                            :tokens   4
+                            :life     35}}
                  (deal-damage 5))
-             {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        3
-                        :life          34}}))
-      (is (= (-> {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        4
-                            :life          35}}
+             {:nemesis {:shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   3
+                        :life     34}}))
+      (is (= (-> {:nemesis {:shield   ::magus-of-cloaks/shield
+                            :when-hit [[::magus-of-cloaks/when-hit]]
+                            :tokens   4
+                            :life     35}}
                  (deal-damage 6))
-             {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        3
-                        :life          33}}))
-      (is (= (-> {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        3
-                            :life          35}}
+             {:nemesis {:shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   3
+                        :life     33}}))
+      (is (= (-> {:nemesis {:shield   ::magus-of-cloaks/shield
+                            :when-hit [[::magus-of-cloaks/when-hit]]
+                            :tokens   3
+                            :life     35}}
                  (deal-damage 1))
-             {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        2
-                        :life          35}}))
-      (is (= (-> {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        2
-                            :life          35}}
+             {:nemesis {:shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   2
+                        :life     35}}))
+      (is (= (-> {:nemesis {:shield   ::magus-of-cloaks/shield
+                            :when-hit [[::magus-of-cloaks/when-hit]]
+                            :tokens   2
+                            :life     35}}
                  (deal-damage 1))
-             {:nemesis {:modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        2
-                        :life          35}})))))
+             {:nemesis {:shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   2
+                        :life     35}})))))
 
 (deftest ashen-haruspex-test
   (testing "Ashen Haruspex"
@@ -125,28 +125,28 @@
 (deftest black-solstice-test
   (testing "Black Solstice"
     (testing "To Discard"
-      (is (= (-> {:nemesis {:play-area     [black-solstice]
-                            :modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        4
-                            :life          30}}
+      (is (= (-> {:nemesis {:play-area [black-solstice]
+                            :shield    ::magus-of-cloaks/shield
+                            :when-hit  [[::magus-of-cloaks/when-hit]]
+                            :tokens    4
+                            :life      30}}
                  (deal-damage 4))
-             {:nemesis {:play-area     [black-solstice]
-                        :modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        3
-                        :life          30}}))
-      (is (= (-> {:nemesis {:play-area     [black-solstice]
-                            :modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        3
-                            :life          30}}
+             {:nemesis {:play-area [black-solstice]
+                        :shield    ::magus-of-cloaks/shield
+                        :when-hit  [[::magus-of-cloaks/when-hit]]
+                        :tokens    3
+                        :life      30}}))
+      (is (= (-> {:nemesis {:play-area [black-solstice]
+                            :shield    ::magus-of-cloaks/shield
+                            :when-hit  [[::magus-of-cloaks/when-hit]]
+                            :tokens    3
+                            :life      30}}
                  (deal-damage 4))
-             {:nemesis {:discard       [black-solstice]
-                        :modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        2
-                        :life          29}})))
+             {:nemesis {:discard  [black-solstice]
+                        :shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   2
+                        :life     29}})))
     (testing "Power"
       (is (= (-> {:nemesis   {:play-area [(assoc-in black-solstice [:power :power] 1)]
                               :unleash   [[:damage-gravehold 1]]}
@@ -337,28 +337,28 @@
 (deftest rising-dark-test
   (testing "Rising Dark"
     (testing "To Discard"
-      (is (= (-> {:nemesis {:play-area     [rising-dark]
-                            :modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        4
-                            :life          30}}
+      (is (= (-> {:nemesis {:play-area [rising-dark]
+                            :shield    ::magus-of-cloaks/shield
+                            :when-hit  [[::magus-of-cloaks/when-hit]]
+                            :tokens    4
+                            :life      30}}
                  (deal-damage 4))
-             {:nemesis {:play-area     [rising-dark]
-                        :modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        3
-                        :life          30}}))
-      (is (= (-> {:nemesis {:play-area     [rising-dark]
-                            :modify-damage ::magus-of-cloaks/modify-damage
-                            :when-hit      [[::magus-of-cloaks/when-hit]]
-                            :tokens        3
-                            :life          30}}
+             {:nemesis {:play-area [rising-dark]
+                        :shield    ::magus-of-cloaks/shield
+                        :when-hit  [[::magus-of-cloaks/when-hit]]
+                        :tokens    3
+                        :life      30}}))
+      (is (= (-> {:nemesis {:play-area [rising-dark]
+                            :shield    ::magus-of-cloaks/shield
+                            :when-hit  [[::magus-of-cloaks/when-hit]]
+                            :tokens    3
+                            :life      30}}
                  (deal-damage 4))
-             {:nemesis {:discard       [rising-dark]
-                        :modify-damage ::magus-of-cloaks/modify-damage
-                        :when-hit      [[::magus-of-cloaks/when-hit]]
-                        :tokens        2
-                        :life          29}})))
+             {:nemesis {:discard  [rising-dark]
+                        :shield   ::magus-of-cloaks/shield
+                        :when-hit [[::magus-of-cloaks/when-hit]]
+                        :tokens   2
+                        :life     29}})))
     (testing "Power"
       (is (= (-> {:nemesis   {:play-area [(assoc-in rising-dark [:power :power] 1)]
                               :unleash   [[:damage-gravehold 1]]}

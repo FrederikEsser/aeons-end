@@ -50,11 +50,11 @@
 (effects/register {::unleash-choice unleash-choice
                    ::unleash        do-unleash})
 
-(defn modify-damage [{:keys [nemesis]} damage]
+(defn shield [{:keys [nemesis]}]
   (let [{:keys [tokens]} nemesis]
-    (max 0 (- damage tokens))))
+    tokens))
 
-(effects/register-predicates {::modify-damage modify-damage})
+(effects/register-predicates {::shield shield})
 
 (defn when-hit [game {:keys [damage]}]
   (let [discard-powers (->> (get-in game [:nemesis :play-area])
@@ -84,12 +84,6 @@
 
 (effects/register-predicates {::victory-condition victory-condition})
 
-
-(defn ashen-haruspex-modify-damage [_ damage]
-  (max (- damage 2) 0))
-
-(effects/register-predicates {::ashen-haruspex-modify-damage ashen-haruspex-modify-damage})
-
 (defn ashen-haruspex-damage [game _]
   (let [damage (-> (get-in game [:nemesis :tokens])
                    inc
@@ -103,15 +97,15 @@
 
 (effects/register {::ashen-haruspex-damage ashen-haruspex-damage})
 
-(def ashen-haruspex {:name          :ashen-haruspex
-                     :type          :minion
-                     :tier          2
-                     :life          5
-                     :text          "When this minion is dealt damage, prevent 2 of that damage."
-                     :modify-damage ::ashen-haruspex-modify-damage
-                     :persistent    {:text    "Any player suffers damage equal to half the number of nemesis tokens Magus of Cloaks has, rounded up."
-                                     :effects [[::ashen-haruspex-damage]]}
-                     :quote         "'If any among us can kill the dark itself, it is Quilius.' Garu, Oathsworn Protector"})
+(def ashen-haruspex {:name       :ashen-haruspex
+                     :type       :minion
+                     :tier       2
+                     :life       5
+                     :text       "When this minion is dealt damage, prevent 2 of that damage."
+                     :shield     2
+                     :persistent {:text    "Any player suffers damage equal to half the number of nemesis tokens Magus of Cloaks has, rounded up."
+                                  :effects [[::ashen-haruspex-damage]]}
+                     :quote      "'If any among us can kill the dark itself, it is Quilius.' Garu, Oathsworn Protector"})
 
 (defn black-solstice-damage [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -278,20 +272,20 @@
                               :effects [[::twilight-empire-damage]
                                         [::gain-nemesis-tokens {:arg 1}]]}})
 
-(def veil-daughter {:name          :veil-daughter
-                    :type          :minion
-                    :tier          3
-                    :life          11
-                    :text          "When this minion is dealt damage, reduce that damage by the number of nemesis tokens Magus of Cloaks has."
-                    :modify-damage ::modify-damage
-                    :persistent    {:text    "The player with the most charges suffers 4 damage."
-                                    :effects [[:give-choice {:title   :veil-daughter
-                                                             :text    "The player with the most charges suffers 4 damage."
-                                                             :choice  [:damage-player {:arg 4}]
-                                                             :options [:players {:most-charges true}]
-                                                             :min     1
-                                                             :max     1}]]}
-                    :quote         "'Where Ulgimor is merely a beast of shadow, the Veil Daughter is a darkling goddess.' Dezmodia, Voidborn Prodigy"})
+(def veil-daughter {:name       :veil-daughter
+                    :type       :minion
+                    :tier       3
+                    :life       11
+                    :text       "When this minion is dealt damage, reduce that damage by the number of nemesis tokens Magus of Cloaks has."
+                    :shield     ::shield
+                    :persistent {:text    "The player with the most charges suffers 4 damage."
+                                 :effects [[:give-choice {:title   :veil-daughter
+                                                          :text    "The player with the most charges suffers 4 damage."
+                                                          :choice  [:damage-player {:arg 4}]
+                                                          :options [:players {:most-charges true}]
+                                                          :min     1
+                                                          :max     1}]]}
+                    :quote      "'Where Ulgimor is merely a beast of shadow, the Veil Daughter is a darkling goddess.' Dezmodia, Voidborn Prodigy"})
 
 (def magus-of-cloaks {:name              :magus-of-cloaks
                       :level             6
@@ -302,7 +296,7 @@
                                           "OR"
                                           "Gravehold suffers 2 damage."]
                       :additional-rules  ::additional-rules
-                      :modify-damage     ::modify-damage
+                      :shield            ::shield
                       :when-hit          [[::when-hit]]
                       :victory-condition ::victory-condition
                       :cards             [dusk-spawn rising-dark twilight-empire

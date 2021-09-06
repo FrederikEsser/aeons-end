@@ -21,11 +21,6 @@
                                             [:damage-gravehold 1]]}
                      :quote      "'Kadir remains convinced the drones were once merely creatures from The Depths.'"})
 
-(defn cauterizer-modify-damage [_ damage]
-  (min damage 1))
-
-(effects/register-predicates {::cauterizer-modify-damage cauterizer-modify-damage})
-
 (defn cauterizer-damage [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :cauterizer})]
     (push-effect-stack game {:effects [[:give-choice {:title   :cauterizer
@@ -37,15 +32,15 @@
 
 (effects/register {::cauterizer-damage cauterizer-damage})
 
-(def cauterizer {:name          :cauterizer
-                 :type          :minion
-                 :tier          2
-                 :life          3
-                 :text          "When damage is dealt to this minion, reduce that damage to 1."
-                 :modify-damage ::cauterizer-modify-damage
-                 :persistent    {:text    "Any player suffers damage equal to this minion's current life."
-                                 :effects [[::cauterizer-damage]]}
-                 :quote         "'Hack away all you like, youngling. It will only grow back another... whatever that part is.' Adelheim, Breach Mage Weaponsmith"})
+(def cauterizer {:name       :cauterizer
+                 :type       :minion
+                 :tier       2
+                 :life       3
+                 :text       "When damage is dealt to this minion, reduce that damage to 1."
+                 :max-damage 1
+                 :persistent {:text    "Any player suffers damage equal to this minion's current life."
+                              :effects [[::cauterizer-damage]]}
+                 :quote      "'Hack away all you like, youngling. It will only grow back another... whatever that part is.' Adelheim, Breach Mage Weaponsmith"})
 
 (defn haze-spewer-damage [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :haze-spewer})]
@@ -137,26 +132,21 @@
                                                                  :damage    2}]]}
                  :quote      "'One of the few indigenous creatures of the cave, though corrupted from exposure to the breach.' Gex, Breach Mage Advisor"})
 
-(defn monstrosity-of-omens-modify-damage [_ damage]
-  (min damage 1))
-
-(effects/register-predicates {::monstrosity-of-omens-modify-damage monstrosity-of-omens-modify-damage})
-
 (defn monstrosity-of-omens-damage [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :monstrosity-of-omens})]
     (push-effect-stack game {:effects [[:damage-gravehold life]]})))
 
 (effects/register {::monstrosity-of-omens-damage monstrosity-of-omens-damage})
 
-(def monstrosity-of-omens {:name          :monstrosity-of-omens
-                           :type          :minion
-                           :tier          3
-                           :life          5
-                           :text          "When damage is dealt to this minion, reduce that damage to 1."
-                           :modify-damage ::monstrosity-of-omens-modify-damage
-                           :persistent    {:text    "Gravehold suffers damage equal to this minion's current life."
-                                           :effects [[::monstrosity-of-omens-damage]]}
-                           :quote         "'Never have I seen such a creature, even among the ranks of the Nameless.' Yan Magda, Enlightened Exile"})
+(def monstrosity-of-omens {:name       :monstrosity-of-omens
+                           :type       :minion
+                           :tier       3
+                           :life       5
+                           :text       "When damage is dealt to this minion, reduce that damage to 1."
+                           :max-damage 1
+                           :persistent {:text    "Gravehold suffers damage equal to this minion's current life."
+                                        :effects [[::monstrosity-of-omens-damage]]}
+                           :quote      "'Never have I seen such a creature, even among the ranks of the Nameless.' Yan Magda, Enlightened Exile"})
 
 (def needlemaw {:name       :needlemaw
                 :type       :minion

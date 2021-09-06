@@ -138,14 +138,16 @@
 (effects/register {::at-start-turn at-start-turn
                    ::at-end-turn   at-end-turn})
 
+(defn- get-damage [damage & {:keys [shield max-damage]}]
+  (cond-> damage
+          shield (- shield)
+          max-damage (min max-damage)
+          :always (max 0)))
+
 (defn deal-damage-to-nemesis [{:keys [nemesis] :as game} {:keys [damage]}]
   (if (pos? damage)
-    (let [{:keys [life modify-damage when-hit]} nemesis
-          modify-damage-fn (when modify-damage
-                             (effects/get-predicate modify-damage))
-          damage           (if modify-damage-fn
-                             (modify-damage-fn game damage)
-                             damage)]
+    (let [{:keys [life shield when-hit]} nemesis
+          damage (get-damage damage :shield (ut/get-value shield game))]
       (-> game
           (assoc-in [:nemesis :life] (max (- life damage) 0))
           (cond-> when-hit (push-effect-stack {:args    {:damage damage}
@@ -156,13 +158,11 @@
   (if (= :husks card-name)
     (deal-damage-to-husks game args)
     (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-          {:keys [life max-life modify-damage when-hit]} card
-          modify-damage-fn (when modify-damage
-                             (effects/get-predicate modify-damage))
-          damage           (if modify-damage-fn
-                             (modify-damage-fn game damage)
-                             damage)
-          killed?          (<= life damage)]
+          {:keys [life max-life max-damage shield when-hit]} card
+          damage  (get-damage damage
+                              :shield (ut/get-value shield game)
+                              :max-damage (ut/get-value max-damage game))
+          killed? (<= life damage)]
       (-> game
           (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
                                                                 (- life damage)))

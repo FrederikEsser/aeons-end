@@ -194,6 +194,13 @@
   (let [reduction (or reduction 0)]
     (if (< cost reduction) 0 (- cost reduction))))
 
+(defn get-value [val game]
+  (let [val-fn (when (keyword? val)
+                 (effects/get-predicate val))]
+    (if val-fn
+      (val-fn game)
+      val)))
+
 (defn can-afford? [{:keys [aether earmarked-aether restricted-aether]
                     :or   {aether 0}}
                    cost type]
@@ -537,6 +544,9 @@
 
 (effects/register-options {:players options-from-players})
 
+(defn can-damage? [game {:keys [max-damage]}]
+  (not= 0 (get-value max-damage game)))
+
 (defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name type]}]]
   (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])
         husks? (and number-of-husks
@@ -544,6 +554,7 @@
     (case area
       :minions (concat (->> (get-in game [:nemesis :play-area])
                             (filter (comp #{:minion} :type))
+                            (filter (partial can-damage? game))
                             (map :name))
                        (when husks? [:husks]))
       :husks (when husks? [:husks])
