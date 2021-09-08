@@ -288,7 +288,7 @@
                                  "Deal 2 damage."
                                  "Any ally may destroy a card in hand."]
                        :effects [[::convection-field-choice]]
-                       :quote   "'Much to Ulgimor's dismay, no shadow would be cast without coward Ohat' Nerva, Survivor"})
+                       :quote   "'Much to Ulgimor's dismay, no shadow would be cast without the coward Ohat' Nerva, Survivor"})
 
 (defn crystallize-reveal [game {:keys [player-no caster] :as args}]
   (let [number-of-gems (->> (get-in game [:players player-no :hand])
@@ -675,7 +675,7 @@
                 :cast    ["Deal 1 damage."
                           "Allies may collectively discard up to two cards in hand. For each card discarded this way, deal 3 additional damage."]
                 :effects [[::pyromancy-give-choice]]
-                :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
+                :quote   "'Even in the black between worlds, fire hungers for light.'"})
 
 (def pyrotechnic-surge {:name        :pyrotechnic-surge
                         :type        :spell

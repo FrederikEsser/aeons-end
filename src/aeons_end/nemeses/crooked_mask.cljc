@@ -94,6 +94,7 @@
 
 (def blind-abandon {:name     :blind-abandon
                     :type     :corruption
+                    :cost     0
                     :text     ["Suffer 1 damage."
                                "You may destroy a non-corruption card in hand."
                                "Destroy this."]
@@ -108,6 +109,7 @@
 
 (def contagion {:name     :contagion
                 :type     :corruption
+                :cost     0
                 :text     ["Suffer 1 damage."
                            "Return any card that costs 0 Aether in your discard pile to your hand."
                            "Destroy this."]
@@ -123,6 +125,7 @@
 
 (def delirium-veil {:name     :delirium-veil
                     :type     :corruption
+                    :cost     0
                     :text     ["Gravehold suffers 2 damage."
                                "Focus a breach."
                                "Destroy this."]
@@ -138,6 +141,7 @@
 
 (def dire-wisdom {:name     :dire-wisdom
                   :type     :corruption
+                  :cost     0
                   :text     ["Gain a spell from any spell supply pile."
                              "Gain three corruptions and place them on top of your deck."
                              "Destroy this."]
@@ -155,6 +159,7 @@
 
 (def endless-hunger {:name     :endless-hunger
                      :type     :corruption
+                     :cost     0
                      :text     ["Gravehold suffers 3 damage."
                                 "Gain 2 life."
                                 "Destroy this."]
@@ -165,6 +170,7 @@
 
 (def fever-of-war {:name     :fever-of-war
                    :type     :corruption
+                   :cost     0
                    :text     ["Suffer 1 damage."
                               "Deal 2 damage."
                               "Destroy this."]
@@ -175,6 +181,7 @@
 
 (def grim-sight {:name     :grim-sight
                  :type     :corruption
+                 :cost     0
                  :text     ["Gravehold suffers 2 damage."
                             "Look at the top card of your deck. You may destroy it."
                             "Destroy this."]
@@ -191,6 +198,7 @@
 
 (def insatiable-avarice {:name     :insatiable-avarice
                          :type     :corruption
+                         :cost     0
                          :text     ["Suffer 2 damage."
                                     "Gain a gem from the least expensive gem supply pile and place it into your hand."
                                     "Destroy this."]
@@ -206,6 +214,7 @@
 
 (def lust-for-power {:name     :lust-for-power
                      :type     :corruption
+                     :cost     0
                      :text     ["Suffer 1 damage."
                                 "Gain 1 charge."
                                 "Destroy this."]
@@ -216,6 +225,7 @@
 
 (def nothingness {:name     :nothingness
                   :type     :corruption
+                  :cost     0
                   :text     ["Discard two non-corruption cards. Suffer 2 damage."
                              "Shuffle any player's turn order card into the turn order deck."
                              "Destroy this."]
@@ -250,6 +260,7 @@
 
 (def reckless-might {:name     :reckless-might
                      :type     :corruption
+                     :cost     0
                      :text     ["Gain a relic from any relic supply pile and place on top of your deck."
                                 "Suffer damage equal to half its cost, rounded up."
                                 "Destroy this."]

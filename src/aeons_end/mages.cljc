@@ -206,7 +206,8 @@
                                                                     [:nemesis :minions {:not-names prev-targets}]]
                                                           :min     1
                                                           :max     1}]]
-                                          [[:deal-damage-to-nemesis {:damage damage}]])})))
+                                          (when-not (contains? prev-targets :nemesis)
+                                            [[:deal-damage-to-nemesis {:damage damage}]]))})))
 
 (defn colossal-force-discard [game {:keys [player-no breach-no card-name spells]}]
   (let [spells (or spells

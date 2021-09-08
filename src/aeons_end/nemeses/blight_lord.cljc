@@ -46,6 +46,7 @@
 
 (def tainted-jade {:name            :tainted-jade
                    :type            :gem
+                   :cost            0
                    :auto-play-index 2
                    :text            ["Gain 2 Aether. Suffer 1 damage."
                                      "OR"
