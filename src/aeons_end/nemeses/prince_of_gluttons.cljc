@@ -60,6 +60,29 @@
 
 (effects/register-predicates {::unleash-text unleash-text})
 
+(defn cerephage-devour [game _]
+  (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :cerephage})]
+    (push-effect-stack game {:effects [[:give-choice {:title      :cerephage
+                                                      :text       (str "Devour " (ut/number->text life) " cards from one supply pile.")
+                                                      :choice     [::devour {:number-of-cards life}]
+                                                      :options    [:supply {:devoured false}]
+                                                      :min        1
+                                                      :max        1
+                                                      :mandatory? true}]]})))
+
+(effects/register {::cerephage-devour cerephage-devour})
+
+(def cerephage {:name       :cerephage
+                :type       :minion
+                :tier       2
+                :life       7
+                :persistent {:text    ["Devour cards equal to this minion's life from one supply pile."
+                                       "Then, this minion suffers 2 damage."]
+                             :effects [[::cerephage-devour]
+                                       [:deal-damage-to-minion {:card-name :cerephage
+                                                                :damage    2}]]}
+                :quote      "'Quickly. Before our heads are hollow!' Adelheim, Breach Mage Weaponsmith"})
+
 (defn lobotomize-choice [game {:keys [area player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case area
@@ -147,5 +170,5 @@
                                              "- If all supply piles are empty, the players lose."]
                          :victory-condition ::victory-condition
                          :cards             [(attack/generic 1) lobotomize thought-biter
-                                             (minion/generic 2 1) (minion/generic 2 2) mindguzzler
+                                             cerephage (minion/generic 2) mindguzzler
                                              (attack/generic 3) (power/generic 3) (minion/generic 3)]})
