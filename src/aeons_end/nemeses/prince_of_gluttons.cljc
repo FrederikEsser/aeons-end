@@ -88,6 +88,22 @@
                                           :max     1}]]
                  :quote   "'I saw the woman's eyes empty and everything she was fell away into nothing.' Nerva, Survivor"})
 
+(defn mindguzzler-set-life [{:keys [supply] :as game} _]
+  (let [empty-supply-piles (->> supply
+                                (filter (comp zero? :pile-size))
+                                count)]
+    (ut/update-in-vec game [:nemesis :play-area] {:name :mindguzzler} assoc :life (+ 8 empty-supply-piles))))
+
+(effects/register {::mindguzzler-set-life mindguzzler-set-life})
+
+(def mindguzzler {:name        :mindguzzler
+                  :type        :minion
+                  :tier        2
+                  :immediately {:text    ["Set this minion's life equal to 8 plus the number of empty supply piles."]
+                                :effects [[::mindguzzler-set-life]]}
+                  :persistent  {:text    "Unleash"
+                                :effects [[:unleash]]}})
+
 (defn thought-biter-choice [game {:keys [area player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case area
@@ -131,5 +147,5 @@
                                              "- If all supply piles are empty, the players lose."]
                          :victory-condition ::victory-condition
                          :cards             [(attack/generic 1) lobotomize thought-biter
-                                             (minion/generic 2 1) (minion/generic 2 2) (minion/generic 2 3)
+                                             (minion/generic 2 1) (minion/generic 2 2) mindguzzler
                                              (attack/generic 3) (power/generic 3) (minion/generic 3)]})
