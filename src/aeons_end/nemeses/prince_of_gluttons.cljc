@@ -88,6 +88,36 @@
                                           :max     1}]]
                  :quote   "'I saw the woman's eyes empty and everything she was fell away into nothing.' Nerva, Survivor"})
 
+(defn thought-biter-choice [game {:keys [area player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :players [[:damage-player 2]]
+                                        :supply [[::devour {:number-of-cards 2
+                                                            :card-name       card-name}]])}))
+
+(effects/register {::thought-biter-choice thought-biter-choice})
+
+(def thought-biter {:name       :thought-biter
+                    :type       :minion
+                    :tier       1
+                    :life       6
+                    :persistent {:text    ["Any player suffers 2 damage."
+                                           "OR"
+                                           "Devour two relics from the least expensive relic supply pile."]
+                                 :effects [[:give-choice {:title   :thought-biter
+                                                          :text    ["Any player suffers 2 damage."
+                                                                    "OR"
+                                                                    "Devour two relics from the least expensive relic supply pile."]
+                                                          :choice  ::thought-biter-choice
+                                                          :options [:mixed
+                                                                    [:players]
+                                                                    [:supply {:type            :relic
+                                                                              :least-expensive true
+                                                                              :devoured        false}]]
+                                                          :min     1
+                                                          :max     1}]]}
+                    :quote      "'Is it eating the cave wall?' Nym, Breach Mage Apprentice"})
+
 (def prince-of-gluttons {:name              :prince-of-gluttons
                          :level             5
                          :life              70
@@ -100,6 +130,6 @@
                                              "- When Prince of Gluttons would Devour a card from a supply pile that is empty Gravehold suffers 2 damage per card instead."
                                              "- If all supply piles are empty, the players lose."]
                          :victory-condition ::victory-condition
-                         :cards             [(attack/generic 1) lobotomize (minion/generic 1)
+                         :cards             [(attack/generic 1) lobotomize thought-biter
                                              (minion/generic 2 1) (minion/generic 2 2) (minion/generic 2 3)
                                              (attack/generic 3) (power/generic 3) (minion/generic 3)]})
