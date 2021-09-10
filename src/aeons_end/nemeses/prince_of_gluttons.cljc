@@ -186,6 +186,27 @@
                                           :max     1}]]
                  :quote   "'I saw the woman's eyes empty and everything she was fell away into nothing.' Nerva, Survivor"})
 
+(defn memory-eater-choice [{:keys [supply] :as game} _]
+  (let [empty-supply-piles (->> supply
+                                (filter (comp zero? :pile-size))
+                                count)]
+    (push-effect-stack game {:effects [[:give-choice {:title   :digest
+                                                      :text    (str "The player with the lowest life suffers " empty-supply-piles " damage.")
+                                                      :choice  [:damage-player {:arg empty-supply-piles}]
+                                                      :options [:players {:lowest-life true}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::memory-eater-choice memory-eater-choice})
+
+(def memory-eater {:name       :memory-eater
+                   :type       :minion
+                   :tier       3
+                   :life       16
+                   :persistent {:text    "The player with the lowest life suffers damage equal to the number of empty supply piles."
+                                :effects [[::memory-eater-choice]]}
+                   :quote      "'Sometimes I think it a blessing to have forgotten so much of my past.' Phaedraxa, Breach Mage Seer"})
+
 (defn mindguzzler-set-life [{:keys [supply] :as game} _]
   (let [empty-supply-piles (->> supply
                                 (filter (comp zero? :pile-size))
@@ -199,7 +220,7 @@
                   :tier        2
                   :immediately {:text    ["Set this minion's life equal to 8 plus the number of empty supply piles."]
                                 :effects [[::mindguzzler-set-life]]}
-                  :persistent  {:text    "Unleash"
+                  :persistent  {:text    "Unleash."
                                 :effects [[:unleash]]}})
 
 (defn thought-biter-choice [game {:keys [area player-no card-name]}]
@@ -266,4 +287,4 @@
                          :victory-condition ::victory-condition
                          :cards             [gorge lobotomize thought-biter
                                              cerephage godfeeders mindguzzler
-                                             digest vile-feast (minion/generic 3)]})
+                                             digest vile-feast memory-eater]})

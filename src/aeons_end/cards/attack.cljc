@@ -484,7 +484,7 @@
        :type :attack
        :tier tier}
       (case tier
-        1 {:text    ["Unleash"
+        1 {:text    ["Unleash."
                      "Gravehold suffers 3 damage."]
            :effects [[:unleash]
                      [:damage-gravehold 3]]}

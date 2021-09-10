@@ -61,7 +61,7 @@
                                                           :min     1
                                                           :max     1}]]}
                   :power      {:power   2
-                               :text    ["Unleash"
+                               :text    ["Unleash."
                                          "Any player discards three cards in hand and then draws one card."]
                                :effects [[:unleash]
                                          [::agony-field-choice]]}
