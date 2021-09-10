@@ -274,7 +274,7 @@
                                                                               [:give-choice {:title   :convection-field
                                                                                              :text    "Any ally may destroy a card in hand."
                                                                                              :choice  :destroy-from-hand
-                                                                                             :options [:players :hand [:ally true]]
+                                                                                             :options [:players :hand {:ally true}]
                                                                                              :max     1}]]}
                                                         :max       1}]]})))
 

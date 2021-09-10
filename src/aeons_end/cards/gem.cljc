@@ -291,25 +291,34 @@
 (defn volcanic-glass-donate [game {:keys [player-no donator no-choice?]}]
   (if no-choice?
     game
-    (-> game
-        (update-in [:players donator :aether] - 2)
-        (push-effect-stack {:player-no player-no
-                            :effects   [[:gain {:card-name   :volcanic-glass
-                                                :to          :deck
-                                                :to-position :top}]]}))))
+    (let [last-devoured (->> (get-in game [:nemesis :devoured])
+                             last
+                             :name)]
+      (-> game
+          (update-in [:players donator :aether] - 2)
+          (push-effect-stack {:player-no player-no
+                              :effects   [[:gain {:card-name   (if (= :volcanic-glass last-devoured)
+                                                                 :devoured
+                                                                 :volcanic-glass)
+                                                  :to          :deck
+                                                  :to-position :top}]]})))))
 
 (defn volcanic-glass-on-gain [{:keys [current-player] :as game} {:keys [player-no]}]
   (let [{:keys [aether]} (get-in game [:players player-no])
-        {:keys [pile-size]} (ut/get-pile-idx game :volcanic-glass)]
+        {:keys [pile-size]} (ut/get-pile-idx game :volcanic-glass)
+        last-devoured (->> (get-in game [:nemesis :devoured])
+                           last
+                           :name)]
     (cond-> game
             (and (= player-no current-player)
                  (>= aether 2)
-                 (pos? pile-size)) (push-effect-stack {:player-no player-no
-                                                       :effects   [[:give-choice {:title   :volcanic-glass
-                                                                                  :text    "Any ally may gain a Volcanic Glass on top of their deck, if you spend 2 Aether."
-                                                                                  :choice  [::volcanic-glass-donate {:donator player-no}]
-                                                                                  :options [:players {:ally true}]
-                                                                                  :max     1}]]}))))
+                 (or (pos? pile-size)
+                     (= :volcanic-glass last-devoured))) (push-effect-stack {:player-no player-no
+                                                                             :effects   [[:give-choice {:title   :volcanic-glass
+                                                                                                        :text    "Any ally may gain a Volcanic Glass on top of their deck, if you spend 2 Aether."
+                                                                                                        :choice  [::volcanic-glass-donate {:donator player-no}]
+                                                                                                        :options [:players {:ally true}]
+                                                                                                        :max     1}]]}))))
 
 (effects/register {::volcanic-glass-donate  volcanic-glass-donate
                    ::volcanic-glass-on-gain volcanic-glass-on-gain})

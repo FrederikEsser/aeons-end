@@ -7,6 +7,7 @@
             [aeons-end.nemeses.carapace-queen :refer [carapace-queen deal-damage-to-husks]]
             [aeons-end.nemeses.blight-lord :refer [blight-lord]]
             [aeons-end.nemeses.crooked-mask :refer [crooked-mask]]
+            [aeons-end.nemeses.prince-of-gluttons :refer [prince-of-gluttons]]
             [aeons-end.nemeses.magus-of-cloaks :refer [magus-of-cloaks]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
@@ -269,6 +270,7 @@
               carapace-queen
               blight-lord
               crooked-mask
+              prince-of-gluttons
               magus-of-cloaks])
 
 (def basic-cards (concat

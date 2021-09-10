@@ -324,11 +324,11 @@
 (defn view-nemesis [{{:keys [name life play-area deck revealed revealed-cards discard
                              unleash-text additional-rules
                              tokens fury husks tainted-jades tainted-track
-                             corruption-deck]} :nemesis
-                     {:keys [player-no]}       :player
-                     choice                    :choice
-                     resolving                 :resolving
-                     :as                       game}]
+                             corruption-deck devoured]} :nemesis
+                     {:keys [player-no] :as player}     :player
+                     choice                             :choice
+                     resolving                          :resolving
+                     :as                                game}]
   (merge {:name-ui          (ut/format-name name)
           :tier             (ut/get-nemesis-tier game)
           :life             life
@@ -470,6 +470,29 @@
                                     (choice-interaction {:area :tainted-track} choice))}))
          (when corruption-deck
            {:corruptions (count corruption-deck)})
+         (when devoured
+           {:devoured (let [{:keys [type cost] :as card} (last devoured)
+                            last-card (merge (view-card card)
+                                             {:cost cost
+                                              :name :devoured}
+                                             (when (and (ut/can-main? game player-no)
+                                                        (not choice)
+                                                        (ut/can-afford? player cost type))
+                                               {:interaction :buyable})
+                                             (choice-interaction {:area      :supply
+                                                                  :card-name :devoured} choice))]
+                        (merge
+                          (when (not-empty devoured)
+                            {:card last-card})
+                          {:cards           (if (empty? devoured)
+                                              []
+                                              (concat (->> devoured
+                                                           (drop-last 1)
+                                                           (mapv (fn [{:keys [cost] :as card}]
+                                                                   (merge (view-card card)
+                                                                          {:cost cost}))))
+                                                      [last-card]))
+                           :number-of-cards (count devoured)}))})
          (choice-interaction {:area :nemesis} choice)))
 
 (defn view-trash [{:keys [trash]}]

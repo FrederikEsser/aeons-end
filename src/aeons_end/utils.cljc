@@ -150,11 +150,17 @@
   (update pile :pile-size inc))
 
 (defn get-pile-idx [game card-name]
-  (->> game
-       :supply
-       (keep-indexed (fn [idx pile]
-                       (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
-       first))
+  (if (= :devoured card-name)
+    (let [devoured  (get-in game [:nemesis :devoured])
+          pile-size (count devoured)]
+      {:card      (last devoured)
+       :pile-size pile-size
+       :idx       (dec pile-size)})
+    (->> game
+         :supply
+         (keep-indexed (fn [idx pile]
+                         (when ((comp #{card-name} :name :card) pile) (merge pile {:idx idx}))))
+         first)))
 
 (defn get-card-idx [game path criteria]
   (let [select-fn (if (= :discard (last path))
@@ -338,7 +344,8 @@
                     low-cost (->> options
                                   (filter (comp #{:closed :focused} :status))
                                   (keep :focus-cost)
-                                  (apply min 20))]
+                                  sort
+                                  first)]
                 (cond->> options
                          lowest-focus-cost (filter (comp #{low-cost} :focus-cost))
                          opened (filter (comp #{:opened} :status))
@@ -442,7 +449,8 @@
                           (->> players
                                (keep :life)
                                (filter pos?)                ; Exhausted players are spared
-                               (apply min 20)))
+                               sort
+                               first))
         high-life       (->> players
                              (keep :life)
                              (apply max 0))
@@ -590,16 +598,24 @@
 
 (effects/register-options {:turn-order options-from-turn-order})
 
-(defn options-from-supply [{:keys [supply]} _
-                           & [{:keys [type max-cost least-expensive all]}]]
-  (let [piles    (cond->> supply
-                          type (filter (comp #{type} :type :card))
-                          max-cost (filter (comp #(<= % max-cost) :cost :card)))
-        min-cost (when (not-empty piles)
-                   (->> piles
-                        (filter (comp pos? :pile-size))
-                        (map (comp :cost :card))
-                        (apply min 20)))]
+(defn options-from-supply [{:keys [supply] :as game} _
+                           & [{:keys [type cost max-cost least-expensive devoured all]
+                               :or   {devoured true}}]]
+  (let [last-devoured (when devoured
+                        (some-> (get-in game [:nemesis :devoured])
+                                last
+                                (assoc :name :devoured)))
+        piles         (cond->> supply
+                               last-devoured (concat [{:card last-devoured :pile-size 1}])
+                               type (filter (comp #{type} :type :card))
+                               cost (filter (comp #{cost} :cost :card))
+                               max-cost (filter (comp #(<= % max-cost) :cost :card)))
+        min-cost      (when (not-empty piles)
+                        (->> piles
+                             (filter (comp pos? :pile-size))
+                             (map (comp :cost :card))
+                             sort
+                             first))]
     (cond->> piles
              least-expensive (filter (comp #{min-cost} :cost :card))
              (not all) (filter (comp pos? :pile-size))

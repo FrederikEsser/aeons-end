@@ -581,10 +581,14 @@
                    [option :expert +2]
                    [option :extinction +4]]]]])
              (let [{:keys [name name-ui tier unleash-text additional-rules life tokens deck play-area discard fury husks
-                           tainted-jades tainted-track corruptions interaction choice-value]} (-> @state :game :nemesis)]
+                           tainted-jades tainted-track corruptions devoured interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
-                       [:tr (map-tag :th [(str "Nemesis - tier " tier) "Play area" (str "Deck" (when deck (str " (" (:number-of-cards deck) ")"))) "Discard"])]
+                       [:tr (map-tag :th [(str "Nemesis - tier " tier)
+                                          "Play area"
+                                          (str "Deck" (when deck (str " (" (:number-of-cards deck) ")")))
+                                          "Discard"
+                                          (when devoured "Devoured")])]
                        [:tr
                         [:td
                          [:div
@@ -667,7 +671,10 @@
                                 (->> (:visible-cards deck)
                                      (mapk view-nemesis-card)))]]
                         [:td [view-expandable-pile :discard/nemesis discard
-                              {:nemesis? true}]]]]]]))]]
+                              {:nemesis? true}]]
+                        (when devoured
+                          [:td [view-expandable-pile :devoured/nemesis devoured
+                                {:nemesis? true}]])]]]]))]]
          [:tr
           [:td
            (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]

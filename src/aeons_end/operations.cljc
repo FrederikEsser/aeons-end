@@ -266,7 +266,9 @@
     (let [{:keys [card idx pile-size]} (ut/get-pile-idx game card-name)]
       (when (and pile-size (pos? pile-size))
         {:card      (ut/give-id! card)
-         :from-path from
+         :from-path (if (= :devoured card-name)
+                      [:nemesis :devoured]
+                      from)
          :idx       idx}))
     (let [player-no (or from-player player-no)
           from-path (cond
@@ -363,8 +365,9 @@
       (cond-> game
               card (-> (remove-card from-path idx)
                        (add-card [:players player-no :gaining] :top (dissoc card :face))
-                       (push-effect-stack (merge args {:effects [[:on-gain gain-args]
-                                                                 [:finalize-gain gain-args]]}))
+                       (push-effect-stack {:player-no player-no
+                                           :effects   [[:on-gain gain-args]
+                                                       [:finalize-gain gain-args]]})
                        check-stack)))
     game))
 
@@ -894,7 +897,7 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? repeatable? unswift? choice-opts bonus-damage]
+(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? mandatory? repeatable? unswift? choice-opts bonus-damage]
                                             [opt-name :as option] :options
                                             {:keys [effects]}     :or-choice
                                             :as                   choice}]
@@ -933,11 +936,12 @@
                                              (when bonus-damage
                                                {:args {:bonus-damage bonus-damage}})))
       (or (nil? min)
-          optional?) (-> game
-                         (push-effect-stack {:player-no player-no
-                                             :card-id   card-id
-                                             :choice    choice})
-                         (choose nil))
+          optional?
+          mandatory?) (-> game
+                          (push-effect-stack {:player-no player-no
+                                              :card-id   card-id
+                                              :choice    choice})
+                          (choose nil))
       :else game)))
 
 (effects/register {:give-choice give-choice})
