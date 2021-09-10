@@ -599,7 +599,7 @@
 (effects/register-options {:turn-order options-from-turn-order})
 
 (defn options-from-supply [{:keys [supply] :as game} _
-                           & [{:keys [type cost max-cost least-expensive devoured all]
+                           & [{:keys [type cost max-cost least-expensive most-expensive devoured all]
                                :or   {devoured true}}]]
   (let [last-devoured (when devoured
                         (some-> (get-in game [:nemesis :devoured])
@@ -610,14 +610,14 @@
                                type (filter (comp #{type} :type :card))
                                cost (filter (comp #{cost} :cost :card))
                                max-cost (filter (comp #(<= % max-cost) :cost :card)))
-        min-cost      (when (not-empty piles)
+        pile-costs    (when (not-empty piles)
                         (->> piles
                              (filter (comp pos? :pile-size))
                              (map (comp :cost :card))
-                             sort
-                             first))]
+                             sort))]
     (cond->> piles
-             least-expensive (filter (comp #{min-cost} :cost :card))
+             least-expensive (filter (comp #{(first pile-costs)} :cost :card))
+             most-expensive (filter (comp #{(last pile-costs)} :cost :card))
              (not all) (filter (comp pos? :pile-size))
              :always (map (comp :name :card)))))
 

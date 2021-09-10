@@ -107,6 +107,23 @@
                        "Any player suffers damage equal to the number of empty supply supply piles."]
              :effects [[::digest-give-choice]]})
 
+(def godfeeders {:name       :godfeeders
+                 :type       :minion
+                 :tier       2
+                 :life       8
+                 :persistent {:text    ["Gravehold suffers 3 damage."
+                                        "Devour a gem from the most expensive gem supply pile."]
+                              :effects [[:damage-gravehold 3]
+                                        [:give-choice {:title   :godfeeders
+                                                       :text    "Devour a gem from the most expensive gem supply pile."
+                                                       :choice  ::devour
+                                                       :options [:supply {:type           :gem
+                                                                          :most-expensive true
+                                                                          :devoured       false}]
+                                                       :min     1
+                                                       :max     1}]]}
+                 :quote      "'The Prince exploits these creatures to both mend its wounds and sate its hunger.'"})
+
 (defn gorge-devour [{:keys [supply] :as game} _]
   (let [cost (->> supply
                   (filter (comp pos? :pile-size))
@@ -138,7 +155,8 @@
                                      :choice  [:damage-player {:arg 2}]
                                      :options [:players]
                                      :min     1
-                                     :max     1}]]})
+                                     :max     1}]]
+            :quote   "'So much of our history was lost in the first Purge. Aeons of knowledge, art, and culture erased. It has been so very long that we know not even the true name of The World That Was.' Brama, Breach Mage Elder"})
 
 (defn lobotomize-choice [game {:keys [area player-no card-name]}]
   (push-effect-stack game {:player-no player-no
@@ -247,5 +265,5 @@
                                              "- If all supply piles are empty, the players lose."]
                          :victory-condition ::victory-condition
                          :cards             [gorge lobotomize thought-biter
-                                             cerephage (minion/generic 2) mindguzzler
+                                             cerephage godfeeders mindguzzler
                                              digest vile-feast (minion/generic 3)]})
