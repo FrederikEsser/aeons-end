@@ -107,6 +107,39 @@
                        "Any player suffers damage equal to the number of empty supply supply piles."]
              :effects [[::digest-give-choice]]})
 
+(defn gorge-devour [{:keys [supply] :as game} _]
+  (let [cost (->> supply
+                  (filter (comp pos? :pile-size))
+                  (map :card)
+                  (filter (comp #{:gem} :type))
+                  (map :cost)
+                  sort
+                  drop-last
+                  last)]
+    (push-effect-stack game {:effects [[:give-choice {:title      :gorge
+                                                      :text       "Devour two cards from the second most expensive gem supply pile."
+                                                      :choice     [::devour {:number-of-cards 2}]
+                                                      :options    [:supply {:cost     (or cost :no-cost)
+                                                                            :devoured false}]
+                                                      :min        1
+                                                      :max        1
+                                                      :mandatory? true}]]})))
+
+(effects/register {::gorge-devour gorge-devour})
+
+(def gorge {:name    :gorge
+            :type    :attack
+            :tier    1
+            :text    ["Devour two cards from the second most expensive gem supply pile."
+                      "Any player suffers 2 damage."]
+            :effects [[::gorge-devour]
+                      [:give-choice {:title   :gorge
+                                     :text    "Any player suffers 2 damage."
+                                     :choice  [:damage-player {:arg 2}]
+                                     :options [:players]
+                                     :min     1
+                                     :max     1}]]})
+
 (defn lobotomize-choice [game {:keys [area player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case area
@@ -213,6 +246,6 @@
                                              "- When Prince of Gluttons would Devour a card from a supply pile that is empty Gravehold suffers 2 damage per card instead."
                                              "- If all supply piles are empty, the players lose."]
                          :victory-condition ::victory-condition
-                         :cards             [(attack/generic 1) lobotomize thought-biter
+                         :cards             [gorge lobotomize thought-biter
                                              cerephage (minion/generic 2) mindguzzler
                                              digest vile-feast (minion/generic 3)]})

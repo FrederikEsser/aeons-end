@@ -212,6 +212,57 @@
                                     :aether  2}
                                    {}]})))))))
 
+(deftest gorge-test
+  (testing "Gorge"
+    (let [jade           (assoc jade :id 1)
+          dread-diamond  (assoc dread-diamond :id 2)
+          volcanic-glass (assoc volcanic-glass :id 3)
+          burning-opal   (assoc burning-opal :id 4)]
+      (is (= (-> {:nemesis {:deck [gorge]}
+                  :players [{:life 10}]
+                  :supply  [{:card jade :pile-size 2}
+                            {:card volcanic-glass :pile-size 5}
+                            {:card burning-opal :pile-size 5}]}
+                 draw-nemesis-card
+                 (choose :volcanic-glass)
+                 (choose {:player-no 0}))
+             {:nemesis {:discard  [gorge]
+                        :devoured [volcanic-glass volcanic-glass]}
+              :players [{:life 8}]
+              :supply  [{:card jade :pile-size 2}
+                        {:card volcanic-glass :pile-size 3}
+                        {:card burning-opal :pile-size 5}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:deck [gorge]}
+                                 :players [{:life 10}]
+                                 :supply  [{:card jade :pile-size 2}
+                                           {:card volcanic-glass :pile-size 5}
+                                           {:card burning-opal :pile-size 5}]}
+                                draw-nemesis-card
+                                (choose :jade))))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:deck [gorge]}
+                                 :players [{:life 10}]
+                                 :supply  [{:card jade :pile-size 2}
+                                           {:card volcanic-glass :pile-size 5}
+                                           {:card burning-opal :pile-size 5}]}
+                                draw-nemesis-card
+                                (choose :burning-opal))))
+      (is (= (-> {:nemesis   {:deck [gorge]}
+                  :players   [{:life 10}]
+                  :supply    [{:card jade :pile-size 0}
+                              {:card dread-diamond :pile-size 5}
+                              {:card volcanic-glass :pile-size 0}]
+                  :gravehold {:life 30}}
+                 draw-nemesis-card
+                 (choose {:player-no 0}))
+             {:nemesis   {:discard [gorge]}
+              :players   [{:life 8}]
+              :supply    [{:card jade :pile-size 0}
+                          {:card dread-diamond :pile-size 5}
+                          {:card volcanic-glass :pile-size 0}]
+              :gravehold {:life 26}})))))
+
 (deftest lobotomize-test
   (testing "Lobotomize"
     (let [ignite   (assoc ignite :id 1)
