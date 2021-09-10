@@ -157,6 +157,26 @@
                                                           :max     1}]]}
                     :quote      "'Is it eating the cave wall?' Nym, Breach Mage Apprentice"})
 
+(defn vile-feast-damage [{:keys [supply] :as game} _]
+  (let [empty-supply-piles (->> supply
+                                (filter (comp zero? :pile-size))
+                                count)]
+    (push-effect-stack game {:effects [[:damage-gravehold (* 2 empty-supply-piles)]]})))
+
+(effects/register {::vile-feast-damage vile-feast-damage})
+
+(def vile-feast {:name       :vile-feast
+                 :type       :power
+                 :tier       3
+                 :to-discard {:text      "Spend 8 Aether."
+                              :predicate [::power/can-afford? {:amount 8}]
+                              :effects   [[:pay {:amount 8
+                                                 :type   :discard-power-card}]]}
+                 :power      {:power   2
+                              :text    ["Gravehold suffers 2 damage for each empty supply pile."]
+                              :effects [[::vile-feast-damage]]}
+                 :quote      "'It aims to make us forget what is at stake.' Malastar, Breach Mage Mentor"})
+
 (def prince-of-gluttons {:name              :prince-of-gluttons
                          :level             5
                          :life              70
@@ -171,4 +191,4 @@
                          :victory-condition ::victory-condition
                          :cards             [(attack/generic 1) lobotomize thought-biter
                                              cerephage (minion/generic 2) mindguzzler
-                                             (attack/generic 3) (power/generic 3) (minion/generic 3)]})
+                                             (attack/generic 3) vile-feast (minion/generic 3)]})
