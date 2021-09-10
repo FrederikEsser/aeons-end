@@ -83,6 +83,30 @@
                                                                 :damage    2}]]}
                 :quote      "'Quickly. Before our heads are hollow!' Adelheim, Breach Mage Weaponsmith"})
 
+(defn digest-give-choice [{:keys [supply] :as game} _]
+  (let [empty-supply-piles (->> supply
+                                (filter (comp zero? :pile-size))
+                                count)]
+    (push-effect-stack game {:effects [[:give-choice {:title     :digest
+                                                      :text      (str "Any player suffers " empty-supply-piles " damage.")
+                                                      :choice    [:damage-player {:arg empty-supply-piles}]
+                                                      :or-choice {:text    "Unleash three times."
+                                                                  :effects [[:unleash]
+                                                                            [:unleash]
+                                                                            [:unleash]]}
+                                                      :options   [:players]
+                                                      :max       1}]]})))
+
+(effects/register {::digest-give-choice digest-give-choice})
+
+(def digest {:name    :digest
+             :type    :attack
+             :tier    3
+             :text    ["Unleash three times."
+                       "OR"
+                       "Any player suffers damage equal to the number of empty supply supply piles."]
+             :effects [[::digest-give-choice]]})
+
 (defn lobotomize-choice [game {:keys [area player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (case area
@@ -191,4 +215,4 @@
                          :victory-condition ::victory-condition
                          :cards             [(attack/generic 1) lobotomize thought-biter
                                              cerephage (minion/generic 2) mindguzzler
-                                             (attack/generic 3) vile-feast (minion/generic 3)]})
+                                             digest vile-feast (minion/generic 3)]})
