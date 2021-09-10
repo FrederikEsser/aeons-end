@@ -60,6 +60,34 @@
 
 (effects/register-predicates {::unleash-text unleash-text})
 
+(defn lobotomize-choice [game {:keys [area player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (case area
+                                        :players [[:damage-player 3]]
+                                        :supply [[::devour {:number-of-cards 3
+                                                            :card-name       card-name}]])}))
+
+(effects/register {::lobotomize-choice lobotomize-choice})
+
+(def lobotomize {:name    :lobotomize
+                 :type    :attack
+                 :tier    1
+                 :text    ["Any player suffers 3 damage."
+                           "OR"
+                           "Devour three spells from any spell supply pile."]
+                 :effects [[:give-choice {:title   :lobotomize
+                                          :text    ["Any player suffers 3 damage."
+                                                    "OR"
+                                                    "Devour three spells from any spell supply pile."]
+                                          :choice  ::lobotomize-choice
+                                          :options [:mixed
+                                                    [:players]
+                                                    [:supply {:type     :spell
+                                                              :devoured false}]]
+                                          :min     1
+                                          :max     1}]]
+                 :quote   "'I saw the woman's eyes empty and everything she was fell away into nothing.' Nerva, Survivor"})
+
 (def prince-of-gluttons {:name              :prince-of-gluttons
                          :level             5
                          :life              70
@@ -72,6 +100,6 @@
                                              "- When Prince of Gluttons would Devour a card from a supply pile that is empty Gravehold suffers 2 damage per card instead."
                                              "- If all supply piles are empty, the players lose."]
                          :victory-condition ::victory-condition
-                         :cards             [(attack/generic 1 1) (attack/generic 1 2) (minion/generic 1)
+                         :cards             [(attack/generic 1) lobotomize (minion/generic 1)
                                              (minion/generic 2 1) (minion/generic 2 2) (minion/generic 2 3)
                                              (attack/generic 3) (power/generic 3) (minion/generic 3)]})

@@ -7,7 +7,7 @@
             [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [burning-opal dread-diamond jade volcanic-glass]]
             [aeons-end.cards.relic :refer [flexing-dagger]]
-            [aeons-end.cards.spell :refer []]
+            [aeons-end.cards.spell :refer [ignite radiance]]
             [aeons-end.mages :refer [underearth-mantra]]
             [aeons-end.utils :as ut]))
 
@@ -211,3 +211,64 @@
                   :players        [{:discard [volcanic-glass]
                                     :aether  2}
                                    {}]})))))))
+
+(deftest lobotomize-test
+  (testing "Lobotomize"
+    (let [ignite   (assoc ignite :id 1)
+          radiance (assoc radiance :id 2)]
+      (is (= (-> {:nemesis {:deck [lobotomize]}
+                  :players [{:life 10}]
+                  :supply  [{:card ignite :pile-size 2}
+                            {:card radiance :pile-size 5}]}
+                 draw-nemesis-card
+                 (choose {:area :players :player-no 0}))
+             {:nemesis {:discard [lobotomize]}
+              :players [{:life 7}]
+              :supply  [{:card ignite :pile-size 2}
+                        {:card radiance :pile-size 5}]}))
+      (is (= (-> {:nemesis {:deck [lobotomize]}
+                  :players [{:life 10}]
+                  :supply  [{:card ignite :pile-size 2}
+                            {:card radiance :pile-size 5}]}
+                 draw-nemesis-card
+                 (choose {:area :supply :card-name :radiance}))
+             {:nemesis {:discard  [lobotomize]
+                        :devoured [radiance radiance radiance]}
+              :players [{:life 10}]
+              :supply  [{:card ignite :pile-size 2}
+                        {:card radiance :pile-size 2}]}))
+      (is (= (-> {:nemesis   {:deck [lobotomize]}
+                  :players   [{:life 10}]
+                  :supply    [{:card ignite :pile-size 2}
+                              {:card radiance :pile-size 5}]
+                  :gravehold {:life 30}}
+                 draw-nemesis-card
+                 (choose {:area :supply :card-name :ignite}))
+             {:nemesis   {:discard  [lobotomize]
+                          :devoured [ignite ignite]}
+              :players   [{:life 10}]
+              :supply    [{:card ignite :pile-size 0}
+                          {:card radiance :pile-size 5}]
+              :gravehold {:life 28}}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:deck [lobotomize]}
+                                 :players [{:life 10}]
+                                 :supply  [{:card jade :pile-size 5}
+                                           {:card ignite :pile-size 0}]}
+                                draw-nemesis-card
+                                (choose {:area :supply :card-name :ignite}))))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:deck [lobotomize]}
+                                 :players [{:life 10}]
+                                 :supply  [{:card jade :pile-size 5}
+                                           {:card ignite :pile-size 0}]}
+                                draw-nemesis-card
+                                (choose {:area :supply :card-name :jade}))))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:nemesis {:deck     [lobotomize]
+                                           :devoured [ignite]}
+                                 :players [{:life 10}]
+                                 :supply  [{:card jade :pile-size 5}
+                                           {:card ignite :pile-size 0}]}
+                                draw-nemesis-card
+                                (choose {:area :supply :card-name :devoured})))))))
