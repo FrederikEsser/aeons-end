@@ -265,6 +265,13 @@
 (effects/register {:exhaust-player exhaust-player
                    :damage-player  damage-player})
 
+(defn setup [{:keys [nemesis] :as game} _]
+  (let [{:keys [setup]} nemesis]
+    (cond-> game
+            setup (push-effect-stack {:effects setup}))))
+
+(effects/register {:setup setup})
+
 (def nemeses [rageborne
               umbra-titan
               carapace-queen

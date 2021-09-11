@@ -175,7 +175,6 @@
 
 (defn create-game [{:keys [difficulty nemesis players turn-order-variant? supply]}]
   (let [{:keys [difficulty nemesis]} (select-nemesis nemesis difficulty)
-        {:keys [setup]} nemesis
         turn-order-variant? (and turn-order-variant?
                                  (= 4 (count players)))]
     (cond-> {:mode       :slow
@@ -188,6 +187,4 @@
              :supply     (create-supply supply)
              :players    (->> (select-mages players turn-order-variant?)
                               (mapv #(create-player % :difficulty difficulty)))
-             :turn-order (setup-turn-order (count players) turn-order-variant?)}
-            setup (-> (push-effect-stack {:effects setup})
-                      check-stack))))
+             :turn-order (setup-turn-order (count players) turn-order-variant?)})))

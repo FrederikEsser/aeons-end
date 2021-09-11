@@ -3,19 +3,21 @@
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
             [aeons-end.cards.attack]
-            [aeons-end.cards.power :as power]
-            [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.attack :as attack]))
+            [aeons-end.cards.power :as power]))
 
-(defn devour [game {:keys [number-of-cards card-name]
+(defn devour [game {:keys [number-of-cards card-name card-names]
                     :or   {number-of-cards 1}}]
-  (let [{:keys [pile-size] :or {pile-size 0}} (ut/get-pile-idx game card-name)]
-    (push-effect-stack game {:effects (concat (repeat (min number-of-cards pile-size)
-                                                      [:move-card {:card-name card-name
-                                                                   :from      :supply
-                                                                   :to        :devoured}])
-                                              (when (> number-of-cards pile-size)
-                                                [[:damage-gravehold (* 2 (- number-of-cards pile-size))]]))})))
+  (if card-names
+    (push-effect-stack game {:effects (->> card-names
+                                           (map (fn [card-name]
+                                                  [::devour {:card-name card-name}])))})
+    (let [{:keys [pile-size] :or {pile-size 0}} (ut/get-pile-idx game card-name)]
+      (push-effect-stack game {:effects (concat (repeat (min number-of-cards pile-size)
+                                                        [:move-card {:card-name card-name
+                                                                     :from      :supply
+                                                                     :to        :devoured}])
+                                                (when (> number-of-cards pile-size)
+                                                  [[:damage-gravehold (* 2 (- number-of-cards pile-size))]]))}))))
 
 (effects/register {::devour devour})
 
@@ -39,11 +41,32 @@
   (let [gems (->> supply
                   (map :card)
                   (filter (comp #{:gem} :type))
-                  (sort-by :cost >)
-                  (map :name))]
-    (push-effect-stack game {:effects (->> gems
-                                           (mapv (fn [card-name]
-                                                   [::devour {:card-name card-name}])))})))
+                  (group-by :cost)
+                  (sort-by first >)
+                  vals
+                  (map (partial map :name)))]
+    (push-effect-stack game {:effects (concat (->> gems
+                                                   (mapv (fn [card-names]
+                                                           [:give-choice {:title   :setup
+                                                                          :text    "Place one gem from each gem supply, starting with the most expensive, on top of the devoured pile."
+                                                                          :choice  ::devour
+                                                                          :options [:supply {:names (set card-names)}]
+                                                                          :min     (count card-names)
+                                                                          :max     (count card-names)}])))
+                                              (when (#{:expert :extinction} difficulty)
+                                                (->> (range 1 10)
+                                                     reverse
+                                                     (map (fn [n]
+                                                            [:give-choice {:title   :expert-setup
+                                                                           :text    (if (= 1 n)
+                                                                                      "Place one additional card from any of the supply piles on top of the devoured pile."
+                                                                                      (str "Place an additional "
+                                                                                           (ut/number->text n)
+                                                                                           " cards from any of the supply piles on top of the devoured pile."))
+                                                                           :choice  ::devour
+                                                                           :options [:supply {:devoured false}]
+                                                                           :min     1
+                                                                           :max     1}])))))})))
 
 (effects/register {::setup setup})
 

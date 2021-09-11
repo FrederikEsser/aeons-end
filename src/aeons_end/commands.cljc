@@ -10,7 +10,8 @@
 
 (defn start-game [game]
   (-> game
-      (op/push-effect-stack {:effects [[:next-turn]]})
+      (op/push-effect-stack {:effects [[:setup]
+                                       [:next-turn]]})
       op/check-stack))
 
 (defn play [game player-no card-name]
