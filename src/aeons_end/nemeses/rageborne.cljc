@@ -101,7 +101,7 @@
                                                      :type   :discard-power-card}]]}
                      :power      {:power   2
                                   :text    ["Unleash."
-                                            "Any player suffers 1 damage. That player suffers 1 additional damage for each Fury token Rageborne has."]
+                                            "Any player suffers 1 damage. That player suffers 1 additional damage for each Fury Rageborne has."]
                                   :effects [[:unleash]
                                             [::invoke-carnage-damage]]}
                      :quote      "'There is but a single power among The Nameless that can shatter Gravehold.' Brama, Breach Mage Elder"})
@@ -121,7 +121,7 @@
                 :type    :attack
                 :tier    3
                 :text    ["Unleash three times."
-                          "The player collectively discard cards in hand equal to the number of Fury tokens Rageborne has."]
+                          "The player collectively discard cards in hand equal to the amount of Fury Rageborne has."]
                 :effects [[:unleash]
                           [:unleash]
                           [:unleash]
@@ -138,7 +138,7 @@
                :type       :minion
                :tier       1
                :life       5
-               :persistent {:text    "Gravehold suffers damage equal to the number of Fury tokens Rageborne has."
+               :persistent {:text    "Gravehold suffers damage equal to the amount of Fury Rageborne has."
                             :effects [[::provoker-damage]]}
                :quote      "'I nearly wasted a freshly forged chopper on one of these things.' Reeve, Breach Mage Elite"})
 
@@ -302,9 +302,9 @@
    "- Draw a card from the strike deck and resolve it."
    "- Shuffle that card back into the strike deck."
    (if (#{:beginner :normal} difficulty)
-     "- Rageborne loses three Fury tokens"
-     "- Rageborne loses one Fury token")
-   "At the end of the nemesis turn, if Rageborne has four or more Fury tokens, it Strikes once."])
+     "- Rageborne loses three Fury"
+     "- Rageborne loses one Fury")
+   "At the end of the nemesis turn, if Rageborne has four or more Fury, it Strikes once."])
 
 (effects/register-predicates {::additional-rules additional-rules})
 
@@ -312,7 +312,7 @@
                 :level            2
                 :life             70
                 :unleash          [[::gain-fury]]
-                :unleash-text     "Rageborne gains one Fury token."
+                :unleash-text     "Rageborne gains one Fury."
                 :additional-rules ::additional-rules
                 :at-end-turn      [[::at-end-turn]]
                 :cards            [cleave provoker unrelenting-ire

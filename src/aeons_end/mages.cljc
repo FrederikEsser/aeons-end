@@ -800,14 +800,14 @@
 (def quietus-vow {:name        :quietus-vow
                   :activation  :your-main-phase
                   :charge-cost 5
-                  :text        "Deal 2 damage for each Trophy token you have."
+                  :text        "Deal 2 damage for each Trophies you have."
                   :effects     [[::quietus-vow-damage]]})
 
 (def extinguish {:name    :extinguish
                  :type    :spell
                  :cost    0
                  :cast    ["Deal 1 damage."
-                           "If this damage causes a minion from the nemesis deck to be discarded, Quilius gains a Trophy token."]
+                           "If this damage causes a minion from the nemesis deck to be discarded, Quilius gains a Trophy."]
                  :effects [[:deal-damage {:arg          1
                                           :kill-effects [[::quilius-gain-trophy]]}]]})
 

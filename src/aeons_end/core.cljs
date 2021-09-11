@@ -580,7 +580,7 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui tier unleash-text additional-rules life tokens deck play-area discard fury husks
+             (let [{:keys [name name-ui tier unleash-text additional-rules life cloaks deck play-area discard fury husks
                            tainted-jades tainted-track corruptions devoured interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
@@ -611,10 +611,10 @@
                               [:div {:style {:font-size   "1.1em"
                                              :padding-top "3px"}}
                                "Life: " life]
-                              (when tokens
+                              (when cloaks
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
-                                 "Tokens: " tokens])
+                                 "Cloaks: " cloaks])
                               (when fury
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}

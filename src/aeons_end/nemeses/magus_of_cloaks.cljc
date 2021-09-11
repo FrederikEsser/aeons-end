@@ -1,47 +1,43 @@
 (ns aeons-end.nemeses.magus-of-cloaks
   (:require [aeons-end.operations :refer [push-effect-stack move-card]]
-            [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.attack]
-            [aeons-end.cards.power :as power]
-            [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.attack :as attack]))
+            [aeons-end.cards.attack]))
 
-(defn get-min-tokens [{:keys [difficulty]}]
+(defn get-min-cloaks [{:keys [difficulty]}]
   (if (#{:expert :extinction} difficulty) 3 2))
 
-(defn get-max-tokens [{:keys [difficulty]}]
+(defn get-max-cloaks [{:keys [difficulty]}]
   (if (#{:expert :extinction} difficulty) 9 8))
 
-(defn gain-nemesis-tokens [{:keys [nemesis] :as game} {:keys [arg]}]
-  (assoc-in game [:nemesis :tokens] (min (+ (:tokens nemesis)
+(defn gain-cloaks [{:keys [nemesis] :as game} {:keys [arg]}]
+  (assoc-in game [:nemesis :cloaks] (min (+ (:cloaks nemesis)
                                             arg)
-                                         (get-max-tokens game))))
+                                         (get-max-cloaks game))))
 
-(defn lose-nemesis-token [{:keys [nemesis] :as game} _]
-  (assoc-in game [:nemesis :tokens] (max (dec (:tokens nemesis))
-                                         (get-min-tokens game))))
+(defn lose-cloak [{:keys [nemesis] :as game} _]
+  (assoc-in game [:nemesis :cloaks] (max (dec (:cloaks nemesis))
+                                         (get-min-cloaks game))))
 
-(effects/register {::gain-nemesis-tokens gain-nemesis-tokens
-                   ::lose-nemesis-token  lose-nemesis-token})
+(effects/register {::gain-cloaks gain-cloaks
+                   ::lose-cloak  lose-cloak})
 
 (defn unleash-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
-                                      :tokens [[::gain-nemesis-tokens 2]]
+                                      :cloaks [[::gain-cloaks 2]]
                                       :damage [[:damage-gravehold 2]])}))
 
 (defn do-unleash [{:keys [nemesis] :as game} args]
   (let [title            (keyword (or (:resolving args)
                                       (:resolving game))
                                   "unleash")
-        {:keys [tokens]} nemesis
-        can-gain-tokens? (<= tokens (- (get-max-tokens game)
+        {:keys [cloaks]} nemesis
+        can-gain-cloaks? (<= cloaks (- (get-max-cloaks game)
                                        2))]
-    (push-effect-stack game {:effects (if can-gain-tokens?
+    (push-effect-stack game {:effects (if can-gain-cloaks?
                                         [[:give-choice {:title   title
                                                         :choice  ::unleash-choice
                                                         :options [:special
-                                                                  {:option :tokens :text "Magus of Cloaks gains two nemesis tokens"}
+                                                                  {:option :cloaks :text "Magus of Cloaks gains two cloaks"}
                                                                   {:option :damage :text "Gravehold suffers 2 damage"}]
                                                         :min     1
                                                         :max     1}]]
@@ -51,8 +47,8 @@
                    ::unleash        do-unleash})
 
 (defn shield [{:keys [nemesis]}]
-  (let [{:keys [tokens]} nemesis]
-    tokens))
+  (let [{:keys [cloaks]} nemesis]
+    cloaks))
 
 (effects/register-predicates {::shield shield})
 
@@ -60,7 +56,7 @@
   (let [discard-powers (->> (get-in game [:nemesis :play-area])
                             (filter (comp #{::nemesis-damaged} :to-discard))
                             (map :name))]
-    (push-effect-stack game {:effects (concat [[::lose-nemesis-token]]
+    (push-effect-stack game {:effects (concat [[::lose-cloak]]
                                               (when (pos? damage)
                                                 (->> discard-powers
                                                      (map (fn [card-name]
@@ -69,10 +65,10 @@
 (effects/register {::when-hit when-hit})
 
 (defn additional-rules [{:keys [difficulty]}]
-  ["- When Magus of Cloaks would be dealt damage, reduce that damage by the number of nemesis tokens he has. Then, Magus of Cloaks loses one nemesis token."
+  ["- When Magus of Cloaks would be dealt damage, reduce that damage by the number of cloaks he has. Then, Magus of Cloaks loses one cloak."
    (if (#{:beginner :normal} difficulty)
-     "- Magus of Cloaks can never have less than two nemesis tokens or more than eight nemesis tokens."
-     "- Magus of Cloaks can never have less than three nemesis tokens or more than nine nemesis tokens.")])
+     "- Magus of Cloaks can never have less than two cloaks or more than eight cloaks."
+     "- Magus of Cloaks can never have less than three cloaks or more than nine cloaks.")])
 
 (effects/register-predicates {::additional-rules additional-rules})
 
@@ -85,7 +81,7 @@
 (effects/register-predicates {::victory-condition victory-condition})
 
 (defn ashen-haruspex-damage [game _]
-  (let [damage (-> (get-in game [:nemesis :tokens])
+  (let [damage (-> (get-in game [:nemesis :cloaks])
                    inc
                    (quot 2))]
     (push-effect-stack game {:effects [[:give-choice {:title   :ashen-haruspex
@@ -103,7 +99,7 @@
                      :life       5
                      :text       "When this minion is dealt damage, prevent 2 of that damage."
                      :shield     2
-                     :persistent {:text    "Any player suffers damage equal to half the number of nemesis tokens Magus of Cloaks has, rounded up."
+                     :persistent {:text    "Any player suffers damage equal to half the number of cloaks Magus of Cloaks has, rounded up."
                                   :effects [[::ashen-haruspex-damage]]}
                      :quote      "'If any among us can kill the dark itself, it is Quilius.' Garu, Oathsworn Protector"})
 
@@ -158,8 +154,8 @@
                  :type       :minion
                  :tier       1
                  :life       5
-                 :text       "When this minion is dealt damage, Magus of Cloaks gains one nemesis token."
-                 :when-hit   [[::gain-nemesis-tokens 1]]
+                 :text       "When this minion is dealt damage, Magus of Cloaks gains one cloak."
+                 :when-hit   [[::gain-cloaks 1]]
                  :persistent {:text    "Any player loses 1 charge or suffers 2 damage."
                               :effects [[:give-choice {:title   :dusk-spawn
                                                        :text    "Any player loses 1 charge or suffers 2 damage."
@@ -198,18 +194,18 @@
 (def eclipse {:name    :eclipse
               :type    :attack
               :tier    3
-              :text    ["Magus of Cloaks gains five nemesis tokens."
+              :text    ["Magus of Cloaks gains five cloaks."
                         "The player with the most expensive prepped spell destroys that spell and suffers 2 damage."]
-              :effects [[::gain-nemesis-tokens 5]
+              :effects [[::gain-cloaks 5]
                         [::eclipse-give-choice]]
               :quote   "'We live in darkness, but they thrive in it.' Mist, Voidwalker"})
 
 (def enshroud {:name    :enshroud
                :type    :attack
                :tier    2
-               :text    ["Magus of Cloaks gains four nemesis tokens."
+               :text    ["Magus of Cloaks gains four cloaks."
                          "The players collectively destroy two prepped spells that cost 0 Aether."]
-               :effects [[::gain-nemesis-tokens 4]
+               :effects [[::gain-cloaks 4]
                          [:give-choice {:title   :enshroud
                                         :text    "The players collectively destroy two prepped spells that cost 0 Aether."
                                         :choice  :destroy-prepped-spells
@@ -250,15 +246,15 @@
 (def shadows-reach {:name        :shadow's-reach
                     :type        :power
                     :tier        3
-                    :immediately {:text    "Magus of Cloaks gain four nemesis tokens."
-                                  :effects [[::gain-nemesis-tokens 4]]}
+                    :immediately {:text    "Magus of Cloaks gain four cloaks."
+                                  :effects [[::gain-cloaks 4]]}
                     :power       {:power   9
                                   :text    ["Magus of Cloaks reaches its final form. Humanity is wiped out. The players lose the game."]
                                   :effects [[::reach-final-form]]}
                     :quote       "'What little we have shall be smothered in the end.' Nerva, Survivor"})
 
 (defn twilight-empire-damage [game _]
-  (let [damage (get-in game [:nemesis :tokens])]
+  (let [damage (get-in game [:nemesis :cloaks])]
     (push-effect-stack game {:effects [[:damage-gravehold damage]]})))
 
 (effects/register {::twilight-empire-damage twilight-empire-damage})
@@ -267,16 +263,16 @@
                       :type  :power
                       :tier  1
                       :power {:power   3
-                              :text    ["Gravehold suffers damage equal to the number of nemesis tokens Magus of Cloaks has."
-                                        "Then, Magus of Cloaks gains one nemesis token."]
+                              :text    ["Gravehold suffers damage equal to the number of cloaks Magus of Cloaks has."
+                                        "Then, Magus of Cloaks gains one cloak."]
                               :effects [[::twilight-empire-damage]
-                                        [::gain-nemesis-tokens {:arg 1}]]}})
+                                        [::gain-cloaks {:arg 1}]]}})
 
 (def veil-daughter {:name       :veil-daughter
                     :type       :minion
                     :tier       3
                     :life       11
-                    :text       "When this minion is dealt damage, reduce that damage by the number of nemesis tokens Magus of Cloaks has."
+                    :text       "When this minion is dealt damage, reduce that damage by the number of cloaks Magus of Cloaks has."
                     :shield     ::shield
                     :persistent {:text    "The player with the most charges suffers 4 damage."
                                  :effects [[:give-choice {:title   :veil-daughter
@@ -290,9 +286,9 @@
 (def magus-of-cloaks {:name              :magus-of-cloaks
                       :level             6
                       :life              35
-                      :tokens            4
+                      :cloaks            4
                       :unleash           [[::unleash]]
-                      :unleash-text      ["Magus of Cloaks gains two nemesis tokens."
+                      :unleash-text      ["Magus of Cloaks gains two cloaks."
                                           "OR"
                                           "Gravehold suffers 2 damage."]
                       :additional-rules  ::additional-rules
