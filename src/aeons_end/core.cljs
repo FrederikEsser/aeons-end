@@ -683,7 +683,12 @@
                [:tbody
                 [:tr (map-tag :th ["Gravehold" "Turn order deck"])]
                 [:tr
-                 [:td "Life: " (-> @state :game :gravehold :life)]
+                 [:td
+                  (let [{:keys [life pillars]} (get-in @state [:game :gravehold])]
+                    [:div
+                     [:div "Life: " life]
+                     (when pillars
+                       [:div "Pillars: " pillars])])]
                  [:td
                   (let [number-of-cards (:number-of-cards deck)]
                     [:div

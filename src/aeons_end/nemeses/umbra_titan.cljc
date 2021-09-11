@@ -5,10 +5,10 @@
             [aeons-end.cards.attack]
             [aeons-end.cards.power :as power]))
 
-(defn lose-nemesis-tokens [game {:keys [arg]}]
-  (update-in game [:nemesis :tokens] - arg))
+(defn destroy-gravehold-pillars [game {:keys [arg]}]
+  (update-in game [:gravehold :pillars] - arg))
 
-(effects/register {::lose-nemesis-tokens lose-nemesis-tokens})
+(effects/register {::destroy-gravehold-pillars destroy-gravehold-pillars})
 
 (defn crumble-revive-minion [game {:keys [card-name]}]
   (-> game
@@ -25,12 +25,12 @@
               :text    ["Place the most recently discarded minion in the nemesis discard pile back into play."
                         "Unleash."
                         "OR"
-                        "Umbra Titan loses three nemesis tokens."]
+                        "Umbra Titan destroys three pillars of Gravehold."]
               :effects [[:give-choice {:title     :crumble
                                        :text      "Place the most recently discarded minion in the nemesis discard pile back into play.\nUnleash."
                                        :choice    ::crumble-revive-minion
-                                       :or-choice {:text    "Umbra Titan loses three nemesis tokens."
-                                                   :effects [[::lose-nemesis-tokens 3]]}
+                                       :or-choice {:text    "Umbra Titan destroys three pillars of Gravehold."
+                                                   :effects [[::destroy-gravehold-pillars 3]]}
                                        :options   [:nemesis :discard {:type :minion :most-recent true}]
                                        :max       1}]]})
 
@@ -40,12 +40,12 @@
               :life       6
               :persistent {:text    ["The player with the most expensive prepped spell discards that spell."
                                      "OR"
-                                     "Umbra Titan loses one nemesis token."]
+                                     "The Cryptid destroy one pillar of Gravehold."]
                            :effects [[:give-choice {:title     :cryptid
                                                     :text      "The player with the most expensive prepped spell discards that spell."
                                                     :choice    :discard-prepped-spells
-                                                    :or-choice {:text    "Umbra titan loses one nemesis token"
-                                                                :effects [[::lose-nemesis-tokens 1]]}
+                                                    :or-choice {:text    "The Cryptid destroy one pillar of Gravehold"
+                                                                :effects [[::destroy-gravehold-pillars 1]]}
                                                     :options   [:players :prepped-spells {:most-expensive true}]
                                                     :max       1}]]}
               :quote      "'The beasts of this cave seem to revere the Titan as though it were some ancient god.' Mazhaedron, Henge Mystic"})
@@ -55,7 +55,7 @@
                                      (filter (comp #{:nemesis} :type))
                                      count)]
     (push-effect-stack game {:effects (if (= 2 discarded-nemesis-cards)
-                                        [[::lose-nemesis-tokens 1]]
+                                        [[::destroy-gravehold-pillars 1]]
                                         [[:damage-gravehold 2]])})))
 
 (effects/register {::grubber-persistent grubber-persistent})
@@ -64,36 +64,36 @@
               :type       :minion
               :tier       1
               :life       5
-              :persistent {:text    ["If the nemesis has two turn order cards in the turn order discard pile, Umbra Titan loses one nemesis token."
+              :persistent {:text    ["If the nemesis has two turn order cards in the turn order discard pile, Grubber destroys one pillar of Gravehold."
                                      "Otherwise, Gravehold suffers 2 damage."]
                            :effects [[::grubber-persistent]]}
               :quote      "'Kick it, stab it, burn it... the thing just keeps grinning.' Sparrow, Breach Mage Soldier"})
 
 (defn maul-choice [{:keys [players] :as game} {:keys [choice]}]
   (case choice
-    :lose-tokens (push-effect-stack game {:effects [[::lose-nemesis-tokens 2]]})
-    :destroy (let [sorted-spells (->> players
-                                      (map-indexed (fn [player-no {:keys [breaches]}]
-                                                     (->> breaches
-                                                          (map-indexed (fn [breach-no breach]
-                                                                         (->> (:prepped-spells breach)
-                                                                              (map (fn [{:keys [name cost]}]
-                                                                                     {:player-no player-no
-                                                                                      :breach-no breach-no
-                                                                                      :card-name name
-                                                                                      :cost      cost})))))
-                                                          (apply concat))))
-                                      (apply concat)
-                                      (sort-by :cost >))
-                   [_ cost-2] (map :cost sorted-spells)]
-               (push-effect-stack game {:effects (concat
-                                                   [[:destroy-prepped-spells (first sorted-spells)]
-                                                    [:give-choice {:title   :maul
-                                                                   :text    "The players collectively destroy the most expensive prepped spell."
-                                                                   :choice  :destroy-prepped-spells
-                                                                   :options [:players :prepped-spells {:min-cost cost-2}]
-                                                                   :min     1
-                                                                   :max     1}]])}))))
+    :pillars (push-effect-stack game {:effects [[::destroy-gravehold-pillars 2]]})
+    :spells (let [sorted-spells (->> players
+                                     (map-indexed (fn [player-no {:keys [breaches]}]
+                                                    (->> breaches
+                                                         (map-indexed (fn [breach-no breach]
+                                                                        (->> (:prepped-spells breach)
+                                                                             (map (fn [{:keys [name cost]}]
+                                                                                    {:player-no player-no
+                                                                                     :breach-no breach-no
+                                                                                     :card-name name
+                                                                                     :cost      cost})))))
+                                                         (apply concat))))
+                                     (apply concat)
+                                     (sort-by :cost >))
+                  [_ cost-2] (map :cost sorted-spells)]
+              (push-effect-stack game {:effects (concat
+                                                  [[:destroy-prepped-spells (first sorted-spells)]
+                                                   [:give-choice {:title   :maul
+                                                                  :text    "The players collectively destroy the most expensive prepped spell."
+                                                                  :choice  :destroy-prepped-spells
+                                                                  :options [:players :prepped-spells {:min-cost cost-2}]
+                                                                  :min     1
+                                                                  :max     1}]])}))))
 
 (defn maul-give-choice [{:keys [players] :as game} _]
   (let [[cost-1 cost-2 cost-3] (->> players
@@ -102,13 +102,13 @@
                                     (map :cost)
                                     (sort >))]
     (push-effect-stack game {:effects (cond
-                                        (nil? cost-2) [[::lose-nemesis-tokens 2]]
+                                        (nil? cost-2) [[::destroy-gravehold-pillars 2]]
                                         (or (= cost-1 cost-2)
                                             (not= cost-2 cost-3)) [[:give-choice {:title     :maul
                                                                                   :text      "The players collectively destroy the two most expensive prepped spells."
                                                                                   :choice    :destroy-prepped-spells
-                                                                                  :or-choice {:text    "Umbra Titan loses two nemesis tokens"
-                                                                                              :effects [[::lose-nemesis-tokens 2]]}
+                                                                                  :or-choice {:text    "Umbra Titan destroys two pillars of Gravehold."
+                                                                                              :effects [[::destroy-gravehold-pillars 2]]}
                                                                                   :options   [:players :prepped-spells {:min-cost cost-2}]
                                                                                   :min       2
                                                                                   :max       2
@@ -116,8 +116,8 @@
                                         :else [[:give-choice {:title   :maul
                                                               :choice  ::maul-choice
                                                               :options [:special
-                                                                        {:option :destroy :text "The players collectively destroy the two most expensive prepped spells"}
-                                                                        {:option :lose-tokens :text "Umbra Titan loses two nemesis tokens"}]
+                                                                        {:option :spells :text "The players collectively destroy the two most expensive prepped spells"}
+                                                                        {:option :pillars :text "Umbra Titan destroys two pillars of Gravehold"}]
                                                               :min     1
                                                               :max     1}]])})))
 
@@ -129,7 +129,7 @@
            :tier    2
            :text    ["The players collectively destroy the two most expensive prepped spells."
                      "OR"
-                     "Umbra Titan loses two nemesis tokens."]
+                     "Umbra Titan destroys two pillars of Gravehold."]
            :effects [[::maul-give-choice]]})
 
 (def seismic-roar {:name       :seismic-roar
@@ -140,14 +140,14 @@
                                 :effects   [[:pay {:amount 6
                                                    :type   :discard-power-card}]]}
                    :power      {:power   3
-                                :text    "Umbra Titan loses two nemesis tokens."
-                                :effects [[::lose-nemesis-tokens 2]]}
+                                :text    "Umbra Titan destroys two pillars of Gravehold."
+                                :effects [[::destroy-gravehold-pillars 2]]}
                    :quote      "'I roared as it bore through the rock. And Gravehold shuddered like those within its walls.' Nerva, Survivor"})
 
 (defn tombfright-persistent [game _]
-  (let [tokens (get-in game [:nemesis :tokens])]
-    (push-effect-stack game {:effects (if (>= tokens 5)
-                                        [[::lose-nemesis-tokens 1]]
+  (let [pillars (get-in game [:gravehold :pillars])]
+    (push-effect-stack game {:effects (if (>= pillars 5)
+                                        [[::destroy-gravehold-pillars 1]]
                                         [[:damage-gravehold 3]])})))
 
 (effects/register {::tombfright-persistent tombfright-persistent})
@@ -156,39 +156,39 @@
                  :type       :minion
                  :tier       2
                  :life       8
-                 :persistent {:text    ["If Umbra Titan has 5 or more nemesis tokens, it loses a nemesis token."
+                 :persistent {:text    ["If Gravehold has 5 or more pillars, Tombfright destroys one pillar."
                                         "Otherwise, Gravehold suffers 3 damage."]
                               :effects [[::tombfright-persistent]]}
                  :quote      "'With two heads, it's twice as eager to make a meal of a mage.' Sparrow, Breach Mage Soldier"})
 
-(defn vault-behemoth-lose-token [game _]
+(defn vault-behemoth-destroy-pillar [game _]
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :vault-behemoth})]
     (cond-> game
-            (<= life 8) (push-effect-stack {:effects [[::lose-nemesis-tokens 1]]}))))
+            (<= life 8) (push-effect-stack {:effects [[::destroy-gravehold-pillars 1]]}))))
 
-(effects/register {::vault-behemoth-lose-token vault-behemoth-lose-token})
+(effects/register {::vault-behemoth-destroy-pillar vault-behemoth-destroy-pillar})
 
 (def vault-behemoth {:name       :vault-behemoth
                      :type       :minion
                      :tier       2
                      :life       9
                      :persistent {:text    ["Any player suffers 2 damage."
-                                            "If this minion has 8 or less life, Umbra Titan loses one nemesis token."]
+                                            "If this minion has 8 or less life, Vault Behemoth destroys one pillar of Gravehold."]
                                   :effects [[:give-choice {:title   :vault-behemoth
                                                            :text    "Any player suffers 2 damage."
                                                            :choice  [:damage-player {:arg 2}]
                                                            :options [:players]
                                                            :min     1
                                                            :max     1}]
-                                            [::vault-behemoth-lose-token]]}
+                                            [::vault-behemoth-destroy-pillar]]}
                      :quote      "'The air rasping in its massive lungs is enough to burst your eardrums.'"})
 
 (def demi-ancient {:name       :demi-ancient
                    :type       :minion
                    :tier       3
                    :life       18
-                   :persistent {:text    "Umbra Titan loses one nemesis token."
-                                :effects [[::lose-nemesis-tokens 1]]}
+                   :persistent {:text    "Demi-Ancient destroys one pillar of Gravehold."
+                                :effects [[::destroy-gravehold-pillars 1]]}
                    :quote      "'In the time before ours, their kind thrived in the tumult of the fledgling world. Now, they seek a new home among The Nameless.' Mazahaedron, Henge Mystic"})
 
 (def yawning-black {:name       :yawning-black
@@ -201,25 +201,25 @@
                     :power      {:power   2
                                  :text    ["Any player suffers 6 damage."
                                            "OR"
-                                           "Umbra Titan loses three nemesis tokens."]
+                                           "Umbra Titan destroys three pillars of Gravehold."]
                                  :effects [[:give-choice {:title     :yawning-black
                                                           :text      "Any player suffers 6 damage."
                                                           :choice    [:damage-player {:arg 6}]
-                                                          :or-choice {:text    "Umbra Titan loses three nemesis tokens."
-                                                                      :effects [[::lose-nemesis-tokens 3]]}
+                                                          :or-choice {:text    "Umbra Titan destroys three pillars of Gravehold."
+                                                                      :effects [[::destroy-gravehold-pillars 3]]}
                                                           :options   [:players]
                                                           :max       1}]]}
                     :quote      "The Titan hides beneath the skin of the cave, emerging only to strike."})
 
 (defn setup [{:keys [difficulty] :as game} _]
-  (assoc-in game [:nemesis :tokens] (if (#{:expert :extinction} difficulty) 5 8)))
+  (assoc-in game [:gravehold :pillars] (if (#{:expert :extinction} difficulty) 5 8)))
 
 (effects/register {::setup setup})
 
 (defn unleash-choice [game {:keys [choice]}]
   (push-effect-stack game {:effects (case choice
                                       :damage [[:damage-gravehold 2]]
-                                      :token [[::lose-nemesis-tokens 1]])}))
+                                      :pillar [[::destroy-gravehold-pillars 1]])}))
 
 (defn do-unleash [game args]
   (let [title                   (keyword (or (:resolving args)
@@ -233,15 +233,15 @@
                                                        1 {:title     title
                                                           :text      "Any player suffers 2 damage."
                                                           :choice    [:damage-player {:arg 2}]
-                                                          :or-choice {:text    "Umbra titan loses one nemesis token"
-                                                                      :effects [[::lose-nemesis-tokens 1]]}
+                                                          :or-choice {:text    "Umbra Titan destroys one pillar of Gravehold"
+                                                                      :effects [[::destroy-gravehold-pillars 1]]}
                                                           :options   [:players]
                                                           :max       1}
                                                        2 {:title   title
                                                           :choice  ::unleash-choice
                                                           :options [:special
                                                                     {:option :damage :text "Gravehold suffers 2 damage"}
-                                                                    {:option :token :text "Umbra titan loses one nemesis token"}]
+                                                                    {:option :pillar :text "Umbra Titan destroys one pillar of Gravehold"}]
                                                           :min     1
                                                           :max     1})]]})))
 
@@ -249,10 +249,10 @@
                    ::unleash        do-unleash})
 
 (defn victory-condition [{:keys [real-game?] :as game}]
-  (let [tokens (get-in game [:nemesis :tokens])]
+  (let [pillars (get-in game [:gravehold :pillars])]
     (when (and real-game?
-               tokens
-               (<= tokens 0))
+               pillars
+               (<= pillars 0))
       {:conclusion :defeat
        :text       "Gravehold's foundation is undermined. Gravehold collapses into rubble."})))
 
@@ -268,7 +268,7 @@
        0 "Gravehold [alt. any player] suffers 2 damage"
        1 "Any player [alt. Gravehold] suffers 2 damage.")
      "OR"
-     "Umbra Titan loses one nemesis token."]))
+     "Umbra Titan destroys one pillar of Gravehold."]))
 
 (effects/register-predicates {::unleash-text unleash-text})
 
@@ -278,7 +278,7 @@
                   :setup             [[::setup]]
                   :unleash           [[::unleash]]
                   :unleash-text      ::unleash-text
-                  :additional-rules  ["When Umbra Titan has zero nemesis tokens, Gravehold's foundation is undermined. Gravehold collapses into rubble and the players lose."]
+                  :additional-rules  ["When Gravehold has zero pillars left, its foundation is undermined. Gravehold collapses into rubble and the players lose."]
                   :victory-condition ::victory-condition
                   :cards             [cryptid grubber seismic-roar
                                       maul tombfright vault-behemoth

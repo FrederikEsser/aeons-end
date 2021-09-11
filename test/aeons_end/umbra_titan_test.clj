@@ -12,294 +12,294 @@
 (deftest crumble-test
   (testing "Crumble"
     (is (= (-> {:nemesis   {:deck    [crumble]
-                            :unleash [[:damage-gravehold 1]]
-                            :tokens  8}
-                :gravehold {:life 30}}
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:pillars 8
+                            :life    30}}
                draw-nemesis-card)
            {:nemesis   {:discard [crumble]
-                        :unleash [[:damage-gravehold 1]]
-                        :tokens  5}
-            :gravehold {:life 30}}))
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:pillars 5
+                        :life    30}}))
     (is (= (-> {:nemesis   {:deck    [crumble]
                             :discard [cryptid]
-                            :unleash [[:damage-gravehold 1]]
-                            :tokens  8}
-                :gravehold {:life 30}}
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:pillars 8
+                            :life    30}}
                draw-nemesis-card
                (choose nil))
            {:nemesis   {:discard [cryptid crumble]
-                        :unleash [[:damage-gravehold 1]]
-                        :tokens  5}
-            :gravehold {:life 30}}))
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:pillars 5
+                        :life    30}}))
     (is (= (-> {:nemesis   {:deck    [crumble]
                             :discard [cryptid]
-                            :unleash [[:damage-gravehold 1]]
-                            :tokens  8}
-                :gravehold {:life 30}}
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:pillars 8
+                            :life    30}}
                draw-nemesis-card
                (choose :cryptid))
            {:nemesis   {:play-area [cryptid]
                         :discard   [crumble]
-                        :unleash   [[:damage-gravehold 1]]
-                        :tokens    8}
-            :gravehold {:life 29}}))
+                        :unleash   [[:damage-gravehold 1]]}
+            :gravehold {:pillars 8
+                        :life    29}}))
     (is (= (-> {:nemesis   {:deck    [crumble]
                             :discard [cryptid grubber]
-                            :unleash [[:damage-gravehold 1]]
-                            :tokens  8}
-                :gravehold {:life 30}}
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:pillars 8
+                            :life    30}}
                draw-nemesis-card
                (choose :grubber))
            {:nemesis   {:play-area [grubber]
                         :discard   [cryptid crumble]
-                        :unleash   [[:damage-gravehold 1]]
-                        :tokens    8}
-            :gravehold {:life 29}}))
+                        :unleash   [[:damage-gravehold 1]]}
+            :gravehold {:pillars 8
+                        :life    29}}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
                           (-> {:nemesis   {:deck    [crumble]
                                            :discard [cryptid grubber]
-                                           :unleash [[:damage-gravehold 1]]
-                                           :tokens  8}
-                               :gravehold {:life 30}}
+                                           :unleash [[:damage-gravehold 1]]}
+                               :gravehold {:pillars 8
+                                           :life    30}}
                               draw-nemesis-card
                               (choose :cryptid))))))
 
 (deftest cryptid-test
   (testing "Cryptid"
-    (is (= (-> {:nemesis {:play-area [cryptid]
-                          :tokens    8}}
+    (is (= (-> {:nemesis   {:play-area [cryptid]}
+                :gravehold {:pillars 8}}
                (resolve-nemesis-cards-in-play))
-           {:nemesis {:play-area [cryptid]
-                      :tokens    7}}))
-    (is (= (-> {:nemesis {:play-area [cryptid]
-                          :tokens    8}
-                :players [{:breaches [{:prepped-spells [spark]}]}]}
+           {:nemesis   {:play-area [cryptid]}
+            :gravehold {:pillars 7}}))
+    (is (= (-> {:nemesis   {:play-area [cryptid]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}]}]}
                (resolve-nemesis-cards-in-play)
                (choose nil))
-           {:nemesis {:play-area [cryptid]
-                      :tokens    7}
-            :players [{:breaches [{:prepped-spells [spark]}]}]}))
-    (is (= (-> {:nemesis {:play-area [cryptid]
-                          :tokens    8}
-                :players [{:breaches [{:prepped-spells [spark]}]}]}
+           {:nemesis   {:play-area [cryptid]}
+            :gravehold {:pillars 7}
+            :players   [{:breaches [{:prepped-spells [spark]}]}]}))
+    (is (= (-> {:nemesis   {:play-area [cryptid]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}]}]}
                (resolve-nemesis-cards-in-play)
                (choose {:player-no 0 :breach-no 0 :card-name :spark}))
-           {:nemesis {:play-area [cryptid]
-                      :tokens    8}
-            :players [{:breaches [{}]
-                       :discard  [spark]}]}))
-    (is (= (-> {:nemesis {:play-area [cryptid]
-                          :tokens    8}
-                :players [{:breaches [{:prepped-spells [spark]}]}
-                          {:breaches [{:prepped-spells [ignite]}]}]}
+           {:nemesis   {:play-area [cryptid]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{}]
+                         :discard  [spark]}]}))
+    (is (= (-> {:nemesis   {:play-area [cryptid]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
                (resolve-nemesis-cards-in-play)
                (choose {:player-no 1 :breach-no 0 :card-name :ignite}))
-           {:nemesis {:play-area [cryptid]
-                      :tokens    8}
-            :players [{:breaches [{:prepped-spells [spark]}]}
-                      {:breaches [{}]
-                       :discard  [ignite]}]}))
+           {:nemesis   {:play-area [cryptid]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{:prepped-spells [spark]}]}
+                        {:breaches [{}]
+                         :discard  [ignite]}]}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis {:play-area [cryptid]
-                                         :tokens    8}
-                               :players [{:breaches [{:prepped-spells [spark]}]}
-                                         {:breaches [{:prepped-spells [ignite]}]}]}
+                          (-> {:nemesis   {:play-area [cryptid]}
+                               :gravehold {:pillars 8}
+                               :players   [{:breaches [{:prepped-spells [spark]}]}
+                                           {:breaches [{:prepped-spells [ignite]}]}]}
                               (resolve-nemesis-cards-in-play)
                               (choose {:player-no 0 :breach-no 0 :card-name :spark}))))
-    (is (= (-> {:nemesis {:play-area [cryptid]
-                          :tokens    8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [ignite]}]}
-                          {:breaches [{:prepped-spells [ignite]}]}]}
+    (is (= (-> {:nemesis   {:play-area [cryptid]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
                (resolve-nemesis-cards-in-play)
                (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
-           {:nemesis {:play-area [cryptid]
-                      :tokens    8}
-            :players [{:breaches [{:prepped-spells [spark]}
-                                  {}]
-                       :discard  [ignite]}
-                      {:breaches [{:prepped-spells [ignite]}]}]}))))
+           {:nemesis   {:play-area [cryptid]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {}]
+                         :discard  [ignite]}
+                        {:breaches [{:prepped-spells [ignite]}]}]}))))
 
 (deftest grubber-test
   (testing "Grubber"
-    (is (= (-> {:nemesis    {:play-area [grubber]
-                             :tokens    8}
-                :gravehold  {:life 30}
+    (is (= (-> {:nemesis    {:play-area [grubber]}
+                :gravehold  {:pillars 8
+                             :life    30}
                 :turn-order {:discard [turn-order/nemesis]}}
                (resolve-nemesis-cards-in-play))
-           {:nemesis    {:play-area [grubber]
-                         :tokens    8}
-            :gravehold  {:life 28}
+           {:nemesis    {:play-area [grubber]}
+            :gravehold  {:pillars 8
+                         :life    28}
             :turn-order {:discard [turn-order/nemesis]}}))
-    (is (= (-> {:nemesis    {:play-area [grubber]
-                             :tokens    8}
-                :gravehold  {:life 30}
+    (is (= (-> {:nemesis    {:play-area [grubber]}
+                :gravehold  {:pillars 8
+                             :life    30}
                 :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}}
                (resolve-nemesis-cards-in-play))
-           {:nemesis    {:play-area [grubber]
-                         :tokens    7}
-            :gravehold  {:life 30}
+           {:nemesis    {:play-area [grubber]}
+            :gravehold  {:pillars 7
+                         :life    30}
             :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}}))))
 
 (deftest maul-test
   (testing "Maul"
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{}]}]}
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{}]}]}
                draw-nemesis-card)
-           {:nemesis {:discard [maul]
-                      :tokens  6}
-            :players [{:breaches [{}]}]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 6}
+            :players   [{:breaches [{}]}]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}]}]}
                draw-nemesis-card)
-           {:nemesis {:discard [maul]
-                      :tokens  6}
-            :players [{:breaches [{:prepped-spells [spark]}]}]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 6}
+            :players   [{:breaches [{:prepped-spells [spark]}]}]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]}]}
                draw-nemesis-card
                (choose nil))
-           {:nemesis {:discard [maul]
-                      :tokens  6}
-            :players [{:breaches [{:prepped-spells [spark]}
-                                  {:prepped-spells [spark]}]}]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 6}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [spark]}]}]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]}]}
                draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 0 :breach-no 1 :card-name :spark}]))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{}
-                                  {}]}]
-            :trash   [spark spark]}))
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{}
+                                    {}]}]
+            :trash     [spark spark]}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis {:deck   [maul]
-                                         :tokens 8}
-                               :players [{:breaches [{:prepped-spells [spark]}
-                                                     {:prepped-spells [spark]}]}]}
+                          (-> {:nemesis   {:deck [maul]}
+                               :gravehold {:pillars 8}
+                               :players   [{:breaches [{:prepped-spells [spark]}
+                                                       {:prepped-spells [spark]}]}]}
                               draw-nemesis-card
                               (choose [{:player-no 0 :breach-no 0 :card-name :spark}]))))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}]}
-                          {:breaches [{:prepped-spells [ignite]}]}]}
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}]}
+                            {:breaches [{:prepped-spells [ignite]}]}]}
                draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 1 :breach-no 0 :card-name :ignite}]))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{}]}
-                      {:breaches [{}]}]
-            :trash   [spark ignite]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{}]}
+                        {:breaches [{}]}]
+            :trash     [spark ignite]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}]}]}
                draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :spark}
                         {:player-no 0 :breach-no 1 :card-name :spark}]))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{}
-                                  {}
-                                  {:prepped-spells [spark]}]}]
-            :trash   [spark spark]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [ignite]}
-                                      {:prepped-spells [spark]}
-                                      {:prepped-spells [ignite]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{}
+                                    {}
+                                    {:prepped-spells [spark]}]}]
+            :trash     [spark spark]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [ignite]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
                draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
                         {:player-no 0 :breach-no 2 :card-name :ignite}]))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{}
-                                  {:prepped-spells [spark]}
-                                  {}]}]
-            :trash   [ignite ignite]}))
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{}
+                                    {:prepped-spells [spark]}
+                                    {}]}]
+            :trash     [ignite ignite]}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis {:deck   [maul]
-                                         :tokens 8}
-                               :players [{:breaches [{:prepped-spells [ignite]}
-                                                     {:prepped-spells [spark]}
-                                                     {:prepped-spells [ignite]}]}]}
+                          (-> {:nemesis   {:deck [maul]}
+                               :gravehold {:pillars 8}
+                               :players   [{:breaches [{:prepped-spells [ignite]}
+                                                       {:prepped-spells [spark]}
+                                                       {:prepped-spells [ignite]}]}]}
                               draw-nemesis-card
                               (choose [{:player-no 0 :breach-no 0 :card-name :ignite}
                                        {:player-no 0 :breach-no 1 :card-name :spark}]))))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [dark-fire]}
-                                      {:prepped-spells [spark]}
-                                      {:prepped-spells [ignite]}]}]}
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [dark-fire]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
                draw-nemesis-card
                (choose [{:player-no 0 :breach-no 0 :card-name :dark-fire}
                         {:player-no 0 :breach-no 2 :card-name :ignite}]))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{}
-                                  {:prepped-spells [spark]}
-                                  {}]}]
-            :trash   [dark-fire ignite]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}
-                                      {:prepped-spells [ignite]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{}
+                                    {:prepped-spells [spark]}
+                                    {}]}]
+            :trash     [dark-fire ignite]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
                draw-nemesis-card
-               (choose :lose-tokens))
-           {:nemesis {:discard [maul]
-                      :tokens  6}
-            :players [{:breaches [{:prepped-spells [spark]}
-                                  {:prepped-spells [spark]}
-                                  {:prepped-spells [ignite]}]}]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [spark]}
-                                      {:prepped-spells [ignite]}]}]}
+               (choose :pillars))
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 6}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {:prepped-spells [spark]}
+                                    {:prepped-spells [ignite]}]}]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}]}]}
                draw-nemesis-card
-               (choose :destroy)
+               (choose :spells)
                (choose {:player-no 0 :breach-no 1 :card-name :spark}))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{:prepped-spells [spark]}
-                                  {}
-                                  {}]}]
-            :trash   [ignite spark]}))
-    (is (= (-> {:nemesis {:deck   [maul]
-                          :tokens 8}
-                :players [{:breaches [{:prepped-spells [spark]}
-                                      {:prepped-spells [ignite]}
-                                      {:prepped-spells [ignite]}
-                                      {:prepped-spells [dark-fire]}]}]}
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {}
+                                    {}]}]
+            :trash     [ignite spark]}))
+    (is (= (-> {:nemesis   {:deck [maul]}
+                :gravehold {:pillars 8}
+                :players   [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [ignite]}
+                                        {:prepped-spells [ignite]}
+                                        {:prepped-spells [dark-fire]}]}]}
                draw-nemesis-card
-               (choose :destroy)
+               (choose :spells)
                (choose {:player-no 0 :breach-no 1 :card-name :ignite}))
-           {:nemesis {:discard [maul]
-                      :tokens  8}
-            :players [{:breaches [{:prepped-spells [spark]}
-                                  {}
-                                  {:prepped-spells [ignite]}
-                                  {}]}]
-            :trash   [dark-fire ignite]}))
+           {:nemesis   {:discard [maul]}
+            :gravehold {:pillars 8}
+            :players   [{:breaches [{:prepped-spells [spark]}
+                                    {}
+                                    {:prepped-spells [ignite]}
+                                    {}]}]
+            :trash     [dark-fire ignite]}))
     (is (thrown-with-msg? AssertionError #"Choose error:"
-                          (-> {:nemesis {:deck   [maul]
-                                         :tokens 8}
-                               :players [{:breaches [{:prepped-spells [spark]}
-                                                     {:prepped-spells [ignite]}
-                                                     {:prepped-spells [ignite]}
-                                                     {:prepped-spells [dark-fire]}]}]}
+                          (-> {:nemesis   {:deck [maul]}
+                               :gravehold {:pillars 8}
+                               :players   [{:breaches [{:prepped-spells [spark]}
+                                                       {:prepped-spells [ignite]}
+                                                       {:prepped-spells [ignite]}
+                                                       {:prepped-spells [dark-fire]}]}]}
                               draw-nemesis-card
-                              (choose :destroy)
+                              (choose :spells)
                               (choose {:player-no 0 :breach-no 0 :card-name :spark}))))))
 
 (deftest seismic-roar-test
@@ -313,79 +313,79 @@
                           (-> {:nemesis {:play-area [seismic-roar]}
                                :players [{:aether 5}]}
                               (discard-power-card 0 :seismic-roar))))
-    (is (= (-> {:nemesis {:play-area [(assoc-in seismic-roar [:power :power] 1)]
-                          :tokens    8}}
+    (is (= (-> {:nemesis   {:play-area [(assoc-in seismic-roar [:power :power] 1)]}
+                :gravehold {:pillars 8}}
                resolve-nemesis-cards-in-play)
-           {:nemesis {:discard [(assoc-in seismic-roar [:power :power] 0)]
-                      :tokens  6}}))))
+           {:nemesis   {:discard [(assoc-in seismic-roar [:power :power] 0)]}
+            :gravehold {:pillars 6}}))))
 
 (deftest umbra-titan-test
   (testing "Umbra Titan"
     (testing "Unleash"
-      (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/unleash]]}
+      (is (= (-> {:nemesis    {:unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/nemesis]}
+                  :gravehold  {:pillars 8}
                   :players    [{:life 10}]}
                  unleash
                  (choose nil))
-             {:nemesis    {:tokens  7
-                           :unleash [[::umbra-titan/unleash]]}
+             {:nemesis    {:unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/nemesis]}
+              :gravehold  {:pillars 7}
               :players    [{:life 10}]}))
-      (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/unleash]]}
+      (is (= (-> {:nemesis    {:unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/player-1 turn-order/nemesis]}
+                  :gravehold  {:pillars 8}
                   :players    [{:life 10}]}
                  unleash
                  (choose {:player-no 0}))
-             {:nemesis    {:tokens  8
-                           :unleash [[::umbra-titan/unleash]]}
+             {:nemesis    {:unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/player-1 turn-order/nemesis]}
+              :gravehold  {:pillars 8}
               :players    [{:life 8}]}))
-      (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/unleash]]}
+      (is (= (-> {:nemesis    {:unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
-                  :gravehold  {:life 30}}
+                  :gravehold  {:pillars 8
+                               :life    30}}
                  unleash
-                 (choose :token))
-             {:nemesis    {:tokens  7
-                           :unleash [[::umbra-titan/unleash]]}
+                 (choose :pillar))
+             {:nemesis    {:unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
-              :gravehold  {:life 30}}))
-      (is (= (-> {:nemesis    {:tokens  8
-                               :unleash [[::umbra-titan/unleash]]}
+              :gravehold  {:pillars 7
+                           :life    30}}))
+      (is (= (-> {:nemesis    {:unleash [[::umbra-titan/unleash]]}
                   :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
-                  :gravehold  {:life 30}}
+                  :gravehold  {:pillars 8
+                               :life    30}}
                  unleash
                  (choose :damage))
-             {:nemesis    {:tokens  8
-                           :unleash [[::umbra-titan/unleash]]}
+             {:nemesis    {:unleash [[::umbra-titan/unleash]]}
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
-              :gravehold  {:life 28}})))
+              :gravehold  {:pillars 8
+                           :life    28}})))
     (testing "Victory condition"
       (is (= (-> {:real-game? true
                   :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
                   :nemesis    (merge umbra-titan
-                                     {:deck   [{}]
-                                      :tokens 2})}
+                                     {:deck [{}]})
+                  :gravehold  {:pillars 2}}
                  unleash
-                 (choose :token))
+                 (choose :pillar))
              {:real-game? true
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
               :nemesis    (merge umbra-titan
-                                 {:deck   [{}]
-                                  :tokens 1})}))
+                                 {:deck [{}]})
+              :gravehold  {:pillars 1}}))
       (is (= (-> {:real-game? true
                   :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
                   :nemesis    (merge umbra-titan
-                                     {:deck   [{}]
-                                      :tokens 1})}
+                                     {:deck [{}]})
+                  :gravehold  {:pillars 1}}
                  unleash
-                 (choose :token)
+                 (choose :pillar)
                  (update :game-over dissoc :text))
              {:real-game? true
               :turn-order {:discard [turn-order/nemesis turn-order/nemesis]}
               :nemesis    (merge umbra-titan
-                                 {:deck   [{}]
-                                  :tokens 0})
+                                 {:deck [{}]})
+              :gravehold  {:pillars 0}
               :game-over  {:conclusion :defeat}})))))
