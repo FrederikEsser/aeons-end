@@ -12,9 +12,7 @@
 
 (defn crumble-revive-minion [game {:keys [card-name]}]
   (-> game
-      (push-effect-stack {:effects [[:move-card {:card-name card-name
-                                                 :from      :discard
-                                                 :to        :play-area}]
+      (push-effect-stack {:effects [[:revive-minion {:card-name card-name}]
                                     [:unleash]]})))
 
 (effects/register {::crumble-revive-minion crumble-revive-minion})

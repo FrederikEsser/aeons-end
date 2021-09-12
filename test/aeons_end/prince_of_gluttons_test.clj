@@ -9,6 +9,7 @@
             [aeons-end.cards.relic :refer [flexing-dagger]]
             [aeons-end.cards.spell :refer [ignite radiance]]
             [aeons-end.mages :refer [underearth-mantra]]
+            [aeons-end.cards.attack :refer [awaken]]
             [aeons-end.utils :as ut]))
 
 (defn fixture [f]
@@ -323,3 +324,27 @@
                                            {:card ignite :pile-size 0}]}
                                 draw-nemesis-card
                                 (choose {:area :supply :card-name :devoured})))))))
+
+(deftest mindguzzler-test
+  (testing "Mindguzzler"
+    (is (= (-> {:nemesis {:deck [mindguzzler]}
+                :supply  [{:card jade :pile-size 0}
+                          {:card ignite :pile-size 0}
+                          {:card radiance :pile-size 5}]}
+               draw-nemesis-card)
+           {:nemesis {:play-area [(assoc mindguzzler :life 10)]}
+            :supply  [{:card jade :pile-size 0}
+                      {:card ignite :pile-size 0}
+                      {:card radiance :pile-size 5}]}))
+    (is (= (-> {:nemesis {:deck    [awaken]
+                          :discard [(assoc mindguzzler :life 0)]}
+                :supply  [{:card jade :pile-size 0}
+                          {:card ignite :pile-size 0}
+                          {:card radiance :pile-size 0}]}
+               draw-nemesis-card
+               (choose :mindguzzler))
+           {:nemesis {:play-area [(assoc mindguzzler :life 11)]
+                      :discard   [awaken]}
+            :supply  [{:card jade :pile-size 0}
+                      {:card ignite :pile-size 0}
+                      {:card radiance :pile-size 0}]}))))
