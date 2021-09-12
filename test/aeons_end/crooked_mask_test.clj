@@ -8,7 +8,7 @@
             [aeons-end.cards.starter :refer :all]
             [aeons-end.turn-order :as turn-order]
             [aeons-end.cards.gem :refer [haunted-berylite jade sifters-pearl]]
-            [aeons-end.cards.relic :refer [mages-totem fiend-catcher temporal-helix]]
+            [aeons-end.cards.relic :refer [fiend-catcher mages-totem molten-hammer temporal-helix]]
             [aeons-end.cards.spell :refer [ignite radiance]]))
 
 (defn fixture [f]
@@ -93,27 +93,78 @@
                            :revealed-cards 1}}))
       (is (= (-> {:difficulty :expert
                   :nemesis    {:corruption-deck [corruption-card-2]}
-                  :players    [{:hand [corruption-card]}
+                  :players    [{:hand    [corruption-card]
+                                :ability {:charges 1}}
                                {}]}
                  (play 0 :corruption)
-                 (choose {:player-no 1}))
+                 (choose {:area :players :player-no 1}))
              {:difficulty :expert
               :nemesis    {:corruption-deck [corruption-card-2]}
-              :players    [{}
+              :players    [{:ability {:charges 1}}
                            {:discard [corruption-card]}]}))
+      (is (= (-> {:difficulty :expert
+                  :nemesis    {:corruption-deck [corruption-card-2]}
+                  :players    [{:hand    [corruption-card]
+                                :ability {:charges 1}}
+                               {}]}
+                 (play 0 :corruption)
+                 (choose {:area :ability :player-no 0}))
+             {:difficulty :expert
+              :nemesis    {:corruption-deck [corruption-card-2 corruption-card]}
+              :players    [{:ability {:charges 0}}
+                           {}]}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:difficulty :expert
+                                 :nemesis    {:corruption-deck [corruption-card-2]}
+                                 :players    [{:hand    [corruption-card]
+                                               :ability {:charges 0}}
+                                              {}]}
+                                (play 0 :corruption)
+                                (choose {:area :ability :player-no 0}))))
       (is (= (-> {:difficulty :expert
                   :players    [{:hand [fiend-catcher corruption-card]}
                                {}]
                   :turn-order {:deck [turn-order/player-1]}}
                  (play 0 :fiend-catcher)
                  (choose {:area :hand :player-no 0 :card-name :corruption})
-                 (choose {:player-no 0}))
+                 (choose {:area :players :player-no 0}))
              {:difficulty :expert
               :players    [{:play-area [fiend-catcher]
                             :discard   [corruption-card]}
                            {}]
               :turn-order {:deck           [turn-order/player-1]
-                           :revealed-cards 1}})))
+                           :revealed-cards 1}}))
+      (is (= (-> {:difficulty :expert
+                  :players    [{:hand    [molten-hammer]
+                                :ability {:charges     0
+                                          :charge-cost 5}}
+                               {:discard [corruption-card]
+                                :ability {:charges 1}}]}
+                 (play 0 :molten-hammer)
+                 (choose {:area :discard :player-no 1 :card-id 1})
+                 (choose {:area :players :player-no 0}))
+             {:difficulty :expert
+              :players    [{:play-area [molten-hammer]
+                            :discard   [corruption-card]
+                            :ability   {:charges     1
+                                        :charge-cost 5}}
+                           {:ability {:charges 1}}]}))
+      (is (= (-> {:difficulty :expert
+                  :nemesis    {:corruption-deck [corruption-card-2]}
+                  :players    [{:hand    [molten-hammer]
+                                :ability {:charges     0
+                                          :charge-cost 5}}
+                               {:discard [corruption-card]
+                                :ability {:charges 1}}]}
+                 (play 0 :molten-hammer)
+                 (choose {:area :discard :player-no 1 :card-id 1})
+                 (choose {:area :ability :player-no 0}))
+             {:difficulty :expert
+              :nemesis    {:corruption-deck [corruption-card-2 corruption-card]}
+              :players    [{:play-area [molten-hammer]
+                            :ability   {:charges     0
+                                        :charge-cost 5}}
+                           {:ability {:charges 1}}]})))
     (testing "Resolve corruption"
       (is (= (-> {:difficulty :normal
                   :nemesis    {}

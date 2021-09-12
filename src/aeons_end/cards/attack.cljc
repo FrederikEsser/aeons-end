@@ -209,7 +209,8 @@
                :type    :attack
                :tier    2
                :text    ["Unleash."
-                         "The players collectively discard two prepped spells. Any player suffers 2 damage."]
+                         "The players collectively discard two prepped spells."
+                         "Any player suffers 2 damage."]
                :effects [[:unleash]
                          [:give-choice {:title   :mutilate
                                         :text    "The players collectively discard two prepped spells."

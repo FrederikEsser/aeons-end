@@ -38,23 +38,44 @@
                    ::gain-corruption-and-shuffle gain-corruption-and-shuffle
                    ::unleash                     do-unleash})
 
-(defn corruption-on-trash [{:keys [difficulty] :as game} {:keys [card-id]}]
-  (let [{{:keys [name]} :card} (ut/get-card-idx game [:trash] {:id card-id})]
-    (push-effect-stack game {:effects (if (#{:beginner :normal} difficulty)
-                                        [[:move-card {:move-card-id card-id
+(defn corruption-on-trash-choice [game {:keys [area player-no destroyed-by card-name]}]
+  (push-effect-stack game {:effects (case area
+                                      :players [[:move-card {:player-no player-no
+                                                             :card-name card-name
+                                                             :from      :trash
+                                                             :to        :discard}]]
+                                      :ability [[:spend-charges {:player-no destroyed-by :arg 1}]
+                                                [:move-card {:card-name   card-name
+                                                             :from        :trash
+                                                             :to          :corruption-deck
+                                                             :to-position :bottom}]])}))
+
+(defn corruption-on-trash [{:keys [difficulty] :as game} {:keys [player-no card-id destroyed-by]}]
+  (let [{{:keys [name]} :card} (ut/get-card-idx game [:trash] {:id card-id})
+        destroyed-by (or destroyed-by player-no)
+        {:keys [charges] :or {charges 0}} (get-in game [:players destroyed-by :ability])]
+    (if (#{:beginner :normal} difficulty)
+      (push-effect-stack game {:effects [[:move-card {:move-card-id card-id
                                                       :from         :trash
                                                       :to           :corruption-deck
-                                                      :to-position  :bottom}]]
-                                        [[:give-choice {:title   name
-                                                        :text    (str "Place " (ut/format-name name) " into any player's discard pile.")
-                                                        :choice  [:move-card {:move-card-id card-id
-                                                                              :from         :trash
-                                                                              :to           :discard}]
-                                                        :options [:players]
-                                                        :min     1
-                                                        :max     1}]])})))
+                                                      :to-position  :bottom}]]})
+      (push-effect-stack game {:player-no destroyed-by
+                               :effects   [[:give-choice (merge {:title   name
+                                                                 :text    (concat
+                                                                            [(str "Place " (ut/format-name name) " into any player's discard pile.")]
+                                                                            (when (pos? charges)
+                                                                              ["OR"
+                                                                               "Lose 1 charge to place it on the bottom of the corruption deck."]))
+                                                                 :choice  [::corruption-on-trash-choice {:card-name    name
+                                                                                                         :destroyed-by destroyed-by}]
+                                                                 :options [:mixed
+                                                                           [:players]
+                                                                           [:player :ability {:min-charges 1}]]
+                                                                 :min     1
+                                                                 :max     1})]]}))))
 
-(effects/register {::corruption-on-trash corruption-on-trash})
+(effects/register {::corruption-on-trash-choice corruption-on-trash-choice
+                   ::corruption-on-trash        corruption-on-trash})
 
 (defn resolve-corruption [game {:keys [player-no card-name]}]
   (let [{:keys [card]} (ut/get-card-idx game [:players player-no :hand] {:name card-name})]
@@ -76,7 +97,7 @@
 (defn additional-rules [{:keys [difficulty]}]
   [(if (#{:beginner :normal} difficulty)
      "- When a corruption is destroyed, place it on the bottom of the corruption deck."
-     "- When a corruption is destroyed, place it into any player's discard pile.")
+     "- When a corruption is destroyed, place it into any player's discard pile OR lose 1 charge to place it on the bottom of the corruption deck.")
    "- When a player would gain a corruption and the corruption deck is empty, Gravehold suffers 2 damage instead."
    "- At the start of each player's turn, before that player's casting phase, that player resolves all corruptions in their hand, in any order."
    "- At the end of each player's main phase, that player resolves all corruptions they drew during their turn."
