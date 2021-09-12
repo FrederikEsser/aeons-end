@@ -232,7 +232,7 @@
 
 (effects/register {:destroy-from-hand destroy-from-hand})
 
-(defn destroy-from-discard [game {:keys [player-no card-id card-ids]}]
+(defn destroy-from-discard [game {:keys [player-no destroyed-by card-id card-ids]}]
   (let [card-ids (if card-id
                    [{:player-no player-no :card-id card-id}]
                    card-ids)]
@@ -240,13 +240,14 @@
             (not-empty card-ids) (push-effect-stack {:player-no player-no
                                                      :effects   (->> card-ids
                                                                      (mapv (fn [{:keys [card-id]}]
-                                                                             [:move-card {:move-card-id card-id
-                                                                                          :from         :discard
-                                                                                          :to           :trash}])))}))))
+                                                                             [:move-card (medley/assoc-some {:move-card-id card-id
+                                                                                                             :from         :discard
+                                                                                                             :to           :trash}
+                                                                                                            :destroyed-by destroyed-by)])))}))))
 
 (effects/register {:destroy-from-discard destroy-from-discard})
 
-(defn destroy-from-area [game {:keys [player-no area card-name card-id choices]}]
+(defn destroy-from-area [game {:keys [player-no destroyed-by area card-name card-id choices]}]
   (let [choices (or choices
                     (when (and area (or card-name card-id))
                       [{:area      area
@@ -258,6 +259,7 @@
                                                                     (map (fn [{:keys [area card-name card-id]}]
                                                                            [:move-card (medley/assoc-some {:from area
                                                                                                            :to   :trash}
+                                                                                                          :destroyed-by destroyed-by
                                                                                                           :card-name card-name
                                                                                                           :move-card-id card-id)])))}))))
 

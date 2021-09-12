@@ -6,7 +6,7 @@
             [aeons-end.nemeses.blight-lord :as blight-lord :refer :all]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer []]
-            [aeons-end.cards.relic :refer [mages-totem]]
+            [aeons-end.cards.relic :refer [conclave-scroll mages-totem molten-hammer]]
             [aeons-end.cards.spell :refer []]))
 
 (defn fixture [f]
@@ -61,6 +61,38 @@
              {:players [{:play-area [mages-totem]
                          :aether    2
                          :life      8}]
+              :nemesis {:tainted-jades [tainted-jade]}}))
+      (is (= (-> {:players [{:hand    [molten-hammer]
+                             :ability {:charges     0
+                                       :charge-cost 5}
+                             :life    10}
+                            {:discard [tainted-jade]
+                             :life    10}]
+                  :nemesis {:tainted-jades []}}
+                 (play 0 :molten-hammer)
+                 (choose {:area :discard :player-no 1 :card-id 1}))
+             {:players [{:play-area [molten-hammer]
+                         :ability   {:charges     1
+                                     :charge-cost 5}
+                         :life      9}
+                        {:life 10}]
+              :nemesis {:tainted-jades [tainted-jade]}}))
+      (is (= (-> {:supply  [{:card conclave-scroll :pile-size 0}]
+                  :players [{:hand    [conclave-scroll]
+                             :ability {:charges     0
+                                       :charge-cost 5}
+                             :life    10}
+                            {:discard [tainted-jade]
+                             :life    10}]
+                  :nemesis {:tainted-jades []}}
+                 (play 0 :conclave-scroll)
+                 (choose {:player-no 1 :card-id 1}))
+             {:supply  [{:card conclave-scroll :pile-size 0}]
+              :players [{:play-area [conclave-scroll]
+                         :ability   {:charges     1
+                                     :charge-cost 5}
+                         :life      9}
+                        {:life 10}]
               :nemesis {:tainted-jades [tainted-jade]}})))))
 
 (deftest blight-lord-test

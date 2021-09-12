@@ -92,7 +92,7 @@
             (zero? pile-size) (push-effect-stack {:player-no player-no
                                                   :effects   [[:give-choice {:title   :conclave-scroll
                                                                              :text    "You may destroy the top card of any ally's discard pile."
-                                                                             :choice  :destroy-from-discard
+                                                                             :choice  [:destroy-from-discard {:destroyed-by player-no}]
                                                                              :options [:players :discard {:ally true :last true}]
                                                                              :max     1}]]}))))
 
@@ -228,19 +228,25 @@
                                            :max     1}]]
                   :quote   "'Once, the conclave worshipped at the foot of a great tower much like this very effigy.' Yan Magda, Enlightened Exile"})
 
+(defn molten-hammer-give-choice [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :molten-hammer
+                                                      :text    "You may destroy a card in hand or on top of any player's discard pile."
+                                                      :choice  [:destroy-from-area {:destroyed-by player-no}]
+                                                      :options [:mixed
+                                                                [:player :hand]
+                                                                [:players :discard {:last true}]]
+                                                      :max     1}]]}))
+
+(effects/register {::molten-hammer-give-choice molten-hammer-give-choice})
+
 (def molten-hammer {:name    :molten-hammer
                     :type    :relic
                     :cost    5
                     :text    ["Gain 1 charge."
                               "You may destroy a card in hand or on top of any player's discard pile."]
                     :effects [[:gain-charge]
-                              [:give-choice {:title   :molten-hammer
-                                             :text    "You may destroy a card in hand or on top of any player's discard pile."
-                                             :choice  :destroy-from-area
-                                             :options [:mixed
-                                                       [:player :hand]
-                                                       [:players :discard {:last true}]]
-                                             :max     1}]]
+                              [::molten-hammer-give-choice]]
                     :quote   "'Some tools are meant for making, while others hold a more pernicious task.' Mist, Dagger Captain"})
 
 (defn primordial-fetish-destroy [game {:keys [player-no]}]

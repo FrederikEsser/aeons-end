@@ -3,16 +3,14 @@
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
             [aeons-end.cards.attack]
-            [aeons-end.cards.power :as power]
-            [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.attack :as attack]))
+            [aeons-end.cards.power :as power]))
 
 (defn tainted-jade-on-trash [game {:keys [player-no card-id destroyed-by]}]
   (push-effect-stack game {:effects (concat [[:move-card {:move-card-id card-id
                                                           :from         :trash
                                                           :to           :tainted-jades}]]
                                             (when (not= destroyed-by :tainted-jade)
-                                              [[:damage-player {:player-no player-no
+                                              [[:damage-player {:player-no (or destroyed-by player-no)
                                                                 :arg       1}]]))}))
 
 (defn tainted-jade-choice [game {:keys [player-no card-id choice]}]
