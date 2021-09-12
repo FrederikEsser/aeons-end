@@ -5,6 +5,7 @@
             [aeons-end.nemeses.rageborne :refer [rageborne]]
             [aeons-end.nemeses.umbra-titan :refer [umbra-titan]]
             [aeons-end.nemeses.carapace-queen :refer [carapace-queen deal-damage-to-husks]]
+            [aeons-end.nemeses.knight-of-shackles :refer [knight-of-shackles]]
             [aeons-end.nemeses.blight-lord :refer [blight-lord]]
             [aeons-end.nemeses.crooked-mask :refer [crooked-mask]]
             [aeons-end.nemeses.prince-of-gluttons :refer [prince-of-gluttons]]
@@ -284,6 +285,7 @@
 (def nemeses [rageborne
               umbra-titan
               carapace-queen
+              knight-of-shackles
               blight-lord
               crooked-mask
               prince-of-gluttons

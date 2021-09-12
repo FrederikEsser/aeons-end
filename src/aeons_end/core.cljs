@@ -584,7 +584,7 @@
                            tainted-jades tainted-track corruptions devoured interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
-                       [:tr (map-tag :th [(str "Nemesis - tier " tier)
+                       [:tr (map-tag :th [(str "Nemesis - Tier " tier)
                                           "Play area"
                                           (str "Deck" (when deck (str " (" (:number-of-cards deck) ")")))
                                           "Discard"

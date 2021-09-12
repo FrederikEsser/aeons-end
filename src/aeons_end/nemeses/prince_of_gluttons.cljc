@@ -2,7 +2,6 @@
   (:require [aeons-end.operations :refer [push-effect-stack move-card add-card]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.attack]
             [aeons-end.cards.power :as power]))
 
 (defn devour [game {:keys [number-of-cards card-name card-names]
