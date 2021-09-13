@@ -67,3 +67,23 @@ background: radial-gradient(circle, #cfe2e1 0%, #afd9db 40%, #98ceda 100%);
 .power {
 background: radial-gradient(circle, #fdfee5 0%, #fcf398 40%, #fde24a 100%);
 }
+
+.closed-breach {
+background: radial-gradient(circle, #2f90ad 0%, #25476c 70%, #172e49 100%);
+}
+
+.opened-breach {
+background: radial-gradient(circle, #ffffdc 0%, #fff52f 50%, #cc690c 100%);
+}
+
+.closed-aethereal-breach {
+background: radial-gradient(circle, #70c6a8 0%, #25476c 70%, #172e49 100%);
+}
+
+.opened-aethereal-breach {
+background: radial-gradient(circle, #b4ebe6 0%, #70c6a8 70%, #388054 100%);
+}
+
+.sigil-breach {
+background: radial-gradient(circle, #c9b8e0 0%, #8965ad 40%, #523a92 100%);
+}

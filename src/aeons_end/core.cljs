@@ -51,7 +51,7 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
-(defn button-class [type]
+(defn button-class [type & [status]]
   (case type
     :gem "gem"
     :relic "relic"
@@ -59,6 +59,16 @@
     :attack "attack"
     :minion "minion"
     :power "power"
+    :breach (case status
+              :closed "closed-breach"
+              :focused "closed-breach"
+              :opened "opened-breach"
+              :destroyed nil)
+    :aethereal (case status
+                 :closed "closed-aethereal-breach"
+                 :focused "closed-aethereal-breach"
+                 :opened "opened-aethereal-breach")
+    :sigil "sigil-breach"
     {:player-nos #{0 1}} "player-1-2"
     {:player-nos #{2 3}} "player-3-4"
     nil))
@@ -84,14 +94,6 @@
                          (= :husks type) "#5f5356"
                          (= :tainted type) "#5b863f"
                          (= :corruption type) "#9dcb6b"
-                         (= :destroyed status) :white
-                         (= :breach type) (cond
-                                            (= :opened status) "#f8e238"
-                                            :else "#506f9a")
-                         (= :sigil type) "#5d328a"
-                         (= :aethereal type) (cond
-                                               (= :opened status) "#a9ddd1"
-                                               :else "#2579a5")
                          (= :ability type) (if (= :charged status)
                                              "#f5bb11" #_"#f9e395"
                                              "#f9e395" #_"#b4afa2")
@@ -283,6 +285,7 @@
                                                  :status (or (get interactions :openable)
                                                              status)
                                                  :min-width 88)
+                  :class           (button-class (or type :breach) status)
                   :disabled        disabled
                   :on-click        (when (not-empty interactions)
                                      (fn [] (cond
@@ -323,6 +326,7 @@
                                         :type :breach
                                         :status status
                                         :width "88px")
+                :class    (button-class :breach status)
                 :disabled disabled
                 :on-click (when interaction
                             (fn [] (case interaction

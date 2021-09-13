@@ -200,7 +200,7 @@
                             open-cost  (when (and open-costs stage)
                                          (ut/minus-cost (get open-costs stage) breach-cost-reduction))]
                         (merge {:name-ui   (if (= :destroyed status)
-                                             "X"
+                                             "Ø"
                                              (ut/format-breach-no breach-no))
                                 :breach-no breach-no
                                 :status    status}
