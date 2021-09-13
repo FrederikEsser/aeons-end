@@ -1,7 +1,7 @@
 (ns aeons-end.knight-of-shackles-test
   (:require [clojure.test :refer :all]
             [aeons-end.test-utils :refer :all]
-            [aeons-end.commands :refer :all]
+            [aeons-end.commands :refer [unfocus-nemesis-breach]]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.nemeses.knight-of-shackles :as knight-of-shackles :refer :all]
             [aeons-end.cards.starter :refer :all]
@@ -143,3 +143,83 @@
              {:nemesis {:unleash  [[::knight-of-shackles/unleash]]
                         :breaches [(open breach-1)]}
               :players [{:life 6}]})))))
+
+(deftest fellblade-test
+  (testing "Fellblade"
+    (is (= (-> {:nemesis   {:play-area [fellblade]
+                            :breaches  [{:status :closed}
+                                        {:status :closed :stage 0}]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play)
+               (choose nil))
+           {:nemesis   {:play-area [fellblade]
+                        :breaches  [{:status :closed}
+                                    {:status :closed :stage 0}]}
+            :gravehold {:life 27}}))
+    (is (= (-> {:nemesis   {:play-area [fellblade]
+                            :breaches  [{:status :closed}
+                                        {:status :closed :stage 0}]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play)
+               (choose {:breach-no 1}))
+           {:nemesis   {:play-area [fellblade]
+                        :breaches  [{:status :closed}
+                                    {:status :closed :stage 1}]}
+            :gravehold {:life 30}}))
+    (is (= (-> {:nemesis   {:play-area [fellblade]
+                            :breaches  [{:status :closed}
+                                        {:status  :closed
+                                         :stage   3
+                                         :effects [[:damage-gravehold 7]]}]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play)
+               (choose {:breach-no 1}))
+           {:nemesis   {:play-area [fellblade]
+                        :breaches  [{:status :closed}
+                                    {:status  :opened
+                                     :effects [[:damage-gravehold 7]]}]}
+            :gravehold {:life 23}}))
+    (is (= (-> {:nemesis   {:play-area [fellblade]
+                            :breaches  [{:status :closed}
+                                        {:status :opened}]}
+                :gravehold {:life 30}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis   {:play-area [fellblade]
+                        :breaches  [{:status :closed}
+                                    {:status :opened}]}
+            :gravehold {:life 27}}))))
+
+(deftest march-on-gravehold-test
+  (testing "March on Gravehold"
+    (is (= (-> {:nemesis {:play-area [(assoc-in march-on-gravehold [:power :power] 1)]
+                          :breaches  [{:status :opened}
+                                      {:status :closed :stage 0}]
+                          :unleash   [[::knight-of-shackles/unleash]]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard  [(assoc-in march-on-gravehold [:power :power] 0)]
+                      :breaches [{:status :opened}
+                                 {:status :closed :stage 0}]
+                      :unleash  [[::knight-of-shackles/unleash]]}
+            :players [{:life 6}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in march-on-gravehold [:power :power] 1)]
+                          :breaches  [{:status :closed :stage 0}]
+                          :unleash   [[::knight-of-shackles/unleash]]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis {:discard  [(assoc-in march-on-gravehold [:power :power] 0)]
+                      :breaches [{:status :closed :stage 2}]
+                      :unleash  [[::knight-of-shackles/unleash]]}
+            :players [{:life 10}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in march-on-gravehold [:power :power] 1)]
+                          :breaches  [{:status :closed :stage 3}
+                                      {:status :closed :stage 0}]
+                          :unleash   [[::knight-of-shackles/unleash]]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play)
+           {:nemesis {:discard  [(assoc-in march-on-gravehold [:power :power] 0)]
+                      :breaches [{:status :opened}
+                                 {:status :closed :stage 1}]
+                      :unleash  [[::knight-of-shackles/unleash]]}
+            :players [{:life 10}]}))))

@@ -330,7 +330,8 @@
                 :disabled disabled
                 :on-click (when interaction
                             (fn [] (case interaction
-                                     :unfocusable (swap! state assoc :game (cmd/unfocus-nemesis-breach breach-no)))))
+                                     :unfocusable (swap! state assoc :game (cmd/unfocus-nemesis-breach breach-no))
+                                     :quick-choosable (swap! state assoc :game (cmd/choose (or choice-value name))))))
                 :title    text}
        (case status
          :closed (str name-ui " (" (ut/format-cost cost) ") " stage "/4")

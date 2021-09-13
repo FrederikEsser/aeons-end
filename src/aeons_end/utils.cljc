@@ -433,7 +433,7 @@
                                        min-number-of-prepped-spells min-hand lowest-life most-life can-heal min-deck+discard
                                        this last type cost min-cost max-cost can-prep
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
-                                       opened max-breach-no min-non-corruption]}]]
+                                       opened breach-no max-breach-no min-non-corruption]}]]
   (let [solo-play?      (= 1 (count players))
         highest-charge  (->> players
                              (map #(get-in % [:ability :charges] 0))
@@ -502,6 +502,7 @@
                                     can-prep (filter (fn [{:keys [option]}]
                                                        (can-prep? game (merge option
                                                                               can-prep))))
+                                    breach-no (filter (comp #{breach-no} :breach-no :option))
                                     max-breach-no (filter (comp #(<= % max-breach-no) :breach-no :option))
                                     :always (map :option)))
       :else (let [options       (case area
@@ -555,7 +556,7 @@
 (defn can-damage? [game {:keys [max-damage]}]
   (not= 0 (get-value max-damage game)))
 
-(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name not-names type]}]]
+(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name not-names type breach-no opened]}]]
   (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])
         husks? (and number-of-husks
                     (pos? number-of-husks))]
@@ -577,7 +578,14 @@
                         type (filter (comp #{type} :type))
                         most-recent (take-last 1)           ; it's important that 'most-recent' is evaluated last
                         :always (map :name))
-
+      :breaches (let [breaches (->> (get-in game [:nemesis :breaches])
+                                    (map-indexed (fn [breach-no breach]
+                                                   (assoc breach :option {:breach-no breach-no}))))]
+                  (cond->> breaches
+                           opened (filter (comp #{:opened} :status))
+                           (false? opened) (remove (comp #{:opened} :status))
+                           breach-no (filter (comp #{breach-no} :breach-no :option))
+                           :always (map :option)))
       :nemesis (cond->> [:nemesis]
                         not-names (remove not-names))
       [area])))
