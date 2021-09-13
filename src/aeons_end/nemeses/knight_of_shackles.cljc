@@ -3,7 +3,8 @@
             [aeons-end.effects :as effects]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.power :as power]))
+            [aeons-end.cards.power :as power]
+            [aeons-end.utils :as ut]))
 
 (defn do-unleash [{:keys [nemesis] :as game} _]
   (let [{:keys [breach-no breach]} (->> (:breaches nemesis)
@@ -24,6 +25,14 @@
             breach-opens? (push-effect-stack {:effects effects}))))
 
 (effects/register {::unleash do-unleash})
+
+(defn unfocus-breach [game {:keys [breach-no]}]
+  (let [{:keys [status stage]} (get-in game [:nemesis :breaches breach-no])]
+    (assert (= :closed status) (str "Unfocus error: Breach " (ut/format-breach-no breach-no) " has status " (ut/format-name status) "."))
+    (assert (pos? stage) (str "Unfocus error: Breach " (ut/format-breach-no breach-no) " is in stage " stage "."))
+    (update-in game [:nemesis :breaches breach-no :stage] dec)))
+
+(effects/register {::unfocus-breach unfocus-breach})
 
 (defn setup [{:keys [difficulty] :as game} _]
   (cond-> game

@@ -88,7 +88,43 @@
                                      {:status  :opened
                                       :effects [[:damage-gravehold 2]]}]}
               :gravehold {:life 28}})))
-    (testing "Breaches"
+    (testing "Unfocus breaches"
+      (is (= (-> {:nemesis {:breaches [{:status :closed
+                                        :cost   4
+                                        :stage  3}]}
+                  :players [{:aether 4}]}
+                 (unfocus-nemesis-breach 0 0))
+             {:nemesis {:breaches [{:status :closed
+                                    :cost   4
+                                    :stage  2}]}
+              :players [{:aether 0}]}))
+      (is (= (-> {:nemesis {:breaches [{:status :closed
+                                        :cost   4
+                                        :stage  1}]}
+                  :players [{:aether 4}]}
+                 (unfocus-nemesis-breach 0 0))
+             {:nemesis {:breaches [{:status :closed
+                                    :cost   4
+                                    :stage  0}]}
+              :players [{:aether 0}]}))
+      (is (thrown-with-msg? AssertionError #"Unfocus error:"
+                            (-> {:nemesis {:breaches [{:status :closed
+                                                       :cost   4
+                                                       :stage  0}]}
+                                 :players [{:aether 4}]}
+                                (unfocus-nemesis-breach 0 0))))
+      (is (thrown-with-msg? AssertionError #"Unfocus error:"
+                            (-> {:nemesis {:breaches [{:status :opened
+                                                       :cost   0}]}
+                                 :players [{:aether 4}]}
+                                (unfocus-nemesis-breach 0 0))))
+      (is (thrown-with-msg? AssertionError #"Pay error:"
+                            (-> {:nemesis {:breaches [{:status :closed
+                                                       :cost   4
+                                                       :stage  3}]}
+                                 :players [{:aether 3}]}
+                                (unfocus-nemesis-breach 0 0)))))
+    (testing "Breach open effects"
       (is (= (-> {:nemesis {:unleash  [[::knight-of-shackles/unleash]]
                             :breaches [(assoc breach-1 :stage 3)]}
                   :players [{:life 10}

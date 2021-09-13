@@ -1,6 +1,7 @@
 (ns aeons-end.commands
   (:require [aeons-end.utils :as ut]
-            [aeons-end.operations :as op]))
+            [aeons-end.operations :as op]
+            [aeons-end.nemeses.knight-of-shackles :as knight-of-shackles]))
 
 (defn- check-command [command {:keys [current-player effect-stack]} & [player-no]]
   (when (and current-player
@@ -137,6 +138,17 @@
                                            [:pay {:amount (ut/minus-cost open-cost breach-cost-reduction)
                                                   :type   :breach}]
                                            [:open-breach {:breach-no breach-no}]]})
+        op/check-stack)))
+
+(defn unfocus-nemesis-breach [game player-no breach-no]
+  (check-command "Unfocus" game player-no)
+  (let [{:keys [cost]} (get-in game [:nemesis :breaches breach-no])]
+    (-> game
+        (op/push-effect-stack {:player-no player-no
+                               :effects   [[:set-phase {:phase :main}]
+                                           [:pay {:amount cost
+                                                  :type   :breach}]
+                                           [::knight-of-shackles/unfocus-breach {:breach-no breach-no}]]})
         op/check-stack)))
 
 (defn discard-power-card [game player-no card-name]

@@ -89,6 +89,12 @@
                                             (commands/open-breach current-player breach-no)))
     (view)))
 
+(defn unfocus-nemesis-breach [breach-no]
+  (let [{:keys [current-player] :as game} (get-game)]
+    (swap! game-state update :game conj (-> game
+                                            (commands/unfocus-nemesis-breach current-player breach-no)))
+    (view)))
+
 (defn prep-spell [breach-no card-name]
   (let [{:keys [current-player] :as game} (get-game)]
     (swap! game-state update :game conj (-> game

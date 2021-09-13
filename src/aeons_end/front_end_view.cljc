@@ -323,7 +323,7 @@
 
 (defn view-nemesis [{{:keys [name life play-area deck revealed revealed-cards discard
                              unleash-text additional-rules
-                             fury husks tainted-jades tainted-track
+                             fury husks tainted-jades tainted-track breaches
                              corruption-deck devoured cloaks]} :nemesis
                      {:keys [player-no] :as player}            :player
                      choice                                    :choice
@@ -466,6 +466,34 @@
                                     (when (= :tainted-track resolving)
                                       {:status :resolving})
                                     (choice-interaction {:area :tainted-track} choice))}))
+         (when breaches
+           (let [breaches-ui (->> breaches
+                                  (map-indexed (fn view-nemesis-breach [breach-no {:keys [status cost stage text]}]
+                                                 (merge {:name-ui   (ut/format-breach-no breach-no)
+                                                         :breach-no breach-no
+                                                         :status    status
+                                                         :text      text}
+                                                        (when cost
+                                                          {:cost cost})
+                                                        (when stage
+                                                          {:stage stage})
+                                                        (when (and (ut/can-main? game player-no)
+                                                                   (not choice)
+                                                                   cost
+                                                                   (ut/can-afford? player cost :breach)
+                                                                   stage
+                                                                   (pos? stage))
+                                                          {:interaction :unfocusable})
+                                                        (choice-interaction {:area      :breaches
+                                                                             :player-no player-no
+                                                                             :breach-no breach-no} choice)))))
+                 {:keys [name-ui text] :as next-breach} (->> breaches-ui
+                                                             (filter (comp #{:closed} :status))
+                                                             first)]
+             (merge {:breaches breaches-ui}
+                    (when next-breach
+                      {:next-breach (str "BREACH " name-ui)
+                       :breach-text text}))))
          (when corruption-deck
            {:corruptions (count corruption-deck)})
          (when devoured

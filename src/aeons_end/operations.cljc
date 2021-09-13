@@ -387,6 +387,7 @@
 
 (defn pay [game {:keys [player-no amount type]}]
   (let [{:keys [earmarked-aether restricted-aether] :as player} (get-in game [:players player-no])]
+    (assert amount "Pay error: No cost specified")
     (assert (ut/can-afford? player amount type) (str "Pay error: You can't pay " amount " aether, when you only have " (ut/format-aether player) "."))
     (let [{:keys [amount earmarked]} (->> earmarked-aether
                                           (sort-by (comp count first))

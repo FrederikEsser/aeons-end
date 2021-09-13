@@ -313,6 +313,23 @@
            (map #(assoc % :breach-no breach-no))
            (mapk (partial view-card max)))]]))
 
+(defn view-nemesis-breach [{:keys [breach-no name-ui text status stage cost choice-value interaction]}]
+  (let [disabled (nil? interaction)]
+    [:tr {:style {:border :none}}
+     [:td {:style {:border :none}}
+      [:button {:style    (button-style :disabled disabled
+                                        :type :breach
+                                        :status status
+                                        :width "88px")
+                :disabled disabled
+                :on-click (when interaction
+                            (fn [] (case interaction
+                                     :unfocusable (swap! state assoc :game (cmd/unfocus-nemesis-breach breach-no)))))
+                :title    text}
+       (case status
+         :closed (str name-ui " (" (ut/format-cost cost) ") " stage "/4")
+         :opened (str name-ui " (open)"))]]]))
+
 (defn view-ability [{:keys [name-ui text activation-text charges charge-cost interaction choice-value]} player-no]
   (let [disabled (nil? interaction)]
     [:div {:style {:padding-top "3px"}}
@@ -581,10 +598,12 @@
                    [option :expert +2]
                    [option :extinction +4]]]]])
              (let [{:keys [name name-ui tier unleash-text additional-rules life cloaks deck play-area discard fury husks
-                           tainted-jades tainted-track corruptions devoured interaction choice-value]} (-> @state :game :nemesis)]
+                           tainted-jades tainted-track breaches next-breach breach-text corruptions devoured
+                           interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th [(str "Nemesis - Tier " tier)
+                                          (when breaches "Breaches")
                                           "Play area"
                                           (str "Deck" (when deck (str " (" (:number-of-cards deck) ")")))
                                           "Discard"
@@ -649,6 +668,10 @@
                                  (format-text tainted-level "Current space")]
                                 [:div {:style {:font-size "1.1em"}}
                                  (format-text next-tainted-text (str "Space " next-tainted-level))]]]))]]
+                        (when breaches
+                          [:td [:table
+                                [:tbody {:style {:border :none}}
+                                 (mapk view-nemesis-breach breaches)]]])
                         [:td [:div
                               (when husks
                                 (let [{:keys [number-of-husks title swarm-text swarm-interval interaction choice-value]} husks
