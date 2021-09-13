@@ -43,3 +43,27 @@ background: linear-gradient(to right bottom, #f2f057 50%, #ea8f23 50.3%);
 .player-3-4 {
 background: linear-gradient(to right bottom, #3aacb4 50%, #a7326d 50.3%);
 }
+
+.gem {
+background: radial-gradient(circle, #e8e1f1 0%, #ceb5dc 60%, #a7799f 100%);
+}
+
+.relic {
+background: radial-gradient(circle, #f1fefe 0%, #bbe1f6 60%, #78c6ec 100%);
+}
+
+.spell {
+background: radial-gradient(circle, #fafaea 0%, #fcef92 70%, #fbd80f 100%);
+}
+
+.attack {
+background: radial-gradient(circle, #f4e8f6 0%, #d7b4d4 60%, #b68fbb 100%);
+}
+
+.minion {
+background: radial-gradient(circle, #cfe2e1 0%, #afd9db 40%, #98ceda 100%);
+}
+
+.power {
+background: radial-gradient(circle, #fdfee5 0%, #fcf398 40%, #fde24a 100%);
+}

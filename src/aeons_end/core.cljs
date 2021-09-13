@@ -51,6 +51,18 @@
 (defn deselect! [idx]
   (swap! state update :selection remove-idx idx))
 
+(defn button-class [type]
+  (case type
+    :gem "gem"
+    :relic "relic"
+    :spell "spell"
+    :attack "attack"
+    :minion "minion"
+    :power "power"
+    {:player-nos #{0 1}} "player-1-2"
+    {:player-nos #{2 3}} "player-3-4"
+    nil))
+
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
   (let [inverse? (or (#{:nemesis :sigil :husks :tainted} type)
                      (<= 2 (:player-no type))
@@ -68,10 +80,6 @@
                          disabled "#666")
      :font-weight      :bold
      :background-color (cond
-                         (#{:gem :attack} type) "#cfbede"
-                         (#{:relic} type) "#c7dff5"
-                         (#{:spell :power} type) "#f7e2b5"
-                         (= :minion type) "#aadfef"
                          (= :strike type) "#b79171"
                          (= :husks type) "#5f5356"
                          (= :tainted type) "#5b863f"
@@ -95,10 +103,6 @@
      :border-color     (cond
                          (zero? number-of-cards) :red
                          (= :resolving status) :red
-                         (#{:gem :attack} type) "#9d77af"
-                         (#{:relic} type) "#6bb6dc"
-                         (#{:spell :power} type) "#f8c44e"
-                         (= :minion type) "#49c4e9"
                          (= :strike type) "#5e3628"
                          (= :husks type) "#232122"
                          (= :tainted type) "#40512c"
@@ -182,10 +186,7 @@
           [:button {:style         (button-style :disabled disabled
                                                  :type type
                                                  :number-of-cards number-of-cards)
-                    :class         (case (:player-nos type)
-                                     #{0 1} "player-1-2"
-                                     #{2 3} "player-3-4"
-                                     nil)
+                    :class         (button-class type)
                     :title         (format-title card)
                     :disabled      disabled
                     :on-click      (when interaction
@@ -238,6 +239,7 @@
                                                :number-of-cards number-of-cards)
                                  {:width      "150px"
                                   :min-height "170px"})
+                :class    (button-class type)
                 :title    quote
                 :disabled disabled
                 :on-click (when interaction
@@ -732,12 +734,10 @@
                                     (let [disabled (nil? interaction)]
                                       [:div
                                        "[ "
-                                       [:button {:style (button-style :disabled disabled
-                                                                      :type type)
-                                                 :class (case (:player-nos type)
-                                                          #{0 1} "player-1-2"
-                                                          #{2 3} "player-3-4"
-                                                          nil) :disabled disabled
+                                       [:button {:style    (button-style :disabled disabled
+                                                                         :type type)
+                                                 :class    (button-class type)
+                                                 :disabled disabled
                                                  :on-click (when interaction
                                                              (fn [] (case interaction
                                                                       :choosable (select! choice-value name)
@@ -977,6 +977,7 @@
                                          [:option {:value n} (str "$" n (if (= n max-cost) " =" " <="))])))]]
                           [:select {:style     (button-style :type type
                                                              :width 144)
+                                    :class     (button-class type)
                                     :value     (or card-name
                                                    :random)
                                     :on-change (fn [event]
