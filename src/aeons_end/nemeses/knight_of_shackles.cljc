@@ -6,17 +6,22 @@
             [aeons-end.cards.power :as power]
             [aeons-end.utils :as ut]))
 
+(defn open-breach [game {:keys [breach-no]}]
+  (let [{:keys [status effects]} (get-in game [:nemesis :breaches breach-no])]
+    (if (= :opened status)
+      game
+      (-> game
+          (assoc-in [:nemesis :breaches breach-no :status] :opened)
+          (update-in [:nemesis :breaches breach-no] dissoc :cost :stage)
+          (push-effect-stack {:effects effects})))))
+
 (defn focus-breach [game {:keys [breach-no]}]
-  (let [{:keys [stage effects] :as breach} (get-in game [:nemesis :breaches breach-no])
-        breach-opens? (= 3 stage)
-        new-breach    (if breach-opens?
-                        (-> breach
-                            (assoc :status :opened)
-                            (dissoc :cost :stage))
-                        (-> breach
-                            (update :stage inc)))]
-    (cond-> (assoc-in game [:nemesis :breaches breach-no] new-breach)
-            breach-opens? (push-effect-stack {:effects effects}))))
+  (let [{:keys [status stage]} (get-in game [:nemesis :breaches breach-no])]
+    (if (= :opened status)
+      game
+      (if (= 3 stage)
+        (push-effect-stack game {:effects [[::open-breach {:breach-no breach-no}]]})
+        (update-in game [:nemesis :breaches breach-no :stage] inc)))))
 
 (defn unfocus-breach [game {:keys [breach-no]}]
   (let [{:keys [status stage]} (get-in game [:nemesis :breaches breach-no])]
@@ -32,9 +37,74 @@
                        first)]
     (push-effect-stack game {:effects [[::focus-breach {:breach-no breach-no}]]})))
 
-(effects/register {::focus-breach   focus-breach
+(effects/register {::open-breach    open-breach
+                   ::focus-breach   focus-breach
                    ::unfocus-breach unfocus-breach
                    ::unleash        do-unleash})
+
+(defn chainsworn-damage [game _]
+  (let [opened-breaches (->> (get-in game [:nemesis :breaches])
+                             (filter (comp #{:opened} :status))
+                             count)
+        damage          (+ 1 opened-breaches)]
+    (push-effect-stack game {:effects [[:give-choice {:title   :chainsworn
+                                                      :text    (str "Any player suffers " damage " damage.")
+                                                      :choice  [:damage-player {:arg damage}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::chainsworn-damage chainsworn-damage})
+
+(def chainsworn {:name        :chainsworn
+                 :type        :minion
+                 :tier        2
+                 :life        10
+                 :immediately {:text    "Knight of Shackles focuses its breach III."
+                               :effects [[::focus-breach {:breach-no 2}]]}
+                 :persistent  {:text    "Any player suffers 1 damage. That player suffers 1 additional damage for each opened breach Knight of Shackles has."
+                               :effects [[::chainsworn-damage]]}
+                 :quote       "'It strode confidently among the dead upon its blighted steed, the glow of the breach radiating from it as they sieged the city.'"})
+
+(defn engine-of-war-can-discard? [game {:keys [player-no]}]
+  (let [prepped-spells (->> (get-in game [:players player-no :breaches])
+                            (mapcat :prepped-spells)
+                            count)]
+    (>= prepped-spells 3)))
+
+(effects/register-predicates {::engine-of-war-can-discard? engine-of-war-can-discard?})
+
+(defn engine-of-war-damage [game _]
+  (let [opened-breaches (->> (get-in game [:nemesis :breaches])
+                             (filter (comp #{:opened} :status))
+                             count)
+        damage          (+ 1 (* 2 opened-breaches))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :engine-of-war
+                                                      :text    (str "Any player suffers " damage " damage.")
+                                                      :choice  [:damage-player {:arg damage}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::engine-of-war-damage engine-of-war-damage})
+
+(def engine-of-war {:name       :engine-of-war
+                    :type       :power
+                    :tier       2
+                    :to-discard {:text      "Discard three prepped spells."
+                                 :predicate ::engine-of-war-can-discard?
+                                 :effects   [[:give-choice {:title   :engine-of-war
+                                                            :text    "Discard three prepped spells."
+                                                            :choice  :discard-prepped-spells
+                                                            :options [:player :prepped-spells]
+                                                            :min     3
+                                                            :max     3}]]}
+                    :power      {:power   2
+                                 :text    ["Any player suffers 1 damage. That player suffers 2 additional damage for each opened breach Knight of Shackles has."
+                                           "Unleash."]
+                                 :effects [[::engine-of-war-damage]
+                                           [:unleash]]}
+                    :quote      "'If Thraxir can become one of them, so can I.' Xaxos, Voidbringer"})
 
 (def fellblade {:name       :fellblade
                 :type       :minion
@@ -82,6 +152,22 @@
                                       :text    ["If Knight of Shackles's breach I is open, any player suffers 4 damage."
                                                 "Otherwise, Unleash twice."]
                                       :effects [[::march-on-gravehold-damage]]}})
+
+(defn rout-damage [game _]
+  (let [{:keys [status]} (get-in game [:nemesis :breaches 0])]
+    (push-effect-stack game {:effects (if (= :opened status)
+                                        [[:damage-gravehold 6]]
+                                        [[::open-breach {:breach-no 0}]])})))
+
+(effects/register {::rout-damage rout-damage})
+
+(def rout {:name    :rout
+           :type    :attack
+           :tier    2
+           :text    ["If Knight of Shackles's breach I is open, Gravehold suffers 6 damage."
+                     "Otherwise, Knight of Shackles opens its breach I."]
+           :effects [[::rout-damage]]
+           :quote   "'Mist refuses to see Thraxir within this thing, but its quite clear to the rest of us.' Gex, Breach Mage Advisor"})
 
 (def siege {:name    :siege
             :type    :attack
@@ -172,5 +258,5 @@
                                              "- When Knight of Shackles opens a breach, resolve the effect listed on that breach."]
                          :victory-condition ::victory-condition
                          :cards             [fellblade march-on-gravehold siege
-                                             (minion/generic 2) (power/generic 2) (attack/generic 2)
+                                             chainsworn engine-of-war rout
                                              (minion/generic 3) (power/generic 3) (attack/generic 3)]})

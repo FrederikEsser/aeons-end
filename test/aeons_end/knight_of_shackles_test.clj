@@ -144,6 +144,106 @@
                         :breaches [(open breach-1)]}
               :players [{:life 6}]})))))
 
+(deftest chainsworn-test
+  (testing "Chainsworn"
+    (testing "Immediately"
+      (is (= (-> {:nemesis {:deck     [chainsworn]
+                            :breaches [{:status :opened}
+                                       {:status :opened}
+                                       {:status :closed :stage 2}]}}
+                 draw-nemesis-card)
+             {:nemesis {:play-area [(assoc chainsworn :max-life 10)]
+                        :breaches  [{:status :opened}
+                                    {:status :opened}
+                                    {:status :closed :stage 3}]}}))
+      (is (= (-> {:nemesis {:deck     [chainsworn]
+                            :breaches [{:status :opened}
+                                       {:status :opened}
+                                       {:status :closed :stage 3}]}}
+                 draw-nemesis-card)
+             {:nemesis {:play-area [(assoc chainsworn :max-life 10)]
+                        :breaches  [{:status :opened}
+                                    {:status :opened}
+                                    {:status :opened}]}}))
+      (is (= (-> {:nemesis {:deck     [chainsworn]
+                            :breaches [{:status :opened}
+                                       {:status :opened}
+                                       {:status :opened}]}}
+                 draw-nemesis-card)
+             {:nemesis {:play-area [(assoc chainsworn :max-life 10)]
+                        :breaches  [{:status :opened}
+                                    {:status :opened}
+                                    {:status :opened}]}})))
+    (is (= (-> {:nemesis {:play-area [chainsworn]
+                          :breaches  [{:status :closed :stage 1}]}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [chainsworn]
+                      :breaches  [{:status :closed :stage 1}]}
+            :players [{:life 9}]}))
+    (is (= (-> {:nemesis {:play-area [chainsworn]
+                          :breaches  [{:status :opened}
+                                      {:status :closed :stage 2}]}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [chainsworn]
+                      :breaches  [{:status :opened}
+                                  {:status :closed :stage 2}]}
+            :players [{:life 8}]}))
+    (is (= (-> {:nemesis {:play-area [chainsworn]
+                          :breaches  [{:status :opened}
+                                      {:status :closed :stage 3}
+                                      {:status :opened}]}
+                :players [{:life 10}]}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis {:play-area [chainsworn]
+                      :breaches  [{:status :opened}
+                                  {:status :closed :stage 3}
+                                  {:status :opened}]}
+            :players [{:life 7}]}))))
+
+(deftest engine-of-war-test
+  (testing "Engine of War"
+    (is (= (-> {:nemesis {:play-area [(assoc-in engine-of-war [:power :power] 1)]
+                          :breaches  [{:status :closed :stage 1}]
+                          :unleash   [[::knight-of-shackles/unleash]]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard  [(assoc-in engine-of-war [:power :power] 0)]
+                      :breaches [{:status :closed :stage 2}]
+                      :unleash  [[::knight-of-shackles/unleash]]}
+            :players [{:life 9}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in engine-of-war [:power :power] 1)]
+                          :breaches  [{:status :opened}
+                                      {:status :closed :stage 2}]
+                          :unleash   [[::knight-of-shackles/unleash]]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard  [(assoc-in engine-of-war [:power :power] 0)]
+                      :breaches [{:status :opened}
+                                 {:status :closed :stage 3}]
+                      :unleash  [[::knight-of-shackles/unleash]]}
+            :players [{:life 7}]}))
+    (is (= (-> {:nemesis {:play-area [(assoc-in engine-of-war [:power :power] 1)]
+                          :breaches  [{:status :opened}
+                                      {:status :closed :stage 3}
+                                      {:status :opened}]
+                          :unleash   [[::knight-of-shackles/unleash]]}
+                :players [{:life 10}]}
+               resolve-nemesis-cards-in-play
+               (choose {:player-no 0}))
+           {:nemesis {:discard  [(assoc-in engine-of-war [:power :power] 0)]
+                      :breaches [{:status :opened}
+                                 {:status :opened}
+                                 {:status :opened}]
+                      :unleash  [[::knight-of-shackles/unleash]]}
+            :players [{:life 5}]}))))
+
 (deftest fellblade-test
   (testing "Fellblade"
     (is (= (-> {:nemesis   {:play-area [fellblade]
@@ -223,3 +323,20 @@
                                  {:status :closed :stage 1}]
                       :unleash  [[::knight-of-shackles/unleash]]}
             :players [{:life 10}]}))))
+
+(deftest rout-test
+  (testing "Rout"
+    (is (= (-> {:nemesis   {:deck     [rout]
+                            :breaches [{:status :opened}]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard  [rout]
+                        :breaches [{:status :opened}]}
+            :gravehold {:life 24}}))
+    (is (= (-> {:nemesis   {:deck     [rout]
+                            :breaches [{:status :closed :stage 0}]}
+                :gravehold {:life 30}}
+               draw-nemesis-card)
+           {:nemesis   {:discard  [rout]
+                        :breaches [{:status :opened}]}
+            :gravehold {:life 30}}))))
