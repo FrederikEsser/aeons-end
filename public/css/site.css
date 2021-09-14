@@ -87,3 +87,19 @@ background: radial-gradient(circle, #b4ebe6 0%, #70c6a8 70%, #388054 100%);
 .sigil-breach {
 background: radial-gradient(circle, #c9b8e0 0%, #8965ad 40%, #523a92 100%);
 }
+
+.strike {
+background: radial-gradient(circle, #c1b097 0%, #ad734e 70%, #85441d 100%);
+}
+
+.husks {
+background: radial-gradient(circle, #9d6953 0%, #4d3f3f 60%, #262425 100%);
+}
+
+.tainted {
+background: radial-gradient(circle, #6fa444 0%, #4f7334 50%, #47542f 100%);
+}
+
+.corruption {
+background: radial-gradient(circle, #b8d8aa 0%, #9dc968 50%, #279320 100%);
+}

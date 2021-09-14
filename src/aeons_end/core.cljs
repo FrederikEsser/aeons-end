@@ -59,6 +59,8 @@
     :attack "attack"
     :minion "minion"
     :power "power"
+    :strike "strike"
+    :corruption "corruption"
     :breach (case status
               :closed "closed-breach"
               :focused "closed-breach"
@@ -90,10 +92,6 @@
                          disabled "#666")
      :font-weight      :bold
      :background-color (cond
-                         (= :strike type) "#b79171"
-                         (= :husks type) "#5f5356"
-                         (= :tainted type) "#5b863f"
-                         (= :corruption type) "#9dcb6b"
                          (= :ability type) (if (= :charged status)
                                              "#f5bb11" #_"#f9e395"
                                              "#f9e395" #_"#b4afa2")
@@ -663,6 +661,7 @@
                                                                        :disabled disabled)
                                                          {:width      "150px"
                                                           :min-height "170px"})
+                                        :class    "tainted"
                                         :title    (format-title {:text title})
                                         :disabled disabled
                                         :on-click (when interaction
@@ -687,6 +686,7 @@
                                                                            :disabled disabled)
                                                              {:width      "150px"
                                                               :min-height "170px"})
+                                            :class    "husks"
                                             :title    (format-title {:text title})
                                             :disabled disabled
                                             :on-click (when interaction
