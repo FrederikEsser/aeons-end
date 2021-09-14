@@ -289,6 +289,51 @@
                                     {:status :opened}]}
             :gravehold {:life 27}}))))
 
+(deftest invade-test
+  (testing "Invade"
+    (is (= (-> {:nemesis {:deck     [invade]
+                          :breaches [{:status :opened}
+                                     {:status :closed}]}}
+               draw-nemesis-card)
+           {:nemesis {:discard  [invade]
+                      :breaches [{:status :opened}
+                                 {:status :opened}]}}))
+    (is (= (-> {:nemesis {:deck     [invade]
+                          :discard  [march-on-gravehold fellblade engine-of-war chainsworn]
+                          :breaches [{:status :closed}
+                                     {:status :opened}]}}
+               draw-nemesis-card
+               (choose :engine-of-war))
+           {:nemesis {:play-area [engine-of-war]
+                      :discard   [march-on-gravehold fellblade chainsworn invade]
+                      :breaches  [{:status :closed}
+                                  {:status :opened}]}}))
+    (is (= (-> {:nemesis {:deck     [invade]
+                          :discard  [march-on-gravehold fellblade engine-of-war chainsworn]
+                          :breaches [{:status :opened}
+                                     {:status :opened}]}}
+               draw-nemesis-card
+               (choose :engine-of-war)
+               (choose :march-on-gravehold))
+           {:nemesis {:play-area [engine-of-war march-on-gravehold]
+                      :discard   [fellblade chainsworn invade]
+                      :breaches  [{:status :opened}
+                                  {:status :opened}]}}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:deck     [invade]
+                                         :discard  [march-on-gravehold fellblade engine-of-war chainsworn]
+                                         :breaches [{:status :closed}
+                                                    {:status :opened}]}}
+                              draw-nemesis-card
+                              (choose :chainsworn))))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis {:deck     [invade]
+                                         :discard  [march-on-gravehold fellblade engine-of-war chainsworn]
+                                         :breaches [{:status :closed}
+                                                    {:status :opened}]}}
+                              draw-nemesis-card
+                              (choose :march-on-gravehold))))))
+
 (deftest march-on-gravehold-test
   (testing "March on Gravehold"
     (is (= (-> {:nemesis {:play-area [(assoc-in march-on-gravehold [:power :power] 1)]

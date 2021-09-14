@@ -22,9 +22,13 @@
 (effects/register {:unleash unleash})
 
 (defn discard-nemesis-card [game {:keys [card-name]}]
-  (move-card game {:card-name card-name
-                   :from      :play-area
-                   :to        :discard}))
+  (let [{{:keys [max-life power]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
+    (cond-> game
+            (:start-power power) (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc-in [:power :power] (:start-power power))
+            max-life (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc :life max-life)
+            card-name (move-card {:card-name card-name
+                                  :from      :play-area
+                                  :to        :discard}))))
 
 (effects/register {:discard-nemesis-card discard-nemesis-card})
 
@@ -76,9 +80,11 @@
                    :resolve-minion-card           resolve-minion-card
                    :resolve-nemesis-cards-in-play resolve-nemesis-cards-in-play})
 
-(defn set-minion-max-life [game {:keys [card-name life]}]
-  (cond-> game
-          life (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc :max-life life)))
+(defn initialize-nemesis-card [game {:keys [card-name]}]
+  (let [{{:keys [life power]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
+    (cond-> game
+            power (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc-in [:power :start-power] (:power power))
+            life (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc :max-life life))))
 
 (defn resolve-nemesis-card [game {:keys [player-no card-name]}]
   (cond
@@ -99,39 +105,37 @@
   (let [{:keys [name type life] :as card} (get-in game [:nemesis :deck 0])]
     (cond-> game
             (:phase nemesis) (assoc-in [:nemesis :phase] :draw)
-            card (push-effect-stack {:effects (concat [[:move-card {:card-name name
-                                                                    :from      :deck
-                                                                    :to        :play-area}]]
-                                                      (when (= :minion type)
-                                                        [[:set-minion-max-life {:card-name name
-                                                                                :life      life}]])
-                                                      [[:give-choice {:title   (ut/format-name (:name nemesis))
-                                                                      :text    (str "Nemesis "
-                                                                                    (case type
-                                                                                      :attack (str "attacks with " (ut/format-name name) ".")
-                                                                                      :power (str "initiates " (ut/format-name name) ".")
-                                                                                      :minion (str "deploys its " (ut/format-name name) ".")))
-                                                                      :choice  :resolve-nemesis-card
-                                                                      :options (concat
-                                                                                 [:mixed
-                                                                                  [:nemesis :play-area {:name name}]]
-                                                                                 (when (#{:attack :power} type)
-                                                                                   [[:players :ability {:activation    :nemesis-draw
-                                                                                                        :fully-charged true}]]))
-                                                                      :min     1
-                                                                      :max     1}]])}))))
+            card (push-effect-stack {:effects [[:move-card {:card-name name
+                                                            :from      :deck
+                                                            :to        :play-area}]
+                                               [:initialize-nemesis-card {:card-name name}]
+                                               [:give-choice {:title   (ut/format-name (:name nemesis))
+                                                              :text    (str "Nemesis "
+                                                                            (case type
+                                                                              :attack (str "attacks with " (ut/format-name name) ".")
+                                                                              :power (str "initiates " (ut/format-name name) ".")
+                                                                              :minion (str "deploys its " (ut/format-name name) ".")))
+                                                              :choice  :resolve-nemesis-card
+                                                              :options (concat
+                                                                         [:mixed
+                                                                          [:nemesis :play-area {:name name}]]
+                                                                         (when (#{:attack :power} type)
+                                                                           [[:players :ability {:activation    :nemesis-draw
+                                                                                                :fully-charged true}]]))
+                                                              :min     1
+                                                              :max     1}]]}))))
 
-(effects/register {:set-minion-max-life  set-minion-max-life
-                   :resolve-nemesis-card resolve-nemesis-card
-                   :draw-nemesis-card    draw-nemesis-card})
+(effects/register {:initialize-nemesis-card initialize-nemesis-card
+                   :resolve-nemesis-card    resolve-nemesis-card
+                   :draw-nemesis-card       draw-nemesis-card})
 
-(defn revive-minion [game {:keys [card-name]}]
+(defn reactivate-nemesis-card [game {:keys [card-name]}]
   (push-effect-stack game {:effects [[:move-card {:card-name card-name
                                                   :from      :discard
                                                   :to        :play-area}]
                                      [:resolve-nemesis-card {:card-name card-name}]]}))
 
-(effects/register {:revive-minion revive-minion})
+(effects/register {:reactivate-nemesis-card reactivate-nemesis-card})
 
 (defn at-start-turn [{:keys [nemesis] :as game} _]
   (let [{:keys [at-start-turn]} nemesis]
@@ -169,14 +173,13 @@
   (if (= :husks card-name)
     (deal-damage-to-husks game args)
     (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-          {:keys [life max-life max-damage shield when-hit]} card
+          {:keys [life max-damage shield when-hit]} card
           damage  (get-damage damage
                               :shield (ut/get-value shield game)
                               :max-damage (ut/get-value max-damage game))
           killed? (<= life damage)]
       (-> game
-          (assoc-in [:nemesis :play-area idx :life] (if killed? (or max-life 0)
-                                                                (- life damage)))
+          (assoc-in [:nemesis :play-area idx :life] (if killed? 0 (- life damage)))
           (cond-> killed? (discard-nemesis-card {:card-name card-name}))
           (push-effect-stack {:player-no player-no
                               :effects   (concat

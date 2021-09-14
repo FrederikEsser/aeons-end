@@ -3,10 +3,10 @@
             [aeons-end.effects :as effects]
             [aeons-end.operations :refer [can-discard?]]
             [aeons-end.nemeses.carapace-queen :refer [lookup-swarm-effects]]
+            [aeons-end.nemeses.knight-of-shackles :refer [can-unfocus-breach?]]
             [aeons-end.nemeses.blight-lord :refer [lookup-tainted-effects lookup-next-tainted-effects]]
             [clojure.string :as string]
-            [aeons-end.operations :as op]
-            [medley.core :as medley]))
+            [aeons-end.operations :as op]))
 
 (defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
                           {:keys [options max choice-opts] :as choice}]
@@ -394,7 +394,8 @@
                                        (when to-discard
                                          {:to-discard-text (:text to-discard)})
                                        (when power
-                                         {:power-text (:text power)})
+                                         {:power      (:power power)
+                                          :power-text (:text power)})
                                        (when persistent
                                          {:persistent-text (:text persistent)})
                                        (when life
@@ -415,7 +416,7 @@
                                                                            (when to-discard
                                                                              (format-text (:text to-discard) "TO DISCARD"))
                                                                            (when power
-                                                                             (format-text (:text power) "POWER"))
+                                                                             (format-text (:text power) (str "POWER " (:power power))))
                                                                            (when persistent
                                                                              (format-text (:text persistent) "PERSISTENT")))}
                                                             (when immediately
@@ -481,8 +482,7 @@
                                                                    (not choice)
                                                                    cost
                                                                    (ut/can-afford? player cost :breach)
-                                                                   stage
-                                                                   (pos? stage))
+                                                                   (can-unfocus-breach? game breach-no))
                                                           {:interaction :unfocusable})
                                                         (choice-interaction {:area      :breaches
                                                                              :player-no player-no

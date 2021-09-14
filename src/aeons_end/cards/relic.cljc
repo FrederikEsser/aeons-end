@@ -288,7 +288,7 @@
                                                           :choice  ::riddlesphere-choice
                                                           :options [:special
                                                                     {:option :charge :text "Gain 1 charge."}
-                                                                    {:option :aether :text "You may lose 2 charges. If you do, gain 5 Aether."}]
+                                                                    {:option :aether :text "Lose 2 charges to gain 5 Aether."}]
                                                           :min     1
                                                           :max     1}]]
                                           [[:gain-charge]])})))

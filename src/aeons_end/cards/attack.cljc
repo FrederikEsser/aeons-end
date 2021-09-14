@@ -51,7 +51,7 @@
                        "Unleash twice and Gravehold suffers 3 damage."]
              :effects [[:give-choice {:title     :awaken
                                       :text      "Place the most recently discarded minion in the nemesis discard pile back into play."
-                                      :choice    :revive-minion
+                                      :choice    :reactivate-nemesis-card
                                       :or-choice {:text    "Unleash twice and Gravehold suffers 3 damage."
                                                   :effects [[:unleash]
                                                             [:unleash]

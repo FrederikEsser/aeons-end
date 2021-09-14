@@ -1,9 +1,6 @@
 (ns aeons-end.nemeses.knight-of-shackles
   (:require [aeons-end.operations :refer [push-effect-stack move-card add-card]]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.attack :as attack]
-            [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.power :as power]
             [aeons-end.utils :as ut]))
 
 (defn open-breach [game {:keys [breach-no]}]
@@ -23,11 +20,16 @@
         (push-effect-stack game {:effects [[::open-breach {:breach-no breach-no}]]})
         (update-in game [:nemesis :breaches breach-no :stage] inc)))))
 
-(defn unfocus-breach [game {:keys [breach-no]}]
+(defn can-unfocus-breach? [game breach-no]
   (let [{:keys [status stage]} (get-in game [:nemesis :breaches breach-no])]
-    (assert (= :closed status) (str "Unfocus error: Breach " (ut/format-breach-no breach-no) " has status " (ut/format-name status) "."))
-    (assert (pos? stage) (str "Unfocus error: Breach " (ut/format-breach-no breach-no) " is in stage " stage "."))
-    (update-in game [:nemesis :breaches breach-no :stage] dec)))
+    (and (= :closed status)
+         (pos? stage)
+         (->> (get-in game [:nemesis :play-area])
+              (not-any? (comp #{:deathless-legion} :name))))))
+
+(defn unfocus-breach [game {:keys [breach-no]}]
+  (assert (can-unfocus-breach? game breach-no) (str "Unfocus error: Breach " (ut/format-breach-no breach-no) " can't be unfocused."))
+  (update-in game [:nemesis :breaches breach-no :stage] dec))
 
 (defn do-unleash [{:keys [nemesis] :as game} _]
   (let [breach-no (->> (:breaches nemesis)
@@ -65,6 +67,57 @@
                  :persistent  {:text    "Any player suffers 1 damage. That player suffers 1 additional damage for each opened breach Knight of Shackles has."
                                :effects [[::chainsworn-damage]]}
                  :quote       "'It strode confidently among the dead upon its blighted steed, the glow of the breach radiating from it as they sieged the city.'"})
+
+(defn deathless-legion-damage [game _]
+  (let [opened-breaches (->> (get-in game [:nemesis :breaches])
+                             (filter (comp #{:opened} :status))
+                             count)
+        damage          (+ 1 opened-breaches)]
+    (push-effect-stack game {:effects [[:damage-gravehold damage]]})))
+
+(effects/register {::deathless-legion-damage deathless-legion-damage})
+
+(def deathless-legion {:name       :deathless-legion
+                       :type       :minion
+                       :tier       3
+                       :life       18
+                       :text       "Players cannot rotate Knight of Shackles's breaches."
+                       :persistent {:text    "Gravehold suffers 1 damage. Gravehold suffers 1 additional damage for each opened breach Knight of Shackles has."
+                                    :effects [[::deathless-legion-damage]]}})
+
+(defn end-of-all-can-discard? [game {:keys [player-no]}]
+  (->> (get-in game [:players player-no :hand])
+       (filter (comp #(>= % 3) :cost))
+       count
+       (<= 3)))
+
+(effects/register-predicates {::end-of-all-can-discard? end-of-all-can-discard?})
+
+(defn end-of-all-open-breach [{:keys [nemesis] :as game} _]
+  (let [breach-no (->> (:breaches nemesis)
+                       (keep-indexed (fn [breach-no {:keys [status]}]
+                                       (when (= :closed status)
+                                         breach-no)))
+                       first)]
+    (push-effect-stack game {:effects [[::open-breach {:breach-no breach-no}]]})))
+
+(effects/register {::end-of-all-open-breach end-of-all-open-breach})
+
+(def end-of-all {:name       :end-of-all
+                 :type       :power
+                 :tier       3
+                 :to-discard {:text      "Destroy three cards in hand that each cost 3 Aether or more."
+                              :predicate ::end-of-all-can-discard?
+                              :effects   [[:give-choice {:title   :end-of-all
+                                                         :text    "Destroy three cards in hand that each cost 3 Aether or more."
+                                                         :choice  :destroy-from-hand
+                                                         :options [:player :hand {:min-cost 3}]
+                                                         :min     3
+                                                         :max     3}]]}
+                 :power      {:power   2
+                              :text    "Knight of Shackles opens its closed breach with the lowest focus cost."
+                              :effects [[::end-of-all-open-breach]]}
+                 :quote      "'Thraxir was once a breach mage commander, torn asunder by the one called Rageborne. Now he is a harbinger for The Nameless, the end of all.'"})
 
 (defn engine-of-war-can-discard? [game {:keys [player-no]}]
   (let [prepped-spells (->> (get-in game [:players player-no :breaches])
@@ -121,6 +174,41 @@
                                                                   :effects [[:damage-gravehold 3]]}
                                                       :max       1}]]}
                 :quote      "'Dirt is precious here, so we bury our dead in the darkness of The Depths. Or so we thought...' Ohat, Dirt Merchant"})
+
+(defn invade-reuse-power [game {:keys [arg]}]
+  (push-effect-stack game {:effects [[:give-choice {:title   :invade
+                                                    :text    (str "Place the "
+                                                                  (when (> arg 1)
+                                                                    (ut/number->text arg))
+                                                                  " most recently discarded power card"
+                                                                  (when (> arg 1)
+                                                                    "s")
+                                                                  " into play.")
+                                                    :choice  :reactivate-nemesis-card
+                                                    :options [:nemesis :discard {:type :power :most-recent true}]
+                                                    :min     1
+                                                    :max     1}]]}))
+(defn invade-effect [game _]
+  (let [{:keys [status]} (get-in game [:nemesis :breaches 1])
+        opened-breaches (->> (get-in game [:nemesis :breaches])
+                             (filter (comp #{:opened} :status))
+                             count)]
+    (push-effect-stack game {:effects (if (= :closed status)
+                                        [[::open-breach {:breach-no 1}]]
+                                        (->> (range 1 (inc opened-breaches))
+                                             reverse
+                                             (map (fn [n]
+                                                    [::invade-reuse-power n]))))})))
+
+(effects/register {::invade-reuse-power invade-reuse-power
+                   ::invade-effect      invade-effect})
+
+(def invade {:name    :invade
+             :type    :attack
+             :tier    3
+             :text    ["If Knight of Shackles's breach II is closed, Knight of Shackles opens that breach."
+                       "Otherwise, for each opened breach Knight of Shackles has, place the most recently discarded power card into play with the number of power tokens indicated on the card."]
+             :effects [[::invade-effect]]})
 
 (defn march-on-gravehold-can-discard? [game {:keys [player-no]}]
   (let [charges (get-in game [:players player-no :ability :charges])]
@@ -219,7 +307,7 @@
                :text    "Place the most recently discarded minion in the nemesis discard pile back into play."
                :effects [[:give-choice {:title   "Breach II"
                                         :text    "Place the most recently discarded minion in the nemesis discard pile back into play."
-                                        :choice  :revive-minion
+                                        :choice  :reactivate-nemesis-card
                                         :options [:nemesis :discard {:type :minion :most-recent true}]
                                         :min     1
                                         :max     1}]]})
@@ -259,4 +347,4 @@
                          :victory-condition ::victory-condition
                          :cards             [fellblade march-on-gravehold siege
                                              chainsworn engine-of-war rout
-                                             (minion/generic 3) (power/generic 3) (attack/generic 3)]})
+                                             deathless-legion end-of-all invade]})

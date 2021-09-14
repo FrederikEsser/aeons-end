@@ -196,7 +196,7 @@
                               :unleash [[::carapace-queen/unleash]]
                               :husks   {:number-of-husks 0}}}
                    draw-nemesis-card)
-               {:nemesis {:play-area [foul-multitudes]
+               {:nemesis {:play-area [(assoc-in foul-multitudes [:power :start-power] 3)]
                           :unleash   [[::carapace-queen/unleash]]
                           :husks     {:number-of-husks 2}}})))
       (testing "Damage husks"

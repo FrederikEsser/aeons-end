@@ -251,7 +251,7 @@
                              "Shuffle any player's turn order card into the turn order deck."
                              "Destroy this."]
                   :effects  [[:give-choice {:title   :nothingness
-                                            :text    "Discards two non-corruption cards."
+                                            :text    "Discard two non-corruption cards."
                                             :choice  :discard-from-hand
                                             :options [:player :hand {:not-type :corruption}]
                                             :min     2
@@ -407,7 +407,7 @@
 (defn ruin-priest-discard [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :ruin-priest
-                                                      :text    "Discards three non-corruption cards."
+                                                      :text    "Discard three non-corruption cards."
                                                       :choice  :discard-from-hand
                                                       :options [:player :hand {:not-type :corruption}]
                                                       :min     3

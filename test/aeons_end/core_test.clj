@@ -979,14 +979,16 @@
                                              :effects [[:damage-gravehold 1]]}}]}}))
       (is (= (-> {:nemesis   {:play-area [{:name  :iznogood
                                            :type  :power
-                                           :power {:power   1
-                                                   :effects [[:damage-gravehold 1]]}}]}
+                                           :power {:power       1
+                                                   :start-power 2
+                                                   :effects     [[:damage-gravehold 1]]}}]}
                   :gravehold {:life 30}}
                  resolve-nemesis-cards-in-play)
              {:nemesis   {:discard [{:name  :iznogood
                                      :type  :power
-                                     :power {:power   0
-                                             :effects [[:damage-gravehold 1]]}}]}
+                                     :power {:power       2
+                                             :start-power 2
+                                             :effects     [[:damage-gravehold 1]]}}]}
               :gravehold {:life 29}})))
     (testing "Minion"
       (is (= (-> {:nemesis   {:play-area [{:name       :bad-motherfucker

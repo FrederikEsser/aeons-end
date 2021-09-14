@@ -221,7 +221,7 @@
 (defn glittering-doom-discard [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :glittering-doom
-                                                      :text    "Discards three cards in hand."
+                                                      :text    "Discard three cards in hand."
                                                       :choice  :discard-from-hand
                                                       :options [:player :hand]
                                                       :min     3

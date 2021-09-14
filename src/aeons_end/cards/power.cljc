@@ -28,7 +28,7 @@
 (defn agony-field-discard [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :agony-field
-                                                      :text    "Discards three cards in hand."
+                                                      :text    "Discard three cards in hand."
                                                       :choice  :discard-from-hand
                                                       :options [:player :hand]
                                                       :min     3
