@@ -602,8 +602,8 @@
                    [option :normal]
                    [option :expert +2]
                    [option :extinction +4]]]]])
-             (let [{:keys [name name-ui tier unleash-text additional-rules life cloaks deck play-area discard fury husks
-                           tainted-jades tainted-track breaches next-breach breach-text corruptions devoured
+             (let [{:keys [name name-ui tier unleash-text additional-rules life deck play-area discard active?
+                           cloaks fury husks tainted-jades tainted-track breaches corruptions devoured
                            interaction choice-value]} (-> @state :game :nemesis)]
                [:div [:table
                       [:tbody
@@ -613,7 +613,8 @@
                                           (str "Deck" (when deck (str " (" (:number-of-cards deck) ")")))
                                           "Discard"
                                           (when devoured "Devoured")])]
-                       [:tr
+                       [:tr {:class (when active?
+                                      "active-nemesis")}
                         [:td
                          [:div
                           (let [disabled (nil? interaction)]
@@ -833,7 +834,8 @@
                        (mapk-indexed (fn [player-no {:keys [name name-ui turn-order-token title type life ability aether breaches
                                                             hand play-area deck discard purchased trophies active? choice-value interaction]}]
                                        (let [{:keys [max repeatable?]} (get-in @state [:game :choice])]
-                                         [:tr
+                                         [:tr {:class (when active?
+                                                        (str "active-player-" (inc player-no)))}
                                           [:td
                                            [:div
                                             (let [selection (:selection @state)
@@ -918,7 +920,7 @@
                                                 {:split-after (-> (- 5 (:number-of-cards deck)) (mod 5))
                                                  :max         max}]]
                                           (when show-purchased?
-                                            [:td {:style {:background-color "#ccc"}}
+                                            [:td {:style {:background-color "#888"}}
                                              (->> purchased
                                                   (mapk (partial view-card)))])]))))]]]))]
           [:td

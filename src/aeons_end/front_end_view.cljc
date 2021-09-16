@@ -328,10 +328,12 @@
                      {:keys [player-no] :as player}            :player
                      choice                                    :choice
                      resolving                                 :resolving
+                     current-player :current-player
                      :as                                       game}]
   (merge {:name-ui          (ut/format-name name)
           :tier             (ut/get-nemesis-tier game)
           :life             life
+          :active?          (= :nemesis current-player)
           :deck             (merge {:number-of-cards (count (concat deck revealed))}
                                    (when (or revealed revealed-cards)
                                      {:visible-cards (->> (if revealed

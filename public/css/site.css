@@ -36,6 +36,26 @@ th, td {
   border: 1px solid grey;
 }
 
+.active-nemesis {
+background-color: #b22b2e22;
+}
+
+.active-player-1 {
+background-color: #f2f05722;
+}
+
+.active-player-2 {
+background-color: #ea8f2322;
+}
+
+.active-player-3 {
+background-color: #3aacb422;
+}
+
+.active-player-4 {
+background-color: #a7326d22;
+}
+
 .player-1-2 {
 background: linear-gradient(to right bottom, #f2f057 50%, #ea8f23 50.3%);
 }
