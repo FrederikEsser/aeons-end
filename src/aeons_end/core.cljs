@@ -518,93 +518,248 @@
       (medley.core/assoc-some {:name (keyword name)}
                               :set (keyword set)))))
 
-(defn home-page []
+(defn setup-game []
   (fn []
-    (let [{:keys [setup-game?]} @state
-          started? (-> @cmd/game-state :game count (> 1))]
+    (let [{:keys [nemesis difficulty
+                  players turn-order-variant?
+                  supply] :as game-setup} (:game-setup @state)]
       [:div [:h2 "Aeon's End"]
        [:div
-        (cond
-          setup-game? [:button {:style    (button-style)
-                                :on-click #(swap! state assoc
-                                                  :game (cmd/start-game (-> @state :game-setup))
-                                                  :setup-game? false)}
-                       "Start game"]
-          (or (-> @state :game :game-over)
-              (not started?)) [:button {:style    (button-style)
-                                        :on-click #(swap! state assoc
-                                                          :game nil
-                                                          :setup-game? true)}
-                               "New game"]
-          :else [:button {:style    (button-style)
-                          :on-click (fn [] (if (js/confirm "Are you sure you want to give up the current game? All progress will be lost.")
-                                             (swap! state assoc
-                                                    :game nil
-                                                    :setup-game? true)))}
-                 "Resign"])
-        (let [disabled (or setup-game?
-                           (not started?))]
-          [:button {:style    (button-style :disabled disabled)
-                    :disabled disabled
-                    :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
-                                       (swap! state assoc :game (cmd/restart) :selection [])))}
-           "Retry"])]
+        [:button {:style    (button-style)
+                  :on-click #(swap! state assoc
+                                    :game (cmd/start-game game-setup)
+                                    :setup-game? false)}
+         "Start game"]]
 
        [:table
         [:tbody
          [:tr
           [:td {:col-span 2}
-           (if setup-game?
-             (let [{:keys [name min-level]} (-> @state :game-setup :nemesis)
-                   difficulty (-> @state :game-setup :difficulty)]
-               [:div
-                "Nemesis: "
-                [:select {:value     (or name
-                                         min-level
-                                         :random)
-                          :on-change (fn [event]
-                                       (let [value          (.. event -target -value)
-                                             nemesis-setup  (cond
-                                                              (re-matches #"\d" value) (let [min-level (js/parseInt value)]
-                                                                                         {:min-level min-level
-                                                                                          :max-level (inc min-level)})
-                                                              (= "random" value) {}
-                                                              :else {:name (keyword value)})
-                                             new-difficulty (cond
-                                                              (and (nil? (:min-level nemesis-setup))
-                                                                   (= :fit difficulty)) :normal
-                                                              (and (:min-level nemesis-setup)
-                                                                   (nil? min-level)) :fit
-                                                              :else difficulty)]
-                                         (swap! state update :game-setup merge {:nemesis    nemesis-setup
-                                                                                :difficulty new-difficulty})))}
-                 [:<>
-                  [:option {:value :random} "Any nemesis"]
-                  [:hr]
-                  (->> (range 1 8 2)
-                       (mapk (fn [n]
-                               [:option {:value n} (str "Level " n "-" (inc n))])))
-                  [:hr]
-                  (->> nemesis/nemeses
-                       (sort-by (juxt :level :name))
-                       (mapk (fn [{:keys [name level]}]
-                               [:option {:value name} (str (ut/format-name name) " (" level ")")])))]]
-                [:div
-                 "Difficulty: "
-                 [:select {:value     (-> @state :game-setup :difficulty)
-                           :on-change #(swap! state assoc-in [:game-setup :difficulty] (keyword (.. % -target -value)))}
-                  [:<>
-                   (when (-> @state :game-setup :nemesis :min-level)
-                     [:<>
-                      [option :fit]
-                      [:hr]])
-                   [option :beginner -2]
-                   [option :normal]
-                   [option :expert +2]
-                   [option :extinction +4]]]]])
+           (let [{:keys [name min-level]} nemesis]
+             [:div
+              "Nemesis: "
+              [:select {:value     (or name
+                                       min-level
+                                       :random)
+                        :on-change (fn [event]
+                                     (let [value          (.. event -target -value)
+                                           nemesis-setup  (cond
+                                                            (re-matches #"\d" value) (let [min-level (js/parseInt value)]
+                                                                                       {:min-level min-level
+                                                                                        :max-level (inc min-level)})
+                                                            (= "random" value) {}
+                                                            :else {:name (keyword value)})
+                                           new-difficulty (cond
+                                                            (and (nil? (:min-level nemesis-setup))
+                                                                 (= :fit difficulty)) :normal
+                                                            (and (:min-level nemesis-setup)
+                                                                 (nil? min-level)) :fit
+                                                            :else difficulty)]
+                                       (swap! state update :game-setup merge {:nemesis    nemesis-setup
+                                                                              :difficulty new-difficulty})))}
+               [:<>
+                [:option {:value :random} "Any nemesis"]
+                [:hr]
+                (->> (range 1 8 2)
+                     (mapk (fn [n]
+                             [:option {:value n} (str "Level " n "-" (inc n))])))
+                [:hr]
+                (->> nemesis/nemeses
+                     (sort-by (juxt :level :name))
+                     (mapk (fn [{:keys [name level]}]
+                             [:option {:value name} (str (ut/format-name name) " (" level ")")])))]]
+              [:div
+               "Difficulty: "
+               [:select {:value     difficulty
+                         :on-change #(swap! state assoc-in [:game-setup :difficulty] (keyword (.. % -target -value)))}
+                [:<>
+                 (when (:min-level nemesis)
+                   [:<>
+                    [option :fit]
+                    [:hr]])
+                 [option :beginner -2]
+                 [option :normal]
+                 [option :expert +2]
+                 [option :extinction +4]]]]])]]
+         [:tr
+          [:td
+           (let [selected-players (->> players
+                                       (keep :name)
+                                       set)]
+             [:div
+              [:div "Players: " [:select {:style     {:width              "20px"
+                                                      :padding            "4px"
+                                                      :-webkit-appearance :none
+                                                      :-moz-appearance    :none
+                                                      :text-indent        "1px"
+                                                      :text-overflow      ""}
+                                          :value     (count players)
+                                          :on-change (fn [event]
+                                                       (let [value (js/parseInt (.. event -target -value))
+                                                             diff  (- value (count players))]
+                                                         (swap! state assoc-in [:game-setup :players] (vec (if (pos? diff)
+                                                                                                             (concat players (repeat diff {}))
+                                                                                                             (take value players))))))}
+                                 [:<> (->> (range 1 5)
+                                           (mapk (fn [n]
+                                                   [:option {:value n} n])))]]]
+              (when (= 4 (count players))
+                [:div "4p variant "
+                 [:input {:type     :checkbox
+                          :checked  turn-order-variant?
+                          :on-click #(swap! state update-in [:game-setup :turn-order-variant?] not)}]])
+              (->> players
+                   (mapk-indexed (fn [player-no {:keys [name] :as mage}]
+                                   [:div [:select {:value     (or (mage->string mage) "random")
+                                                   :on-change (fn [event]
+                                                                (let [value (.. event -target -value)]
+                                                                  (swap! state assoc-in [:game-setup :players player-no] (if (= "random" value)
+                                                                                                                           {}
+                                                                                                                           (string->mage value)))))}
+                                          [:<>
+                                           [:option {:value "random"} "Any mage"]
+                                           [:hr]
+                                           (->> mages/mages
+                                                (remove (comp (clojure.set/difference selected-players #{name}) :name))
+                                                (sort-by :name)
+                                                (mapk (fn [mage]
+                                                        (let [{:keys [name set]} mage]
+                                                          [:option {:value (mage->string mage)}
+                                                           (cond-> (ut/format-name name)
+                                                                   set (str " (" (ut/format-name-short set) ")"))]))))]]])))])]
+          [:td
+           (let [value          (cond
+                                  (= supply random-market) :random
+                                  (= supply balanced-market) :balanced
+                                  (= supply low-budget-market) :low-budget
+                                  (= supply prosperous-market) :prosperous
+                                  :else :custom)
+                 selected-cards (->> supply
+                                     (keep :card-name)
+                                     set)]
+             [:div
+              [:strong "Market: "] [:select {:value     value
+                                             :on-change (fn [event]
+                                                          (let [value (keyword (.. event -target -value))]
+                                                            (case value
+                                                              :random (swap! state assoc-in [:game-setup :supply] random-market)
+                                                              :balanced (swap! state assoc-in [:game-setup :supply] balanced-market)
+                                                              :low-budget (swap! state assoc-in [:game-setup :supply] low-budget-market)
+                                                              :prosperous (swap! state assoc-in [:game-setup :supply] prosperous-market)
+                                                              :custom nil)))}
+                                    [:<>
+                                     [:option {:value :random} "All random"]
+                                     [:option {:value :balanced} "Balanced"]
+                                     [:option {:value :low-budget} "Low budget"]
+                                     [:option {:value :prosperous} "Prosperous"]
+                                     (when (= :custom value)
+                                       [:option {:value :custom} "Custom"])]]
+              [:table
+               [:tbody
+                (for [row (range 3)]
+                  [:tr {:key (str "row" row)}
+                   (for [col (range 3)]
+                     (let [idx   (+ col (* 3 row))
+                           {:keys [type min-cost max-cost card-name]} (get supply idx)
+                           cards (case type
+                                   :gem gem/cards
+                                   :relic relic/cards
+                                   :spell spell/cards)]
+                       [:td {:key (str "cell" idx)}
+                        [:select {:style     (merge (button-style :type type
+                                                                  :width 40)
+                                                    {:-webkit-appearance :none
+                                                     :-moz-appearance    :none
+                                                     :text-indent        "1px"
+                                                     :text-overflow      ""})
+                                  :value     (or min-cost "-")
+                                  :disabled  card-name
+                                  :on-change (fn [event]
+                                               (let [value (.. event -target -value)]
+                                                 (if (= "-" value)
+                                                   (swap! state update-in [:game-setup :supply idx] dissoc :min-cost)
+                                                   (swap! state assoc-in [:game-setup :supply idx :min-cost] (js/parseInt value)))))}
+                         [:<>
+                          [:option {:value "-"}]
+                          (->> (range 3 (or (when max-cost (inc max-cost)) 9))
+                               (mapk (fn [n]
+                                       [:option {:value n} (str "$" n (if (= n max-cost) " =" " <="))])))]]
+                        [:select {:style     (button-style :type type
+                                                           :width 160)
+                                  :class     (button-class type)
+                                  :value     (or card-name
+                                                 :random)
+                                  :on-change (fn [event]
+                                               (let [value (keyword (.. event -target -value))]
+                                                 (swap! state update-in [:game-setup :supply idx] (fn [setup]
+                                                                                                    (if (= :random value)
+                                                                                                      (dissoc setup :card-name)
+                                                                                                      (-> setup
+                                                                                                          (assoc :card-name value)
+                                                                                                          (dissoc :min-cost
+                                                                                                                  :max-cost)))))))}
+                         [:<>
+                          [:option {:value :random} (str "Any " (ut/format-name type))]
+                          [:hr]
+                          (->> cards
+                               (remove (comp (clojure.set/difference selected-cards #{card-name}) :name))
+                               (sort-by (juxt :cost :name))
+                               (mapk (fn [{:keys [cost name]}]
+                                       [:option {:value name} (str "$" cost " - " (ut/format-name name))])))]]
+                        [:select {:style     (merge (button-style :type type
+                                                                  :width 40)
+                                                    {:-webkit-appearance :none
+                                                     :-moz-appearance    :none
+                                                     :text-indent        "1px"
+                                                     :text-overflow      ""})
+                                  :value     (or max-cost "-")
+                                  :disabled  card-name
+                                  :on-change (fn [event]
+                                               (let [value (.. event -target -value)]
+                                                 (if (= "-" value)
+                                                   (swap! state update-in [:game-setup :supply idx] dissoc :max-cost)
+                                                   (swap! state assoc-in [:game-setup :supply idx :max-cost] (js/parseInt value)))))}
+                         [:<>
+                          [:option {:value "-"}]
+                          (->> (range (or min-cost 3) 9)
+                               (mapk (fn [n]
+                                       [:option {:value n} (str (if (= n min-cost) "= " "<= ") "$" n)])))]]]))])]]])]]]]])))
+
+(defn home-page []
+  (fn []
+    (let [{:keys [setup-game? game selection expanded?]} @state
+          started? (-> @cmd/game-state :game count (> 1))]
+      (if setup-game?
+        [setup-game]
+        [:div [:h2 "Aeon's End"]
+         [:div
+          (if (or (:game-over game)
+                  (not started?))
+            [:button {:style    (button-style)
+                      :on-click #(swap! state assoc
+                                        :game nil
+                                        :setup-game? true)}
+             "New game"]
+            [:button {:style    (button-style)
+                      :on-click (fn [] (if (js/confirm "Are you sure you want to give up the current game? All progress will be lost.")
+                                         (swap! state assoc
+                                                :game nil
+                                                :setup-game? true)))}
+             "Resign"])
+          (let [disabled (not started?)]
+            [:button {:style    (button-style :disabled disabled)
+                      :disabled disabled
+                      :on-click (fn [] (if (js/confirm "Are you sure you want to restart the current game? All progress will be lost.")
+                                         (swap! state assoc :game (cmd/restart) :selection [])))}
+             "Retry"])]
+
+         [:table
+          [:tbody
+           [:tr
+            [:td {:col-span 2}
              (let [{:keys [name name-ui tier unleash-text additional-rules life deck play-area discard active?
                            cloaks fury husks tainted-jades tainted-track breaches corruptions devoured
-                           interaction choice-value]} (-> @state :game :nemesis)]
+                           interaction choice-value]} (:nemesis game)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th [(str "Nemesis - Tier " tier)
@@ -632,7 +787,7 @@
                               [:div {:style {:font-size "1.4em"}} name-ui]
                               [:div {:style {:font-size   "0.8em"
                                              :font-weight :normal}}
-                               "Difficulty: " (ut/format-name (-> @state :game :difficulty))]
+                               "Difficulty: " (ut/format-name (:difficulty game))]
                               [:div {:style {:font-size   "1.1em"
                                              :padding-top "3px"}}
                                "Life: " life]
@@ -705,145 +860,97 @@
                               {:nemesis? true}]]
                         (when devoured
                           [:td [view-expandable-pile :devoured/nemesis devoured
-                                {:nemesis? true}]])]]]]))]]
-         [:tr
-          [:td
-           (when-let [{:keys [deck discard]} (-> @state :game :turn-order)]
-             [:div
-              [:table {:style {:width "100%"}}
-               [:tbody
-                [:tr (map-tag :th ["Gravehold" "Turn order deck"])]
-                [:tr
-                 [:td
-                  (let [{:keys [life pillars]} (get-in @state [:game :gravehold])]
-                    [:div
-                     [:div "Life: " life]
-                     (when pillars
-                       [:div "Pillars: " pillars])])]
-                 [:td
-                  (let [number-of-cards (:number-of-cards deck)]
-                    [:div
-                     [view-expandable-pile :turn-order-discard discard
-                      {:deck [:button {:style    (button-style :disabled true)
-                                       :disabled true}
-                              (if (pos? number-of-cards)
-                                (str "Turn order x" number-of-cards)
-                                "(empty)")]}]
-                     (when (:visible-cards deck)
-                       (->> (reduce (fn [cards {:keys [option]}]
-                                      (let [pre  (take-while (comp not #{option} :name) cards)
-                                            post (drop (inc (count pre)) cards)]
-                                        (vec (concat pre post))))
-                                    (:visible-cards deck)
-                                    (:selection @state))
-                            (mapk (fn [{:keys [name name-ui type interaction choice-value]}]
-                                    (let [disabled (nil? interaction)]
-                                      [:div
-                                       "[ "
-                                       [:button {:style    (button-style :disabled disabled
-                                                                         :type type)
-                                                 :class    (button-class type)
-                                                 :disabled disabled
-                                                 :on-click (when interaction
-                                                             (fn [] (case interaction
-                                                                      :choosable (select! choice-value name)
-                                                                      :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
-                                        name-ui]
-                                       " ]"])))))])]
-                 (when-let [{:keys [conclusion text]} (-> @state :game :game-over)]
-                   [:td
-                    [:div {:style {:text-align :center}}
-                     [:div {:style {:font-size   "3em"
-                                    :font-weight :bold
-                                    :padding     "20px"
-                                    :color       (case conclusion
-                                                   :defeat :red
-                                                   :victory :green)}}
-                      (ut/format-name conclusion)]
-                     [:div
-                      (format-text text)]]])
-                 (when-let [choice (-> @state :game :choice)]
-                   (view-choice choice))
-                 [:td {:style {:max-width "100%"
-                               :float     :right}}
-                  [:div
-                   (let [disabled (-> @state :game :commands :can-undo? not)]
-                     [:button {:style    (button-style :disabled disabled)
-                               :disabled disabled
-                               :on-click (fn [] (swap! state assoc
-                                                       :game (cmd/undo)
-                                                       :selection []))}
-                      [:div {:style {:font-size "2em"
-                                     :padding   "10px"}}
-                       "Undo"]])]]]]]])
-
-           (if setup-game?
-             (let [players          (get-in @state [:game-setup :players])
-                   selected-players (->> players
-                                         (keep :name)
-                                         set)]
+                                {:nemesis? true}]])]]]])]]
+           [:tr
+            [:td
+             (when-let [{:keys [deck discard]} (:turn-order game)]
                [:div
-                [:div "Players: " [:select {:style     {:width              "20px"
-                                                        :padding            "4px"
-                                                        :-webkit-appearance :none
-                                                        :-moz-appearance    :none
-                                                        :text-indent        "1px"
-                                                        :text-overflow      ""}
-                                            :value     (count players)
-                                            :on-change (fn [event]
-                                                         (let [value (js/parseInt (.. event -target -value))
-                                                               diff  (- value (count players))]
-                                                           (swap! state assoc-in [:game-setup :players] (vec (if (pos? diff)
-                                                                                                               (concat players (repeat diff {}))
-                                                                                                               (take value players))))))}
-                                   [:<> (->> (range 1 5)
-                                             (mapk (fn [n]
-                                                     [:option {:value n} n])))]]]
-                (when (= 4 (count players))
-                  (let [turn-order-variant? (get-in @state [:game-setup :turn-order-variant?])]
-                    [:div "4p variant "
-                     [:input {:type     :checkbox
-                              :checked  turn-order-variant?
-                              :on-click #(swap! state update-in [:game-setup :turn-order-variant?] not)}]]))
-                (->> players
-                     (mapk-indexed (fn [player-no {:keys [name] :as mage}]
-                                     [:div [:select {:value     (or (mage->string mage) "random")
-                                                     :on-change (fn [event]
-                                                                  (let [value (.. event -target -value)]
-                                                                    (swap! state assoc-in [:game-setup :players player-no] (if (= "random" value)
-                                                                                                                             {}
-                                                                                                                             (string->mage value)))))}
-                                            [:<>
-                                             [:option {:value "random"} "Any mage"]
-                                             [:hr]
-                                             (->> mages/mages
-                                                  (remove (comp (clojure.set/difference selected-players #{name}) :name))
-                                                  (sort-by :name)
-                                                  (mapk (fn [mage]
-                                                          (let [{:keys [name set]} mage]
-                                                            [:option {:value (mage->string mage)}
-                                                             (cond-> (ut/format-name name)
-                                                                     set (str " (" (ut/format-name-short set) ")"))]))))]]])))])
-             (let [show-purchased? (get-in @state [:expanded? :purchased])
-                   players         (get-in @state [:game :players])]
+                [:table {:style {:width "100%"}}
+                 [:tbody
+                  [:tr (map-tag :th ["Gravehold" "Turn order deck"])]
+                  [:tr
+                   [:td
+                    (let [{:keys [life pillars]} (:gravehold game)]
+                      [:div
+                       [:div "Life: " life]
+                       (when pillars
+                         [:div "Pillars: " pillars])])]
+                   [:td
+                    (let [number-of-cards (:number-of-cards deck)]
+                      [:div
+                       [view-expandable-pile :turn-order-discard discard
+                        {:deck [:button {:style    (button-style :disabled true)
+                                         :disabled true}
+                                (if (pos? number-of-cards)
+                                  (str "Turn order x" number-of-cards)
+                                  "(empty)")]}]
+                       (when (:visible-cards deck)
+                         (->> (reduce (fn [cards {:keys [option]}]
+                                        (let [pre  (take-while (comp not #{option} :name) cards)
+                                              post (drop (inc (count pre)) cards)]
+                                          (vec (concat pre post))))
+                                      (:visible-cards deck)
+                                      selection)
+                              (mapk (fn [{:keys [name name-ui type interaction choice-value]}]
+                                      (let [disabled (nil? interaction)]
+                                        [:div
+                                         "[ "
+                                         [:button {:style    (button-style :disabled disabled
+                                                                           :type type)
+                                                   :class    (button-class type)
+                                                   :disabled disabled
+                                                   :on-click (when interaction
+                                                               (fn [] (case interaction
+                                                                        :choosable (select! choice-value name)
+                                                                        :quick-choosable (swap! state assoc :game (cmd/choose name)))))}
+                                          name-ui]
+                                         " ]"])))))])]
+                   (when-let [{:keys [conclusion text]} (:game-over game)]
+                     [:td
+                      [:div {:style {:text-align :center}}
+                       [:div {:style {:font-size   "3em"
+                                      :font-weight :bold
+                                      :padding     "20px"
+                                      :color       (case conclusion
+                                                     :defeat :red
+                                                     :victory :green)}}
+                        (ut/format-name conclusion)]
+                       [:div
+                        (format-text text)]]])
+                   (when (:choice game)
+                     (view-choice (:choice game)))
+                   [:td {:style {:max-width "100%"
+                                 :float     :right}}
+                    [:div
+                     (let [disabled (not (get-in game [:commands :can-undo?]))]
+                       [:button {:style    (button-style :disabled disabled)
+                                 :disabled disabled
+                                 :on-click (fn [] (swap! state assoc
+                                                         :game (cmd/undo)
+                                                         :selection []))}
+                        [:div {:style {:font-size "2em"
+                                       :padding   "10px"}}
+                         "Undo"]])]]]]]])
+
+             (let [show-purchased? (expanded? :purchased)
+                   {:keys [can-play-all-gems? can-discard-all? can-end-turn? confirm-end-turn]} (:commands game)]
                [:div
                 [:table
                  [:tbody
                   [:tr (map-tag :th ["Breach Mage" "Breaches" "Hand" "Play area" "Deck" "Discard" (when show-purchased? "Purchased")])]
-                  (->> players
+                  (->> (:players game)
                        (mapk-indexed (fn [player-no {:keys [name name-ui turn-order-token title type life ability aether breaches
                                                             hand play-area deck discard purchased trophies active? choice-value interaction]}]
-                                       (let [{:keys [max repeatable?]} (get-in @state [:game :choice])]
+                                       (let [{:keys [max repeatable?]} (:choice game)]
                                          [:tr {:class (when active?
                                                         (str "active-player-" (inc player-no)))}
                                           [:td
                                            [:div
-                                            (let [selection (:selection @state)
-                                                  disabled  (or (nil? interaction)
-                                                                (and (= :choosable interaction)
-                                                                     (= (count selection) max))
-                                                                (and (not repeatable?)
-                                                                     (->> selection (map :option) (some #{name choice-value}))))]
+                                            (let [disabled (or (nil? interaction)
+                                                               (and (= :choosable interaction)
+                                                                    (= (count selection) max))
+                                                               (and (not repeatable?)
+                                                                    (->> selection (map :option) (some #{name choice-value}))))]
                                               [:button {:style    (button-style :type type
                                                                                 :disabled disabled
                                                                                 :width "150px")
@@ -890,14 +997,16 @@
                                                 [:tbody {:style {:border :none}}
                                                  (mapk (partial view-breach max) breaches)]]]
                                           [:td [:div
-                                                (when (and active? (-> @state :game :commands :can-play-all-gems?))
+                                                (when (and active?
+                                                           can-play-all-gems?)
                                                   [:div [:button {:style    (button-style)
                                                                   :on-click (fn [] (swap! state assoc :game (cmd/play-all-gems)))}
                                                          "Play all Gems"]
                                                    [:hr]])
                                                 (mapk (partial view-card max) hand)]]
                                           [:td [:div
-                                                (when (and active? (get-in @state [:game :commands :can-discard-all?]))
+                                                (when (and active?
+                                                           can-discard-all?)
                                                   [:div
                                                    [:button {:style    (button-style)
                                                              :on-click (fn [] (swap! state assoc :game (cmd/discard-all)))}
@@ -905,9 +1014,10 @@
                                                    [:hr]])
                                                 (mapk (partial view-card max) play-area)]]
                                           [:td [:div
-                                                (when (and active? (get-in @state [:game :commands :can-end-turn?]))
+                                                (when (and active?
+                                                           can-end-turn?)
                                                   [:div
-                                                   (let [confirm-text (-> @state :game :commands :confirm-end-turn)]
+                                                   (let [confirm-text confirm-end-turn]
                                                      [:button {:style    (button-style)
                                                                :on-click (fn [] (if (or (not confirm-text)
                                                                                         (js/confirm (str confirm-text
@@ -922,132 +1032,35 @@
                                           (when show-purchased?
                                             [:td {:style {:background-color "#888"}}
                                              (->> purchased
-                                                  (mapk (partial view-card)))])]))))]]]))]
-          [:td
-           (if setup-game?
-             (let [supply         (get-in @state [:game-setup :supply])
-                   value          (cond
-                                    (= supply random-market) :random
-                                    (= supply balanced-market) :balanced
-                                    (= supply low-budget-market) :low-budget
-                                    (= supply prosperous-market) :prosperous
-                                    :else :custom)
-                   selected-cards (->> supply
-                                       (keep :card-name)
-                                       set)]
-               [:div
-                [:strong "Market: "] [:select {:value     value
-                                               :on-change (fn [event]
-                                                            (let [value (keyword (.. event -target -value))]
-                                                              (case value
-                                                                :random (swap! state assoc-in [:game-setup :supply] random-market)
-                                                                :balanced (swap! state assoc-in [:game-setup :supply] balanced-market)
-                                                                :low-budget (swap! state assoc-in [:game-setup :supply] low-budget-market)
-                                                                :prosperous (swap! state assoc-in [:game-setup :supply] prosperous-market)
-                                                                :custom nil)))}
-                                      [:<>
-                                       [:option {:value :random} "All random"]
-                                       [:option {:value :balanced} "Balanced"]
-                                       [:option {:value :low-budget} "Low budget"]
-                                       [:option {:value :prosperous} "Prosperous"]
-                                       (when (= :custom value)
-                                         [:option {:value :custom} "Custom"])]]
-                [:table
-                 [:tbody
-                  (for [row (range 3)]
-                    [:tr {:key (str "row" row)}
-                     (for [col (range 3)]
-                       (let [idx   (+ col (* 3 row))
-                             {:keys [type min-cost max-cost card-name]} (get supply idx)
-                             cards (case type
-                                     :gem gem/cards
-                                     :relic relic/cards
-                                     :spell spell/cards)]
-                         [:td {:key (str "cell" idx)}
-                          [:select {:style     (merge (button-style :type type
-                                                                    :max-width 40)
-                                                      {:-webkit-appearance :none
-                                                       :-moz-appearance    :none
-                                                       :text-indent        "1px"
-                                                       :text-overflow      ""})
-                                    :value     (or min-cost "-")
-                                    :disabled  card-name
-                                    :on-change (fn [event]
-                                                 (let [value (.. event -target -value)]
-                                                   (if (= "-" value)
-                                                     (swap! state update-in [:game-setup :supply idx] dissoc :min-cost)
-                                                     (swap! state assoc-in [:game-setup :supply idx :min-cost] (js/parseInt value)))))}
-                           [:<>
-                            [:option {:value "-"}]
-                            (->> (range 3 (or (when max-cost (inc max-cost)) 9))
-                                 (mapk (fn [n]
-                                         [:option {:value n} (str "$" n (if (= n max-cost) " =" " <="))])))]]
-                          [:select {:style     (button-style :type type
-                                                             :width 144)
-                                    :class     (button-class type)
-                                    :value     (or card-name
-                                                   :random)
-                                    :on-change (fn [event]
-                                                 (let [value (keyword (.. event -target -value))]
-                                                   (swap! state update-in [:game-setup :supply idx] (fn [setup]
-                                                                                                      (if (= :random value)
-                                                                                                        (dissoc setup :card-name)
-                                                                                                        (-> setup
-                                                                                                            (assoc :card-name value)
-                                                                                                            (dissoc :min-cost
-                                                                                                                    :max-cost)))))))}
-                           [:<>
-                            [:option {:value :random} (str "Any " (ut/format-name type))]
-                            [:hr]
-                            (->> cards
-                                 (remove (comp (clojure.set/difference selected-cards #{card-name}) :name))
-                                 (sort-by (juxt :cost :name))
-                                 (mapk (fn [{:keys [cost name]}]
-                                         [:option {:value name} (str "$" cost " - " (ut/format-name name))])))]]
-                          [:select {:style     (merge (button-style :type type
-                                                                    :max-width 40)
-                                                      {:-webkit-appearance :none
-                                                       :-moz-appearance    :none
-                                                       :text-indent        "1px"
-                                                       :text-overflow      ""})
-                                    :value     (or max-cost "-")
-                                    :disabled  card-name
-                                    :on-change (fn [event]
-                                                 (let [value (.. event -target -value)]
-                                                   (if (= "-" value)
-                                                     (swap! state update-in [:game-setup :supply idx] dissoc :max-cost)
-                                                     (swap! state assoc-in [:game-setup :supply idx :max-cost] (js/parseInt value)))))}
-                           [:<>
-                            [:option {:value "-"}]
-                            (->> (range (or min-cost 3) 9)
-                                 (mapk (fn [n]
-                                         [:option {:value n} (str (if (= n min-cost) "= " "<= ") "$" n)])))]]]))])]]])
-             (let [supply    (-> (:game @state) :supply)
-                   expanded? (get-in @state [:expanded? :market])]
+                                                  (mapk (partial view-card)))])]))))]]])]
+            [:td
+             (let [supply           (:supply game)
+                   market-expanded? (expanded? :market)]
                [:div {:style {:font-weight :bold}}
                 "Market " [:button {:on-click (fn [] (swap! state update-in [:expanded? :market] not))}
-                           (if expanded? "-" "+")]
+                           (if market-expanded? "-" "+")]
                 (let [[row1 supply] (split-at 3 supply)
                       [row2 row3] (split-at 3 supply)]
                   [:table
                    [:tbody
-                    (view-row expanded? row1)
-                    (view-row expanded? row2)
-                    (view-row expanded? row3)]])]))]]]]
-       (let [{:keys [number-of-cards] :as trash} (get-in @state [:game :trash])]
-         (when (pos? number-of-cards)
-           [:div (str "Destroyed")
-            [view-expandable-pile :trash trash]]))
-       (when-not setup-game?
-         (let [show-purchased? (get-in @state [:expanded? :purchased])]
+                    (view-row market-expanded? row1)
+                    (view-row market-expanded? row2)
+                    (view-row market-expanded? row3)]])])]]]]
+
+         (let [{:keys [number-of-cards] :as trash} (:trash game)]
+           (when (pos? number-of-cards)
+             [:div (str "Destroyed")
+              [view-expandable-pile :trash trash]]))
+
+         (let [show-purchased? (expanded? :purchased)]
            [:div
             "Mode: "
             [:button {:style    (button-style)
                       :on-click (fn [] (swap! state assoc :game (cmd/switch-mode)))}
-             (ut/format-name (-> @state :game :mode))]
+             (ut/format-name (:mode game))]
             " Purchased: "
             [:button {:on-click (fn [] (swap! state update-in [:expanded? :purchased] not))}
-             (if show-purchased? "Shown" "Hidden")]]))])))
+             (if show-purchased? "Shown" "Hidden")]])]))))
 
 ;; -------------------------
 ;; Initialize app
