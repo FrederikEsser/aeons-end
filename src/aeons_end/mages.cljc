@@ -1046,6 +1046,63 @@
                 :deck     [crystal crystal crystal crystal spark]
                 :ability  imperium-ritual})
 
+(defn eternal-ember-effect [game {:keys [player-no breach-no bonus-damage area card-name]
+                                  :or   {bonus-damage 0}}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (if breach-no
+                                        (concat (when (pos? bonus-damage)
+                                                  [[:deal-damage bonus-damage]])
+                                                [[:spell-effect {:breach-no breach-no :card-name card-name}]])
+                                        [[:deal-damage-to-target {:damage    (+ 1 bonus-damage)
+                                                                  :area      area
+                                                                  :card-name card-name}]])}))
+
+(defn eternal-ember-give-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]}]
+  (let [{:keys [name]} nemesis
+        damage         (+ 1 bonus-damage)
+        prepped-spells (->> (get-in game [:players player-no :breaches])
+                            (mapcat :prepped-spells))]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title   :eternal-ember
+                                                        :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
+                                                                         (when (not-empty prepped-spells)
+                                                                           ["OR"
+                                                                            "Cast one of your prepped spells without discarding it."]))
+                                                        :choice  [::eternal-ember-effect {:bonus-damage bonus-damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]
+                                                                  [:player :prepped-spells]]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::eternal-ember-effect      eternal-ember-effect
+                   ::eternal-ember-give-choice eternal-ember-give-choice})
+
+(def eternal-ember {:name    :eternal-ember
+                    :type    :spell
+                    :cost    0
+                    :text    ["Deal 1 damage."
+                              "OR"
+                              "Cast one of your prepped spells without discarding it."]
+                    :effects [[::eternal-ember-give-choice]]})
+
+(def sanctum-glyph {:name        :sanctum-glyph
+                    :activation  :your-main-phase
+                    :charge-cost 5
+                    :text        "Gravehold gains 7 life."
+                    :effects     [[:heal-gravehold 7]]})
+
+(def zhana {:name     :z'hana
+            :title    "Breach Mage Renegade"
+            :breaches [{:status :destroyed}
+                       {:stage 0}
+                       {:stage 1}
+                       {:stage 3}]
+            :hand     [eternal-ember crystal crystal crystal crystal]
+            :deck     [crystal crystal crystal crystal spark]
+            :ability  sanctum-glyph})
+
 (def mages [adelheim
             brama
             dezmodia
@@ -1064,4 +1121,5 @@
             remnant
             ulgimor
             xaxos
-            yan-magda])
+            yan-magda
+            zhana])
