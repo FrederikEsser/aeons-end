@@ -49,12 +49,13 @@
         check-stack
         (cond-> auto-resolve? (choose {:area :play-area :card-name name})))))
 
-(defn resolve-nemesis-cards-in-play [game]
+(defn resolve-nemesis-cards-in-play [game & {:keys [auto-resolve?]
+                                             :or   {auto-resolve? true}}]
   (let [{:keys [name]} (-> game :nemesis :play-area first)]
     (-> game
         (push-effect-stack {:effects [[:resolve-nemesis-cards-in-play]]})
         check-stack
-        (choose name))))
+        (cond-> auto-resolve? (choose name)))))
 
 (defn deal-damage [game damage]
   (-> game

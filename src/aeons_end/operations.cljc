@@ -73,13 +73,13 @@
     (effect-fn game args)))
 
 (defn check-stack [game]
-  (if (game-over? game)
+  (if-let [game-over (game-over? game)]
     (-> game
         (dissoc :effect-stack :current-player)
         (medley/update-existing :players (partial map (fn [{:keys [deck] :as player}]
                                                         (assoc player :revealed-cards (count deck)))))
-        (assoc :game-over (game-over? game)))
-    (let [[{:keys [player-no card-id effect args] :as top}] (get game :effect-stack)]
+        (assoc :game-over game-over))
+    (let [[{:keys [player-no card-id effect args]}] (get game :effect-stack)]
       (cond-> game
               effect (-> pop-effect-stack
                          (do-effect {:player-no player-no

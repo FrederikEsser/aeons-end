@@ -58,6 +58,7 @@
     :spell "spell"
     :attack "attack"
     :minion "minion"
+    :acolyte "acolyte"
     :power "power"
     :strike "strike"
     :corruption "corruption"
@@ -76,7 +77,7 @@
     nil))
 
 (defn button-style [& {:keys [disabled type status number-of-cards width min-width max-width]}]
-  (let [inverse? (or (#{:nemesis :sigil :husks :tainted} type)
+  (let [inverse? (or (#{:nemesis :sigil :husks :tainted :acolyte} type)
                      (<= 2 (:player-no type))
                      (= #{2 3} (:player-nos type))
                      (#{:closed :focused} status))]
@@ -103,10 +104,15 @@
      :border-color     (cond
                          (zero? number-of-cards) :red
                          (= :resolving status) :red
+                         (#{:gem :attack} type) "#9d77af"
+                         (#{:relic} type) "#6bb6dc"
+                         (#{:spell :power} type) "#f8c44e"
+                         (= :minion type) "#49c4e9"
                          (= :strike type) "#5e3628"
                          (= :husks type) "#232122"
                          (= :tainted type) "#40512c"
                          (= :corruption type) "#34971c"
+                         (= :acolyte type) "#0b2013"
                          (= :destroyed status) "#ccc"
                          (= :focused status) "#f9cf23"
                          (#{:breach :sigil} type) (cond
@@ -227,7 +233,7 @@
            text]))
 
 (defn view-nemesis-card [{:keys [name name-ui text quote choice-value type status cost number-of-cards
-                                 immediately-text to-discard-text power power-text life persistent-text
+                                 immediately-text to-discard-text power power-text life persistent-text blood-magic-text
                                  cast-text interaction] :as card}]
   (when card
     (let [selected? (->> (:selection @state) (some (comp #{name choice-value} :option)))
@@ -263,6 +269,8 @@
            (format-text nil (str "Life: " life)))
          (when persistent-text
            (format-text persistent-text "PERSISTENT"))
+         (when blood-magic-text
+           (format-text blood-magic-text "BLOOD MAGIC"))
          (when cast-text
            (format-text cast-text "Cast"))]
         (when number-of-cards
@@ -759,11 +767,13 @@
             [:td {:col-span 2}
              (let [{:keys [name name-ui tier unleash-text additional-rules life deck play-area discard active?
                            cloaks fury husks tainted-jades tainted-track breaches corruptions devoured
+                           acolytes acolytes-in-play
                            interaction choice-value]} (:nemesis game)]
                [:div [:table
                       [:tbody
                        [:tr (map-tag :th [(str "Nemesis - Tier " tier)
                                           (when breaches "Breaches")
+                                          (when acolytes-in-play "Acolytes")
                                           "Play area"
                                           (str "Deck" (when deck (str " (" (:number-of-cards deck) ")")))
                                           "Discard"
@@ -807,6 +817,10 @@
                                 [:div {:style {:font-size   "1.1em"
                                                :padding-top "3px"}}
                                  "Corruptions: " corruptions])
+                              (when acolytes
+                                [:div {:style {:font-size   "1.1em"
+                                               :padding-top "3px"}}
+                                 "Acolytes: " acolytes])
                               [:hr]
                               (format-text unleash-text "UNLEASH")]])
                           (when tainted-track
@@ -834,6 +848,8 @@
                           [:td [:table
                                 [:tbody {:style {:border :none}}
                                  (mapk view-nemesis-breach breaches)]]])
+                        (when acolytes-in-play
+                          [:td (mapk view-nemesis-card acolytes-in-play)])
                         [:td [:div
                               (when husks
                                 (let [{:keys [number-of-husks title swarm-text swarm-interval interaction choice-value]} husks

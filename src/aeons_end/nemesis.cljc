@@ -9,6 +9,7 @@
             [aeons-end.nemeses.blight-lord :refer [blight-lord]]
             [aeons-end.nemeses.crooked-mask :refer [crooked-mask]]
             [aeons-end.nemeses.prince-of-gluttons :refer [prince-of-gluttons]]
+            [aeons-end.nemeses.hollow-crown :refer [hollow-crown]]
             [aeons-end.nemeses.magus-of-cloaks :refer [magus-of-cloaks]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
@@ -62,6 +63,7 @@
 
 (defn resolve-nemesis-cards-in-play [{:keys [nemesis] :as game} _]
   (push-effect-stack game {:effects (->> (:play-area nemesis)
+                                         (filter (comp #{:attack :minion :power} :type))
                                          (map (fn [{:keys [type name power]}]
                                                 [:give-choice {:title   (ut/format-name (:name nemesis))
                                                                :text    (case type
@@ -102,7 +104,7 @@
                                        :effects   [[:activate-ability]]})))
 
 (defn draw-nemesis-card [{:keys [nemesis] :as game} _]
-  (let [{:keys [name type life] :as card} (get-in game [:nemesis :deck 0])]
+  (let [{:keys [name type] :as card} (get-in game [:nemesis :deck 0])]
     (cond-> game
             (:phase nemesis) (assoc-in [:nemesis :phase] :draw)
             card (push-effect-stack {:effects [[:move-card {:card-name name
@@ -161,8 +163,10 @@
 
 (defn deal-damage-to-nemesis [{:keys [nemesis] :as game} {:keys [damage]}]
   (if (pos? damage)
-    (let [{:keys [life shield when-hit]} nemesis
-          damage (get-damage damage :shield (ut/get-value shield game))]
+    (let [{:keys [life max-damage shield when-hit]} nemesis
+          damage (get-damage damage
+                             :shield (ut/get-value shield game)
+                             :max-damage (ut/get-value max-damage game))]
       (-> game
           (assoc-in [:nemesis :life] (max (- life damage) 0))
           (cond-> when-hit (push-effect-stack {:args    {:damage damage}
@@ -173,7 +177,7 @@
   (if (= :husks card-name)
     (deal-damage-to-husks game args)
     (let [{:keys [card idx]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
-          {:keys [life max-damage shield when-hit]} card
+          {:keys [life max-damage shield when-hit when-killed]} card
           damage  (get-damage damage
                               :shield (ut/get-value shield game)
                               :max-damage (ut/get-value max-damage game))
@@ -186,7 +190,8 @@
                                            (when (pos? damage)
                                              when-hit)
                                            (when killed?
-                                             kill-effects))})))))
+                                             (concat kill-effects
+                                                     when-killed)))})))))
 
 (defn deal-damage-to-target [game {:keys [player-no damage area card-name kill-effects]}]
   (push-effect-stack game {:player-no player-no
@@ -231,13 +236,15 @@
 
 (effects/register {:damage-gravehold damage-gravehold})
 
-(defn exhaust-player [game {:keys [player-no]}]
+(defn exhaust-player [{:keys [nemesis] :as game} {:keys [player-no]}]
   (let [{:keys [name ability]} (get-in game [:players player-no])
-        resolve-text (str (ut/format-name name) " exhausted")]
+        resolve-text (str (ut/format-name name) " exhausted")
+        {:keys [on-player-exhausted]} nemesis]
     (push-effect-stack game {:player-no player-no
-                             :effects   (concat [[:unleash {:resolving resolve-text}]
-                                                 [:unleash {:resolving resolve-text}]
-                                                 [:give-choice {:title   resolve-text
+                             :effects   (concat (or on-player-exhausted
+                                                    [[:unleash {:resolving resolve-text}]
+                                                     [:unleash {:resolving resolve-text}]])
+                                                [[:give-choice {:title   resolve-text
                                                                 :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
                                                                 :choice  [:destroy-breach {:put-prepped-spells-in :discard}]
                                                                 :options [:player :breaches]
@@ -292,6 +299,7 @@
               blight-lord
               crooked-mask
               prince-of-gluttons
+              hollow-crown
               magus-of-cloaks])
 
 (def basic-cards (concat

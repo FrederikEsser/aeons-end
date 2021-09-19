@@ -324,12 +324,12 @@
 (defn view-nemesis [{{:keys [name life play-area deck revealed revealed-cards discard
                              unleash-text additional-rules
                              fury husks tainted-jades tainted-track breaches
-                             corruption-deck devoured cloaks]} :nemesis
-                     {:keys [player-no] :as player}            :player
-                     choice                                    :choice
-                     resolving                                 :resolving
-                     current-player :current-player
-                     :as                                       game}]
+                             corruption-deck devoured cloaks acolytes]} :nemesis
+                     {:keys [player-no] :as player}                     :player
+                     choice                                             :choice
+                     resolving                                          :resolving
+                     current-player                                     :current-player
+                     :as                                                game}]
   (merge {:name-ui          (ut/format-name name)
           :tier             (ut/get-nemesis-tier game)
           :life             life
@@ -360,6 +360,7 @@
                                       (string/join "\n")))}
          (when (not-empty play-area)
            {:play-area (->> play-area
+                            (filter (comp #{:attack :minion :power} :type))
                             (map (fn [{:keys [name immediately to-discard power persistent life] :as card}]
                                    (let [can-discard? (can-discard? game {:player-no player-no
                                                                           :card      card})]
@@ -385,9 +386,25 @@
                                                                  :card-name name} choice)
                                             (choice-interaction {:area      :minions
                                                                  :card-name name} choice))))))})
+         (when acolytes
+           {:acolytes         (count acolytes)
+            :acolytes-in-play (->> play-area
+                                   (filter (comp #{:acolyte} :type))
+                                   (map (fn [{:keys [name life blood-magic] :as card}]
+                                          (merge (view-card card)
+                                                 (when (= resolving name)
+                                                   {:status :resolving})
+                                                 (when blood-magic
+                                                   {:blood-magic-text (:text blood-magic)})
+                                                 (when life
+                                                   {:life life})
+                                                 (choice-interaction {:area      :play-area
+                                                                      :card-name name} choice)
+                                                 (choice-interaction {:area      :minions
+                                                                      :card-name name} choice)))))})
          {:discard (merge
                      (when (not-empty discard)
-                       {:card (let [{:keys [name immediately to-discard power persistent life] :as card} (last discard)]
+                       {:card (let [{:keys [name immediately to-discard power persistent blood-magic life] :as card} (last discard)]
                                 (merge (view-card card)
                                        (when (= resolving name)
                                          {:status :resolving})
@@ -400,6 +417,8 @@
                                           :power-text (:text power)})
                                        (when persistent
                                          {:persistent-text (:text persistent)})
+                                       (when blood-magic
+                                         {:blood-magic-text (:text blood-magic)})
                                        (when life
                                          {:life life})
                                        (choice-interaction {:area      :discard
@@ -407,7 +426,7 @@
                      {:cards           (if (empty? discard)
                                          []
                                          (->> discard
-                                              (map (fn [{:keys [name text immediately to-discard power persistent life] :as card}]
+                                              (map (fn [{:keys [name text immediately to-discard power persistent blood-magic life] :as card}]
                                                      (merge (view-card card)
                                                             {:text (concat (when life
                                                                              [(str "Life: " life)])
@@ -420,7 +439,9 @@
                                                                            (when power
                                                                              (format-text (:text power) (str "POWER " (:power power))))
                                                                            (when persistent
-                                                                             (format-text (:text persistent) "PERSISTENT")))}
+                                                                             (format-text (:text persistent) "PERSISTENT"))
+                                                                           (when blood-magic
+                                                                             (format-text (:text blood-magic) "BLOOD MAGIC")))}
                                                             (when immediately
                                                               {:immediately-text (:text immediately)})
                                                             (when to-discard

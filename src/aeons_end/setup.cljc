@@ -10,7 +10,8 @@
             [aeons-end.cards.power :as power]
             [aeons-end.mages :as mages]
             [aeons-end.turn-order :as turn-order]
-            [aeons-end.utils :as ut :refer [player-starting-life gravehold-starting-life]]))
+            [aeons-end.utils :as ut :refer [player-starting-life gravehold-starting-life]]
+            [medley.core :as medley]))
 
 (def basic-nemesis-cards {1 {1 1
                              2 3
@@ -26,27 +27,28 @@
                              3 7}})
 
 (defn create-nemesis [{:keys [life cards] :as nemesis} & {:keys [number-of-players difficulty]}]
-  (let [life (case difficulty
-               :beginner (- life 10)
-               :extinction (+ life 10)
-               life)]
+  (let [life (when life
+               (case difficulty
+                 :beginner (- life 10)
+                 :extinction (+ life 10)
+                 life))]
     (-> nemesis
-        (assoc :life life
-               :max-life life
-               :deck (->> (range 1 4)
-                          (mapcat (fn [tier]
-                                    (->> nemesis/basic-cards
-                                         (filter (comp #{tier} :tier))
-                                         (group-by :type)
-                                         (mapcat (comp #(take-nth 2 %) shuffle second))
-                                         shuffle
-                                         (take (get-in basic-nemesis-cards [number-of-players tier]))
-                                         (concat (->> cards
-                                                      (filter (comp #{tier} :tier))))
-                                         shuffle)))
-                          (concat [])
-                          (mapv ut/give-id!))
-               :phase :out-of-turn)
+        (medley/assoc-some :life life
+                           :max-life life
+                           :deck (->> (range 1 4)
+                                      (mapcat (fn [tier]
+                                                (->> nemesis/basic-cards
+                                                     (filter (comp #{tier} :tier))
+                                                     (group-by :type)
+                                                     (mapcat (comp #(take-nth 2 %) shuffle second))
+                                                     shuffle
+                                                     (take (get-in basic-nemesis-cards [number-of-players tier]))
+                                                     (concat (->> cards
+                                                                  (filter (comp #{tier} :tier))))
+                                                     shuffle)))
+                                      (concat [])
+                                      (mapv ut/give-id!))
+                           :phase :out-of-turn)
         (dissoc :cards))))
 
 (defn select-nemesis [{:keys [name min-level max-level]} difficulty]
@@ -177,14 +179,14 @@
   (let [{:keys [difficulty nemesis]} (select-nemesis nemesis difficulty)
         turn-order-variant? (and turn-order-variant?
                                  (= 4 (count players)))]
-    (cond-> {:mode       :slow
-             :real-game? true
-             :difficulty difficulty
-             :nemesis    (create-nemesis nemesis
-                                         :number-of-players (count players)
-                                         :difficulty difficulty)
-             :gravehold  {:life (gravehold-starting-life difficulty)}
-             :supply     (create-supply supply)
-             :players    (->> (select-mages players turn-order-variant?)
-                              (mapv #(create-player % :difficulty difficulty)))
-             :turn-order (setup-turn-order (count players) turn-order-variant?)})))
+    {:mode       :slow
+     :real-game? true
+     :difficulty difficulty
+     :nemesis    (create-nemesis nemesis
+                                 :number-of-players (count players)
+                                 :difficulty difficulty)
+     :gravehold  {:life (gravehold-starting-life difficulty)}
+     :supply     (create-supply supply)
+     :players    (->> (select-mages players turn-order-variant?)
+                      (mapv #(create-player % :difficulty difficulty)))
+     :turn-order (setup-turn-order (count players) turn-order-variant?)}))

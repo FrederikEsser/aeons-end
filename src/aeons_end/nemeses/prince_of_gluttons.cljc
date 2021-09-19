@@ -159,6 +159,7 @@
                                                       :text       "Devour two cards from the second most expensive gem supply pile."
                                                       :choice     [::devour {:number-of-cards 2}]
                                                       :options    [:supply {:cost     (or cost :no-cost)
+                                                                            :type     :gem
                                                                             :devoured false}]
                                                       :min        1
                                                       :max        1

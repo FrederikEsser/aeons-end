@@ -123,3 +123,7 @@ background: radial-gradient(circle, #6fa444 0%, #4f7334 50%, #47542f 100%);
 .corruption {
 background: radial-gradient(circle, #b8d8aa 0%, #9dc968 50%, #279320 100%);
 }
+
+.acolyte {
+background: radial-gradient(circle, #45ad98 0%, #2f7d63 40%, #1f542c 100%);
+}

@@ -556,17 +556,22 @@
 (defn can-damage? [game {:keys [max-damage]}]
   (not= 0 (get-value max-damage game)))
 
-(defn options-from-nemesis [game {:keys [area]} & [{:keys [most-recent name not-names type breach-no opened]}]]
+(defn options-from-nemesis [{:keys [nemesis] :as game} {:keys [area]} & [{:keys [most-recent name not-names type breach-no opened most-life]}]]
   (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])
         husks? (and number-of-husks
                     (pos? number-of-husks))]
     (case area
-      :minions (let [valid-minions (concat (->> (get-in game [:nemesis :play-area])
-                                                (filter (comp #{:minion} :type))
-                                                (filter (partial can-damage? game))
-                                                (map :name))
-                                           (when husks? [:husks]))]
+      :minions (let [valid-minions (->> (get-in game [:nemesis :play-area])
+                                        (filter (comp (or (when type #{type})
+                                                          #{:minion :acolyte}) :type))
+                                        (filter (partial can-damage? game)))
+                     highest-life  (->> valid-minions
+                                        (keep :life)
+                                        (apply max 0))]
                  (cond->> valid-minions
+                          most-life (filter (comp #{highest-life} :life))
+                          :always (map :name)
+                          husks? (concat [:husks])
                           not-names (remove not-names)))
       :husks (when husks? [:husks])
       :play-area (cond->> (get-in game [:nemesis :play-area])
@@ -586,8 +591,9 @@
                            (false? opened) (remove (comp #{:opened} :status))
                            breach-no (filter (comp #{breach-no} :breach-no :option))
                            :always (map :option)))
-      :nemesis (cond->> [:nemesis]
-                        not-names (remove not-names))
+      :nemesis (when (can-damage? game nemesis)
+                 (cond->> [:nemesis]
+                          not-names (remove not-names)))
       [area])))
 
 (effects/register-options {:nemesis options-from-nemesis})

@@ -4,12 +4,6 @@
             [aeons-end.commands :refer [unfocus-nemesis-breach]]
             [aeons-end.operations :refer [push-effect-stack check-stack choose]]
             [aeons-end.nemeses.knight-of-shackles :as knight-of-shackles :refer :all]
-            [aeons-end.cards.starter :refer :all]
-            [aeons-end.cards.gem :refer []]
-            [aeons-end.cards.relic :refer []]
-            [aeons-end.cards.spell :refer []]
-            [aeons-end.mages :refer []]
-            [aeons-end.cards.attack :refer []]
             [aeons-end.utils :as ut]))
 
 (defn fixture [f]
