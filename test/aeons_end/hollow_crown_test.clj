@@ -11,6 +11,12 @@
 
 (use-fixtures :each fixture)
 
+(defn do-resolve-blood-magic [game acolyte & {:keys [avoid-self-damage]}]
+  (-> game
+      (push-effect-stack {:effects [[::hollow-crown/resolve-blood-magic {:card-name         acolyte
+                                                                         :avoid-self-damage avoid-self-damage}]]})
+      check-stack))
+
 (deftest hollow-crown-test
   (testing "Hollow Crown"
     (testing "Unleash"
@@ -208,3 +214,30 @@
               :nemesis   {:unleash             [[:damage-gravehold 1]]
                           :on-player-exhausted [[:damage-gravehold 4]]}
               :gravehold {:life 26}})))))
+
+(deftest edryss-tragg-test
+  (testing "Edryss Tragg"
+    (is (= (-> {:nemesis {:unleash   [[::hollow-crown/unleash]]
+                          :play-area [edryss-tragg]}
+                :players [{:life 8}]}
+               (do-resolve-blood-magic :edryss-tragg)
+               (choose {:player-no 0}))
+           {:nemesis {:unleash   [[::hollow-crown/unleash]]
+                      :play-area [edryss-tragg]}
+            :players [{:life 6}]}))
+    (is (= (-> {:nemesis {:unleash   [[::hollow-crown/unleash]]
+                          :play-area [edryss-tragg]}
+                :players [{:life 7}]}
+               (do-resolve-blood-magic :edryss-tragg)
+               (choose {:player-no 0}))
+           {:nemesis {:unleash   [[::hollow-crown/unleash]]
+                      :play-area [(assoc edryss-tragg :life 9)]}
+            :players [{:life 5}]}))
+    (is (= (-> {:nemesis {:unleash   [[::hollow-crown/unleash]]
+                          :play-area [edryss-tragg]}
+                :players [{:life 7}]}
+               (do-resolve-blood-magic :edryss-tragg :avoid-self-damage true)
+               (choose {:player-no 0}))
+           {:nemesis {:unleash   [[::hollow-crown/unleash]]
+                      :play-area [edryss-tragg]}
+            :players [{:life 5}]}))))

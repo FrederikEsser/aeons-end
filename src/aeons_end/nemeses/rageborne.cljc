@@ -297,6 +297,12 @@
             :effects [[::seize-choice]]
             :quote   "'How this cave has not long ago collapsed is a wonder and a mercy.' Nerva, Survivor"})
 
+(defn setup [game _]
+  (-> game
+      (update-in [:nemesis :strike-deck] (comp vec shuffle))))
+
+(effects/register {::setup setup})
+
 (defn additional-rules [{:keys [difficulty]}]
   ["When Rageborne Strikes, resolve the following in order:"
    "- Draw a card from the strike deck and resolve it."
@@ -311,6 +317,7 @@
 (def rageborne {:name             :rageborne
                 :level            2
                 :life             70
+                :setup            [[::setup]]
                 :unleash          [[::gain-fury]]
                 :unleash-text     "Rageborne gains one Fury."
                 :additional-rules ::additional-rules
@@ -319,10 +326,9 @@
                                    blood-cry invoke-carnage scorn
                                    avatar-of-wrath onslaught rolling-death]
                 :fury             1
-                :strike-deck      (->> [convoke
-                                        devastate
-                                        eviscerate
-                                        frenzy
-                                        raze
-                                        seize]
-                                       shuffle)})
+                :strike-deck      [convoke
+                                   devastate
+                                   eviscerate
+                                   frenzy
+                                   raze
+                                   seize]})

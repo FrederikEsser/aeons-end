@@ -57,6 +57,39 @@
 
 (effects/register {::draw-acolyte draw-acolyte})
 
+(defn edryss-tragg-self-damage [game {:keys [player-no]}]
+  (let [{:keys [life]} (get-in game [:players player-no])]
+    (cond-> game
+            (<= life 5) (push-effect-stack {:effects [[:deal-damage-to-minion {:card-name :edryss-tragg
+                                                                               :damage    2}]]}))))
+
+(defn edryss-tragg-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 2]
+                                       [::edryss-tragg-self-damage]]}))
+
+(defn edryss-tragg-blood-magic [game {:keys [avoid-self-damage]}]
+  (push-effect-stack game {:effects [[:give-choice {:title   :acolyte
+                                                    :text    "Any player suffers 2 damage."
+                                                    :choice  (if avoid-self-damage
+                                                               [:damage-player {:arg 2}]
+                                                               ::edryss-tragg-damage)
+                                                    :options [:players]
+                                                    :min     1
+                                                    :max     1}]]}))
+
+(effects/register {::edryss-tragg-self-damage edryss-tragg-self-damage
+                   ::edryss-tragg-damage      edryss-tragg-damage
+                   ::edryss-tragg-blood-magic edryss-tragg-blood-magic})
+
+(def edryss-tragg {:name        :edryss-tragg
+                   :type        :acolyte
+                   :life        11
+                   :blood-magic {:text    "Any player suffers 2 damage. Then, if that player has 5 life or less, this minion suffers 2 damage."
+                                 :effects [[::edryss-tragg-blood-magic]]}
+                   :when-killed [[::draw-acolyte]]
+                   :quote       "'We become that which is most feared.'"})
+
 (defn setup [{:keys [difficulty] :as game} _]
   (-> game
       (assoc-in [:nemesis :life] 1)
@@ -100,7 +133,7 @@
                    :max-damage          0
                    :victory-condition   ::victory-condition
                    :on-player-exhausted [[:damage-gravehold 4]]
-                   :acolytes            (->> (range 1 10)
+                   :acolytes            (->> (range 1 9)
                                              (map (fn [n]
                                                     {:name        (str "Acolyte " n)
                                                      :type        :acolyte
@@ -113,7 +146,7 @@
                                                                                             :min     1
                                                                                             :max     1}]]}
                                                      :when-killed [[::draw-acolyte]]}))
-                                             (concat []))
+                                             (concat [edryss-tragg]))
                    :cards               [(minion/generic 1) (power/generic 1) (attack/generic 1)
                                          (minion/generic 2) (power/generic 2) (attack/generic 2)
                                          (minion/generic 3) (power/generic 3) (attack/generic 3)]})
