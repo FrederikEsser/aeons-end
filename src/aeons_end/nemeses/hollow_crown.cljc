@@ -90,6 +90,104 @@
                    :when-killed [[::draw-acolyte]]
                    :quote       "'We become that which is most feared.'"})
 
+(defn holadran-damage [game {:keys [player-no player-card-names]}]
+  (let [player-numbers (or (some->> player-card-names
+                                    (map :player-no))
+                           (when player-no
+                             [player-no player-no]))]
+    (push-effect-stack game {:effects (->> player-numbers
+                                           (map (fn [player-no]
+                                                  [:damage-player {:player-no player-no :arg 1}])))})))
+
+(effects/register {::holadran-damage holadran-damage})
+
+(def holadran {:name        :holadran
+               :type        :acolyte
+               :life        11
+               :blood-magic {:text    "Two different players each suffer 1 damage."
+                             :effects [[:give-choice {:title   :holadran
+                                                      :text    "Two different players each suffer 1 damage."
+                                                      :choice  ::holadran-damage
+                                                      :options [:players]
+                                                      :min     2
+                                                      :max     2}]]}
+               :when-killed [[::draw-acolyte]]
+               :quote       "'We renounce our existence behind each mask.'"})
+
+(def kurgax {:name        :kurgax
+             :type        :acolyte
+             :life        11
+             :blood-magic {:text    ["Gravehold suffers 1 damage."
+                                     "Any player suffers 1 damage."]
+                           :effects [[:damage-gravehold 1]
+                                     [:give-choice {:title   :kurgax
+                                                    :text    "Any player suffers 1 damage."
+                                                    :choice  [:damage-player {:arg 1}]
+                                                    :options [:players]
+                                                    :min     1
+                                                    :max     1}]]}
+             :when-killed [[::draw-acolyte]]
+             :quote       "'We hunger to be nothing.'"})
+
+(def lurzan {:name        :lurzan
+             :type        :acolyte
+             :life        11
+             :blood-magic {:text    "The player with the lowest life suffers 1 damage."
+                           :effects [[:damage-gravehold 1]
+                                     [:give-choice {:title   :kurgax
+                                                    :text    "The player with the lowest life suffers 1 damage."
+                                                    :choice  [:damage-player {:arg 1}]
+                                                    :options [:players {:lowest-life true}]
+                                                    :min     1
+                                                    :max     1}]]}
+             :when-killed [[::draw-acolyte]]
+             :quote       "'We call the weak to feed the worthy."})
+
+(def nhavkalas {:name        :nhavkalas
+                :type        :acolyte
+                :life        11
+                :blood-magic {:text    ["Gravehold suffers 3 damage."
+                                        "This minion suffers 1 damage."]
+                              :effects [[:damage-gravehold 3]
+                                        [:deal-damage-to-minion {:card-name :nhavkalas
+                                                                 :damage    1}]]}
+                :when-killed [[::draw-acolyte]]
+                :quote       "'We cast aside the haven that has become our shackle.'"})
+
+(defn solara-discard [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title   :solara
+                                                      :text    "Discard 2 cards in hand."
+                                                      :choice  :discard-from-hand
+                                                      :options [:player :hand]
+                                                      :min     2
+                                                      :max     2}]]}))
+
+(defn solara-choice [{:keys [players] :as game} _]
+  (let [max-cards (->> players
+                       (map ut/count-cards-in-hand)
+                       (apply max 0))]
+    (push-effect-stack game {:effects [[:give-choice {:title   :solara
+                                                      :text    "Any player discards 2 cards in hand."
+                                                      :choice  ::solara-discard
+                                                      :options [:players {:min-hand (min 2 max-cards)}]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::solara-discard solara-discard
+                   ::solara-choice  solara-choice})
+
+(def solara {:name        :solara
+             :type        :acolyte
+             :life        11
+             :blood-magic {:text    ["Any player discards 2 cards in hand."
+                                     "This minion suffers 3 damage."]
+                           :effects [[::solara-choice]
+                                     [:deal-damage-to-minion {:card-name :solara
+                                                              :damage    3}]]}
+             :when-killed [[::draw-acolyte]]
+             :quote       "'We wield the breach in reverence to those from beyond it.'"})
+
 (defn setup [{:keys [difficulty] :as game} _]
   (-> game
       (assoc-in [:nemesis :life] 1)
@@ -133,20 +231,21 @@
                    :max-damage          0
                    :victory-condition   ::victory-condition
                    :on-player-exhausted [[:damage-gravehold 4]]
-                   :acolytes            (->> (range 1 9)
+                   :acolytes            (->> (range 1 4)
                                              (map (fn [n]
                                                     {:name        (str "Acolyte " n)
                                                      :type        :acolyte
                                                      :life        11
-                                                     :blood-magic {:text    "Any player suffers 1 damage."
+                                                     :blood-magic {:text    "Any player suffers 2 damage."
                                                                    :effects [[:give-choice {:title   :acolyte
-                                                                                            :text    "Any player suffers 1 damage."
-                                                                                            :choice  [:damage-player {:arg 1}]
+                                                                                            :text    "Any player suffers 2 damage."
+                                                                                            :choice  [:damage-player {:arg 2}]
                                                                                             :options [:players]
                                                                                             :min     1
                                                                                             :max     1}]]}
                                                      :when-killed [[::draw-acolyte]]}))
-                                             (concat [edryss-tragg]))
+                                             (concat [edryss-tragg holadran kurgax
+                                                      lurzan nhavkalas solara]))
                    :cards               [(minion/generic 1) (power/generic 1) (attack/generic 1)
                                          (minion/generic 2) (power/generic 2) (attack/generic 2)
                                          (minion/generic 3) (power/generic 3) (attack/generic 3)]})
