@@ -3,9 +3,7 @@
             [aeons-end.effects :as effects]
             [aeons-end.utils :as ut]
             [medley.core :as medley]
-            [aeons-end.cards.minion :as minion]
-            [aeons-end.cards.power :as power]
-            [aeons-end.cards.attack :as attack]))
+            [aeons-end.cards.power :as power]))
 
 (defn resolve-blood-magic [game {:keys [card-name avoid-self-damage]}]
   (let [{:keys [effects]} (-> (ut/get-card-idx game [:nemesis :play-area] {:name card-name})
@@ -56,6 +54,18 @@
                                                [:initialize-nemesis-card {:card-name name}]]}))))
 
 (effects/register {::draw-acolyte draw-acolyte})
+
+(defn heal-acolyte [game {:keys [card-name arg]}]
+  (let [{{:keys [life max-life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
+    (ut/update-in-vec game [:nemesis :play-area] {:name card-name} assoc :life (min (+ life arg)
+                                                                                    max-life))))
+
+(effects/register {::heal-acolyte heal-acolyte})
+
+(defn shuffle-acolytes [game _]
+  (update-in game [:nemesis :acolytes] (comp vec shuffle)))
+
+(effects/register {::shuffle-acolytes shuffle-acolytes})
 
 (defn edryss-tragg-self-damage [game {:keys [player-no]}]
   (let [{:keys [life]} (get-in game [:players player-no])]
@@ -188,11 +198,179 @@
              :when-killed [[::draw-acolyte]]
              :quote       "'We wield the breach in reverence to those from beyond it.'"})
 
+(defn ascend-heal-and-resolve [game {:keys [card-name]}]
+  (push-effect-stack game {:effects [[::heal-acolyte {:card-name card-name
+                                                      :arg       10}]
+                                     [::resolve-blood-magic {:card-name card-name}]]}))
+
+(effects/register {::ascend-heal-and-resolve ascend-heal-and-resolve})
+
+(def ascend {:name    :ascend
+             :type    :attack
+             :tier    2
+             :text    ["Unleash."
+                       "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Effect."]
+             :effects [[:unleash]
+                       [:give-choice {:title   :ascend
+                                      :text    "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Effect."
+                                      :choice  ::ascend-heal-and-resolve
+                                      :options [:nemesis :minions {:type        :acolyte
+                                                                   :lowest-life true}]
+                                      :min     1
+                                      :max     1}]]
+             :quote   "'Perhaps it is not our doom, Brama. Perhaps it is our very maker.' Xaxos, Voidbringer"})
+
+(defn beseech-return-acolyte [game {:keys [card-name]}]
+  (push-effect-stack game {:effects [[::heal-acolyte {:card-name card-name
+                                                      :arg       10}]
+                                     [:move-card {:card-name card-name
+                                                  :from      :play-area
+                                                  :to        :acolytes}]]}))
+
+(effects/register {::beseech-return-acolyte beseech-return-acolyte})
+
+(def beseech {:name    :beseech
+              :type    :attack
+              :tier    1
+              :text    ["Place the acolyte in play with the lowest life on the bottom of the acolyte deck. Draw an acolyte."
+                        "Unleash."]
+              :effects [[:give-choice {:title   :beseech
+                                       :text    "Place the acolyte in play with the lowest life on the bottom of the acolyte deck."
+                                       :choice  ::beseech-return-acolyte
+                                       :options [:nemesis :minions {:type        :acolyte
+                                                                    :lowest-life true}]
+                                       :min     1
+                                       :max     1}]
+                        [::draw-acolyte]
+                        [:unleash]]
+              :quote   "'The Hollow Crown gestured to the acolyte, who removed its mask and walked into the blinding light within the breach.'"})
+
+(def dominate {:name    :dominate
+               :type    :attack
+               :tier    3
+               :text    ["Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."
+                         "Repeat this one additional time."]
+               :effects [[::resolve-all-acolytes]
+                         [::resolve-all-acolytes]]
+               :quote   "'Behind their masks is nothing, youngling. They have made their choices.' Gex, Breach Mage Advisor"})
+
+(def enslave {:name    :enslave
+              :type    :attack
+              :tier    1
+              :text    "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."
+              :effects [[::resolve-all-acolytes]]
+              :quote   "'It has but one weapon: blood obedience.'"})
+
+(def infernal-domain {:name       :infernal-domain
+                      :type       :power
+                      :tier       2
+                      :to-discard {:text      "Spend 8 Aether."
+                                   :predicate [::power/can-afford? {:amount 8}]
+                                   :effects   [[:pay {:amount 8
+                                                      :type   :discard-power-card}]]}
+                      :power      {:power   2
+                                   :text    ["Draw an acolyte."
+                                             "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."]
+                                   :effects [[::draw-acolyte]
+                                             [::resolve-all-acolytes]]}})
+
+(def nameless-faith {:name       :nameless-faith
+                     :type       :power
+                     :tier       3
+                     :to-discard {:text      "Spend 8 Aether."
+                                  :predicate [::power/can-afford? {:amount 8}]
+                                  :effects   [[:pay {:amount 8
+                                                     :type   :discard-power-card}]]}
+                     :power      {:power   1
+                                  :text    ["Shuffle the two most recently discarded acolytes in the acolyte discard pile into the acolyte deck."
+                                            "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."]
+                                  :effects [[:give-choice {:title   :nameless-faith
+                                                           :text    "Shuffle the two most recently discarded acolytes in the acolyte discard pile into the acolyte deck."
+                                                           :choice  [:move-card {:from :discard
+                                                                                 :to   :acolytes}]
+                                                           :options [:nemesis :discard {:type :acolyte :most-recent true}]
+                                                           :min     1
+                                                           :max     1}]
+                                            [:give-choice {:title   :nameless-faith
+                                                           :text    "Shuffle the most recently discarded acolyte in the acolyte discard pile into the acolyte deck."
+                                                           :choice  [:move-card {:from :discard
+                                                                                 :to   :acolytes}]
+                                                           :options [:nemesis :discard {:type :acolyte :most-recent true}]
+                                                           :min     1
+                                                           :max     1}]
+                                            [::shuffle-acolytes]
+                                            [::resolve-all-acolytes]]}})
+
+(defn reign-resolve [game {:keys [card-name]}]
+  (push-effect-stack game {:effects [[::resolve-blood-magic {:card-name card-name}]
+                                     [:deal-damage-to-minion {:card-name card-name
+                                                              :damage    6}]]}))
+
+(effects/register {::reign-resolve reign-resolve})
+
+(def reign {:name    :reign
+            :type    :attack
+            :tier    2
+            :text    ["Resolve the Blood Magic effect of the acolyte with the most life. That acolyte suffers 6 damage."
+                      "Unleash twice."]
+            :effects [[:give-choice {:title   :reign
+                                     :text    "Resolve the Blood Magic effect of the acolyte with the most life. That acolyte suffers 6 damage."
+                                     :choice  ::reign-resolve
+                                     :options [:nemesis :minions {:type      :acolyte
+                                                                  :most-life true}]
+                                     :min     1
+                                     :max     1}]
+                      [:unleash]
+                      [:unleash]]
+            :quote   "'As it passed through the city, men and women dropped to their knees faithfully, their eyes heavy with tears of awe.'"})
+
+(defn thronewatch-resolve [game {:keys [card-name]}]
+  (push-effect-stack game {:effects [[::resolve-blood-magic {:card-name card-name}]
+                                     [:deal-damage-to-minion {:card-name card-name
+                                                              :damage    1}]]}))
+
+(effects/register {::thronewatch-resolve thronewatch-resolve})
+
+(def thronewatch {:name       :thronewatch
+                  :type       :minion
+                  :tier       1
+                  :life       6
+                  :persistent {:text    "Resolve the Blood Magic effect of the acolyte with the lowest life. That acolyte suffers 1 damage."
+                               :effects [[:give-choice {:title   :thronewatch
+                                                        :text    "Resolve the Blood Magic effect of the acolyte with the lowest life. That acolyte suffers 1 damage."
+                                                        :choice  ::thronewatch-resolve
+                                                        :options [:nemesis :minions {:type        :acolyte
+                                                                                     :lowest-life true}]
+                                                        :min     1
+                                                        :max     1}]]}})
+
+(defn viscera-bride-heal-and-resolve [game {:keys [card-name]}]
+  (push-effect-stack game {:effects [[::heal-acolyte {:card-name card-name
+                                                      :arg       10}]
+                                     [::resolve-blood-magic {:card-name card-name}]
+                                     [::resolve-blood-magic {:card-name card-name}]]}))
+
+(effects/register {::viscera-bride-heal-and-resolve viscera-bride-heal-and-resolve})
+
+(def viscera-bride {:name       :viscera-bride
+                    :type       :minion
+                    :tier       3
+                    :life       18
+                    :persistent {:text    "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Magic effect twice."
+                                 :effects [[:give-choice {:title   :viscera-bride
+                                                          :text    "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Magic effect twice."
+                                                          :choice  ::viscera-bride-heal-and-resolve
+                                                          :options [:nemesis :minions {:type        :acolyte
+                                                                                       :lowest-life true}]
+                                                          :min     1
+                                                          :max     1}]]}
+                    :quote      "'All kings must have a queen.' Dezmodia, Voidborn Prodigy"})
+
 (defn setup [{:keys [difficulty] :as game} _]
   (-> game
       (assoc-in [:nemesis :life] 1)
-      (update-in [:nemesis :acolytes] (comp vec shuffle))
-      (push-effect-stack {:effects (concat [[::draw-acolyte]
+      (push-effect-stack {:effects (concat [[::shuffle-acolytes]
+                                            [::draw-acolyte]
                                             [::draw-acolyte]]
                                            (when (#{:beginner} difficulty)
                                              [[:move-card {:from          :acolytes
@@ -246,6 +424,6 @@
                                                      :when-killed [[::draw-acolyte]]}))
                                              (concat [edryss-tragg holadran kurgax
                                                       lurzan nhavkalas solara]))
-                   :cards               [(minion/generic 1) (power/generic 1) (attack/generic 1)
-                                         (minion/generic 2) (power/generic 2) (attack/generic 2)
-                                         (minion/generic 3) (power/generic 3) (attack/generic 3)]})
+                   :cards               [beseech enslave thronewatch
+                                         ascend infernal-domain reign
+                                         dominate nameless-faith viscera-bride]})

@@ -386,7 +386,7 @@
                                                                  :card-name name} choice)
                                             (choice-interaction {:area      :minions
                                                                  :card-name name} choice))))))})
-         (when acolytes
+         (when (= :hollow-crown name)
            {:acolytes         (count acolytes)
             :acolytes-in-play (->> play-area
                                    (filter (comp #{:acolyte} :type))

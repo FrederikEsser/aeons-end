@@ -556,7 +556,7 @@
 (defn can-damage? [game {:keys [max-damage]}]
   (not= 0 (get-value max-damage game)))
 
-(defn options-from-nemesis [{:keys [nemesis] :as game} {:keys [area]} & [{:keys [most-recent name not-names type breach-no opened most-life]}]]
+(defn options-from-nemesis [{:keys [nemesis] :as game} {:keys [area]} & [{:keys [most-recent name not-names type breach-no opened lowest-life most-life]}]]
   (let [{:keys [number-of-husks]} (get-in game [:nemesis :husks])
         husks? (and number-of-husks
                     (pos? number-of-husks))]
@@ -565,11 +565,12 @@
                                         (filter (comp (or (when type #{type})
                                                           #{:minion :acolyte}) :type))
                                         (filter (partial can-damage? game)))
-                     highest-life  (->> valid-minions
+                     life-values   (->> valid-minions
                                         (keep :life)
-                                        (apply max 0))]
+                                        sort)]
                  (cond->> valid-minions
-                          most-life (filter (comp #{highest-life} :life))
+                          lowest-life (filter (comp #{(first life-values)} :life))
+                          most-life (filter (comp #{(last life-values)} :life))
                           :always (map :name)
                           husks? (concat [:husks])
                           not-names (remove not-names)))
