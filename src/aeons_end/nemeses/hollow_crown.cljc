@@ -32,7 +32,7 @@
                            (:resolving game))
                        "unleash")]
     (push-effect-stack game {:effects (if (#{:expert :extinction} difficulty)
-                                        [[::resolve-all-acolytes]]
+                                        [[::resolve-all-acolytes {:title title}]]
                                         [[:give-choice {:title   title
                                                         :text    "Resolve the Blood Magic effect of the acolyte with the highest life."
                                                         :choice  ::resolve-blood-magic
@@ -67,6 +67,25 @@
 
 (effects/register {::shuffle-acolytes shuffle-acolytes})
 
+(defn bezu-damage [{:keys [players] :as game} {:keys [avoid-self-damage]}]
+  (let [damage (->> players
+                    (map ut/count-prepped-spells)
+                    (apply max))]
+    (push-effect-stack game {:effects (concat [[:damage-gravehold damage]]
+                                              (when-not avoid-self-damage
+                                                [[:deal-damage-to-minion {:card-name :bezu
+                                                                          :damage    damage}]]))})))
+
+(effects/register {::bezu-damage bezu-damage})
+
+(def bezu {:name        :bezu
+           :type        :acolyte
+           :life        11
+           :blood-magic {:text    "Gravehold and this minion suffer 1 damage for each spell prepped by the player with the most prepped spells."
+                         :effects [[::bezu-damage]]}
+           :when-killed [[::draw-acolyte]]
+           :quote       "'We find wisdom in their great cruelty.'"})
+
 (defn edryss-tragg-self-damage [game {:keys [player-no]}]
   (let [{:keys [life]} (get-in game [:players player-no])]
     (cond-> game
@@ -79,7 +98,7 @@
                                        [::edryss-tragg-self-damage]]}))
 
 (defn edryss-tragg-blood-magic [game {:keys [avoid-self-damage]}]
-  (push-effect-stack game {:effects [[:give-choice {:title   :acolyte
+  (push-effect-stack game {:effects [[:give-choice {:title   :edryss-tragg
                                                     :text    "Any player suffers 2 damage."
                                                     :choice  (if avoid-self-damage
                                                                [:damage-player {:arg 2}]
@@ -144,7 +163,7 @@
              :life        11
              :blood-magic {:text    "The player with the lowest life suffers 1 damage."
                            :effects [[:damage-gravehold 1]
-                                     [:give-choice {:title   :kurgax
+                                     [:give-choice {:title   :lurzan
                                                     :text    "The player with the lowest life suffers 1 damage."
                                                     :choice  [:damage-player {:arg 1}]
                                                     :options [:players {:lowest-life true}]
@@ -152,6 +171,36 @@
                                                     :max     1}]]}
              :when-killed [[::draw-acolyte]]
              :quote       "'We call the weak to feed the worthy."})
+
+(defn mord-damage [game {:keys [player-no avoid-self-damage] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   (concat [[:spend-charges 1]
+                                               [:damage-gravehold 1]]
+                                              (when-not avoid-self-damage
+                                                [[:deal-damage-to-minion {:card-name :mord
+                                                                          :damage    1}]]))}))
+
+(defn mord-choice [game {:keys [avoid-self-damage] :as args}]
+  (push-effect-stack game {:effects [[:give-choice {:title     :mord
+                                                    :text      "Any player loses 1 charge, Gravehold suffers 1 damage, and this minion suffers 1 damage."
+                                                    :choice    [::mord-damage {:avoid-self-damage avoid-self-damage}]
+                                                    :options   [:players :ability {:min-charges 1}]
+                                                    :or-choice {:text    "Gravehold suffers 3 damage."
+                                                                :effects [[:damage-gravehold 3]]}
+                                                    :max       1}]]}))
+
+(effects/register {::mord-damage mord-damage
+                   ::mord-choice mord-choice})
+
+(def mord {:name        :mord
+           :type        :acolyte
+           :life        11
+           :blood-magic {:text    ["Gravehold suffers 3 damage."
+                                   "OR"
+                                   "Any player loses 1 charge, Gravehold suffers 1 damage, and this minion suffers 1 damage."]
+                         :effects [[::mord-choice]]}
+           :when-killed [[::draw-acolyte]]
+           :quote       "'We wipe the sister-words from our tongues to taste oblivion.'"})
 
 (def nhavkalas {:name        :nhavkalas
                 :type        :acolyte
@@ -163,6 +212,41 @@
                                                                  :damage    1}]]}
                 :when-killed [[::draw-acolyte]]
                 :quote       "'We cast aside the haven that has become our shackle.'"})
+
+(defn ren-goda-discard [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:damage-player 1]
+                                       [:discard-from-hand {:card-name card-name}]]}))
+
+(defn ren-goda-damage [game {:keys [player-no]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:give-choice {:title     "Ren-Goda"
+                                                      :text      "Discard the most expensive card in your hand and suffer 1 damage."
+                                                      :choice    ::ren-goda-discard
+                                                      :options   [:player :hand {:most-expensive true}]
+                                                      :or-choice {:text    "Suffer 2 damage."
+                                                                  :effects [[:damage-player 2]]}
+                                                      :max       1}]]}))
+
+(effects/register {::ren-goda-discard ren-goda-discard
+                   ::ren-goda-damage  ren-goda-damage})
+
+(def ren-goda {:name        "Ren-Goda"
+               :type        :acolyte
+               :life        11
+               :blood-magic {:text    ["Any player suffers 2 damage."
+                                       "OR"
+                                       "Any player suffers 1 damage and discards their most expensive card in hand."]
+                             :effects [[:give-choice {:title   "Ren-Goda"
+                                                      :text    ["Any player suffers 2 damage."
+                                                                "OR"
+                                                                "Any player suffers 1 damage and discards their most expensive card in hand."]
+                                                      :choice  ::ren-goda-damage
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]}
+               :when-killed [[::draw-acolyte]]
+               :quote       "'We honor the void in blood.'"})
 
 (defn solara-discard [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
@@ -250,15 +334,15 @@
                :tier    3
                :text    ["Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."
                          "Repeat this one additional time."]
-               :effects [[::resolve-all-acolytes]
-                         [::resolve-all-acolytes]]
+               :effects [[::resolve-all-acolytes {:title :dominate}]
+                         [::resolve-all-acolytes {:title :dominate}]]
                :quote   "'Behind their masks is nothing, youngling. They have made their choices.' Gex, Breach Mage Advisor"})
 
 (def enslave {:name    :enslave
               :type    :attack
               :tier    1
               :text    "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."
-              :effects [[::resolve-all-acolytes]]
+              :effects [[::resolve-all-acolytes {:title :enslave}]]
               :quote   "'It has but one weapon: blood obedience.'"})
 
 (def infernal-domain {:name       :infernal-domain
@@ -272,7 +356,7 @@
                                    :text    ["Draw an acolyte."
                                              "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."]
                                    :effects [[::draw-acolyte]
-                                             [::resolve-all-acolytes]]}})
+                                             [::resolve-all-acolytes {:title :infernal-domain}]]}})
 
 (def nameless-faith {:name       :nameless-faith
                      :type       :power
@@ -299,7 +383,7 @@
                                                            :min     1
                                                            :max     1}]
                                             [::shuffle-acolytes]
-                                            [::resolve-all-acolytes]]}})
+                                            [::resolve-all-acolytes {:title :nameless-faith}]]}})
 
 (defn reign-resolve [game {:keys [card-name]}]
   (push-effect-stack game {:effects [[::resolve-blood-magic {:card-name card-name}]
@@ -409,21 +493,9 @@
                    :max-damage          0
                    :victory-condition   ::victory-condition
                    :on-player-exhausted [[:damage-gravehold 4]]
-                   :acolytes            (->> (range 1 4)
-                                             (map (fn [n]
-                                                    {:name        (str "Acolyte " n)
-                                                     :type        :acolyte
-                                                     :life        11
-                                                     :blood-magic {:text    "Any player suffers 2 damage."
-                                                                   :effects [[:give-choice {:title   :acolyte
-                                                                                            :text    "Any player suffers 2 damage."
-                                                                                            :choice  [:damage-player {:arg 2}]
-                                                                                            :options [:players]
-                                                                                            :min     1
-                                                                                            :max     1}]]}
-                                                     :when-killed [[::draw-acolyte]]}))
-                                             (concat [edryss-tragg holadran kurgax
-                                                      lurzan nhavkalas solara]))
+                   :acolytes            [bezu edryss-tragg holadran
+                                         kurgax lurzan mord
+                                         nhavkalas ren-goda solara]
                    :cards               [beseech enslave thronewatch
                                          ascend infernal-domain reign
                                          dominate nameless-faith viscera-bride]})
