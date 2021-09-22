@@ -367,8 +367,7 @@
                        (add-card [:players player-no :gaining] :top (dissoc card :face))
                        (push-effect-stack {:player-no player-no
                                            :effects   [[:on-gain gain-args]
-                                                       [:finalize-gain gain-args]]})
-                       check-stack)))
+                                                       [:finalize-gain gain-args]]}))))
     game))
 
 (defn overpay-choice [game {:keys [player-no amount effect]}]
@@ -563,13 +562,11 @@
       (push-effect-stack game {:player-no player-no
                                :effects   [[:flip-discard]
                                            [:move-card args]]})
-      (-> game
-          (push-effect-stack {:player-no player-no
-                              :effects   [[:do-move-card (merge args card-info)]
-                                          (when (= to :trash)
-                                            [:on-trash (merge args {:card-name (:name card)
-                                                                    :card-id   (:id card)})])]})
-          check-stack))))
+      (push-effect-stack game {:player-no player-no
+                               :effects   [[:do-move-card (merge args card-info)]
+                                           (when (= to :trash)
+                                             [:on-trash (merge args {:card-name (:name card)
+                                                                     :card-id   (:id card)})])]}))))
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position to-position] :as args}]
   (assert (or card-name

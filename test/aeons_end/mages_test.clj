@@ -1275,6 +1275,80 @@
                          :trophies 4}]
               :nemesis {:life 42}})))))
 
+(deftest reeve-test
+  (testing "Reeve"
+    (testing "Obsidian Shard"
+      (is (= (-> {:players [{:hand [obsidian-shard]
+                             :life 10}]}
+                 (play 0 :obsidian-shard)
+                 (choose nil))
+             {:players [{:play-area [obsidian-shard]
+                         :aether    1
+                         :life      10}]}))
+      (is (= (-> {:players [{:hand [obsidian-shard]
+                             :life 10}]}
+                 (play 0 :obsidian-shard)
+                 (choose {:player-no 0}))
+             {:players [{:play-area [obsidian-shard]
+                         :aether    3
+                         :life      9}]})))
+    (testing "Quelling Blade"
+      (is (= (-> {:players [{:ability (assoc quelling-blade :charges 4)}]
+                  :nemesis {:play-area [{:name :minion-1
+                                         :type :minion
+                                         :life 10}
+                                        {:name :minion-2
+                                         :type :minion
+                                         :life 10}]}}
+                 (activate-ability 0)
+                 (choose :minion-1)
+                 (choose :minion-2))
+             {:players [{:ability (assoc quelling-blade :charges 0)}]
+              :nemesis {:play-area [{:name :minion-1
+                                     :type :minion
+                                     :life 5}
+                                    {:name :minion-2
+                                     :type :minion
+                                     :life 7}]}}))
+      (is (= (-> {:players [{:ability (assoc quelling-blade :charges 4)}]
+                  :nemesis {:play-area [{:name :minion-1
+                                         :type :minion
+                                         :life 10}]}}
+                 (activate-ability 0)
+                 (choose :minion-1))
+             {:players [{:ability (assoc quelling-blade :charges 0)}]
+              :nemesis {:play-area [{:name :minion-1
+                                     :type :minion
+                                     :life 5}]}}))
+      (is (= (-> {:players [{:ability (assoc quelling-blade :charges 4)}]
+                  :nemesis {:life 50}}
+                 (activate-ability 0))
+             {:players [{:ability (assoc quelling-blade :charges 0)}]
+              :nemesis {:life 50}}))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:players [{:ability (assoc quelling-blade :charges 4)}]
+                                 :nemesis {:play-area [{:name :minion-1
+                                                        :type :minion
+                                                        :life 10}
+                                                       {:name :minion-2
+                                                        :type :minion
+                                                        :life 10}]}}
+                                (activate-ability 0)
+                                (choose :minion-1)
+                                (choose :minion-1))))
+      (is (thrown-with-msg? AssertionError #"Choose error:"
+                            (-> {:players [{:ability (assoc quelling-blade :charges 4)}]
+                                 :nemesis {:life      50
+                                           :play-area [{:name :minion-1
+                                                        :type :minion
+                                                        :life 10}
+                                                       {:name :minion-2
+                                                        :type :minion
+                                                        :life 10}]}}
+                                (activate-ability 0)
+                                (choose :minion-1)
+                                (choose :nemesis)))))))
+
 (deftest ulgimor-test
   (testing "Ulgimor"
     (testing "Coal Shard"

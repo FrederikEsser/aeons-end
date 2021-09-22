@@ -822,6 +822,62 @@
               :ability  quietus-vow
               :trophies 0})
 
+(defn obsidian-shard-damage [game {:keys [player-no no-choice?]}]
+  (cond-> game
+          (not no-choice?) (push-effect-stack {:player-no player-no
+                                               :effects   [[:damage-player 1]
+                                                           [:gain-aether 2]]})))
+
+(effects/register {::obsidian-shard-damage obsidian-shard-damage})
+
+(def obsidian-shard {:name            :obsidian-shard
+                     :type            :gem
+                     :cost            0
+                     :auto-play-index 1
+                     :text            ["Gain 1 Aether."
+                                       "You may suffer 1 damage. If you do, gain an additional 2 Aether."]
+                     :effects         [[:gain-aether 1]
+                                       [:give-choice {:title   :obsidian-shard
+                                                      :text    "You may suffer 1 damage. If you do, gain an additional 2 Aether."
+                                                      :choice  ::obsidian-shard-damage
+                                                      :options [:player]
+                                                      :max     1}]]})
+
+(defn quelling-blade-damage [game {:keys [player-no card-name] :as args}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:deal-damage-to-minion {:card-name card-name
+                                                                :damage    5}]
+                                       [:give-choice {:title   :quelling-blade
+                                                      :text    "Deal 3 damage to a different minion."
+                                                      :choice  [:deal-damage-to-minion {:damage 3}]
+                                                      :options [:nemesis :minions {:not-names #{card-name}}]
+                                                      :min     1
+                                                      :max     1}]]}))
+
+(effects/register {::quelling-blade-damage quelling-blade-damage})
+
+(def quelling-blade {:name        :quelling-blade
+                     :activation  :your-main-phase
+                     :charge-cost 4
+                     :text        ["Deal 5 damage to a minion."
+                                   "Deal 3 damage to a different minion."]
+                     :effects     [[:give-choice {:title   :quelling-blade
+                                                  :text    "Deal 5 damage to a minion."
+                                                  :choice  ::quelling-blade-damage
+                                                  :options [:nemesis :minions]
+                                                  :min     1
+                                                  :max     1}]]})
+
+(def reeve {:name     :reeve
+            :title    "Breach Mage Elite"
+            :breaches [{}
+                       {:stage 2}
+                       {:stage 1}
+                       {:stage 2}]
+            :hand     [obsidian-shard crystal crystal spark spark]
+            :deck     [crystal crystal crystal spark spark]
+            :ability  quelling-blade})
+
 (def void-shard {:name    :void-shard
                  :type    :gem
                  :cost    0
@@ -1118,6 +1174,7 @@
             mist-we
             phaedraxa
             quilius
+            reeve
             remnant
             ulgimor
             xaxos

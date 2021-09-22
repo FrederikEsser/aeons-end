@@ -336,6 +336,7 @@
                            & [{:keys [this id type not-type cost min-cost max-cost most-expensive can-prep
                                       lowest-focus-cost opened min-charges prepped-this-turn]}]]
   (case area
+    :player [{:player-no player-no}]
     :breaches (let [options  (->> (get-in game [:players player-no :breaches])
                                   (keep-indexed (fn [breach-no {:keys [status] :as breach}]
                                                   (when (not= :destroyed status)

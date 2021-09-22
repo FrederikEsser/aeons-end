@@ -300,6 +300,8 @@
            {:turn-order-token turn-order-token})
          (when trophies
            {:trophies trophies})
+         (choice-interaction {:area      :player
+                              :player-no player-no} choice)
          (choice-interaction {:area      :players
                               :player-no player-no} choice)))
 
