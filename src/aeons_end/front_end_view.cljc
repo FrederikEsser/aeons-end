@@ -31,7 +31,7 @@
              (when (map? choice-value)
                {:choice-value choice-value})))))
 
-(defn view-card [{:keys [name text cast type quote]}]
+(defn view-card [{:keys [name text cast type link quote]}]
   (merge {:name    name
           :name-ui (ut/format-name name)
           :type    type}
@@ -40,7 +40,9 @@
          (when cast
            {:cast-text cast})
          (when quote
-           {:quote quote})))
+           {:quote quote})
+         (when link
+           {:link link})))
 
 (defn view-supply-card [{{:keys [player-no] :as player} :player
                          choice                         :choice
@@ -73,10 +75,10 @@
         (= :relic type) 2
         (= :spell type) 3))
 
-(defn view-area [area {{:keys [phase player-no] :as player} :player
-                       choice                               :choice
-                       active?                              :active-player?
-                       :as                                  game}
+(defn view-area [area {{:keys [player-no] :as player} :player
+                       choice                         :choice
+                       active?                        :active-player?
+                       :as                            game}
                  & [position number-of-cards]]
   (let [take-fn (if (= :bottom position) take-last take)
         cards   (cond->> (get player area)

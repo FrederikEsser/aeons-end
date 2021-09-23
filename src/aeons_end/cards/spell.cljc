@@ -445,6 +445,23 @@
                                       :max     1}]]
              :quote   "'We are but one flickering flame against unimaginable dark.' Kadir, Breach Mage Delver"})
 
+(defn inner-fire-damage [game {:keys [player-no] :as args}]
+  (let [tier (ut/get-nemesis-tier game)]
+    (push-effect-stack game {:player-no player-no
+                             :args      args                ; bonus-damage
+                             :effects   [[:deal-damage (if (>= tier 2) 2 1)]]})))
+
+(effects/register {::inner-fire-damage inner-fire-damage})
+
+(def inner-fire {:name    :inner-fire
+                 :type    :spell
+                 :link    true
+                 :cost    2
+                 :cast    ["Deal 1 damage."
+                           "If the nemesis tier is 2 or higher, deal 1 additional damage."]
+                 :effects [[::inner-fire-damage]]
+                 :quote   "'Those of us that came here, we will never be rid of the void. It is a part of us now and forever.' Garu, Oathsworn Protector"})
+
 (defn jagged-lightning-discard [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -849,6 +866,7 @@
             feral-lightning
             fiery-torrent
             ignite
+            inner-fire
             jagged-lightning
             kindle
             lava-tendril

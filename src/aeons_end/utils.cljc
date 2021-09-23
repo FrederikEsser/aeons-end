@@ -241,7 +241,7 @@
   (if breach-no
     (let [{:keys [breach-capacity] :or {breach-capacity 1}} (get-in game [:players player-no])
           {:keys [status]} (get-in game [:players player-no :breaches breach-no])
-          {:keys [dual-breach may-prep-to-closed-breach]} card
+          {:keys [dual-breach link may-prep-to-closed-breach]} card
           may-prep-to-closed-breach (and (or may-prep-to-closed-breach
                                              closed-breaches?)
                                          (not opened-breaches?))
@@ -252,6 +252,10 @@
                                                               :breach-no breach-no})]
       (cond-> (or (and (contains? breach-stati status)
                        (empty? prepped-spells))
+                  (and (contains? breach-stati status)
+                       link
+                       (= 1 (count prepped-spells))
+                       (->> prepped-spells first :link))
                   (and (= :opened status)
                        (< (count prepped-spells) breach-capacity)))
               dual-breach (and' (can-prep? game {:player-no        player-no

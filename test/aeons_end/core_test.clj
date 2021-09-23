@@ -161,7 +161,7 @@
                                             :phase    :casting}]}
                                 (play 0 :crystal)))))))
 
-(deftest dual-breach-spells-test
+(deftest dual-breach-spell-test
   (testing "Dual breach spells"
     (let [dual-breach-spell {:id          1
                              :name        :dual-breach-spell
@@ -384,6 +384,41 @@
                                        :prepped-spells [dual-breach-spell]}
                                       {:status :closed}
                                       {:status :destroyed}]}]}))))))
+
+(deftest link-spell-test
+  (testing "Link spells"
+    (let [link-spell {:id      1
+                      :name    :link-spell
+                      :type    :spell
+                      :link    true
+                      :effects [[:deal-damage 1]]}]
+      (testing "Prepping"
+        (is (= (-> {:players [{:hand     [link-spell]
+                               :breaches [{:status :opened}]}]}
+                   (prep-spell 0 0 :link-spell))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [link-spell]}]}]}))
+        (is (= (-> {:players [{:hand     [link-spell]
+                               :breaches [{:status         :opened
+                                           :prepped-spells [link-spell]}]}]}
+                   (prep-spell 0 0 :link-spell))
+               {:players [{:breaches [{:status         :opened
+                                       :prepped-spells [link-spell link-spell]}]}]}))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [link-spell]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [spark]}]}]}
+                                  (prep-spell 0 0 :link-spell))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [spark]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [link-spell]}]}]}
+                                  (prep-spell 0 0 :spark))))
+        (is (thrown-with-msg? AssertionError #"Prep error:"
+                              (-> {:players [{:hand     [link-spell]
+                                              :breaches [{:status         :opened
+                                                          :prepped-spells [link-spell link-spell]}]}]}
+                                  (prep-spell 0 0 :link-spell))))))))
 
 (deftest buy-card-test
   (testing "Buy card"

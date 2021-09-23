@@ -154,17 +154,20 @@
 (defn map-tag [tag coll & [style]]
   (keepk (fn [x] [tag style x]) coll))
 
-(defn format-title [{:keys [text cast-text]}]
-  (str (if (coll? text)
-         (string/join "\n" text)
-         text)
-       (when (and text cast-text)
-         "\n")
-       (when cast-text
-         (str "Cast: "
-              (if (coll? cast-text)
-                (string/join "\n" cast-text)
-                cast-text)))))
+(defn format-title [{:keys [link text cast-text]}]
+  (str
+    (when link
+      "LINK\n")
+    (if (coll? text)
+      (string/join "\n" text)
+      text)
+    (when (and text cast-text)
+      "\n")
+    (when cast-text
+      (str "Cast: "
+           (if (coll? cast-text)
+             (string/join "\n" cast-text)
+             cast-text)))))
 
 (defn view-card
   ([card]
@@ -234,7 +237,7 @@
 
 (defn view-nemesis-card [{:keys [name name-ui text quote choice-value type status cost number-of-cards
                                  immediately-text to-discard-text power power-text life persistent-text blood-magic-text
-                                 cast-text interaction] :as card}]
+                                 link cast-text interaction] :as card}]
   (when card
     (let [selected? (->> (:selection @state) (some (comp #{name choice-value} :option)))
           disabled  (or (nil? interaction)
@@ -257,6 +260,11 @@
        [:div
         [:div {:style {:font-size "1.4em"}} (when cost (str (ut/format-cost cost) " ")) name-ui]
         [:div
+         (when link
+           [:div {:style {:font-size   "0.8em"
+                          :font-weight :bold
+                          :padding-top "3px"}}
+            "LINK"])
          (when text
            (format-text text))
          (when immediately-text
