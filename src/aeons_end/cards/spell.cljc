@@ -208,6 +208,16 @@
                                                                   :max     1}]]}]]
            :quote   "'It is not killing. It is research.' Xaxos, Voidbringer"})
 
+(def conflagration {:name    :conflagration
+                    :type    :spell
+                    :link    true
+                    :cost    3
+                    :cast    ["Deal 2 damage."
+                              "Gain 1 Aether."]
+                    :effects [[:deal-damage 2]
+                              [:gain-aether 1]]
+                    :quote   "'Burn away their wickedness and there is little else left.' Quilius, Breach Mage Assassin"})
+
 (defn conjure-the-lost-destroy [game {:keys [player-no area card-id] :as args}]
   (cond-> game
           area (push-effect-stack {:player-no player-no
@@ -855,6 +865,7 @@
             celestial-spire
             chaos-arc
             char
+            conflagration
             conjure-the-lost
             consuming-void
             convection-field
