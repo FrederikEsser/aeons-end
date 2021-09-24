@@ -441,6 +441,15 @@
                     :effects [[::fiery-torrent-damage]]
                     :quote   "'Fire feeds fire.' Dezmodia, Voidborn Prodigy"})
 
+(def fulminate {:name          :fulminate
+                :type          :spell
+                :link          true
+                :cost          5
+                :text          "While prepped, other spells you cast deal 1 additional damage."
+                :while-prepped {:bonus-damage 1}
+                :cast          "Deal 3 damage."
+                :effects       [[:deal-damage 3]]})
+
 (def ignite {:name    :ignite
              :type    :spell
              :cost    4
@@ -896,6 +905,7 @@
             feedback-aura
             feral-lightning
             fiery-torrent
+            fulminate
             ignite
             inner-fire
             jagged-lightning

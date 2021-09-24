@@ -156,13 +156,13 @@
 
 (defn format-title [{:keys [link text cast-text]}]
   (str
-    (when link
-      "LINK\n")
     (if (coll? text)
       (string/join "\n" text)
       text)
     (when (and text cast-text)
       "\n")
+    (when link
+      "LINK\n")
     (when cast-text
       (str "Cast: "
            (if (coll? cast-text)
@@ -260,11 +260,6 @@
        [:div
         [:div {:style {:font-size "1.4em"}} (when cost (str (ut/format-cost cost) " ")) name-ui]
         [:div
-         (when link
-           [:div {:style {:font-size   "0.8em"
-                          :font-weight :bold
-                          :padding-top "3px"}}
-            "LINK"])
          (when text
            (format-text text))
          (when immediately-text
@@ -279,6 +274,11 @@
            (format-text persistent-text "PERSISTENT"))
          (when blood-magic-text
            (format-text blood-magic-text "BLOOD MAGIC"))
+         (when link
+           [:div {:style {:font-size   "0.8em"
+                          :font-weight :bold
+                          :padding-top "3px"}}
+            "LINK"])
          (when cast-text
            (format-text cast-text "Cast"))]
         (when number-of-cards

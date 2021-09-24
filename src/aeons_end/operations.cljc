@@ -669,11 +669,16 @@
   (let [{:keys [id effects dual-breach]} (or card
                                              (:card (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})))
         {:keys [bonus-damage opened-effects]} (get-breach-effects (get-in game [:players player-no :breaches breach-no]))
-        adjacent-breach (when dual-breach
-                          (get-breach-effects (get-in game [:players player-no :breaches (inc breach-no)])))
-        bonus-damage    (cond-> bonus-damage
-                                additional-damage (+ additional-damage)
-                                dual-breach (+ (:bonus-damage adjacent-breach)))]
+        adjacent-breach      (when dual-breach
+                               (get-breach-effects (get-in game [:players player-no :breaches (inc breach-no)])))
+        while-prepped-damage (->> (get-in game [:players (or caster player-no) :breaches])
+                                  (mapcat :prepped-spells)
+                                  (remove (comp #{id} :id))
+                                  (keep (comp :bonus-damage :while-prepped))
+                                  (apply + 0))
+        bonus-damage         (cond-> (+ bonus-damage while-prepped-damage)
+                                     additional-damage (+ additional-damage)
+                                     dual-breach (+ (:bonus-damage adjacent-breach)))]
     (-> game
         (push-effect-stack {:player-no (or caster player-no)
                             :card-id   id

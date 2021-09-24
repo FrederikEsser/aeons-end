@@ -533,6 +533,47 @@
            {:players [{:breaches [{:status         :opened
                                    :prepped-spells [feral-lightning]}]}]}))))
 
+(deftest fulminate-test
+  (testing "Fulminate"
+    (let [fulminate-1 (assoc fulminate :id 1)
+          fulminate-2 (assoc fulminate :id 2)
+          spark       (assoc spark :id 3)]
+      (is (= (-> {:players [{:breaches [{:prepped-spells [fulminate-1]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :fulminate))
+             {:players [{:breaches [{}]
+                         :discard  [fulminate-1]}]
+              :nemesis {:life 47}}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [spark]}
+                                        {:prepped-spells [fulminate-1]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :spark))
+             {:players [{:breaches [{}
+                                    {:prepped-spells [fulminate-1]}]
+                         :discard  [spark]}]
+              :nemesis {:life 48}}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [fulminate-1]}
+                                        {:prepped-spells [fulminate-2]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :fulminate))
+             {:players [{:breaches [{}
+                                    {:prepped-spells [fulminate-2]}]
+                         :discard  [fulminate-1]}]
+              :nemesis {:life 46}}))
+      (is (= (-> {:players [{:breaches [{:prepped-spells [fulminate-1]}
+                                        {:prepped-spells [fulminate-2]}
+                                        {:status         :opened
+                                         :bonus-damage   1
+                                         :prepped-spells [spark]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 2 :spark))
+             {:players [{:breaches [{:prepped-spells [fulminate-1]}
+                                    {:prepped-spells [fulminate-2]}
+                                    {:status       :opened
+                                     :bonus-damage 1}]
+                         :discard  [spark]}]
+              :nemesis {:life 46}})))))
+
 (deftest ignite-test
   (testing "Ignite"
     (is (= (-> {:players [{:breaches [{:prepped-spells [ignite]}]}

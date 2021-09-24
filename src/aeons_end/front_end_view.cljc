@@ -37,12 +37,12 @@
           :type    type}
          (when text
            {:text text})
+         (when link
+           {:link link})
          (when cast
            {:cast-text cast})
          (when quote
-           {:quote quote})
-         (when link
-           {:link link})))
+           {:quote quote})))
 
 (defn view-supply-card [{{:keys [player-no] :as player} :player
                          choice                         :choice
