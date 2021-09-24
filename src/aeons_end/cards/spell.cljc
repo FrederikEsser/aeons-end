@@ -806,6 +806,26 @@
                                              :max     1}]]
                     :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
 
+(defn thermal-dart-charge [game {:keys [player-no]}]
+  (let [thermal-dart-count (->> (get-in game [:players player-no :this-turn])
+                                (filter (comp #{:thermal-dart} :cast))
+                                count)]
+    (cond-> game
+            (pos? thermal-dart-count) (push-effect-stack {:player-no player-no
+                                                          :effects   [[:gain-charge]]}))))
+
+(effects/register {::thermal-dart-charge thermal-dart-charge})
+
+(def thermal-dart {:name    :thermal-dart
+                   :type    :spell
+                   :link    true
+                   :cost    4
+                   :cast    ["Deal 3 damage."
+                             "If this is not the first Thermal Dart you have cast this turn, gain 1 charge."]
+                   :effects [[:deal-damage 3]
+                             [::thermal-dart-charge]]
+                   :quote   "'Become lethal or become lost.' Sparrow, Breach Mage Soldier"})
+
 (defn thoughtform-familiar-damage [game {:keys [player-no card-id] :as args}]
   (let [other-prepped-spells (->> (get-in game [:players player-no :breaches])
                                   (mapcat :prepped-spells)
@@ -894,5 +914,6 @@
             scorch
             scrying-bolt
             spectral-echo
+            thermal-dart
             thoughtform-familiar
             wildfire-whip])

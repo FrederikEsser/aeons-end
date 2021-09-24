@@ -1061,6 +1061,73 @@
                                  :type :minion
                                  :life 0}]}}))))
 
+(deftest thermal-dart-test
+  (testing "Thermal Dart"
+    (let [thermal-dart (assoc thermal-dart :id 1)]
+      (is (= (-> {:real-game? true
+                  :players    [{:breaches [{:prepped-spells [thermal-dart thermal-dart]}]
+                                :ability  {:charges     0
+                                           :charge-cost 4}}]
+                  :nemesis    {:life 50}}
+                 (cast-spell 0 0 :thermal-dart))
+             {:real-game? true
+              :players    [{:breaches  [{:prepped-spells [thermal-dart]}]
+                            :discard   [thermal-dart]
+                            :ability   {:charges     0
+                                        :charge-cost 4}
+                            :this-turn [{:cast :thermal-dart}]}]
+              :nemesis    {:life 47}}))
+      (is (= (-> {:real-game? true
+                  :players    [{:breaches  [{:prepped-spells [thermal-dart]}]
+                                :discard   [thermal-dart]
+                                :ability   {:charges     0
+                                            :charge-cost 4}
+                                :this-turn [{:cast :thermal-dart}]}]
+                  :nemesis    {:life 47}}
+                 (cast-spell 0 0 :thermal-dart))
+             {:real-game? true
+              :players    [{:breaches  [{}]
+                            :discard   [thermal-dart thermal-dart]
+                            :ability   {:charges     1
+                                        :charge-cost 4}
+                            :this-turn [{:cast :thermal-dart}
+                                        {:cast :thermal-dart}]}]
+              :nemesis    {:life 44}}))
+      (is (= (-> {:real-game? true
+                  :players    [{:breaches  [{:prepped-spells [thermal-dart]}]
+                                :discard   [spark]
+                                :ability   {:charges     0
+                                            :charge-cost 4}
+                                :this-turn [{:cast :spark}]}]
+                  :nemesis    {:life 49}}
+                 (cast-spell 0 0 :thermal-dart))
+             {:real-game? true
+              :players    [{:breaches  [{}]
+                            :discard   [spark thermal-dart]
+                            :ability   {:charges     0
+                                        :charge-cost 4}
+                            :this-turn [{:cast :spark}
+                                        {:cast :thermal-dart}]}]
+              :nemesis    {:life 46}}))
+      (is (= (-> {:real-game? true
+                  :players    [{:breaches  [{:prepped-spells [thermal-dart]}]
+                                :discard   [thermal-dart thermal-dart]
+                                :ability   {:charges     1
+                                            :charge-cost 4}
+                                :this-turn [{:cast :thermal-dart}
+                                            {:cast :thermal-dart}]}]
+                  :nemesis    {:life 44}}
+                 (cast-spell 0 0 :thermal-dart))
+             {:real-game? true
+              :players    [{:breaches  [{}]
+                            :discard   [thermal-dart thermal-dart thermal-dart]
+                            :ability   {:charges     2
+                                        :charge-cost 4}
+                            :this-turn [{:cast :thermal-dart}
+                                        {:cast :thermal-dart}
+                                        {:cast :thermal-dart}]}]
+              :nemesis    {:life 41}})))))
+
 (deftest wildfire-whip-test
   (testing "Wildfire Whip"
     (testing "While prepped"
