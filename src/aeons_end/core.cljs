@@ -18,16 +18,16 @@
                     {:type :spell} {:type :spell} {:type :spell}])
 
 (def balanced-market [{:type :gem :max-cost 3} {:type :gem :min-cost 4} {:type :gem}
-                      {:type :relic :max-cost 4} {:type :relic :min-cost 4} {:type :spell}
-                      {:type :spell :max-cost 4} {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 6}])
+                      {:type :relic :max-cost 3} {:type :relic :min-cost 4} {:type :spell}
+                      {:type :spell :max-cost 4} {:type :spell :min-cost 5 :max-cost 5} {:type :spell :min-cost 6}])
 
 (def low-budget-market [{:type :gem :max-cost 3} {:type :gem :min-cost 4 :max-cost 4} {:type :gem :max-cost 5}
                         {:type :relic :max-cost 3} {:type :relic :max-cost 5} {:type :spell :max-cost 6}
-                        {:type :spell :max-cost 3} {:type :spell :max-cost 4} {:type :spell :max-cost 5}])
+                        {:type :spell :max-cost 4} {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 5 :max-cost 6}])
 
 (def prosperous-market [{:type :gem :max-cost 3} {:type :gem :min-cost 4 :max-cost 4} {:type :gem :min-cost 5}
-                        {:type :relic :max-cost 4} {:type :relic :min-cost 5} {:type :spell}
-                        {:type :spell :min-cost 4 :max-cost 5} {:type :spell :min-cost 5 :max-cost 6} {:type :spell :min-cost 7}])
+                        {:type :relic :max-cost 4} {:type :relic :min-cost 5} {:type :spell :min-cost 5}
+                        {:type :spell :max-cost 4} {:type :spell :min-cost 5 :max-cost 6} {:type :spell :min-cost 7}])
 
 (defonce state (r/atom {:setup-game? true
                         :game-setup  {:difficulty          :fit
