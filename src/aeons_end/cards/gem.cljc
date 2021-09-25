@@ -26,6 +26,31 @@
                     :effects [[::alien-element-gain-aether]]
                     :quote   "'It matters not what it is, only what it can do' Garu, Oathsworn Protector"})
 
+(defn banishing-topaz-topdeck [game {:keys [player-no card-name]}]
+  (cond-> game
+          card-name (push-effect-stack {:player-no player-no
+                                        :effects   [[:move-card {:card-name   card-name
+                                                                 :from        :hand
+                                                                 :to          :deck
+                                                                 :to-position :top}]
+                                                    [:gain-aether 2]]})))
+
+(effects/register {::banishing-topaz-topdeck banishing-topaz-topdeck})
+
+(def banishing-topaz {:name            :banishing-topaz
+                      :type            :gem
+                      :cost            5
+                      :auto-play-index 1
+                      :text            ["Gain 2 Aether."
+                                        "You may place a card in hand on top of your deck. If you do, gain an additional 2 Aether."]
+                      :effects         [[:gain-aether 2]
+                                        [:give-choice {:title   :banishing-topaz
+                                                       :text    "You may place a card in hand on top of your deck. If you do, gain an additional 2 Aether."
+                                                       :choice  ::banishing-topaz-topdeck
+                                                       :options [:player :hand]
+                                                       :max     1}]]
+                      :quote           "'They give. And then they take.' Mist, Dagger Captain"})
+
 (defn bloodstone-jewel-on-gain [game {:keys [player-no]}]
   (let [this-turn (get-in game [:players player-no :this-turn])]
     (cond-> game
@@ -346,6 +371,7 @@
                      :quote   "'Once, the trees of V'riswood towered ancient and beautiful. These polished bits of their amber is all that remains beyond that memory.' Brama, Breach Mage Elder"})
 
 (def cards [alien-element
+            banishing-topaz
             bloodstone-jewel
             breach-ore
             burning-opal
