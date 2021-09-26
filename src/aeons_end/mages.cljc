@@ -699,37 +699,37 @@
                                                                 :min     1
                                                                 :max     1}]]}))))
 
-(defn exalted-brand-cast [game {:keys [caster player-no breach-no card-name spells]}]
-  (-> game
-      (push-effect-stack {:player-no caster
-                          :effects   (->> (or spells
-                                              (when (and player-no breach-no card-name)
-                                                [{:player-no player-no
-                                                  :breach-no breach-no
-                                                  :card-name card-name}]))
-                                          (mapcat (fn [{:keys [player-no breach-no card-name] :as args}]
-                                                    (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
-                                                      [[:cast-spell (assoc args :caster caster)]
-                                                       [::exalted-brand-give-spell {:card-id     id
-                                                                                    :from-player player-no}]]))))})))
+(defn exalted-brand-cast-spell [game {:keys [player-no caster breach-no card-name times no-choice?] :as args}]
+  (let [caster (or caster player-no)]
+    (cond-> game
+            (not no-choice?) (push-effect-stack {:player-no caster
+                                                 :effects   (concat
+                                                              (when (and breach-no card-name)
+                                                                (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
+                                                                  [[:cast-spell (assoc args :caster caster)]
+                                                                   [::exalted-brand-give-spell {:card-id     id
+                                                                                                :from-player player-no}]]))
+                                                              (when (pos? times)
+                                                                [[:give-choice {:title   :exalted-brand
+                                                                                :text    [(case times
+                                                                                            3 "Cast up to three different spells prepped by any number of players."
+                                                                                            2 "Cast up to two more spells prepped by any number of players."
+                                                                                            1 "You may cast one more spell prepped by any player.")
+                                                                                          "For each spell cast this way, place that spell into any ally's hand."]
+                                                                                :choice  [::exalted-brand-cast-spell {:times  (dec times)
+                                                                                                                      :caster caster}]
+                                                                                :options [:players :prepped-spells]
+                                                                                :max     1}]]))}))))
 
-(defn exalted-brand-choice [game {:keys [player-no]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:give-choice {:title   :exalted-brand
-                                                      :text    "Cast up to three different spells prepped by any number of players. For each spell cast this way, place that spell into any ally's hand."
-                                                      :choice  [::exalted-brand-cast {:caster player-no}]
-                                                      :options [:players :prepped-spells]
-                                                      :max     3}]]}))
 
 (effects/register {::exalted-brand-give-spell exalted-brand-give-spell
-                   ::exalted-brand-cast       exalted-brand-cast
-                   ::exalted-brand-choice     exalted-brand-choice})
+                   ::exalted-brand-cast-spell exalted-brand-cast-spell})
 
 (def exalted-brand {:name        :exalted-brand
                     :activation  :your-main-phase
                     :charge-cost 6
                     :text        "Cast up to three different spells prepped by any number of players. For each spell cast this way, place that spell into any ally's hand."
-                    :effects     [[::exalted-brand-choice]]})
+                    :effects     [[::exalted-brand-cast-spell {:times 3}]]})
 
 (def mist-we {:name     :mist
               :set      :war-eternal
