@@ -194,6 +194,22 @@
                     :effects [[::erratic-ingot-gain-aether]]
                     :quote   "'Hit it all you like, Adelheim. It has a mind of its own.' Gex, Breach Mage Adviser"})
 
+(def fossilized-scarab {:name            :fossilized-scarab
+                        :type            :gem
+                        :cost            3
+                        :auto-play-index -1
+                        :text            ["Gain 2 Aether."
+                                          "OR"
+                                          "Destroy a card in hand."]
+                        :effects         [[:give-choice {:title     :fossilized-scarab
+                                                         :text      "Destroy a card in hand."
+                                                         :choice    :destroy-from-hand
+                                                         :options   [:player :hand]
+                                                         :or-choice {:text    "Gain 2 Aether"
+                                                                     :effects [[:gain-aether 2]]}
+                                                         :max       1}]]
+                        :quote           "'This creature is not dead, youngling. It sleeps. There is no death, only the moment before waking.' Yan Magda, Enlightened Exile"})
+
 (def frozen-magmite {:name    :frozen-magmite
                      :type    :gem
                      :cost    3
@@ -379,6 +395,7 @@
             diamond-cluster
             dread-diamond
             erratic-ingot
+            fossilized-scarab
             frozen-magmite
             haunted-berylite
             jade
