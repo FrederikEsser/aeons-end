@@ -107,6 +107,22 @@
                                 [::conclave-destroy]]
                       :quote   "'Brama and her ilk read the words and consider them answers. I see only questions.' Yan Magda, Enlightened Exile"})
 
+(def eternity-charm {:name    :eternity-charm
+                     :type    :relic
+                     :cost    3
+                     :text    ["Focus your closed breach with the lowest focus cost."
+                               "Reveal the top three cards of your deck. You may prep one of the revealed spells."]
+                     :effects [[:focus-lowest-cost-breach]
+                               [:reveal-from-deck 3]
+                               [:give-choice {:title   :eternity-charm
+                                              :text    "You may prep one of the revealed spells."
+                                              :choice  :prep-from-revealed
+                                              :options [:player :revealed {:type     :spell
+                                                                           :can-prep {}}]
+                                              :max     1}]
+                               [:topdeck-all-revealed]]
+                     :quote   "'In the void, the stars breathe and expire somehow all at once.' Mist, Voidwalker"})
+
 (defn fiend-catcher-choice [game {:keys [player-no]}]
   (let [{:keys [type]} (-> game :turn-order :deck first)]
     (cond-> game
@@ -380,6 +396,7 @@
             bottled-vortex
             cairn-compass
             conclave-scroll
+            eternity-charm
             fiend-catcher
             flexing-dagger
             focusing-orb

@@ -278,6 +278,64 @@
                                 (play 0 :cairn-compass)
                                 (choose {:player-no 0 :card-id 2})))))))
 
+(deftest eternity-charm-test
+  (testing "Eternity Charm"
+    (let [spark     (assoc spark :id 1)
+          dark-fire (assoc dark-fire :id 2)]
+      (is (= (-> {:players [{:hand     [eternity-charm]
+                             :deck     [dark-fire crystal spark]
+                             :breaches [{:status     :closed
+                                         :stage      1
+                                         :focus-cost 2}]}]}
+                 (play 0 :eternity-charm)
+                 (choose :dark-fire))
+             {:players [{:play-area      [eternity-charm]
+                         :deck           [crystal spark]
+                         :breaches       [{:status         :focused
+                                           :stage          2
+                                           :focus-cost     2
+                                           :prepped-spells [dark-fire]}]
+                         :revealed-cards 2}]})))
+    (is (= (-> {:players [{:hand     [eternity-charm]
+                           :deck     [dark-fire crystal spark]
+                           :breaches [{:status     :closed
+                                       :stage      1
+                                       :focus-cost 2}]}]}
+               (play 0 :eternity-charm)
+               (choose :spark))
+           {:players [{:play-area      [eternity-charm]
+                       :deck           [dark-fire crystal]
+                       :breaches       [{:status         :focused
+                                         :stage          2
+                                         :focus-cost     2
+                                         :prepped-spells [spark]}]
+                       :revealed-cards 2}]}))
+    (is (= (-> {:players [{:hand     [eternity-charm]
+                           :deck     [spark spark crystal]
+                           :breaches [{:status     :closed
+                                       :stage      1
+                                       :focus-cost 2}]}]}
+               (play 0 :eternity-charm)
+               (choose nil))
+           {:players [{:play-area      [eternity-charm]
+                       :deck           [spark spark crystal]
+                       :breaches       [{:status     :focused
+                                         :stage      2
+                                         :focus-cost 2}]
+                       :revealed-cards 3}]}))
+    (is (= (-> {:players [{:hand     [eternity-charm]
+                           :deck     [crystal crystal jade spark]
+                           :breaches [{:status     :closed
+                                       :stage      1
+                                       :focus-cost 2}]}]}
+               (play 0 :eternity-charm))
+           {:players [{:play-area      [eternity-charm]
+                       :deck           [crystal crystal jade spark]
+                       :breaches       [{:status     :focused
+                                         :stage      2
+                                         :focus-cost 2}]
+                       :revealed-cards 3}]}))))
+
 (deftest fiend-catcher-test
   (testing "Fiend Catcher"
     (let [fiend-catcher (assoc fiend-catcher :id 1)

@@ -304,6 +304,22 @@
 
 (effects/register {:prep-from-discard prep-from-discard})
 
+(defn prep-from-revealed [game {:keys [player-no card-name closed-breaches?]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:players player-no :discard] {:name card-name})
+        [breach-no] (ut/prepable-breaches game {:player-no        player-no
+                                                :card             card
+                                                :closed-breaches? closed-breaches?})]
+    (cond-> game
+            (and card-name
+                 breach-no) (push-effect-stack {:player-no player-no
+                                                :effects   [[:move-card {:card-name card-name
+                                                                         :from      :revealed
+                                                                         :to        :breach
+                                                                         :breach-no breach-no}]
+                                                            [:on-prep-spell {:card card}]]}))))
+
+(effects/register {:prep-from-revealed prep-from-revealed})
+
 (defn focus-lowest-cost-breach [game {:keys [player-no]}]
   (let [breach-no (->> (get-in game [:players player-no :breaches])
                        (keep-indexed (fn [idx {:keys [status focus-cost]}]
