@@ -414,8 +414,8 @@
                       :type                      :spell
                       :cost                      5
                       :text                      "This spell may be prepped to a closed breach without focusing it."
-                      :cast                      "Deal 3 damage."
                       :may-prep-to-closed-breach true
+                      :cast                      "Deal 3 damage."
                       :effects                   [[:deal-damage 3]]
                       :quote                     "'All things can be tamed.' Lash, Breach Mage Scout"})
 

@@ -1349,6 +1349,143 @@
                                 (choose :minion-1)
                                 (choose :nemesis)))))))
 
+(deftest sparrow-test
+  (testing "Sparrow"
+    (testing "Eldritch Tether"
+      (is (= (-> {:current-player 0
+                  :players        [{:ability  (assoc eldritch-tether :charges 5)
+                                    :breaches [{:status :closed
+                                                :stage  2}]}
+                                   {:breaches [{:status :closed
+                                                :stage  2}
+                                               {:status :closed
+                                                :stage  0}]}]}
+                 (activate-ability 0)
+                 (choose {:area :breaches :player-no 0 :breach-no 0})
+                 (choose {:player-no 0 :breach-no 0})
+                 (choose {:player-no 1 :breach-no 1})
+                 (choose {:player-no 1 :breach-no 0}))
+             {:current-player 0
+              :players        [{:ability  (assoc eldritch-tether :charges 0)
+                                :breaches [{:status :opened}]}
+                               {:breaches [{:status :closed
+                                            :stage  3}
+                                           {:status :closed
+                                            :stage  1}]}]}))
+      (is (= (-> {:current-player 0
+                  :players        [{:ability  (assoc eldritch-tether :charges 5)
+                                    :breaches [{:status :closed
+                                                :stage  2}]}
+                                   {:breaches [{:status :closed
+                                                :stage  3}]}]}
+                 (activate-ability 0)
+                 (choose {:area :breaches :player-no 0 :breach-no 0})
+                 (choose {:player-no 0 :breach-no 0})
+                 (choose {:player-no 1 :breach-no 0}))
+             {:current-player 0
+              :players        [{:ability  (assoc eldritch-tether :charges 0)
+                                :breaches [{:status :opened}]}
+                               {:breaches [{:status :opened}]}]}))
+      (is (= (-> {:players [{:ability  (assoc eldritch-tether :charges 5)
+                             :breaches [{:status :closed
+                                         :stage  2}]}
+                            {:breaches [{:status :opened}
+                                        {:status :destroyed}
+                                        {:status :opened}
+                                        {:status :opened}]
+                             :hand     [spark ignite]
+                             :deck     [crystal spark spark crystal]}]}
+                 (activate-ability 0)
+                 (choose {:area :players :player-no 1})
+                 (choose :spark)
+                 (choose :spark)
+                 (choose :ignite))
+             {:players [{:ability  (assoc eldritch-tether :charges 0)
+                         :breaches [{:status :closed
+                                     :stage  2}]}
+                        {:breaches [{:status         :opened
+                                     :prepped-spells [spark]}
+                                    {:status :destroyed}
+                                    {:status         :opened
+                                     :prepped-spells [ignite]}
+                                    {:status         :opened
+                                     :prepped-spells [spark]}]
+                         :hand     [crystal spark]
+                         :deck     [crystal]}]}))
+      (is (= (-> {:players [{:ability  (assoc eldritch-tether :charges 5)
+                             :breaches [{:status :closed
+                                         :stage  2}]}
+                            {:breaches [{:status :opened}
+                                        {:status :destroyed}
+                                        {:status :opened}
+                                        {:status :opened}]
+                             :hand     [spark ignite]
+                             :deck     [crystal spark spark crystal]}]}
+                 (activate-ability 0)
+                 (choose {:area :players :player-no 1})
+                 (choose :ignite)
+                 (choose nil))
+             {:players [{:ability  (assoc eldritch-tether :charges 0)
+                         :breaches [{:status :closed
+                                     :stage  2}]}
+                        {:breaches [{:status :opened}
+                                    {:status :destroyed}
+                                    {:status :opened}
+                                    {:status         :opened
+                                     :prepped-spells [ignite]}]
+                         :hand     [spark crystal spark spark]
+                         :deck     [crystal]}]}))
+      (is (= (-> {:players [{:ability  (assoc eldritch-tether :charges 5)
+                             :breaches [{:status :closed
+                                         :stage  2}]}
+                            {:breaches [{:status :opened}
+                                        {:status :destroyed}
+                                        {:status :opened}
+                                        {:status         :opened
+                                         :prepped-spells [radiance]}]
+                             :hand     [spark ignite]
+                             :deck     [crystal spark spark crystal]}]}
+                 (activate-ability 0)
+                 (choose {:area :players :player-no 1})
+                 (choose :ignite)
+                 (choose :spark))
+             {:players [{:ability  (assoc eldritch-tether :charges 0)
+                         :breaches [{:status :closed
+                                     :stage  2}]}
+                        {:breaches [{:status         :opened
+                                     :prepped-spells [ignite]}
+                                    {:status :destroyed}
+                                    {:status         :opened
+                                     :prepped-spells [spark]}
+                                    {:status         :opened
+                                     :prepped-spells [radiance]}]
+                         :hand     [crystal spark spark]
+                         :deck     [crystal]}]}))
+      (is (= (-> {:players [{:ability  (assoc eldritch-tether :charges 5)
+                             :breaches [{:status :closed
+                                         :stage  2}]}
+                            {:breaches [{:status :opened}
+                                        {:status :destroyed}
+                                        {:status :opened}
+                                        {:status :opened}]
+                             :hand     []
+                             :deck     [crystal spark spark crystal]}]}
+                 (activate-ability 0)
+                 (choose {:area :players :player-no 1})
+                 (choose :spark)
+                 (choose :spark))
+             {:players [{:ability  (assoc eldritch-tether :charges 0)
+                         :breaches [{:status :closed
+                                     :stage  2}]}
+                        {:breaches [{:status         :opened
+                                     :prepped-spells [spark]}
+                                    {:status :destroyed}
+                                    {:status :opened}
+                                    {:status         :opened
+                                     :prepped-spells [spark]}]
+                         :hand     [crystal]
+                         :deck     [crystal]}]})))))
+
 (deftest ulgimor-test
   (testing "Ulgimor"
     (testing "Coal Shard"

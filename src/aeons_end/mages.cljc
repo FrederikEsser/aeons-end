@@ -97,7 +97,7 @@
                                                                   :bonus-damage 2}}]
                                        [:give-choice {:title   :tempest-sigil
                                                       :text    "You may prep a spell from your hand to a breach."
-                                                      :choice  [:prep-spell]
+                                                      :choice  :prep-spell
                                                       :options [:player :hand {:type     :spell
                                                                                :can-prep {}}]
                                                       :max     1}]]}))
@@ -924,6 +924,79 @@
               :deck     [crystal crystal crystal crystal spark]
               :ability  ephemera-masque})
 
+(def smolder {:name                      :smolder
+              :type                      :spell
+              :cost                      0
+              :text                      "This spell may be prepped to a closed breach without focusing it."
+              :may-prep-to-closed-breach true
+              :cast                      "Deal 1 damage."
+              :effects                   [[:deal-damage 1]]})
+
+(defn eldritch-tether-prep-spell [game {:keys [player-no card-name times no-choice?]}]
+  (cond-> game
+          (not no-choice?) (push-effect-stack {:player-no player-no
+                                               :effects   (concat
+                                                            (when card-name
+                                                              [[:prep-spell {:card-name card-name}]])
+                                                            (when (pos? times)
+                                                              [[:give-choice {:title   :eldritch-tether
+                                                                              :text    (case times
+                                                                                         3 "Prep up to three spells from your hand."
+                                                                                         2 "Prep up to two more spells from your hand."
+                                                                                         1 "You may prep one more spell from your hand.")
+                                                                              :choice  [::eldritch-tether-prep-spell {:times (dec times)}]
+                                                                              :options [:player :hand {:type     :spell
+                                                                                                       :can-prep {}}]
+                                                                              :max     1}]]))})))
+
+(defn eldritch-tether-choice [game {:keys [area player-no breach-no]}]
+  (case area
+    :breaches (push-effect-stack game {:player-no player-no
+                                       :effects   (concat [[:focus-breach {:breach-no breach-no}]]
+                                                          (->> (range 1 4)
+                                                               reverse
+                                                               (map (fn [n]
+                                                                      [:give-choice {:title   :eldritch-tether
+                                                                                     :text    (str "Focus any player's breach " (ut/number->text n) " additional time" (when (> n 1) "s") ".")
+                                                                                     :choice  :focus-breach
+                                                                                     :options [:players :breaches {:opened false}]
+                                                                                     :min     1
+                                                                                     :max     1}]))))})
+    :players (push-effect-stack game {:player-no player-no
+                                      :effects   [[:draw 3]
+                                                  [::eldritch-tether-prep-spell {:times 3}]]})))
+
+(effects/register {::eldritch-tether-prep-spell eldritch-tether-prep-spell
+                   ::eldritch-tether-choice     eldritch-tether-choice})
+
+(def eldritch-tether {:name        :eldritch-tether
+                      :activation  :your-main-phase
+                      :charge-cost 5
+                      :text        ["Focus any player's breach. Repeat this three additional times."
+                                    "OR"
+                                    "Any ally with no closed breaches draws three cards and then preps up to three spells from their hand."]
+                      :effects     [[:give-choice {:title   :eldritch-tether
+                                                   :text    ["Focus any player's breach. Repeat this three additional times."
+                                                             "OR"
+                                                             "Any ally with no closed breaches draws three cards and then preps up to three spells from their hand."]
+                                                   :choice  ::eldritch-tether-choice
+                                                   :options [:mixed
+                                                             [:players :breaches {:opened false}]
+                                                             [:players {:ally            true
+                                                                        :closed-breaches 0}]]
+                                                   :min     1
+                                                   :max     1}]]})
+
+(def sparrow {:name     :sparrow
+              :title    "Breach Mage Soldier"
+              :breaches [{:status :destroyed}
+                         {:stage 1}
+                         {:stage 1}
+                         {:stage 0}]
+              :hand     [smolder crystal crystal crystal crystal]
+              :deck     [crystal crystal crystal crystal crystal]
+              :ability  eldritch-tether})
+
 (defn coal-shard-effects [game {:keys [player-no card-id]}]
   (let [{:keys [life]} (get-in game [:players player-no])]
     (push-effect-stack game {:player-no player-no
@@ -1176,6 +1249,7 @@
             quilius
             reeve
             remnant
+            sparrow
             ulgimor
             xaxos
             yan-magda

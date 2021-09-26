@@ -417,6 +417,11 @@
        (filter (comp #{:opened} :status))
        count))
 
+(defn count-closed-breaches [{:keys [breaches]}]
+  (->> breaches
+       (filter (comp #{:closed :focused} :status))
+       count))
+
 (defn count-cards-in-hand [{:keys [hand]}]
   (count hand))
 
@@ -438,7 +443,7 @@
                                        min-number-of-prepped-spells min-hand lowest-life most-life can-heal min-deck+discard
                                        this last type cost min-cost max-cost can-prep
                                        most-expensive most-opened-breaches most-prepped-spells lowest-focus-cost most-crystals
-                                       opened breach-no max-breach-no min-non-corruption]}]]
+                                       opened closed-breaches breach-no max-breach-no min-non-corruption]}]]
   (let [solo-play?      (= 1 (count players))
         highest-charge  (->> players
                              (map #(get-in % [:ability :charges] 0))
@@ -474,6 +479,7 @@
                                                          (>= charges charge-cost)))
                                  (false? fully-charged) (remove (fn [{{:keys [charges charge-cost]} :ability}]
                                                                   (>= charges charge-cost)))
+                                 closed-breaches (filter (comp #{closed-breaches} count-closed-breaches))
                                  most-opened-breaches (filter (comp #{highest-opened} count-opened-breaches))
                                  most-prepped-spells (filter (comp #{highest-prepped} count-prepped-spells))
                                  min-number-of-prepped-spells (filter (comp #(>= % min-number-of-prepped-spells) count-prepped-spells))
