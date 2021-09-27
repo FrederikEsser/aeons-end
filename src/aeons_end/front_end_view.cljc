@@ -364,7 +364,7 @@
                                       (string/join "\n")))}
          (when (not-empty play-area)
            {:play-area (->> play-area
-                            (filter (comp #{:attack :minion :power} :type))
+                            (remove (comp #{:acolyte} :type))
                             (map (fn [{:keys [name immediately to-discard power persistent life] :as card}]
                                    (let [can-discard? (can-discard? game {:player-no player-no
                                                                           :card      card})]

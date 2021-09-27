@@ -40,7 +40,7 @@
 (def banishing-topaz {:name            :banishing-topaz
                       :type            :gem
                       :cost            5
-                      :auto-play-index 1
+                      :auto-play-index -1
                       :text            ["Gain 2 Aether."
                                         "You may place a card in hand on top of your deck. If you do, gain an additional 2 Aether."]
                       :effects         [[:gain-aether 2]

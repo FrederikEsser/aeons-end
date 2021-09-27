@@ -486,6 +486,50 @@
                         {:breaches [{:prepped-spells [radiance]}]
                          :hand     [crystal]}]})))))
 
+(deftest transmogrifier-test
+  (testing "Transmogrifier"
+    (let [transmogrifier  (assoc transmogrifier :id 1)
+          unstable-prism  (assoc unstable-prism :id 2)
+          vortex-gauntlet (assoc vortex-gauntlet :id 3)]
+      (is (= (-> {:supply  [{:card unstable-prism :pile-size 5}]
+                  :players [{:hand [transmogrifier crystal]}]}
+                 (play 0 :transmogrifier)
+                 (choose :crystal)
+                 (choose :unstable-prism))
+             {:supply  [{:card unstable-prism :pile-size 4}]
+              :players [{:play-area [transmogrifier]
+                         :discard   [unstable-prism]}]
+              :trash   [crystal]}))
+      (is (= (-> {:supply  [{:card vortex-gauntlet :pile-size 5}]
+                  :players [{:hand [transmogrifier transmogrifier]}]}
+                 (play 0 :transmogrifier)
+                 (choose :transmogrifier)
+                 (choose :vortex-gauntlet))
+             {:supply  [{:card vortex-gauntlet :pile-size 4}]
+              :players [{:play-area [transmogrifier]
+                         :discard   [vortex-gauntlet]}]
+              :trash   [transmogrifier]}))
+      (is (= (-> {:supply  [{:card transmogrifier :pile-size 4}]
+                  :players [{:hand [transmogrifier crystal]}]}
+                 (play 0 :transmogrifier)
+                 (choose :crystal))
+             {:supply  [{:card transmogrifier :pile-size 4}]
+              :players [{:play-area [transmogrifier]}]
+              :trash   [crystal]}))
+      (is (= (-> {:supply  [{:card unstable-prism :pile-size 5}]
+                  :players [{:hand [transmogrifier crystal]}]}
+                 (play 0 :transmogrifier)
+                 (choose :crystal)
+                 (choose nil))
+             {:supply  [{:card unstable-prism :pile-size 5}]
+              :players [{:play-area [transmogrifier]}]
+              :trash   [crystal]}))
+      (is (= (-> {:supply  [{:card unstable-prism :pile-size 5}]
+                  :players [{:hand [transmogrifier]}]}
+                 (play 0 :transmogrifier))
+             {:supply  [{:card unstable-prism :pile-size 5}]
+              :players [{:play-area [transmogrifier]}]})))))
+
 (deftest unstable-prism-test
   (testing "Unstable Prism"
     (is (= (-> {:players [{:hand [unstable-prism]}]}
@@ -515,6 +559,7 @@
            {:players [{:hand      [unstable-prism]
                        :play-area [unstable-prism]
                        :aether    2}]}))))
+
 
 (deftest vortex-gauntlet-test
   (testing "Vortex Gauntlet"

@@ -339,6 +339,56 @@
                      :effects [[::temporal-helix-choice]]
                      :quote   "'Breach mages are never truly in possession of their own minds.' Brama, Breach Mage Elder"})
 
+(defn transmogrifier-upgrade [game {:keys [player-no card-name]}]
+  (let [{{:keys [cost]} :card} (ut/get-card-idx game [:players player-no :hand] {:name card-name})
+        max-cost (+ 3 cost)]
+    (-> game
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:destroy-from-hand {:card-name card-name}]
+                                        [:give-choice {:text    (str "You may gain a card from any supply pile that costs up to " (ut/format-cost max-cost) " Aether.")
+                                                       :choice  :gain
+                                                       :options [:supply {:max-cost max-cost}]
+                                                       :max     1}]]}))))
+
+(effects/register {::transmogrifier-upgrade transmogrifier-upgrade})
+
+(def transmogrifier {:name    :transmogrifier
+                     :type    :relic
+                     :cost    4
+                     :text    ["Destroy a card in hand."
+                               "You may gain a card from any supply pile that costs up to 3 Aether more than the destroyed card."]
+                     :effects [[:give-choice {:title   :transmogrifier
+                                              :text    "Destroy a card in hand."
+                                              :choice  ::transmogrifier-upgrade
+                                              :options [:player :hand]
+                                              :min     1
+                                              :max     1}]]
+                     :quote   "'Adelheim has fashioned this alien object from riddle and shadow.' Kadir, Breach Mage Delver"})
+
+(defn unstable-prism-play-gem [game {:keys [player-no card-name]}]
+  (push-effect-stack game {:player-no player-no
+                           :effects   [[:play-twice {:card-name card-name}]
+                                       [:move-card {:card-name card-name
+                                                    :from      :play-area
+                                                    :to        :trash}]]}))
+
+(effects/register {::unstable-prism-play-gem unstable-prism-play-gem})
+
+(def unstable-prism {:name    :unstable-prism
+                     :type    :relic
+                     :cost    3
+                     :text    ["Play a gem in hand twice and destroy it."
+                               "OR"
+                               "Gain 2 Aether."]
+                     :effects [[:give-choice {:title     :unstable-prism
+                                              :text      "Play a gem in hand twice and destroy it."
+                                              :choice    ::unstable-prism-play-gem
+                                              :or-choice {:text    "Gain 2 Aether"
+                                                          :effects [[:gain-aether 2]]}
+                                              :options   [:player :hand {:type :gem}]
+                                              :max       1}]]
+                     :quote   "'Not every pretty rock is a means to wage war. Some must be cut and carved into more useful things.' Adelheim, Breach Mage Weaponsmith"})
+
 (defn vortex-gauntlet-cast [game {:keys [player-no breach-no card-name] :as args}]
   (let [{{:keys [id]} :card} (ut/get-card-idx game [:players player-no :breaches breach-no :prepped-spells] {:name card-name})]
     (cond-> game
@@ -367,30 +417,6 @@
                       :effects [[::vortex-gauntlet-choice]]
                       :quote   "'One does not wield this glove. The glove wields the bearer.' Gex, Breach Mage Advisor"})
 
-(defn unstable-prism-play-gem [game {:keys [player-no card-name]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:play-twice {:card-name card-name}]
-                                       [:move-card {:card-name card-name
-                                                    :from      :play-area
-                                                    :to        :trash}]]}))
-
-(effects/register {::unstable-prism-play-gem unstable-prism-play-gem})
-
-(def unstable-prism {:name    :unstable-prism
-                     :type    :relic
-                     :cost    3
-                     :text    ["Play a gem in hand twice and destroy it."
-                               "OR"
-                               "Gain 2 Aether."]
-                     :effects [[:give-choice {:title     :unstable-prism
-                                              :text      "Play a gem in hand twice and destroy it."
-                                              :choice    ::unstable-prism-play-gem
-                                              :or-choice {:text    "Gain 2 Aether"
-                                                          :effects [[:gain-aether 2]]}
-                                              :options   [:player :hand {:type :gem}]
-                                              :max       1}]]
-                     :quote   "'Not every pretty rock is a means to wage war. Some must be cut and carved into more useful things.' Adelheim, Breach Mage Weaponsmith"})
-
 (def cards [astral-cube
             blasting-staff
             bottled-vortex
@@ -406,5 +432,6 @@
             primordial-fetish
             riddlesphere
             temporal-helix
-            vortex-gauntlet
-            unstable-prism])
+            transmogrifier
+            unstable-prism
+            vortex-gauntlet])
