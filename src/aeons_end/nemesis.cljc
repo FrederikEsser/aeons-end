@@ -202,21 +202,23 @@
                                                                            :kill-effects kill-effects}]])}))
 
 (defn deal-damage [{:keys [nemesis] :as game} {:keys [player-no arg bonus-damage kill-effects]
-                                               :or   {bonus-damage 0}}]
+                                               :or   {arg          0
+                                                      bonus-damage 0}}]
   (let [{:keys [name]} nemesis
         minions (ut/options-from-nemesis game {:area :minions})
         damage  (+ arg bonus-damage)]
-    (push-effect-stack game {:player-no player-no
-                             :effects   (if (not-empty minions)
-                                          [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
-                                                          :effect  [:deal-damage-to-target {:damage       damage
-                                                                                            :kill-effects kill-effects}]
-                                                          :options [:mixed
-                                                                    [:nemesis]
-                                                                    [:nemesis :minions]]
-                                                          :min     1
-                                                          :max     1}]]
-                                          [[:deal-damage-to-nemesis {:damage damage}]])})))
+    (cond-> game
+            (pos? damage) (push-effect-stack {:player-no player-no
+                                              :effects   (if (not-empty minions)
+                                                           [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                                           :effect  [:deal-damage-to-target {:damage       damage
+                                                                                                             :kill-effects kill-effects}]
+                                                                           :options [:mixed
+                                                                                     [:nemesis]
+                                                                                     [:nemesis :minions]]
+                                                                           :min     1
+                                                                           :max     1}]]
+                                                           [[:deal-damage-to-nemesis {:damage damage}]])}))))
 
 (effects/register {:deal-damage-to-nemesis deal-damage-to-nemesis
                    :deal-damage-to-minion  deal-damage-to-minion

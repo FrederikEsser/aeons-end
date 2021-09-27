@@ -267,8 +267,7 @@
                                               :max     2}]]
                      :quote   "'The Far Hollow hovels still smolder from the last time a mage lost his wits and will to the void.' Ghan, Gem Scavenger"})
 
-(defn convection-field-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]
-                                                           :or   {bonus-damage 0}}]
+(defn convection-field-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]}]
   (let [{:keys [name]} nemesis
         big-damage   (+ 4 bonus-damage)
         small-damage (+ 2 bonus-damage)]
@@ -618,8 +617,7 @@
                                            [:deal-damage (+ cost damage)]]
                                           [[:deal-damage-to-target args]])})))
 
-(defn oblivion-swell-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]
-                                                         :or   {bonus-damage 0}}]
+(defn oblivion-swell-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]}]
   (let [{:keys [name]} nemesis
         damage (+ 2 bonus-damage)
         gems?  (->> (get-in game [:players player-no :hand])
@@ -659,8 +657,7 @@
                                          [:deal-damage (+ 2 damage)]]
                                         [[:deal-damage-to-target args]])}))
 
-(defn phoenix-flame-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]
-                                                        :or   {bonus-damage 0}}]
+(defn phoenix-flame-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]}]
   (let [{:keys [name]} nemesis
         damage  (+ 2 bonus-damage)
         charges (get-in game [:players player-no :ability :charges])]

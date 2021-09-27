@@ -228,13 +228,13 @@
              {:players [{:breaches [{:status :closed}]
                          :discard  [torch]}]
               :nemesis {:life 49}}))
-      #_(is (= (-> {:players [{:breaches [{:status         :opened
-                                           :prepped-spells [torch]}]}]
-                    :nemesis {:life 50}}
-                   (cast-spell 0 0 :torch))
-               {:players [{:breaches [{:status :opened}]
-                           :discard  [torch]}]
-                :nemesis {:life 49}}))
+      (is (= (-> {:players [{:breaches [{:status         :opened
+                                         :prepped-spells [torch]}]}]
+                  :nemesis {:life 50}}
+                 (cast-spell 0 0 :torch))
+             {:players [{:breaches [{:status :opened}]
+                         :discard  [torch]}]
+              :nemesis {:life 49}}))
       (is (= (-> {:players [{:breaches [{:status         :closed
                                          :stage          0
                                          :prepped-spells [torch]}]}]

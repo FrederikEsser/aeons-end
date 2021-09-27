@@ -126,13 +126,11 @@
                :deck     [crystal crystal crystal crystal spark]
                :ability  tempest-sigil})
 
-(defn torch-effect [game {:keys [player-no breach-no bonus-damage area card-name]
-                          :or   {bonus-damage 0}}]
+(defn torch-effect [game {:keys [player-no breach-no bonus-damage area card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (if breach-no
-                                        (concat [[:focus-breach {:breach-no breach-no}]]
-                                                (when (pos? bonus-damage)
-                                                  [[:deal-damage bonus-damage]]))
+                                        [[:focus-breach {:breach-no breach-no}]
+                                         [:deal-damage bonus-damage]]
                                         [[:deal-damage-to-target {:damage    (+ 1 bonus-damage)
                                                                   :area      area
                                                                   :card-name card-name}]])}))
@@ -144,18 +142,20 @@
                                 (mapcat :breaches)
                                 (some (comp #{:closed :focused} :status)))]
     (push-effect-stack game {:player-no player-no
-                             :effects   [[:give-choice {:title   :torch
-                                                        :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
-                                                                         (when unopened-breaches?
-                                                                           ["OR"
-                                                                            "Focus any player's breach."]))
-                                                        :effect  [::torch-effect {:bonus-damage bonus-damage}]
-                                                        :options [:mixed
-                                                                  [:nemesis]
-                                                                  [:nemesis :minions]
-                                                                  [:players :breaches {:opened false}]]
-                                                        :min     1
-                                                        :max     1}]]})))
+                             :args      {:bonus-damage bonus-damage}
+                             :effects   (if unopened-breaches?
+                                          [[:give-choice {:title   :torch
+                                                          :text    [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                                    "OR"
+                                                                    "Focus any player's breach."]
+                                                          :effect  ::torch-effect
+                                                          :options [:mixed
+                                                                    [:nemesis]
+                                                                    [:nemesis :minions]
+                                                                    [:players :breaches {:opened false}]]
+                                                          :min     1
+                                                          :max     1}]]
+                                          [[:deal-damage 1]])})))
 
 (effects/register {::torch-effect      torch-effect
                    ::torch-give-choice torch-give-choice})
@@ -742,6 +742,58 @@
               :deck     [crystal crystal crystal spark spark]
               :ability  exalted-brand})
 
+(defn cinder-give-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]}]
+  (let [{:keys [name]} nemesis
+        damage (+ 1 bonus-damage)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title   :cinder
+                                                        :text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                        :effect  [:deal-damage-to-target {:damage damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]]
+                                                        :or      {:text    "Gain 2 Aether."
+                                                                  :effects [[:gain-aether 2]
+                                                                            [:deal-damage bonus-damage]]}
+                                                        :max     1}]]})))
+
+(effects/register {::cinder-give-choice cinder-give-choice})
+
+(def cinder {:name    :cinder
+             :type    :spell
+             :cost    0
+             :cast    ["Deal 1 damage."
+                       "OR"
+                       "Gain 2 Aether."]
+             :effects [[::cinder-give-choice]]})
+
+(defn terminus-barrier-discard [game _]
+  (let [[{:keys [type]} :as deck] (get-in game [:nemesis :deck])]
+    (push-effect-stack game {:effects [[:move-cards {:number-of-cards (min (if (= :attack type) 2 1)
+                                                                           (count deck))
+                                                     :from            :deck
+                                                     :from-position   :top
+                                                     :to              :discard}]]})))
+
+(effects/register {::terminus-barrier-discard terminus-barrier-discard})
+
+(def terminus-barrier {:name        :terminus-barrier
+                       :activation  :your-main-phase
+                       :charge-cost 5
+                       :text        ["Discard the top card of the nemesis deck."
+                                     "If you discarded an attack card, discard an additional card."]
+                       :effects     [[::terminus-barrier-discard]]})
+
+(def nym {:name     :nym
+          :title    "Breach Mage Apprentice"
+          :breaches [{}
+                     {:stage 0}
+                     {:stage 1}
+                     {:stage 1}]
+          :hand     [cinder crystal crystal crystal crystal]
+          :deck     [crystal crystal crystal spark spark]
+          :ability  terminus-barrier})
+
 (defn tourmaline-shard-destroy [game {:keys [player-no card-name]}]
   (cond-> game
           card-name (push-effect-stack {:player-no player-no
@@ -1175,13 +1227,11 @@
                 :deck     [crystal crystal crystal crystal spark]
                 :ability  imperium-ritual})
 
-(defn eternal-ember-effect [game {:keys [player-no breach-no bonus-damage area card-name]
-                                  :or   {bonus-damage 0}}]
+(defn eternal-ember-effect [game {:keys [player-no breach-no bonus-damage area card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   (if breach-no
-                                        (concat (when (pos? bonus-damage)
-                                                  [[:deal-damage bonus-damage]])
-                                                [[:spell-effect {:breach-no breach-no :card-name card-name}]])
+                                        [[:deal-damage bonus-damage]
+                                         [:spell-effect {:breach-no breach-no :card-name card-name}]]
                                         [[:deal-damage-to-target {:damage    (+ 1 bonus-damage)
                                                                   :area      area
                                                                   :card-name card-name}]])}))
@@ -1192,18 +1242,20 @@
         prepped-spells (->> (get-in game [:players player-no :breaches])
                             (mapcat :prepped-spells))]
     (push-effect-stack game {:player-no player-no
-                             :effects   [[:give-choice {:title   :eternal-ember
-                                                        :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
-                                                                         (when (not-empty prepped-spells)
-                                                                           ["OR"
-                                                                            "Cast one of your prepped spells without discarding it."]))
-                                                        :effect  [::eternal-ember-effect {:bonus-damage bonus-damage}]
-                                                        :options [:mixed
-                                                                  [:nemesis]
-                                                                  [:nemesis :minions]
-                                                                  [:player :prepped-spells]]
-                                                        :min     1
-                                                        :max     1}]]})))
+                             :args      {:bonus-damage bonus-damage}
+                             :effects   (if (not-empty prepped-spells)
+                                          [[:give-choice {:title   :eternal-ember
+                                                          :text    [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                                    "OR"
+                                                                    "Cast one of your prepped spells without discarding it."]
+                                                          :effect  ::eternal-ember-effect
+                                                          :options [:mixed
+                                                                    [:nemesis]
+                                                                    [:nemesis :minions]
+                                                                    [:player :prepped-spells]]
+                                                          :min     1
+                                                          :max     1}]]
+                                          [[:deal-damage 1]])})))
 
 (effects/register {::eternal-ember-effect      eternal-ember-effect
                    ::eternal-ember-give-choice eternal-ember-give-choice})
@@ -1245,6 +1297,7 @@
             mazahaedron
             mist-ae
             mist-we
+            nym
             phaedraxa
             quilius
             reeve

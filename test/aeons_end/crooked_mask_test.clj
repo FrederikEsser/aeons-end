@@ -635,8 +635,7 @@
     (is (= (-> {:nemesis {:play-area       [(assoc corrupter :life 1)]
                           :corruption-deck [corruption-card corruption-card-2]}
                 :players [{:deck [crystal spark]}]}
-               (deal-damage 0)
-               (choose {:area :minions :player-no 0 :card-name :corrupter}))
+               (deal-damage 0))
            {:nemesis {:play-area       [(assoc corrupter :life 1)]
                       :corruption-deck [corruption-card corruption-card-2]}
             :players [{:deck [crystal spark]}]}))))
