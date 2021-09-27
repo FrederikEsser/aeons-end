@@ -353,6 +353,29 @@
                                          :max     2}]]
                 :quote   "'Xaxos always says, to come back to light, we must first visit the shadow.' Malastar, Breach Mage Mentor"})
 
+(defn devouring-shadow-can-use? [game {:keys [player-no]}]
+  (->> (get-in game [:players player-no :hand])
+       not-empty))
+
+(effects/register-predicates {::devouring-shadow-can-use? devouring-shadow-can-use?})
+
+(def devouring-shadow {:name          :devouring-shadow
+                       :type          :spell
+                       :cost          6
+                       :text          "While prepped, once per turn during your main phase you may destroy a card in hand."
+                       :while-prepped {:phase    :main
+                                       :once     true
+                                       :can-use? ::devouring-shadow-can-use?
+                                       :effects  [[:give-choice {:title   :devouring-shadow
+                                                                 :text    "Destroy a card in hand."
+                                                                 :choice  :destroy-from-hand
+                                                                 :options [:player :hand]
+                                                                 :min     1
+                                                                 :max     1}]]}
+                       :cast          "Deal 3 damage."
+                       :effects       [[:deal-damage 3]]
+                       :quote         "'To thrive, everything must eat. Even shadows.' Malastar, Breach Mage Mentor"})
+
 (defn equilibrium-modify-damage [damage]
   (max (dec damage) 1))
 
@@ -900,6 +923,7 @@
             convection-field
             crystallize
             dark-fire
+            devouring-shadow
             equilibrium
             essence-theft
             feedback-aura
