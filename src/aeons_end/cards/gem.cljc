@@ -46,7 +46,7 @@
                       :effects         [[:gain-aether 2]
                                         [:give-choice {:title   :banishing-topaz
                                                        :text    "You may place a card in hand on top of your deck. If you do, gain an additional 2 Aether."
-                                                       :choice  ::banishing-topaz-topdeck
+                                                       :effect  ::banishing-topaz-topdeck
                                                        :options [:player :hand]
                                                        :max     1}]]
                       :quote           "'They give. And then they take.' Mist, Dagger Captain"})
@@ -75,13 +75,13 @@
                  :text            ["Focus your closed breach with the lowest focus cost."
                                    "OR"
                                    "Gain 2 Aether."]
-                 :effects         [[:give-choice {:title     :breach-ore
-                                                  :text      "Focus your closed breach with the lowest focus cost."
-                                                  :choice    :focus-lowest-cost-breach
-                                                  :options   [:player :breaches {:lowest-focus-cost true}]
-                                                  :or-choice {:text    "Gain 2 Aether"
-                                                              :effects [[:gain-aether 2]]}
-                                                  :max       1}]]
+                 :effects         [[:give-choice {:title   :breach-ore
+                                                  :text    "Focus your closed breach with the lowest focus cost."
+                                                  :effect  :focus-lowest-cost-breach
+                                                  :options [:player :breaches {:lowest-focus-cost true}]
+                                                  :or      {:text    "Gain 2 Aether"
+                                                            :effects [[:gain-aether 2]]}
+                                                  :max     1}]]
                  :quote           "'If you want to make those wretched things scream, try this.' Sparrow, Breach Mage Soldier"})
 
 (defn burning-opal-discard [game {:keys [player-no card-name]}]
@@ -90,7 +90,7 @@
                                         :effects   [[:discard-from-hand {:card-name card-name}]
                                                     [:give-choice {:title   :burning-opal
                                                                    :text    "Any ally draws a card."
-                                                                   :choice  [:draw {:arg 1}]
+                                                                   :effect  [:draw {:arg 1}]
                                                                    :options [:players {:ally true}]
                                                                    :min     1
                                                                    :max     1}]]})))
@@ -106,7 +106,7 @@
                    :effects         [[:gain-aether 3]
                                      [:give-choice {:title   :burning-opal
                                                     :text    "You may discard a card in hand. If you do, any ally draws a card."
-                                                    :choice  ::burning-opal-discard
+                                                    :effect  ::burning-opal-discard
                                                     :options [:player :hand]
                                                     :max     1}]]
                    :quote           "'Careful, youngling. You'll be wanting tongs to handle that!' Adelheim, Breach Mage Weaponsmith"})
@@ -119,7 +119,7 @@
             (= 1 clouded-sapphires-played) (push-effect-stack {:player-no player-no
                                                                :effects   [[:give-choice {:title   :clouded-sapphire
                                                                                           :text    "Any ally gains 1 charge"
-                                                                                          :choice  :gain-charge
+                                                                                          :effect  :gain-charge
                                                                                           :options [:players :ability {:ally true :fully-charged false}]
                                                                                           :min     1
                                                                                           :max     1}]]}))))
@@ -172,7 +172,7 @@
                     :effects         [[:gain-aether 2]
                                       [:give-choice {:title   :dread-diamond
                                                      :text    "You may discard a prepped spell. If you do, gain an additional 1 Aether."
-                                                     :choice  ::dread-diamond-discard
+                                                     :effect  ::dread-diamond-discard
                                                      :options [:player :prepped-spells]
                                                      :max     1}]]
                     :quote           "'There is a cruelty within this stone, a hunger veiled as beauty' Xaxos, Voidbringer"})
@@ -201,13 +201,13 @@
                         :text            ["Gain 2 Aether."
                                           "OR"
                                           "Destroy a card in hand."]
-                        :effects         [[:give-choice {:title     :fossilized-scarab
-                                                         :text      "Destroy a card in hand."
-                                                         :choice    :destroy-from-hand
-                                                         :options   [:player :hand]
-                                                         :or-choice {:text    "Gain 2 Aether"
-                                                                     :effects [[:gain-aether 2]]}
-                                                         :max       1}]]
+                        :effects         [[:give-choice {:title   :fossilized-scarab
+                                                         :text    "Destroy a card in hand."
+                                                         :effect  :destroy-from-hand
+                                                         :options [:player :hand]
+                                                         :or      {:text    "Gain 2 Aether"
+                                                                   :effects [[:gain-aether 2]]}
+                                                         :max     1}]]
                         :quote           "'This creature is not dead, youngling. It sleeps. There is no death, only the moment before waking.' Yan Magda, Enlightened Exile"})
 
 (def frozen-magmite {:name    :frozen-magmite
@@ -220,7 +220,7 @@
                                                         :duration :once-turn
                                                         :effects  [[:give-choice {:title   :frozen-magmite
                                                                                   :text    "You may place the card you gained on top of your deck."
-                                                                                  :choice  :topdeck-from-gained
+                                                                                  :effect  :topdeck-from-gained
                                                                                   :options [:player :gaining]
                                                                                   :max     1}]]}}]]
                      :quote   "'Fear not returning to the dust, younglings. Even fire must sleep.' Mazahaedron, Henge Mystic"})
@@ -240,13 +240,13 @@
                        :text            ["Discard a card in hand. If you do, gain 2 charges."
                                          "OR"
                                          "Gain 2 Aether."]
-                       :effects         [[:give-choice {:title     :haunted-berylite
-                                                        :text      "Discard a card in hand. If you do, gain 2 charges."
-                                                        :choice    ::haunted-berylite-discard
-                                                        :options   [:player :hand]
-                                                        :or-choice {:text    "Gain 2 Aether"
-                                                                    :effects [[:gain-aether 2]]}
-                                                        :max       1}]]
+                       :effects         [[:give-choice {:title   :haunted-berylite
+                                                        :text    "Discard a card in hand. If you do, gain 2 charges."
+                                                        :effect  ::haunted-berylite-discard
+                                                        :options [:player :hand]
+                                                        :or      {:text    "Gain 2 Aether"
+                                                                  :effects [[:gain-aether 2]]}
+                                                        :max     1}]]
                        :quote           "'All things end. And each leaves behind a shadow, a skull, a memory.' Yan Magda, Enlightened Exile"})
 
 (def jade {:name    :jade
@@ -282,7 +282,7 @@
                                    "OR"
                                    "Gain 2 Aether and deal 1 damage."]
                  :effects         [[:give-choice {:title   :pain-stone
-                                                  :choice  ::pain-stone-choices
+                                                  :effect  ::pain-stone-choices
                                                   :options [:special
                                                             {:option :aether :text "Gain 3 Aether"}
                                                             {:option :damage :text "Gain 2 Aether and deal 1 damage"}]
@@ -323,7 +323,7 @@
                               [:all-players {:effects [[:reveal-from-deck 1]
                                                        [:give-choice {:title   :sifter's-pearl
                                                                       :text    "You may discard the top card of your deck."
-                                                                      :choice  :discard-from-revealed
+                                                                      :effect  :discard-from-revealed
                                                                       :options [:player :revealed]
                                                                       :max     1}]
                                                        [:topdeck-all-revealed]]}]]
@@ -357,7 +357,7 @@
                      (= :volcanic-glass last-devoured))) (push-effect-stack {:player-no player-no
                                                                              :effects   [[:give-choice {:title   :volcanic-glass
                                                                                                         :text    "Any ally may gain a Volcanic Glass on top of their deck, if you spend 2 Aether."
-                                                                                                        :choice  [::volcanic-glass-donate {:donator player-no}]
+                                                                                                        :effect  [::volcanic-glass-donate {:donator player-no}]
                                                                                                         :options [:players {:ally true}]
                                                                                                         :max     1}]]}))))
 
@@ -380,7 +380,7 @@
                                "Gain 2 Aether."]
                      :on-gain [[:give-choice {:title   :v'riswood-amber
                                               :text    "You may place the gained V'riswood Amber on top of your deck."
-                                              :choice  :topdeck-from-gained
+                                              :effect  :topdeck-from-gained
                                               :options [:player :gaining]
                                               :max     1}]]
                      :effects [[:gain-aether 2]]

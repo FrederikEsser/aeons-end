@@ -25,7 +25,7 @@
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :cauterizer})]
     (push-effect-stack game {:effects [[:give-choice {:title   :cauterizer
                                                       :text    (str "Any player suffers " life " damage.")
-                                                      :choice  [:damage-player {:arg life}]
+                                                      :effect  [:damage-player {:arg life}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -66,7 +66,7 @@
                        :persistent {:text    "Any player suffers 2 damage."
                                     :effects [[:give-choice {:title   :howling-spinners
                                                              :text    "Any player suffers 2 damage."
-                                                             :choice  [:damage-player {:arg 2}]
+                                                             :effect  [:damage-player {:arg 2}]
                                                              :options [:players]
                                                              :min     1
                                                              :max     1}]]}
@@ -100,7 +100,7 @@
                                                            :text    ["Any player discards a prepped spell."
                                                                      "OR"
                                                                      "Any player loses 1 charge."]
-                                                           :choice  ::labyrinth-wisp-choice
+                                                           :effect  ::labyrinth-wisp-choice
                                                            :options [:mixed
                                                                      [:players :prepped-spells]
                                                                      [:players :ability {:min-charges 1}]]
@@ -115,7 +115,7 @@
                  :persistent {:text    "The player with the most opened breaches suffers 2 damage."
                               :effects [[:give-choice {:title   :mage-ender
                                                        :text    "The player with the most opened breaches suffers 2 damage."
-                                                       :choice  [:damage-player {:arg 2}]
+                                                       :effect  [:damage-player {:arg 2}]
                                                        :options [:players {:most-opened-breaches true}]
                                                        :min     1
                                                        :max     1}]]}
@@ -184,7 +184,7 @@
                                                      :text    ["The player with the lowest life suffers 2 damage."
                                                                "OR"
                                                                "Any player discards a prepped spell that costs 3 Aether or more."]
-                                                     :choice  ::venomite-choice
+                                                     :effect  ::venomite-choice
                                                      :options [:mixed
                                                                [:players {:lowest-life true}]
                                                                [:players :prepped-spells {:min-cost 3}]]

@@ -73,7 +73,7 @@
                                                                                                    " " extra-husk-kills
                                                                                                    " additional husk" (when (< 1 extra-husk-kills) "s")
                                                                                                    " if you suffer 1 damage.")
-                                                                                     :choice  [::distribute-damage {:damage surplus-damage}]
+                                                                                     :effect  [::distribute-damage {:damage surplus-damage}]
                                                                                      :options [:nemesis :husks]
                                                                                      :max     1}]]))})))))
 
@@ -104,7 +104,7 @@
                      :text      "Any player discards a prepped spell. Place two husks into play."
                      :effects   [[:give-choice {:title   :swarm
                                                 :text    "Any player discards a prepped spell."
-                                                :choice  :discard-prepped-spells
+                                                :effect  :discard-prepped-spells
                                                 :options [:players :prepped-spells]
                                                 :min     1
                                                 :max     1}]
@@ -118,7 +118,7 @@
                      :text      "The player with the lowest life suffers 3 damage. Discard a husk."
                      :effects   [[:give-choice {:title   :swarm
                                                 :text    "The player with the lowest life suffers 3 damage."
-                                                :choice  [:damage-player {:arg 3}]
+                                                :effect  [:damage-player {:arg 3}]
                                                 :options [:players {:lowest-life true}]
                                                 :min     1
                                                 :max     1}]
@@ -217,14 +217,14 @@
              :text    ["Any player suffers 4 damage."
                        "OR"
                        "Carapace Queen Swarms twice."]
-             :effects [[:give-choice {:title     :infest
-                                      :text      "Any player suffers 4 damage."
-                                      :choice    [:damage-player {:arg 4}]
-                                      :options   [:players]
-                                      :or-choice {:text    "Carapace Queen Swarms twice."
-                                                  :effects [[::swarm]
-                                                            [::swarm]]}
-                                      :max       1}]]
+             :effects [[:give-choice {:title   :infest
+                                      :text    "Any player suffers 4 damage."
+                                      :effect  [:damage-player {:arg 4}]
+                                      :options [:players]
+                                      :or      {:text    "Carapace Queen Swarms twice."
+                                                :effects [[::swarm]
+                                                          [::swarm]]}
+                                      :max     1}]]
              :quote   "'Husks are easy enough to dispatch... one on one, that is.' Lash, Breach Mage Scout"})
 
 (defn legion-beacon-damage [game _]

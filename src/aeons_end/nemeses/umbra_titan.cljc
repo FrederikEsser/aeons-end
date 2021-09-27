@@ -24,13 +24,13 @@
                         "Unleash."
                         "OR"
                         "Umbra Titan destroys three pillars of Gravehold."]
-              :effects [[:give-choice {:title     :crumble
-                                       :text      "Place the most recently discarded minion in the nemesis discard pile back into play.\nUnleash."
-                                       :choice    ::crumble-revive-minion
-                                       :or-choice {:text    "Umbra Titan destroys three pillars of Gravehold."
-                                                   :effects [[::destroy-gravehold-pillars 3]]}
-                                       :options   [:nemesis :discard {:type :minion :most-recent true}]
-                                       :max       1}]]})
+              :effects [[:give-choice {:title   :crumble
+                                       :text    "Place the most recently discarded minion in the nemesis discard pile back into play.\nUnleash."
+                                       :effect  ::crumble-revive-minion
+                                       :options [:nemesis :discard {:type :minion :most-recent true}]
+                                       :or      {:text    "Umbra Titan destroys three pillars of Gravehold."
+                                                 :effects [[::destroy-gravehold-pillars 3]]}
+                                       :max     1}]]})
 
 (def cryptid {:name       :cryptid
               :type       :minion
@@ -39,13 +39,13 @@
               :persistent {:text    ["The player with the most expensive prepped spell discards that spell."
                                      "OR"
                                      "The Cryptid destroy one pillar of Gravehold."]
-                           :effects [[:give-choice {:title     :cryptid
-                                                    :text      "The player with the most expensive prepped spell discards that spell."
-                                                    :choice    :discard-prepped-spells
-                                                    :or-choice {:text    "The Cryptid destroy one pillar of Gravehold"
-                                                                :effects [[::destroy-gravehold-pillars 1]]}
-                                                    :options   [:players :prepped-spells {:most-expensive true}]
-                                                    :max       1}]]}
+                           :effects [[:give-choice {:title   :cryptid
+                                                    :text    "The player with the most expensive prepped spell discards that spell."
+                                                    :effect  :discard-prepped-spells
+                                                    :options [:players :prepped-spells {:most-expensive true}]
+                                                    :or      {:text    "The Cryptid destroy one pillar of Gravehold"
+                                                              :effects [[::destroy-gravehold-pillars 1]]}
+                                                    :max     1}]]}
               :quote      "'The beasts of this cave seem to revere the Titan as though it were some ancient god.' Mazhaedron, Henge Mystic"})
 
 (defn grubber-persistent [game _]
@@ -88,7 +88,7 @@
                                                   [[:destroy-prepped-spells (first sorted-spells)]
                                                    [:give-choice {:title   :maul
                                                                   :text    "The players collectively destroy the most expensive prepped spell."
-                                                                  :choice  :destroy-prepped-spells
+                                                                  :effect  :destroy-prepped-spells
                                                                   :options [:players :prepped-spells {:min-cost cost-2}]
                                                                   :min     1
                                                                   :max     1}]])}))))
@@ -104,15 +104,15 @@
                                         (or (= cost-1 cost-2)
                                             (not= cost-2 cost-3)) [[:give-choice {:title     :maul
                                                                                   :text      "The players collectively destroy the two most expensive prepped spells."
-                                                                                  :choice    :destroy-prepped-spells
-                                                                                  :or-choice {:text    "Umbra Titan destroys two pillars of Gravehold."
-                                                                                              :effects [[::destroy-gravehold-pillars 2]]}
+                                                                                  :effect    :destroy-prepped-spells
                                                                                   :options   [:players :prepped-spells {:min-cost cost-2}]
+                                                                                  :or        {:text    "Umbra Titan destroys two pillars of Gravehold."
+                                                                                              :effects [[::destroy-gravehold-pillars 2]]}
                                                                                   :min       2
                                                                                   :max       2
                                                                                   :optional? true}]]
                                         :else [[:give-choice {:title   :maul
-                                                              :choice  ::maul-choice
+                                                              :effect  ::maul-choice
                                                               :options [:special
                                                                         {:option :spells :text "The players collectively destroy the two most expensive prepped spells"}
                                                                         {:option :pillars :text "Umbra Titan destroys two pillars of Gravehold"}]
@@ -174,7 +174,7 @@
                                             "If this minion has 8 or less life, Vault Behemoth destroys one pillar of Gravehold."]
                                   :effects [[:give-choice {:title   :vault-behemoth
                                                            :text    "Any player suffers 2 damage."
-                                                           :choice  [:damage-player {:arg 2}]
+                                                           :effect  [:damage-player {:arg 2}]
                                                            :options [:players]
                                                            :min     1
                                                            :max     1}]
@@ -200,13 +200,13 @@
                                  :text    ["Any player suffers 6 damage."
                                            "OR"
                                            "Umbra Titan destroys three pillars of Gravehold."]
-                                 :effects [[:give-choice {:title     :yawning-black
-                                                          :text      "Any player suffers 6 damage."
-                                                          :choice    [:damage-player {:arg 6}]
-                                                          :or-choice {:text    "Umbra Titan destroys three pillars of Gravehold."
-                                                                      :effects [[::destroy-gravehold-pillars 3]]}
-                                                          :options   [:players]
-                                                          :max       1}]]}
+                                 :effects [[:give-choice {:title   :yawning-black
+                                                          :text    "Any player suffers 6 damage."
+                                                          :effect  [:damage-player {:arg 6}]
+                                                          :options [:players]
+                                                          :or      {:text    "Umbra Titan destroys three pillars of Gravehold."
+                                                                    :effects [[::destroy-gravehold-pillars 3]]}
+                                                          :max     1}]]}
                     :quote      "The Titan hides beneath the skin of the cave, emerging only to strike."})
 
 (defn setup [{:keys [difficulty] :as game} _]
@@ -228,15 +228,15 @@
                                      count)]
     (assert (<= 1 discarded-nemesis-cards 2) (str "Turn order error: There are " discarded-nemesis-cards " nemesis turn order cards in the turn order discard pile."))
     (push-effect-stack game {:effects [[:give-choice (case discarded-nemesis-cards
-                                                       1 {:title     title
-                                                          :text      "Any player suffers 2 damage."
-                                                          :choice    [:damage-player {:arg 2}]
-                                                          :or-choice {:text    "Umbra Titan destroys one pillar of Gravehold"
-                                                                      :effects [[::destroy-gravehold-pillars 1]]}
-                                                          :options   [:players]
-                                                          :max       1}
+                                                       1 {:title   title
+                                                          :text    "Any player suffers 2 damage."
+                                                          :effect  [:damage-player {:arg 2}]
+                                                          :options [:players]
+                                                          :or      {:text    "Umbra Titan destroys one pillar of Gravehold"
+                                                                    :effects [[::destroy-gravehold-pillars 1]]}
+                                                          :max     1}
                                                        2 {:title   title
-                                                          :choice  ::unleash-choice
+                                                          :effect  ::unleash-choice
                                                           :options [:special
                                                                     {:option :damage :text "Gravehold suffers 2 damage"}
                                                                     {:option :pillar :text "Umbra Titan destroys one pillar of Gravehold"}]

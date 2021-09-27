@@ -40,7 +40,7 @@
                                    :can-use? ::arcane-nexus-can-use?
                                    :effects  [[:give-choice {:title   :arcane-nexus
                                                              :text    "Return a gem you played this turn to your hand."
-                                                             :choice  [:move-card {:from :play-area
+                                                             :effect  [:move-card {:from :play-area
                                                                                    :to   :hand}]
                                                              :options [:player :play-area {:type :gem}]
                                                              :min     1
@@ -81,7 +81,7 @@
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:give-choice {:title   :blaze
                                                                 :text    "You may place the gained Blaze on top of any player's discard pile."
-                                                                :choice  [::blaze-move-card {:card-id     gained-card-id
+                                                                :effect  [::blaze-move-card {:card-id     gained-card-id
                                                                                              :from-player player-no}]
                                                                 :options [:players]
                                                                 :max     1}]]}))))
@@ -117,7 +117,7 @@
       (push-effect-stack {:player-no player-no
                           :effects   [[:give-choice {:title   :carbonize
                                                      :text    "You may place the revealed turn order card on the bottom of the turn order deck."
-                                                     :choice  :put-turn-order-top-to-bottom
+                                                     :effect  :put-turn-order-top-to-bottom
                                                      :options [:turn-order :revealed]
                                                      :max     1}]]})))
 
@@ -155,7 +155,7 @@
             (zero? pile-size) (push-effect-stack {:player-no player-no
                                                   :effects   [[:give-choice {:title   :celestial-spire
                                                                              :text    "Any ally draws a card."
-                                                                             :choice  [:draw {:arg 1}]
+                                                                             :effect  [:draw {:arg 1}]
                                                                              :options [:players {:ally true}]
                                                                              :min     1
                                                                              :max     1}]]}))))
@@ -202,7 +202,7 @@
            :effects [[:deal-damage {:arg          6
                                     :kill-effects [[:give-choice {:title   :char
                                                                   :text    "Any player gains 2 life."
-                                                                  :choice  [:heal {:life 2}]
+                                                                  :effect  [:heal {:life 2}]
                                                                   :options [:players {:can-heal true}]
                                                                   :min     1
                                                                   :max     1}]]}]]
@@ -237,7 +237,7 @@
                        :effects [[:deal-damage 5]
                                  [:give-choice {:title   :conjure-the-lost
                                                 :text    "You may destroy this. If you do, Gravehold gains 4 life."
-                                                :choice  ::conjure-the-lost-destroy
+                                                :effect  ::conjure-the-lost-destroy
                                                 :options [:mixed
                                                           [:players :discard {:this true}]
                                                           [:players :prepped-spells {:this true}]]
@@ -262,7 +262,7 @@
                                "Deal 3 damage for each card destroyed this way."]
                      :effects [[:give-choice {:title   :consuming-void
                                               :text    "Destroy up to two cards in hand."
-                                              :choice  ::consuming-void-destroy
+                                              :effect  ::consuming-void-destroy
                                               :options [:player :hand]
                                               :max     2}]]
                      :quote   "'The Far Hollow hovels still smolder from the last time a mage lost his wits and will to the void.' Ghan, Gem Scavenger"})
@@ -273,20 +273,20 @@
         big-damage   (+ 4 bonus-damage)
         small-damage (+ 2 bonus-damage)]
     (push-effect-stack game {:player-no player-no
-                             :effects   [[:give-choice {:title     :convection-field
-                                                        :text      (str "Deal " big-damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
-                                                        :choice    [:deal-damage-to-target {:damage big-damage}]
-                                                        :options   [:mixed
-                                                                    [:nemesis]
-                                                                    [:nemesis :minions]]
-                                                        :or-choice {:text    (str "Deal " small-damage " damage.\nAny ally may destroy a card in hand.")
-                                                                    :effects [[:deal-damage small-damage]
-                                                                              [:give-choice {:title   :convection-field
-                                                                                             :text    "Any ally may destroy a card in hand."
-                                                                                             :choice  :destroy-from-hand
-                                                                                             :options [:players :hand {:ally true}]
-                                                                                             :max     1}]]}
-                                                        :max       1}]]})))
+                             :effects   [[:give-choice {:title   :convection-field
+                                                        :text    (str "Deal " big-damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                        :effect  [:deal-damage-to-target {:damage big-damage}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]]
+                                                        :or      {:text    (str "Deal " small-damage " damage.\nAny ally may destroy a card in hand.")
+                                                                  :effects [[:deal-damage small-damage]
+                                                                            [:give-choice {:title   :convection-field
+                                                                                           :text    "Any ally may destroy a card in hand."
+                                                                                           :effect  :destroy-from-hand
+                                                                                           :options [:players :hand {:ally true}]
+                                                                                           :max     1}]]}
+                                                        :max     1}]]})))
 
 (effects/register {::convection-field-choice convection-field-choice})
 
@@ -313,7 +313,7 @@
                            :args      args                  ; bonus-damage
                            :effects   [[:give-choice {:title   :crystallize
                                                       :text    "Any ally reveals their hand. Deal 2 damage for each gem in that ally's hand."
-                                                      :choice  [::crystallize-reveal {:caster player-no}]
+                                                      :effect  [::crystallize-reveal {:caster player-no}]
                                                       :options [:players {:ally true}]
                                                       :min     1
                                                       :max     1}]]}))
@@ -348,7 +348,7 @@
                           "Deal 3 damage for each card discarded this way."]
                 :effects [[:give-choice {:title   :dark-fire
                                          :text    "Discard up to two cards in hand."
-                                         :choice  ::dark-fire-discard
+                                         :effect  ::dark-fire-discard
                                          :options [:player :hand]
                                          :max     2}]]
                 :quote   "'Xaxos always says, to come back to light, we must first visit the shadow.' Malastar, Breach Mage Mentor"})
@@ -368,7 +368,7 @@
                                        :can-use? ::devouring-shadow-can-use?
                                        :effects  [[:give-choice {:title   :devouring-shadow
                                                                  :text    "Destroy a card in hand."
-                                                                 :choice  :destroy-from-hand
+                                                                 :effect  :destroy-from-hand
                                                                  :options [:player :hand]
                                                                  :min     1
                                                                  :max     1}]]}
@@ -396,7 +396,7 @@
                                         :effects   [[:discard-from-hand {:card-name card-name}]
                                                     [:give-choice {:title   :essence-theft
                                                                    :text    "Any player gains 1 life."
-                                                                   :choice  [:heal {:life 1}]
+                                                                   :effect  [:heal {:life 1}]
                                                                    :options [:players {:can-heal true}]
                                                                    :min     1
                                                                    :max     1}]]})))
@@ -411,7 +411,7 @@
                     :effects [[:deal-damage 3]
                               [:give-choice {:title   :essence-theft
                                              :text    "You may discard a card in hand. If you do, any player gains 1 life."
-                                             :choice  ::essence-theft-discard
+                                             :effect  ::essence-theft-discard
                                              :options [:player :hand]
                                              :max     1}]]
                     :quote   "'There is talk of the link between the mages and our adversaries. More and more, the difference between the two becomes harder to see.' Ohat, Dirt Merchant"})
@@ -481,7 +481,7 @@
              :effects [[:deal-damage 2]
                        [:give-choice {:title   :ignite
                                       :text    "Any ally gains 1 charge"
-                                      :choice  :gain-charge
+                                      :effect  :gain-charge
                                       :options [:players :ability {:ally true :fully-charged false}]
                                       :min     1
                                       :max     1}]]
@@ -510,7 +510,7 @@
                                         :effects   [[:discard-from-hand {:card-name card-name}]
                                                     [:give-choice {:title   :jagged-lightning
                                                                    :text    "Any player focuses their closed breach with the lowest focus cost."
-                                                                   :choice  :focus-breach
+                                                                   :effect  :focus-breach
                                                                    :options [:players :breaches {:lowest-focus-cost true}]
                                                                    :min     1
                                                                    :max     1}]]})))
@@ -525,7 +525,7 @@
                        :effects [[:deal-damage 3]
                                  [:give-choice {:title   :jagged-lightning
                                                 :text    "You may discard a card in hand. If you do, any player focuses their closed breach with the lowest focus cost."
-                                                :choice  ::jagged-lightning-discard
+                                                :effect  ::jagged-lightning-discard
                                                 :options [:player :hand]
                                                 :max     1}]]
                        :quote   "'Let us hope it hurts.' Sparrow, Breach Mage Soldier"})
@@ -581,7 +581,7 @@
                                                         (when (pos? pile-size)
                                                           [[:give-choice {:title   :nether-conduit
                                                                           :text    (str "Any ally may gain a " (ut/format-name card-name) ".")
-                                                                          :choice  [:gain {:card-name card-name}]
+                                                                          :effect  [:gain {:card-name card-name}]
                                                                           :options [:players {:ally true}]
                                                                           :max     1}]]))}))))
 
@@ -593,7 +593,7 @@
                      :cast    "Reveal a card in hand that costs 2 Aether or more. If you do, deal damage equal to the number of cards missing in that card's supply pile. Then, any ally may gain a card from that supply pile."
                      :effects [[:give-choice {:title   :nether-conduit
                                               :text    "Reveal a card in hand that costs 2 Aether or more."
-                                              :choice  ::nether-conduit-reveal
+                                              :effect  ::nether-conduit-reveal
                                               :options [:player :hand {:min-cost 2}]
                                               :min     1
                                               :max     1}]]})
@@ -629,7 +629,7 @@
                                                         :text    (concat [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")]
                                                                          (when gems?
                                                                            ["You may discard a gem. If you do, deal additional damage equal to its cost."]))
-                                                        :choice  [::oblivion-swell-damage {:damage damage}]
+                                                        :effect  [::oblivion-swell-damage {:damage damage}]
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:nemesis :minions]
@@ -670,7 +670,7 @@
                                                                          (when (and charges (pos? charges))
                                                                            ["OR"
                                                                             "Lose 1 charge to deal 2 additional damage."]))
-                                                        :choice  [::phoenix-flame-damage {:damage damage}]
+                                                        :effect  [::phoenix-flame-damage {:damage damage}]
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:nemesis :minions]
@@ -721,7 +721,7 @@
                            :args      args                  ; bonus-damage
                            :effects   [[:give-choice {:title   :pyromancy
                                                       :text    "Allies may collectively discard up to two cards in hand."
-                                                      :choice  [::pyromancy-discard {:caster player-no}]
+                                                      :effect  [::pyromancy-discard {:caster player-no}]
                                                       :options [:players :hand {:ally true}]
                                                       :max     2}]]}))
 
@@ -746,7 +746,7 @@
                         :effects     [[:deal-damage 4]
                                       [:give-choice {:title   :pyrotechnic-surge
                                                      :text    "You may destroy a card in your discard pile."
-                                                     :choice  :destroy-from-discard
+                                                     :effect  :destroy-from-discard
                                                      :options [:player :discard]
                                                      :max     1}]]})
 
@@ -766,7 +766,7 @@
                     :while-prepped {:at-start-casting [[:reveal-from-deck 1]
                                                        [:give-choice {:title   :reduce-to-ash
                                                                       :text    "Reveal the top card of your deck. You may destroy it."
-                                                                      :choice  :trash-from-revealed
+                                                                      :effect  :trash-from-revealed
                                                                       :options [:player :revealed]
                                                                       :max     1}]
                                                        [:topdeck-all-revealed]]}
@@ -793,7 +793,7 @@
              :effects [[:deal-damage {:arg          4
                                       :kill-effects [[:give-choice {:title   :scorch
                                                                     :text    "Any ally gains 2 charges."
-                                                                    :choice  [:gain-charges {:arg 2}]
+                                                                    :effect  [:gain-charges {:arg 2}]
                                                                     :options [:players :ability {:ally true :fully-charged false}]
                                                                     :min     1
                                                                     :max     1}]]}]]
@@ -805,7 +805,7 @@
                                                          [:reveal-from-deck 2]
                                                          [:give-choice {:title   :scrying-bolt
                                                                         :text    "Return them in any order."
-                                                                        :choice  :topdeck-from-revealed
+                                                                        :effect  :topdeck-from-revealed
                                                                         :options [:nemesis :revealed]
                                                                         :min     2
                                                                         :max     2}]]})))
@@ -820,7 +820,7 @@
                    :effects [[:deal-damage 5]
                              [:give-choice {:title   :scrying-bolt
                                             :text    "You may lose 1 charge. If you do, reveal the top two cards of the nemesis deck. Return them in any order."
-                                            :choice  ::scrying-bolt-reveal
+                                            :effect  ::scrying-bolt-reveal
                                             :options [:player :ability {:min-charges 1}]
                                             :max     1}]]
                    :quote   "'Who would've thought you could see the future so clearly at the end of a bolt of aether.' Reeve, Breach Mage Elite"})
@@ -833,7 +833,7 @@
                     :effects [[:deal-damage 2]
                               [:give-choice {:title   :spectral-echo
                                              :text    "You may destroy a card in hand."
-                                             :choice  :destroy-from-hand
+                                             :effect  :destroy-from-hand
                                              :options [:player :hand]
                                              :max     1}]]
                     :quote   "'Clear your mind, child. Drink in the void.' Xaxos, Breach Mage Adept"})
@@ -888,7 +888,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :wildfire-whip
                                                       :text    "Cast any player's prepped spell."
-                                                      :choice  [:cast-spell {:caster player-no}]
+                                                      :effect  [:cast-spell {:caster player-no}]
                                                       :options [:players :prepped-spells]
                                                       :min     1
                                                       :max     1}]]}))

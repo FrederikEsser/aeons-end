@@ -22,7 +22,7 @@
                                            (map (fn [{:keys [name]}]
                                                   [:give-choice {:title   title
                                                                  :text    "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."
-                                                                 :choice  [::resolve-blood-magic {:avoid-self-damage true}]
+                                                                 :effect  [::resolve-blood-magic {:avoid-self-damage true}]
                                                                  :options [:nemesis :play-area {:name name}]
                                                                  :min     1
                                                                  :max     1}])))})))
@@ -35,7 +35,7 @@
                                         [[::resolve-all-acolytes {:title title}]]
                                         [[:give-choice {:title   title
                                                         :text    "Resolve the Blood Magic effect of the acolyte with the highest life."
-                                                        :choice  ::resolve-blood-magic
+                                                        :effect  ::resolve-blood-magic
                                                         :options [:nemesis :minions {:type      :acolyte
                                                                                      :most-life true}]
                                                         :min     1
@@ -100,7 +100,7 @@
 (defn edryss-tragg-blood-magic [game {:keys [avoid-self-damage]}]
   (push-effect-stack game {:effects [[:give-choice {:title   :edryss-tragg
                                                     :text    "Any player suffers 2 damage."
-                                                    :choice  (if avoid-self-damage
+                                                    :effect  (if avoid-self-damage
                                                                [:damage-player {:arg 2}]
                                                                ::edryss-tragg-damage)
                                                     :options [:players]
@@ -136,7 +136,7 @@
                :blood-magic {:text    "Two different players each suffer 1 damage."
                              :effects [[:give-choice {:title   :holadran
                                                       :text    "Two different players each suffer 1 damage."
-                                                      :choice  ::holadran-damage
+                                                      :effect  ::holadran-damage
                                                       :options [:players]
                                                       :min     2
                                                       :max     2}]]}
@@ -151,7 +151,7 @@
                            :effects [[:damage-gravehold 1]
                                      [:give-choice {:title   :kurgax
                                                     :text    "Any player suffers 1 damage."
-                                                    :choice  [:damage-player {:arg 1}]
+                                                    :effect  [:damage-player {:arg 1}]
                                                     :options [:players]
                                                     :min     1
                                                     :max     1}]]}
@@ -165,7 +165,7 @@
                            :effects [[:damage-gravehold 1]
                                      [:give-choice {:title   :lurzan
                                                     :text    "The player with the lowest life suffers 1 damage."
-                                                    :choice  [:damage-player {:arg 1}]
+                                                    :effect  [:damage-player {:arg 1}]
                                                     :options [:players {:lowest-life true}]
                                                     :min     1
                                                     :max     1}]]}
@@ -181,13 +181,13 @@
                                                                           :damage    1}]]))}))
 
 (defn mord-choice [game {:keys [avoid-self-damage] :as args}]
-  (push-effect-stack game {:effects [[:give-choice {:title     :mord
-                                                    :text      "Any player loses 1 charge, Gravehold suffers 1 damage, and this minion suffers 1 damage."
-                                                    :choice    [::mord-damage {:avoid-self-damage avoid-self-damage}]
-                                                    :options   [:players :ability {:min-charges 1}]
-                                                    :or-choice {:text    "Gravehold suffers 3 damage."
-                                                                :effects [[:damage-gravehold 3]]}
-                                                    :max       1}]]}))
+  (push-effect-stack game {:effects [[:give-choice {:title   :mord
+                                                    :text    "Any player loses 1 charge, Gravehold suffers 1 damage, and this minion suffers 1 damage."
+                                                    :effect  [::mord-damage {:avoid-self-damage avoid-self-damage}]
+                                                    :options [:players :ability {:min-charges 1}]
+                                                    :or      {:text    "Gravehold suffers 3 damage."
+                                                              :effects [[:damage-gravehold 3]]}
+                                                    :max     1}]]}))
 
 (effects/register {::mord-damage mord-damage
                    ::mord-choice mord-choice})
@@ -220,13 +220,13 @@
 
 (defn ren-goda-damage [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
-                           :effects   [[:give-choice {:title     "Ren-Goda"
-                                                      :text      "Discard the most expensive card in your hand and suffer 1 damage."
-                                                      :choice    ::ren-goda-discard
-                                                      :options   [:player :hand {:most-expensive true}]
-                                                      :or-choice {:text    "Suffer 2 damage."
-                                                                  :effects [[:damage-player 2]]}
-                                                      :max       1}]]}))
+                           :effects   [[:give-choice {:title   "Ren-Goda"
+                                                      :text    "Discard the most expensive card in your hand and suffer 1 damage."
+                                                      :effect  ::ren-goda-discard
+                                                      :options [:player :hand {:most-expensive true}]
+                                                      :or      {:text    "Suffer 2 damage."
+                                                                :effects [[:damage-player 2]]}
+                                                      :max     1}]]}))
 
 (effects/register {::ren-goda-discard ren-goda-discard
                    ::ren-goda-damage  ren-goda-damage})
@@ -241,7 +241,7 @@
                                                       :text    ["Any player suffers 2 damage."
                                                                 "OR"
                                                                 "Any player suffers 1 damage and discards their most expensive card in hand."]
-                                                      :choice  ::ren-goda-damage
+                                                      :effect  ::ren-goda-damage
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]}
@@ -252,7 +252,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :solara
                                                       :text    "Discard 2 cards in hand."
-                                                      :choice  :discard-from-hand
+                                                      :effect  :discard-from-hand
                                                       :options [:player :hand]
                                                       :min     2
                                                       :max     2}]]}))
@@ -263,7 +263,7 @@
                        (apply max 0))]
     (push-effect-stack game {:effects [[:give-choice {:title   :solara
                                                       :text    "Any player discards 2 cards in hand."
-                                                      :choice  ::solara-discard
+                                                      :effect  ::solara-discard
                                                       :options [:players {:min-hand (min 2 max-cards)}]
                                                       :min     1
                                                       :max     1}]]})))
@@ -297,7 +297,7 @@
              :effects [[:unleash]
                        [:give-choice {:title   :ascend
                                       :text    "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Effect."
-                                      :choice  ::ascend-heal-and-resolve
+                                      :effect  ::ascend-heal-and-resolve
                                       :options [:nemesis :minions {:type        :acolyte
                                                                    :lowest-life true}]
                                       :min     1
@@ -320,7 +320,7 @@
                         "Unleash."]
               :effects [[:give-choice {:title   :beseech
                                        :text    "Place the acolyte in play with the lowest life on the bottom of the acolyte deck."
-                                       :choice  ::beseech-return-acolyte
+                                       :effect  ::beseech-return-acolyte
                                        :options [:nemesis :minions {:type        :acolyte
                                                                     :lowest-life true}]
                                        :min     1
@@ -370,14 +370,14 @@
                                             "Resolve the Blood Magic effect of each acolyte in play without those acolytes suffering damage from their Blood Magic effects."]
                                   :effects [[:give-choice {:title   :nameless-faith
                                                            :text    "Shuffle the two most recently discarded acolytes in the acolyte discard pile into the acolyte deck."
-                                                           :choice  [:move-card {:from :discard
+                                                           :effect  [:move-card {:from :discard
                                                                                  :to   :acolytes}]
                                                            :options [:nemesis :discard {:type :acolyte :most-recent true}]
                                                            :min     1
                                                            :max     1}]
                                             [:give-choice {:title   :nameless-faith
                                                            :text    "Shuffle the most recently discarded acolyte in the acolyte discard pile into the acolyte deck."
-                                                           :choice  [:move-card {:from :discard
+                                                           :effect  [:move-card {:from :discard
                                                                                  :to   :acolytes}]
                                                            :options [:nemesis :discard {:type :acolyte :most-recent true}]
                                                            :min     1
@@ -399,7 +399,7 @@
                       "Unleash twice."]
             :effects [[:give-choice {:title   :reign
                                      :text    "Resolve the Blood Magic effect of the acolyte with the most life. That acolyte suffers 6 damage."
-                                     :choice  ::reign-resolve
+                                     :effect  ::reign-resolve
                                      :options [:nemesis :minions {:type      :acolyte
                                                                   :most-life true}]
                                      :min     1
@@ -422,7 +422,7 @@
                   :persistent {:text    "Resolve the Blood Magic effect of the acolyte with the lowest life. That acolyte suffers 1 damage."
                                :effects [[:give-choice {:title   :thronewatch
                                                         :text    "Resolve the Blood Magic effect of the acolyte with the lowest life. That acolyte suffers 1 damage."
-                                                        :choice  ::thronewatch-resolve
+                                                        :effect  ::thronewatch-resolve
                                                         :options [:nemesis :minions {:type        :acolyte
                                                                                      :lowest-life true}]
                                                         :min     1
@@ -443,7 +443,7 @@
                     :persistent {:text    "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Magic effect twice."
                                  :effects [[:give-choice {:title   :viscera-bride
                                                           :text    "The acolyte with the lowest life gains 10 life. Resolve that acolyte's Blood Magic effect twice."
-                                                          :choice  ::viscera-bride-heal-and-resolve
+                                                          :effect  ::viscera-bride-heal-and-resolve
                                                           :options [:nemesis :minions {:type        :acolyte
                                                                                        :lowest-life true}]
                                                           :min     1

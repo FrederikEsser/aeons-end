@@ -29,7 +29,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :agony-field
                                                       :text    "Discard three cards in hand."
-                                                      :choice  :discard-from-hand
+                                                      :effect  :discard-from-hand
                                                       :options [:player :hand]
                                                       :min     3
                                                       :max     3}]
@@ -41,7 +41,7 @@
                        (apply max 0))]
     (push-effect-stack game {:effects [[:give-choice {:title   :agony-field
                                                       :text    "Any player discards three cards in hand and then draws one card."
-                                                      :choice  ::agony-field-discard
+                                                      :effect  ::agony-field-discard
                                                       :options [:players {:min-hand (min 3 max-cards)}]
                                                       :min     1
                                                       :max     1}]]})))
@@ -56,7 +56,7 @@
                                :predicate ::agony-field-can-discard?
                                :effects   [[:give-choice {:title   :agony-field
                                                           :text    "Destroy a card in hand that costs 2 Aether or more."
-                                                          :choice  :destroy-from-hand
+                                                          :effect  :destroy-from-hand
                                                           :options [:player :hand {:min-cost 2}]
                                                           :min     1
                                                           :max     1}]]}
@@ -106,7 +106,7 @@
                                :effects [[:unleash]
                                          [:give-choice {:title   :aphotic-sun
                                                         :text    "The player with the most charges suffers 3 damage and loses all of their charges."
-                                                        :choice  ::aphotic-sun-damage
+                                                        :effect  ::aphotic-sun-damage
                                                         :options [:players {:most-charges true}]
                                                         :min     1
                                                         :max     1}]]}
@@ -119,7 +119,7 @@
     (cond-> game
             (pos? max-prepped-spells) (push-effect-stack {:effects [[:give-choice {:title   :bleed-static
                                                                                    :text    "The player with the most prepped spells suffers 2 damage for each of their prepped spells."
-                                                                                   :choice  [:damage-player {:arg (* 2 max-prepped-spells)}]
+                                                                                   :effect  [:damage-player {:arg (* 2 max-prepped-spells)}]
                                                                                    :options [:players {:most-prepped-spells true}]
                                                                                    :min     1
                                                                                    :max     1}]]}))))
@@ -157,7 +157,7 @@
                                     :predicate ::cataclysmic-fate-can-discard?
                                     :effects   [[:give-choice {:title   :cataclysmic-fate
                                                                :text    "Destroy a prepped spell that costs 5 Aether or more and a breach in which it was prepped."
-                                                               :choice  ::cataclysmic-fate-destroy-breach
+                                                               :effect  ::cataclysmic-fate-destroy-breach
                                                                :options [:player :prepped-spells {:min-cost 5}]
                                                                :min     1
                                                                :max     1}]]}
@@ -165,7 +165,7 @@
                                     :text    "The player with the lowest life suffers 4 damage."
                                     :effects [[:give-choice {:title   :cataclysmic-fate
                                                              :text    "The player with the lowest life suffers 4 damage."
-                                                             :choice  [:damage-player {:arg 4}]
+                                                             :effect  [:damage-player {:arg 4}]
                                                              :options [:players {:lowest-life true}]
                                                              :min     1
                                                              :max     1}]]}})
@@ -177,7 +177,7 @@
                                       [:reveal-from-deck 2]
                                       [:give-choice {:title   :chaos-flail
                                                      :text    "Destroy the most expensive card revealed."
-                                                     :choice  :trash-from-revealed
+                                                     :effect  :trash-from-revealed
                                                      :options [:player :revealed {:most-expensive true}]
                                                      :min     1
                                                      :max     1}]
@@ -200,7 +200,7 @@
                                          [:unleash]
                                          [:give-choice {:title   :chaos-flail
                                                         :text    "Any player places their discard pile on top of their deck and shuffles it.\nThen, that player reveals the top two cards of their deck and destroys the most expensive card revealed."
-                                                        :choice  ::chaos-flail-destroy
+                                                        :effect  ::chaos-flail-destroy
                                                         :options [:players {:min-deck+discard 1}]
                                                         :min     1
                                                         :max     1}]]}})
@@ -216,7 +216,7 @@
                                  :text    "The player with the most life suffers damage equal to their current life."
                                  :effects [[:give-choice {:title   :dire-abbatoir
                                                           :text    "The player with the most life suffers damage equal to their current life."
-                                                          :choice  :kill-player
+                                                          :effect  :kill-player
                                                           :options [:players {:most-life true}]
                                                           :min     1
                                                           :max     1}]]}})
@@ -239,7 +239,7 @@
                               :text    ["The player with the most charges suffers 4 damage and loses all of their charges."]
                               :effects [[:give-choice {:title   :doom-aegis
                                                        :text    "The player with the most charges suffers 4 damage and loses all of their charges."
-                                                       :choice  ::doom-aegis-damage
+                                                       :effect  ::doom-aegis-damage
                                                        :options [:players {:most-charges true}]
                                                        :min     1
                                                        :max     1}]]}
@@ -264,7 +264,7 @@
                                     :predicate [::cards-in-hand? {:amount 4}]
                                     :effects   [[:give-choice {:title   :heart-of-nothing
                                                                :text    "Discard four cards in hand."
-                                                               :choice  :discard-from-hand
+                                                               :effect  :discard-from-hand
                                                                :options [:player :hand]
                                                                :min     4
                                                                :max     4}]]}
@@ -272,14 +272,14 @@
                                     :text    ["Any player suffers 4 damage."
                                               "OR"
                                               "Unleash twice."]
-                                    :effects [[:give-choice {:title     :heart-of-nothing
-                                                             :text      "Any player suffers 4 damage."
-                                                             :choice    [:damage-player {:arg 4}]
-                                                             :or-choice {:text    "Unleash twice"
-                                                                         :effects [[:unleash]
-                                                                                   [:unleash]]}
-                                                             :options   [:players]
-                                                             :max       1}]]}
+                                    :effects [[:give-choice {:title   :heart-of-nothing
+                                                             :text    "Any player suffers 4 damage."
+                                                             :effect  [:damage-player {:arg 4}]
+                                                             :options [:players]
+                                                             :or      {:text    "Unleash twice"
+                                                                       :effects [[:unleash]
+                                                                                 [:unleash]]}
+                                                             :max     1}]]}
                        :quote      "'Beyond our world is a vast nothing. At the center of this lies The Nameless.' Mist, Voidwalker"})
 
 (def morbid-gyre {:name       :morbid-gyre
@@ -296,7 +296,7 @@
                                          [:unleash]
                                          [:give-choice {:title   :morbid-gyre
                                                         :text    "The players collectively discard three cards in hand."
-                                                        :choice  :collective-discard-from-hand
+                                                        :effect  :collective-discard-from-hand
                                                         :options [:players :hand]
                                                         :min     3
                                                         :max     3}]]}
@@ -333,7 +333,7 @@
                                     :predicate ::planar-collision-can-discard?
                                     :effects   [[:give-choice {:title   :planar-collision
                                                                :text    "Discard two prepped spells."
-                                                               :choice  :discard-prepped-spells
+                                                               :effect  :discard-prepped-spells
                                                                :options [:player :prepped-spells]
                                                                :min     2
                                                                :max     2}]]}
@@ -360,7 +360,7 @@
                               :text    "Gravehold suffers 18 damage. The players may collectively discard up to six gems. For each gem discarded this way, prevent 3 of that damage."
                               :effects [[:give-choice {:title   :pulverizing-ray
                                                        :text    "Gravehold suffers 18 damage. The players may collectively discard up to six gems. For each gem discarded this way, prevent 3 of that damage."
-                                                       :choice  ::pulverizing-ray-damage
+                                                       :effect  ::pulverizing-ray-damage
                                                        :options [:players :hand {:type :gem}]
                                                        :max     6}]]}
                       :quote "'The ground absorbed the latent energy left by the first breaches ever opened. Without this fuel our spells, out fate would be certain.' Malastar, Breach Mage Mentor"})
@@ -381,7 +381,7 @@
                                    :predicate ::reality-rupture-can-discard?
                                    :effects   [[:give-choice {:title   :reality-rupture
                                                               :text    "Destroy two prepped spells that each cost 3 Aether or more."
-                                                              :choice  :destroy-prepped-spells
+                                                              :effect  :destroy-prepped-spells
                                                               :options [:player :prepped-spells {:min-cost 3}]
                                                               :min     2
                                                               :max     2}]]}
@@ -426,7 +426,7 @@
                                                                         (when (> manual-destroy-count 1)
                                                                           "s")
                                                                         ".")
-                                                          :choice  :destroy-prepped-spells
+                                                          :effect  :destroy-prepped-spells
                                                           :options [:players :prepped-spells {:min-cost cost-2}]
                                                           :min     manual-destroy-count
                                                           :max     manual-destroy-count}]]))})))
@@ -451,7 +451,7 @@
                              :predicate [::cards-in-hand? {:amount 3}]
                              :effects   [[:give-choice {:title   :woven-sky
                                                         :text    "Discard three cards in hand."
-                                                        :choice  :discard-from-hand
+                                                        :effect  :discard-from-hand
                                                         :options [:player :hand]
                                                         :min     3
                                                         :max     3}]]}
@@ -461,7 +461,7 @@
                              :effects [[:unleash]
                                        [:give-choice {:title   :woven-sky
                                                       :text    "Any player suffers 4 damage."
-                                                      :choice  [:damage-player {:arg 4}]
+                                                      :effect  [:damage-player {:arg 4}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]}
@@ -503,10 +503,10 @@
                       :text    ["Any player suffers 6 damage."
                                 "OR"
                                 "Gravehold suffers 8 damage."]
-                      :effects [[:give-choice {:title     name
-                                               :text      "Any player suffers 6 damage."
-                                               :choice    [:damage-player {:arg 6}]
-                                               :or-choice {:text    "Gravehold suffers 8 damage."
-                                                           :effects [[:damage-gravehold 8]]}
-                                               :options   [:players]
-                                               :max       1}]]})}))
+                      :effects [[:give-choice {:title   name
+                                               :text    "Any player suffers 6 damage."
+                                               :effect  [:damage-player {:arg 6}]
+                                               :options [:players]
+                                               :or      {:text    "Gravehold suffers 8 damage."
+                                                         :effects [[:damage-gravehold 8]]}
+                                               :max     1}]]})}))

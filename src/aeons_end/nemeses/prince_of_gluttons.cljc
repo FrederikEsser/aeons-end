@@ -27,7 +27,7 @@
         cards-devoured (if (<= (count players) 2) 3 2)]
     (push-effect-stack game {:effects [[:give-choice {:title      title
                                                       :text       (str "Devour " (ut/number->text cards-devoured) " cards from the least expensive supply pile.")
-                                                      :choice     [::devour {:number-of-cards cards-devoured}]
+                                                      :effect     [::devour {:number-of-cards cards-devoured}]
                                                       :options    [:supply {:least-expensive true
                                                                             :devoured        false}]
                                                       :min        1
@@ -48,7 +48,7 @@
                                                    (mapv (fn [card-names]
                                                            [:give-choice {:title   :setup
                                                                           :text    "Place one gem from each gem supply, starting with the most expensive, on top of the devoured pile."
-                                                                          :choice  ::devour
+                                                                          :effect  ::devour
                                                                           :options [:supply {:names (set card-names)}]
                                                                           :min     (count card-names)
                                                                           :max     (count card-names)}])))
@@ -62,7 +62,7 @@
                                                                                       (str "Place an additional "
                                                                                            (ut/number->text n)
                                                                                            " cards from any of the supply piles on top of the devoured pile."))
-                                                                           :choice  ::devour
+                                                                           :effect  ::devour
                                                                            :options [:supply {:devoured false}]
                                                                            :min     1
                                                                            :max     1}])))))})))
@@ -86,7 +86,7 @@
   (let [{{:keys [life]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name :cerephage})]
     (push-effect-stack game {:effects [[:give-choice {:title      :cerephage
                                                       :text       (str "Devour " (ut/number->text life) " cards from one supply pile.")
-                                                      :choice     [::devour {:number-of-cards life}]
+                                                      :effect     [::devour {:number-of-cards life}]
                                                       :options    [:supply {:devoured false}]
                                                       :min        1
                                                       :max        1
@@ -109,15 +109,15 @@
   (let [empty-supply-piles (->> supply
                                 (filter (comp zero? :pile-size))
                                 count)]
-    (push-effect-stack game {:effects [[:give-choice {:title     :digest
-                                                      :text      (str "Any player suffers " empty-supply-piles " damage.")
-                                                      :choice    [:damage-player {:arg empty-supply-piles}]
-                                                      :or-choice {:text    "Unleash three times."
-                                                                  :effects [[:unleash]
-                                                                            [:unleash]
-                                                                            [:unleash]]}
-                                                      :options   [:players]
-                                                      :max       1}]]})))
+    (push-effect-stack game {:effects [[:give-choice {:title   :digest
+                                                      :text    (str "Any player suffers " empty-supply-piles " damage.")
+                                                      :effect  [:damage-player {:arg empty-supply-piles}]
+                                                      :options [:players]
+                                                      :or      {:text    "Unleash three times."
+                                                                :effects [[:unleash]
+                                                                          [:unleash]
+                                                                          [:unleash]]}
+                                                      :max     1}]]})))
 
 (effects/register {::digest-give-choice digest-give-choice})
 
@@ -138,7 +138,7 @@
                               :effects [[:damage-gravehold 3]
                                         [:give-choice {:title   :godfeeders
                                                        :text    "Devour a gem from the most expensive gem supply pile."
-                                                       :choice  ::devour
+                                                       :effect  ::devour
                                                        :options [:supply {:type           :gem
                                                                           :most-expensive true
                                                                           :devoured       false}]
@@ -157,7 +157,7 @@
                   last)]
     (push-effect-stack game {:effects [[:give-choice {:title      :gorge
                                                       :text       "Devour two cards from the second most expensive gem supply pile."
-                                                      :choice     [::devour {:number-of-cards 2}]
+                                                      :effect     [::devour {:number-of-cards 2}]
                                                       :options    [:supply {:cost     (or cost :no-cost)
                                                                             :type     :gem
                                                                             :devoured false}]
@@ -175,7 +175,7 @@
             :effects [[::gorge-devour]
                       [:give-choice {:title   :gorge
                                      :text    "Any player suffers 2 damage."
-                                     :choice  [:damage-player {:arg 2}]
+                                     :effect  [:damage-player {:arg 2}]
                                      :options [:players]
                                      :min     1
                                      :max     1}]]
@@ -200,7 +200,7 @@
                                           :text    ["Any player suffers 3 damage."
                                                     "OR"
                                                     "Devour three spells from any spell supply pile."]
-                                          :choice  ::lobotomize-choice
+                                          :effect  ::lobotomize-choice
                                           :options [:mixed
                                                     [:players]
                                                     [:supply {:type     :spell
@@ -215,7 +215,7 @@
                                 count)]
     (push-effect-stack game {:effects [[:give-choice {:title   :digest
                                                       :text    (str "The player with the lowest life suffers " empty-supply-piles " damage.")
-                                                      :choice  [:damage-player {:arg empty-supply-piles}]
+                                                      :effect  [:damage-player {:arg empty-supply-piles}]
                                                       :options [:players {:lowest-life true}]
                                                       :min     1
                                                       :max     1}]]})))
@@ -266,7 +266,7 @@
                                                           :text    ["Any player suffers 2 damage."
                                                                     "OR"
                                                                     "Devour two relics from the least expensive relic supply pile."]
-                                                          :choice  ::thought-biter-choice
+                                                          :effect  ::thought-biter-choice
                                                           :options [:mixed
                                                                     [:players]
                                                                     [:supply {:type            :relic

@@ -29,7 +29,7 @@
                        "Unleash")]
     (push-effect-stack game {:effects [[:give-choice {:title   title
                                                       :text    "Any player gains a corruption and places it on top of their deck. That player shuffles their discard pile into their deck."
-                                                      :choice  ::gain-corruption-and-shuffle
+                                                      :effect  ::gain-corruption-and-shuffle
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -66,7 +66,7 @@
                                                                             (when (pos? charges)
                                                                               ["OR"
                                                                                "Lose 1 charge to place it on the bottom of the corruption deck."]))
-                                                                 :choice  [::corruption-on-trash-choice {:card-name    name
+                                                                 :effect  [::corruption-on-trash-choice {:card-name    name
                                                                                                          :destroyed-by destroyed-by}]
                                                                  :options [:mixed
                                                                            [:players]
@@ -87,7 +87,7 @@
                                                    [:card-effect {:card card}]])
                                                 [[:give-choice {:title   :corruption
                                                                 :text    "Resolve all corruptions in your hand, in any order."
-                                                                :choice  ::resolve-corruption
+                                                                :effect  ::resolve-corruption
                                                                 :options [:player :hand {:type :corruption}]
                                                                 :min     1
                                                                 :max     1}]])})))
@@ -122,7 +122,7 @@
                     :effects  [[:damage-player 1]
                                [:give-choice {:title   :blind-abandon
                                               :text    "You may destroy a non-corruption card in hand."
-                                              :choice  :destroy-from-hand
+                                              :effect  :destroy-from-hand
                                               :options [:player :hand {:not-type :corruption}]
                                               :max     1}]
                                [:destroy-this]]
@@ -137,7 +137,7 @@
                 :effects  [[:damage-player 1]
                            [:give-choice {:title   :contagion
                                           :text    "Return any card that costs 0 Aether in your discard pile to your hand."
-                                          :choice  :take-from-discard
+                                          :effect  :take-from-discard
                                           :options [:player :discard {:cost 0}]
                                           :min     1
                                           :max     1}]
@@ -153,7 +153,7 @@
                     :effects  [[:damage-gravehold 2]
                                [:give-choice {:title   :delirium-veil
                                               :text    "Focus a breach."
-                                              :choice  :focus-breach
+                                              :effect  :focus-breach
                                               :options [:player :breaches {:opened false}]
                                               :min     1
                                               :max     1}]
@@ -168,7 +168,7 @@
                              "Destroy this."]
                   :effects  [[:give-choice {:title   :dire-wisdom
                                             :text    "Gain a spell from any spell supply pile."
-                                            :choice  :gain
+                                            :effect  :gain
                                             :options [:supply {:type :spell}]
                                             :min     1
                                             :max     1}]
@@ -210,7 +210,7 @@
                             [:reveal-from-deck 1]
                             [:give-choice {:title   :grim-sight
                                            :text    "Look at the top card of your deck. You may destroy it."
-                                           :choice  :trash-from-revealed
+                                           :effect  :trash-from-revealed
                                            :options [:player :revealed]
                                            :max     1}]
                             [:topdeck-all-revealed]
@@ -226,7 +226,7 @@
                          :effects  [[:damage-player 2]
                                     [:give-choice {:title   :insatiable-avarice
                                                    :text    "Gain a gem from the least expensive gem supply pile and place it into your hand."
-                                                   :choice  [:gain {:to :hand}]
+                                                   :effect  [:gain {:to :hand}]
                                                    :options [:supply {:type :gem :least-expensive true}]
                                                    :min     1
                                                    :max     1}]
@@ -252,14 +252,14 @@
                              "Destroy this."]
                   :effects  [[:give-choice {:title   :nothingness
                                             :text    "Discard two non-corruption cards."
-                                            :choice  :discard-from-hand
+                                            :effect  :discard-from-hand
                                             :options [:player :hand {:not-type :corruption}]
                                             :min     2
                                             :max     2}]
                              [:damage-player 2]
                              [:give-choice {:title   :nothingness
                                             :text    "Shuffle any player's turn order card into the turn order deck."
-                                            :choice  :shuffle-into-turn-order-deck
+                                            :effect  :shuffle-into-turn-order-deck
                                             :options [:turn-order :discard {:not-type :nemesis}]
                                             :min     1
                                             :max     1}]
@@ -287,7 +287,7 @@
                                 "Destroy this."]
                      :effects  [[:give-choice {:title   :reckless-might
                                                :text    "Gain a relic from any relic supply pile and place on top of your deck.\nSuffer damage equal to half its cost, rounded up."
-                                               :choice  ::reckless-might-gain
+                                               :effect  ::reckless-might-gain
                                                :options [:supply {:type :relic}]
                                                :min     1
                                                :max     1}]
@@ -303,7 +303,7 @@
                                :effects [[:heal-gravehold 2]
                                          [:give-choice {:title   :bedlam-sage
                                                         :text    "The player with the most life suffers 3 damage."
-                                                        :choice  [:damage-player {:arg 3}]
+                                                        :effect  [:damage-player {:arg 3}]
                                                         :options [:players {:most-life true}]
                                                         :min     1
                                                         :max     1}]]}
@@ -332,7 +332,7 @@
                         "Each of those players gains 1 life."]
               :effects [[:give-choice {:title   :afflict
                                        :text    "Two different players each gain two corruptions and place them on top of their decks."
-                                       :choice  ::afflict-corrupt
+                                       :effect  ::afflict-corrupt
                                        :options [:players]
                                        :min     2
                                        :max     2}]]
@@ -356,14 +356,14 @@
                        "Any player focuses a breach."]
              :effects [[:give-choice {:title       :burden
                                       :text        "The players collectively gain two corruptions and place them on top of their decks."
-                                      :choice      ::burden-gain-corruption
+                                      :effect      ::burden-gain-corruption
                                       :options     [:players]
                                       :min         2
                                       :max         2
                                       :repeatable? true}]
                        [:give-choice {:title   :burden
                                       :text    "Any player focuses a breach."
-                                      :choice  :focus-breach
+                                      :effect  :focus-breach
                                       :options [:players :breaches {:opened false}]
                                       :min     1
                                       :max     1}]]})
@@ -383,7 +383,7 @@
                            :effects   [[:damage-player 2]
                                        [:give-choice {:title   :pain-sower
                                                       :text    "A different player focuses a breach."
-                                                      :choice  :focus-breach
+                                                      :effect  :focus-breach
                                                       :options [:players :breaches {:ally true :opened false}]
                                                       :min     1
                                                       :max     1}]]}))
@@ -398,7 +398,7 @@
                                         "A different player focuses a breach."]
                               :effects [[:give-choice {:title   :pain-sower
                                                        :text    "Any player suffers 2 damage."
-                                                       :choice  ::pain-sower-damage
+                                                       :effect  ::pain-sower-damage
                                                        :options [:players]
                                                        :min     1
                                                        :max     1}]]}
@@ -408,7 +408,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :ruin-priest
                                                       :text    "Discard three non-corruption cards."
-                                                      :choice  :discard-from-hand
+                                                      :effect  :discard-from-hand
                                                       :options [:player :hand {:not-type :corruption}]
                                                       :min     3
                                                       :max     3}]
@@ -422,7 +422,7 @@
                        (apply max 0))]
     (push-effect-stack game {:effects [[:give-choice {:title   :ruin-priest
                                                       :text    "Any player discards three non-corruption cards. That player gains three corruptions and places them into their hand."
-                                                      :choice  ::ruin-priest-discard
+                                                      :effect  ::ruin-priest-discard
                                                       :options [:players {:min-non-corruption (min 3 max-cards)}]
                                                       :min     1
                                                       :max     1}]]})))
@@ -447,7 +447,7 @@
                                          [:damage-player 3]
                                          [:give-choice {:title   :tempt
                                                         :text    "Gain a card from any supply pile that costs 4 Aether or less."
-                                                        :choice  :gain
+                                                        :effect  :gain
                                                         :options [:supply {:max-cost 4}]
                                                         :min     1
                                                         :max     1}]]})))
@@ -460,7 +460,7 @@
             :text    "The player with the most Crystals in hand discards all of their Crystals, suffers 3 damage, and gains a card from any supply pile that costs 4 Aether or less."
             :effects [[:give-choice {:title   :tempt
                                      :text    "The player with the most Crystals in hand discards all of their Crystals."
-                                     :choice  ::tempt-attack
+                                     :effect  ::tempt-attack
                                      :options [:players {:most-crystals true}]
                                      :min     1
                                      :max     1}]]
@@ -480,7 +480,7 @@
                                     :predicate [::power/cards-in-hand? {:amount 4}]
                                     :effects   [[:give-choice {:title   :twisting-madness
                                                                :text    "Discard four cards in hand and draw one card."
-                                                               :choice  ::twisting-madness-discard
+                                                               :effect  ::twisting-madness-discard
                                                                :options [:player :hand]
                                                                :min     4
                                                                :max     4}]]}

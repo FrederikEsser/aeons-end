@@ -13,7 +13,7 @@
                                               [[:damage-player {:player-no (or destroyed-by player-no)
                                                                 :arg       1}]]))}))
 
-(defn tainted-jade-choice [game {:keys [player-no card-id choice]}]
+(defn tainted-jade-choice [game {:keys [player-no card-id choice] :as args}]
   (push-effect-stack game {:player-no player-no
                            :card-id   card-id
                            :effects   (case choice
@@ -29,7 +29,7 @@
       (push-effect-stack game {:player-no player-no
                                :card-id   card-id
                                :effects   [[:give-choice {:title   :tainted-jade
-                                                          :choice  ::tainted-jade-choice
+                                                          :effect  ::tainted-jade-choice
                                                           :options [:special
                                                                     {:option :aether :text "Gain 2 Aether. Suffer 1 damage."}
                                                                     {:option :destroy :text "Spend 2 Aether to destroy this."}]
@@ -89,7 +89,7 @@
                        "unleash")]
     (push-effect-stack game {:effects [[:give-choice {:title   title
                                                       :text    "Any player gains a Tainted Jade."
-                                                      :choice  ::gain-tainted-jade
+                                                      :effect  ::gain-tainted-jade
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -138,7 +138,7 @@
 (defn advance-tainted-track [game _]
   (push-effect-stack game {:effects [[:give-choice {:title   :tainted-track
                                                     :text    "Advance the tainted track."
-                                                    :choice  ::do-advance-tainted-track
+                                                    :effect  ::do-advance-tainted-track
                                                     :options [:nemesis :tainted-track]
                                                     :min     1
                                                     :max     1}]]}))
@@ -159,7 +159,7 @@
                        :text    "The player with the lowest life suffers 4 damage."
                        :effects [[:give-choice {:title   :tainted-track
                                                 :text    "The player with the lowest life suffers 4 damage."
-                                                :choice  [:damage-player {:arg 4}]
+                                                :effect  [:damage-player {:arg 4}]
                                                 :options [:players {:lowest-life true}]
                                                 :min     1
                                                 :max     1}]]}
@@ -198,7 +198,7 @@
                                                "Advance the Tainted Track."]
                                      :effects [[:give-choice {:title   :creeping-viridian
                                                               :text    "Any player gains a Tainted Jade and places it in their hand."
-                                                              :choice  [::gain-tainted-jade {:to :hand}]
+                                                              :effect  [::gain-tainted-jade {:to :hand}]
                                                               :options [:players]
                                                               :min     1
                                                               :max     1}]
@@ -222,7 +222,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :glittering-doom
                                                       :text    "Discard three cards in hand."
-                                                      :choice  :discard-from-hand
+                                                      :effect  :discard-from-hand
                                                       :options [:player :hand]
                                                       :min     3
                                                       :max     3}]
@@ -234,7 +234,7 @@
                        (apply max 0))]
     (push-effect-stack game {:effects [[:give-choice {:title   :glittering-doom
                                                       :text    "Any player discards three cards in hand and then gains three Tainted Jades and places them into their hand."
-                                                      :choice  ::glittering-doom-discard
+                                                      :effect  ::glittering-doom-discard
                                                       :options [:players {:min-hand (min 3 max-cards)}]
                                                       :min     1
                                                       :max     1}]]})))
@@ -260,7 +260,7 @@
              :text    "The players collectively gain three Tainted Jades and place them on top of their decks."
              :effects [[:give-choice {:title       :ossify
                                       :text        "The players collectively gain three Tainted Jades and place them on top of their decks."
-                                      :choice      [::collectively-gain-tainted-jades {:to :deck}]
+                                      :effect      [::collectively-gain-tainted-jades {:to :deck}]
                                       :options     [:players]
                                       :min         3
                                       :max         3
@@ -282,7 +282,7 @@
                         "OR"
                         "Gravehold suffers 8 damage."]
               :effects [[:give-choice {:title   :petrify
-                                       :choice  ::petrify-choice
+                                       :effect  ::petrify-choice
                                        :options [:special
                                                  {:option :advance :text "Advance the Tainted Track twice."}
                                                  {:option :damage :text "Gravehold suffers 8 damage"}]
@@ -299,7 +299,7 @@
                                  :effects [[:damage-gravehold 2]
                                            [:give-choice {:title   :shard-spitter
                                                           :text    "Any player gains a Tainted Jade and places it on top of their deck."
-                                                          :choice  [::gain-tainted-jade {:to :deck}]
+                                                          :effect  [::gain-tainted-jade {:to :deck}]
                                                           :options [:players]
                                                           :min     1
                                                           :max     1}]]}
@@ -313,7 +313,7 @@
                                          "Advance the Tainted Track."]
                                :effects [[:give-choice {:title   :slag-horror
                                                         :text    "Any player gains two Tainted Jades."
-                                                        :choice  [::gain-tainted-jades {:number-of-cards 2}]
+                                                        :effect  [::gain-tainted-jades {:number-of-cards 2}]
                                                         :options [:players]
                                                         :min     1
                                                         :max     1}]
@@ -335,7 +335,7 @@
                                       "If this minion has 8 or less life, advance the Tainted Track."]
                             :effects [[:give-choice {:title   :verdigra
                                                      :text    "Any player suffers 3 damage."
-                                                     :choice  [:damage-player {:arg 3}]
+                                                     :effect  [:damage-player {:arg 3}]
                                                      :options [:players]
                                                      :min     1
                                                      :max     1}]
@@ -348,7 +348,7 @@
               :text    "The players collectively gain two Tainted Jades and place them into their hands."
               :effects [[:give-choice {:title       :vitrify
                                        :text        "The players collectively gain two Tainted Jades and place them into their hands."
-                                       :choice      [::collectively-gain-tainted-jades {:to :hand}]
+                                       :effect      [::collectively-gain-tainted-jades {:to :hand}]
                                        :options     [:players]
                                        :min         2
                                        :max         2

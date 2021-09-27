@@ -41,16 +41,17 @@
   (cond-> game
           (or (not-empty effects)
               choice) (update :effect-stack (partial concat (cond effects (->> effects
-                                                                               (map (fn [effect]
-                                                                                      (when effect
-                                                                                        (merge {:player-no player-no
-                                                                                                :effect    effect}
-                                                                                               (when card-id
-                                                                                                 {:card-id card-id})
-                                                                                               (when args
-                                                                                                 {:args args})))))
-                                                                               (remove nil?))
+                                                                               (keep (fn [effect]
+                                                                                       (when effect
+                                                                                         (merge {:player-no player-no
+                                                                                                 :type      :effect
+                                                                                                 :effect    effect}
+                                                                                                (when card-id
+                                                                                                  {:card-id card-id})
+                                                                                                (when args
+                                                                                                  {:args args}))))))
                                                                   choice [(merge choice
+                                                                                 {:type :choice}
                                                                                  (when player-no
                                                                                    {:player-no player-no})
                                                                                  (when card-id
@@ -79,14 +80,14 @@
         (medley/update-existing :players (partial map (fn [{:keys [deck] :as player}]
                                                         (assoc player :revealed-cards (count deck)))))
         (assoc :game-over game-over))
-    (let [[{:keys [player-no card-id effect args]}] (get game :effect-stack)]
+    (let [[{:keys [type player-no card-id effect args]}] (get game :effect-stack)]
       (cond-> game
-              effect (-> pop-effect-stack
-                         (do-effect {:player-no player-no
-                                     :card-id   card-id
-                                     :effect    effect
-                                     :args      args})
-                         check-stack)))))
+              (= :effect type) (-> pop-effect-stack
+                                   (do-effect {:player-no player-no
+                                               :card-id   card-id
+                                               :effect    effect
+                                               :args      args})
+                                   check-stack)))))
 
 (defn get-effects-from-trigger [{:keys [id effects card-id set-aside]}]
   (let [effect-args (merge {:trigger-id id
@@ -114,7 +115,7 @@
                                                        " things happen at the start of your turn. Select which one happens next.")
                                    "Do something!")]
                 [[:give-choice (merge {:text    text
-                                       :choice  [:simultaneous-effects-choice {:triggers manual-triggers}]
+                                       :effect  [:simultaneous-effects-choice {:triggers manual-triggers}]
                                        :options [:mixed
                                                  [:player :play-area {:names trigger-names}]
                                                  [:player :tavern-mat {:names trigger-names}]
@@ -206,25 +207,8 @@
                                                                             (comp #{:once :once-turn} :duration))))
       (update-in [:players player-no] ut/dissoc-if-empty :triggers)))
 
-(defn- apply-triggers
-  ([game {:keys [player-no event] :as args}]
-   (apply-triggers game player-no event args))
-  ([game player-no event & [args]]
-   (let [triggers          (get-in game [:players player-no :triggers])
-         matching-triggers (cond->> (filter (comp #{event} :event) triggers)
-                                    (= :instead-of-first-action event) (take-last 1)) ; only one effect should happen instead of "The first time you play an Action"
-         apply-trigger     (fn [game {:keys [id card-id effects duration]}]
-                             (push-effect-stack game {:player-no player-no
-                                                      :card-id   card-id
-                                                      :effects   (concat effects
-                                                                         (when (#{:once :once-turn} duration)
-                                                                           [[:remove-trigger {:trigger-id id}]]))
-                                                      :args      args}))]
-     (-> (reduce apply-trigger game (reverse matching-triggers))))))
-
 (effects/register {:remove-trigger  remove-trigger
-                   :remove-triggers remove-triggers
-                   :apply-triggers  apply-triggers})
+                   :remove-triggers remove-triggers})
 
 (defn increase-revealed-number-of-cards [game path]
   (-> game
@@ -792,18 +776,18 @@
 
 (effects/register {:play-all-gems play-all-gems})
 
-(defn- get-choice-fn [data]
-  (let [{:keys [choice] :as result} (if (vector? data)
-                                      {:choice (first data)
+(defn- get-effect-fn [data]
+  (let [{:keys [effect] :as result} (if (vector? data)
+                                      {:effect (first data)
                                        :args   (second data)}
-                                      {:choice data})]
-    (merge result {:choice-fn (effects/get-effect choice)})))
+                                      {:effect data})]
+    (merge result {:effect-fn (effects/get-effect effect)})))
 
 (defn- choose-single [game valid-choices selection]
   (when (sequential? selection)
     (assert (<= (count selection) 1) "Choose error: You can only pick 1 option."))
-  (let [[{:keys [player-no card-id choice or-choice source min optional? bonus-damage]}] (get game :effect-stack)
-        {:keys [choice-fn args]} (get-choice-fn choice)
+  (let [[{:keys [player-no card-id effect source min optional? bonus-damage] :as choice}] (get game :effect-stack)
+        {:keys [effect-fn args]} (get-effect-fn effect)
         arg-name         (case source
                            :special :choice
                            :mixed :choice
@@ -819,12 +803,12 @@
         pop-effect-stack
         (as-> game
               (if (and (nil? single-selection)
-                       or-choice)
+                       (:or choice))
                 (push-effect-stack game (merge {:player-no player-no
-                                                :effects   (:effects or-choice)}
+                                                :effects   (-> choice :or :effects)}
                                                (when bonus-damage
                                                  {:args {:bonus-damage bonus-damage}})))
-                (choice-fn game (merge args
+                (effect-fn game (merge args
                                        {:player-no player-no}
                                        (when bonus-damage
                                          {:bonus-damage bonus-damage})
@@ -835,8 +819,8 @@
                                          :else {:no-choice? true}))))))))
 
 (defn- choose-multi [game valid-choices selection]
-  (let [[{:keys [player-no card-id choice or-choice source area min max optional? choice-opts bonus-damage]}] (get game :effect-stack)
-        {:keys [choice-fn args]} (get-choice-fn choice)
+  (let [[{:keys [player-no card-id effect source area min max optional? bonus-damage] :as choice}] (get game :effect-stack)
+        {:keys [effect-fn args]} (get-effect-fn effect)
         arg-name        (cond
                           (#{:special :mixed} source) :choices
                           (= :prepped-spells area) :spells
@@ -855,27 +839,17 @@
       (assert (<= (count multi-selection) max) (str "Choose error: You can only pick " max " options.")))
     (doseq [sel multi-selection]
       (assert (valid-choices sel) (str "Choose error: " (ut/format-name sel) " is not a valid choice.")))
-    (when (:unique choice-opts)
-      (assert (or (< (count multi-selection) 2)
-                  (apply distinct? multi-selection)) (str "Choose error: All choices must be different: " (->> multi-selection
-                                                                                                               (map ut/format-name)
-                                                                                                               (string/join ", ")))))
-    (when (:similar choice-opts)
-      (assert (or (< (count multi-selection) 2)
-                  (apply = multi-selection)) (str "Choose error: All choices must be similar: " (->> multi-selection
-                                                                                                     (map ut/format-name)
-                                                                                                     (string/join ", ")))))
 
     (-> game
         pop-effect-stack
         (as-> game
               (if (and (empty? multi-selection)
-                       or-choice)
+                       (:or choice))
                 (push-effect-stack game (merge {:player-no player-no
-                                                :effects   (:effects or-choice)}
+                                                :effects   (-> choice :or :effects)}
                                                (when bonus-damage
                                                  {:args {:bonus-damage bonus-damage}})))
-                (choice-fn game (merge args
+                (effect-fn game (merge args
                                        (when bonus-damage
                                          {:bonus-damage bonus-damage})
                                        {:player-no player-no
@@ -885,14 +859,14 @@
                                          {:no-choice? true}))))))))
 
 (defn choose [game selection]
-  (let [[{:keys [choice options min max]}] (get game :effect-stack)
+  (let [[{:keys [type options min max]}] (get game :effect-stack)
         choose-fn     (if (= max 1) choose-single choose-multi)
         valid-choices (->> options
                            (map (fn [{:keys [option] :as option-data}]
                                   (or option
                                       option-data)))
                            set)]
-    (assert choice "Choose error: You don't have a choice to make.")
+    (assert (= :choice type) "Choose error: You don't have a choice to make.")
     (assert (or (not-empty options)
                 (nil? selection)) "Choose error: Choice has no options")
     (assert (or (nil? min) (nil? max) (<= min max)))
@@ -900,16 +874,16 @@
         (choose-fn valid-choices selection)
         check-stack)))
 
-(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? mandatory? repeatable? unswift? choice-opts bonus-damage]
+(defn give-choice [{:keys [mode] :as game} {:keys                 [player-no card-id min max optional? mandatory? repeatable? unswift? bonus-damage]
                                             [opt-name :as option] :options
-                                            {:keys [effects]}     :or-choice
+                                            {:keys [effects]}     :or
                                             :as                   choice}]
   (let [opt-fn    (effects/get-option opt-name)
         [area & opt-args] (ut/get-opt-args option)
-        options   (cond->> (apply opt-fn game {:player-no player-no
-                                               :card-id   card-id
-                                               :area      area} opt-args)
-                           (:unique choice-opts) distinct)
+        options   (apply opt-fn game {:player-no player-no
+                                      :card-id   card-id
+                                      :area      area}
+                         opt-args)
         {:keys [min max] :as choice} (-> choice
                                          (assoc :options options
                                                 :source opt-name

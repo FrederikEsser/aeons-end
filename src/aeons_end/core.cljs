@@ -172,22 +172,17 @@
 (defn view-card
   ([card]
    (view-card nil card))
-  ([max {:keys [name name-ui choice-value choice-opts type cost number-of-cards breach-no interaction prepable-breaches] :as card}]
+  ([max {:keys [name name-ui choice-value type cost number-of-cards breach-no interaction prepable-breaches] :as card}]
    (if (map? card)
      (let [selection       (:selection @state)
            num-selected    (->> selection (filter (comp #{name choice-value} :option)) count)
-           number-of-cards (if (and (= :choosable interaction)
-                                    (not (:leave-in-play-area choice-opts)))
+           number-of-cards (if (= :choosable interaction)
                              (let [num (- (or number-of-cards 1) num-selected)]
                                (if (= 1 num) nil num))
                              number-of-cards)
            disabled        (or (nil? interaction)
                                (and (= :choosable interaction)
-                                    (= (count selection) max))
-                               (and (:unique choice-opts)
-                                    (->> selection (map :option) (some #{name choice-value})))
-                               (and (:similar choice-opts)
-                                    (->> selection (map :option) (some (comp not #{name choice-value})))))
+                                    (= (count selection) max)))
            prepable        (= :prepable interaction)]
        (when-not (and (= :choosable interaction)
                       (= 0 number-of-cards))

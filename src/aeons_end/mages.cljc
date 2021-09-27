@@ -12,7 +12,7 @@
                                                      :effects   [[:draw 1]
                                                                  [:give-choice {:title   :amethyst-shard
                                                                                 :text    "Discard a card in hand."
-                                                                                :choice  :discard-from-hand
+                                                                                :effect  :discard-from-hand
                                                                                 :options [:player :hand]
                                                                                 :min     1
                                                                                 :max     1}]]})))
@@ -27,7 +27,7 @@
                      :effects [[:gain-aether 1]
                                [:give-choice {:title   :amethyst-shard
                                               :text    "Any ally may draw a card and then discard a card in hand."
-                                              :choice  ::amethyst-shard-sift
+                                              :effect  ::amethyst-shard-sift
                                               :options [:players {:ally true}]
                                               :max     1}]]})
 
@@ -66,7 +66,7 @@
                    :text        "Any player gains 4 life."
                    :effects     [[:give-choice {:title   :brink-siphon
                                                 :text    "Any player gains 4 life."
-                                                :choice  [:heal {:life 4}]
+                                                :effect  [:heal {:life 4}]
                                                 :options [:players {:can-heal true}]
                                                 :min     1
                                                 :max     1}]]})
@@ -97,7 +97,7 @@
                                                                   :bonus-damage 2}}]
                                        [:give-choice {:title   :tempest-sigil
                                                       :text    "You may prep a spell from your hand to a breach."
-                                                      :choice  :prep-spell
+                                                      :effect  :prep-spell
                                                       :options [:player :hand {:type     :spell
                                                                                :can-prep {}}]
                                                       :max     1}]]}))
@@ -110,7 +110,7 @@
                     :text        "Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."
                     :effects     [[:give-choice {:title   :tempest-sigil
                                                  :text    "Any player destroys an opened I or II breach and returns any spells prepped to that breach to their hand. That player gains a Sigil breach and places it where the destroyed breach was. Then, that player may prep a spell from their hand to a breach."
-                                                 :choice  ::tempest-sigil-replace-breach
+                                                 :effect  ::tempest-sigil-replace-breach
                                                  :options [:players :breaches {:opened        true
                                                                                :max-breach-no 1}]
                                                  :min     1
@@ -149,7 +149,7 @@
                                                                          (when unopened-breaches?
                                                                            ["OR"
                                                                             "Focus any player's breach."]))
-                                                        :choice  [::torch-effect {:bonus-damage bonus-damage}]
+                                                        :effect  [::torch-effect {:bonus-damage bonus-damage}]
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:nemesis :minions]
@@ -199,7 +199,7 @@
                              :effects   (if (not-empty minions)
                                           [[:give-choice {:title   :colossal-force
                                                           :text    (str "Deal " damage " damage divided however you choose to " (ut/format-name (or name :nemesis)) " or any number of minions.")
-                                                          :choice  [::colossal-force-damage {:damage       damage
+                                                          :effect  [::colossal-force-damage {:damage       damage
                                                                                              :prev-targets prev-targets}]
                                                           :options [:mixed
                                                                     [:nemesis {:not-names prev-targets}]
@@ -235,7 +235,7 @@
                                    "Deal 2 damage plus 4 additional damage for each spell you discarded divided however you choose to the nemesis or any number of minions."]
                      :effects     [[:give-choice {:title   :colossal-force
                                                   :text    "Discard up to four of your prepped spells."
-                                                  :choice  ::colossal-force-discard
+                                                  :effect  ::colossal-force-discard
                                                   :options [:player :prepped-spells]
                                                   :max     4}]]})
 
@@ -261,7 +261,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :shattered-geode
                                                       :text    "You may place the top card of any ally's discard pile into your hand."
-                                                      :choice  [::shattered-geode-take-card {:to-player player-no}]
+                                                      :effect  [::shattered-geode-take-card {:to-player player-no}]
                                                       :options [:players :discard {:ally true :last true}]
                                                       :max     1}]]}))
 
@@ -289,12 +289,12 @@
                     :text        "Destroy up to two cards in your discard pile that cost 0 Aether.\nAny ally draws one card and gains 2 life."
                     :effects     [[:give-choice {:title   :vimcraft-oath
                                                  :text    "Destroy up to two cards in your discard pile that cost 0 Aether."
-                                                 :choice  :destroy-from-discard
+                                                 :effect  :destroy-from-discard
                                                  :options [:player :discard {:cost 0}]
                                                  :max     2}]
                                   [:give-choice {:title   :vimcraft-oath
                                                  :text    "Any ally draws one card and gains 2 life."
-                                                 :choice  ::vimcraft-oath-aid-ally
+                                                 :effect  ::vimcraft-oath-aid-ally
                                                  :options [:players {:ally true}]
                                                  :min     1
                                                  :max     1}]]})
@@ -317,7 +317,7 @@
                 :effects [[:gain-aether 1]
                           [:give-choice {:title   :twin-opal
                                          :text    "You may cast a spell in hand."
-                                         :choice  :cast-spell-in-hand
+                                         :effect  :cast-spell-in-hand
                                          :options [:player :hand {:type :spell}]
                                          :max     1}]]})
 
@@ -328,7 +328,7 @@
                                                                           :additional-damage 1}]
                                                     [:give-choice {:title   :pyromancer's-guile
                                                                    :text    "Cast any number of spells in hand. Those spells each deal 1 additional damage."
-                                                                   :choice  ::pyromancer's-guile-cast
+                                                                   :effect  ::pyromancer's-guile-cast
                                                                    :options [:player :hand {:type :spell}]
                                                                    :max     1}]]})))
 
@@ -341,12 +341,12 @@
                                       "You may destroy a card in your discard pile."]
                         :effects     [[:give-choice {:title   :pyromancer's-guile
                                                      :text    "Cast any number of spells in hand. Those spells each deal 1 additional damage."
-                                                     :choice  ::pyromancer's-guile-cast
+                                                     :effect  ::pyromancer's-guile-cast
                                                      :options [:player :hand {:type :spell}]
                                                      :max     1}]
                                       [:give-choice {:title   :pyromancer's-guile
                                                      :text    "You may destroy a card in your discard pile."
-                                                     :choice  :destroy-from-discard
+                                                     :effect  :destroy-from-discard
                                                      :options [:player :discard]
                                                      :max     1}]]})
 
@@ -380,7 +380,7 @@
                                                       :text    ["Cast any player's prepped spell without discarding it."
                                                                 "Then cast that prepped spell again."
                                                                 "(Discard it afterward)"]
-                                                      :choice  [::black-mirror-cast {:caster player-no}]
+                                                      :effect  [::black-mirror-cast {:caster player-no}]
                                                       :options [:players :prepped-spells]
                                                       :min     1
                                                       :max     1}]]}))
@@ -413,13 +413,13 @@
                     :text            ["Any player gains 1 life."
                                       "OR"
                                       "Gain 1 Aether."]
-                    :effects         [[:give-choice {:title     :emerald-shard
-                                                     :text      "Any player gains 1 life."
-                                                     :choice    [:heal {:life 1}]
-                                                     :options   [:players {:can-heal true}]
-                                                     :or-choice {:text    "Gain 1 Aether"
-                                                                 :effects [[:gain-aether 1]]}
-                                                     :max       1}]]})
+                    :effects         [[:give-choice {:title   :emerald-shard
+                                                     :text    "Any player gains 1 life."
+                                                     :effect  [:heal {:life 1}]
+                                                     :options [:players {:can-heal true}]
+                                                     :or      {:text    "Gain 1 Aether"
+                                                               :effects [[:gain-aether 1]]}
+                                                     :max     1}]]})
 
 (defn otherworldly-gate-effects [{:keys [current-player] :as game} _]
   (-> game
@@ -427,7 +427,7 @@
       (push-effect-stack {:player-no current-player
                           :effects   [[:give-choice {:title   :otherworldly-gate
                                                      :text    "You may return up to three spells in your discard pile to your hand."
-                                                     :choice  :take-from-discard
+                                                     :effect  :take-from-discard
                                                      :options [:player :discard {:type :spell}]
                                                      :max     3}]]})))
 
@@ -455,7 +455,7 @@
         (push-effect-stack {:player-no player-no
                             :effects   (concat [[:give-choice {:title   :quartz-shard
                                                                :text    "You may place the revealed turn order card on the bottom of the turn order deck."
-                                                               :choice  :put-turn-order-top-to-bottom
+                                                               :effect  :put-turn-order-top-to-bottom
                                                                :options [:turn-order :revealed]
                                                                :max     1}]]
                                                (when-not (= :nemesis type)
@@ -489,7 +489,7 @@
                                     "(You may not choose the wildcard turn order card.)"]
                       :effects     [[:give-choice {:title   :quicken-thought
                                                    :text    "Shuffle any player's turn order card into the turn order deck. That player suffers 1 damage."
-                                                   :choice  ::quicken-thought-shuffle-into-turn-order-deck
+                                                   :effect  ::quicken-thought-shuffle-into-turn-order-deck
                                                    :options [:turn-order :discard {:player-non-wild true}]
                                                    :min     1
                                                    :max     1}]]})
@@ -527,7 +527,7 @@
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:give-choice {:title   :gift-of-aether
                                                                 :text    (str "You may prep the " (ut/format-name (:name card)) " you gained to any player's opened breach.")
-                                                                :choice  [::gift-of-aether-prep {:card-id     card-id
+                                                                :effect  [::gift-of-aether-prep {:card-id     card-id
                                                                                                  :from-player player-no}]
                                                                 :options [:players :breaches {:can-prep {:card             card
                                                                                                          :opened-breaches? true}}]
@@ -549,7 +549,7 @@
                      :text        "Gain a spell from any supply pile. You may prep that spell to any player's opened breach."
                      :effects     [[:give-choice {:title   :gift-of-aether
                                                   :text    "Gain a spell from any supply pile."
-                                                  :choice  ::gift-of-aether-gain
+                                                  :effect  ::gift-of-aether-gain
                                                   :options [:supply {:type :spell}]
                                                   :min     1
                                                   :max     1}]]})
@@ -570,7 +570,7 @@
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:give-choice {:title   :worldheart-shard
                                                                 :text    (str "Place the " (ut/format-name card-name) " you gained on top of any ally's discard pile.")
-                                                                :choice  [:move-card {:move-card-id gained-card-id
+                                                                :effect  [:move-card {:move-card-id gained-card-id
                                                                                       :from-player  player-no
                                                                                       :from         :gaining
                                                                                       :to           :discard}]
@@ -599,7 +599,7 @@
                                          "Gain 2 Aether that can only be used to gain a card."
                                          "Place the next card you gain this turn on top of any ally's discard pile."]
                        :effects         [[:give-choice {:title   :worldheart-shard
-                                                        :choice  ::worldheart-shard-choice
+                                                        :effect  ::worldheart-shard-choice
                                                         :options [:special
                                                                   {:option :gain-1 :text "Gain 1 Aether."}
                                                                   {:option :gain-2 :text "Gain 2 Aether that can only be used to gain a card (to an ally)."}]
@@ -613,7 +613,7 @@
                                       "Gravehold gains 4 life."]
                         :effects     [[:give-choice {:title   :underearth-mantra
                                                      :text    "You may gain a gem that costs 4 Aether or less from any supply pile."
-                                                     :choice  :gain
+                                                     :effect  :gain
                                                      :options [:supply {:type :gem :max-cost 4}]
                                                      :max     1}]
                                       [:heal-gravehold 4]]})
@@ -630,13 +630,13 @@
 
 (defn garnet-shard-choice [game {:keys [player-no]}]
   (push-effect-stack game {:player-no player-no
-                           :effects   [[:give-choice {:title     :garnet-shard
-                                                      :text      "Cast any player's prepped spell."
-                                                      :choice    [:cast-spell {:caster player-no}]
-                                                      :or-choice {:text    "Gain 1 Aether"
-                                                                  :effects [[:gain-aether 1]]}
-                                                      :options   [:players :prepped-spells]
-                                                      :max       1}]]}))
+                           :effects   [[:give-choice {:title   :garnet-shard
+                                                      :text    "Cast any player's prepped spell."
+                                                      :effect  [:cast-spell {:caster player-no}]
+                                                      :options [:players :prepped-spells]
+                                                      :or      {:text    "Gain 1 Aether"
+                                                                :effects [[:gain-aether 1]]}
+                                                      :max     1}]]}))
 
 (effects/register {::garnet-shard-choice garnet-shard-choice})
 
@@ -655,7 +655,7 @@
                     :text        "Any ally draws four cards."
                     :effects     [[:give-choice {:title   :divine-augury
                                                  :text    "Any ally draws four cards."
-                                                 :choice  [:draw {:arg 4}]
+                                                 :effect  [:draw {:arg 4}]
                                                  :options [:players {:ally true}]
                                                  :min     1
                                                  :max     1}]]})
@@ -679,7 +679,7 @@
                        :effects [[:gain-aether 1]
                                  [:give-choice {:title   :amethyst-paragon
                                                 :text    "Any ally may prep a spell in hand to their opened or closed breach(es)."
-                                                :choice  [:prep-spell {:closed-breaches? true}]
+                                                :effect  [:prep-spell {:closed-breaches? true}]
                                                 :options [:players :hand {:ally     true
                                                                           :type     :spell
                                                                           :can-prep {:closed-breaches? true}}]
@@ -691,7 +691,7 @@
             card (push-effect-stack {:player-no player-no
                                      :effects   [[:give-choice {:title   :exalted-brand
                                                                 :text    (str "Place the " (ut/format-name name) " into any ally's hand.")
-                                                                :choice  [:move-card {:move-card-id card-id
+                                                                :effect  [:move-card {:move-card-id card-id
                                                                                       :from-player  from-player
                                                                                       :from         :discard
                                                                                       :to           :hand}]
@@ -716,7 +716,7 @@
                                                                                             2 "Cast up to two more spells prepped by any number of players."
                                                                                             1 "You may cast one more spell prepped by any player.")
                                                                                           "For each spell cast this way, place that spell into any ally's hand."]
-                                                                                :choice  [::exalted-brand-cast-spell {:times  (dec times)
+                                                                                :effect  [::exalted-brand-cast-spell {:times  (dec times)
                                                                                                                       :caster caster}]
                                                                                 :options [:players :prepped-spells]
                                                                                 :max     1}]]))}))))
@@ -758,7 +758,7 @@
                        :effects [[:gain-aether 1]
                                  [:give-choice {:title   :tourmaline-shard
                                                 :text    "Any ally may suffer 1 damage. If they do, they destroy a card in hand."
-                                                :choice  ::tourmaline-shard-destroy
+                                                :effect  ::tourmaline-shard-destroy
                                                 :options [:players :hand {:ally true}]
                                                 :max     1}]]})
 
@@ -839,17 +839,17 @@
                      :effects         [[:gain-aether 1]
                                        [:give-choice {:title   :obsidian-shard
                                                       :text    "You may suffer 1 damage. If you do, gain an additional 2 Aether."
-                                                      :choice  ::obsidian-shard-damage
+                                                      :effect  ::obsidian-shard-damage
                                                       :options [:player]
                                                       :max     1}]]})
 
-(defn quelling-blade-damage [game {:keys [player-no card-name] :as args}]
+(defn quelling-blade-damage [game {:keys [player-no card-name]}]
   (push-effect-stack game {:player-no player-no
                            :effects   [[:deal-damage-to-minion {:card-name card-name
                                                                 :damage    5}]
                                        [:give-choice {:title   :quelling-blade
                                                       :text    "Deal 3 damage to a different minion."
-                                                      :choice  [:deal-damage-to-minion {:damage 3}]
+                                                      :effect  [:deal-damage-to-minion {:damage 3}]
                                                       :options [:nemesis :minions {:not-names #{card-name}}]
                                                       :min     1
                                                       :max     1}]]}))
@@ -863,7 +863,7 @@
                                    "Deal 3 damage to a different minion."]
                      :effects     [[:give-choice {:title   :quelling-blade
                                                   :text    "Deal 5 damage to a minion."
-                                                  :choice  ::quelling-blade-damage
+                                                  :effect  ::quelling-blade-damage
                                                   :options [:nemesis :minions]
                                                   :min     1
                                                   :max     1}]]})
@@ -891,7 +891,7 @@
           player-no (push-effect-stack {:player-no player-no
                                         :effects   [[:give-choice {:title   :ephemera-masque
                                                                    :text    "Returns two cards in your discard pile to your hand."
-                                                                   :choice  :take-from-discard
+                                                                   :effect  :take-from-discard
                                                                    :options [:player :discard]
                                                                    :min     2
                                                                    :max     2}]]})))
@@ -904,13 +904,13 @@
                       :text        ["Any ally returns two cards in their discard pile to their hand."
                                     "OR"
                                     "Gravehold gains 5 life."]
-                      :effects     [[:give-choice {:title     :ephemera-masque
-                                                   :text      "Any ally returns two cards in their discard pile to their hand."
-                                                   :choice    ::ephemera-masque-return-cards
-                                                   :or-choice {:text    "Gravehold gains 5 life."
-                                                               :effects [[:heal-gravehold 5]]}
-                                                   :options   [:players {:ally true}]
-                                                   :max       1}]]})
+                      :effects     [[:give-choice {:title   :ephemera-masque
+                                                   :text    "Any ally returns two cards in their discard pile to their hand."
+                                                   :effect  ::ephemera-masque-return-cards
+                                                   :options [:players {:ally true}]
+                                                   :or      {:text    "Gravehold gains 5 life."
+                                                             :effects [[:heal-gravehold 5]]}
+                                                   :max     1}]]})
 
 (def remnant {:name     :remnant
               :title    "Aethereal Entity"
@@ -944,7 +944,7 @@
                                                                                          3 "Prep up to three spells from your hand."
                                                                                          2 "Prep up to two more spells from your hand."
                                                                                          1 "You may prep one more spell from your hand.")
-                                                                              :choice  [::eldritch-tether-prep-spell {:times (dec times)}]
+                                                                              :effect  [::eldritch-tether-prep-spell {:times (dec times)}]
                                                                               :options [:player :hand {:type     :spell
                                                                                                        :can-prep {}}]
                                                                               :max     1}]]))})))
@@ -958,7 +958,7 @@
                                                                (map (fn [n]
                                                                       [:give-choice {:title   :eldritch-tether
                                                                                      :text    (str "Focus any player's breach " (ut/number->text n) " additional time" (when (> n 1) "s") ".")
-                                                                                     :choice  :focus-breach
+                                                                                     :effect  :focus-breach
                                                                                      :options [:players :breaches {:opened false}]
                                                                                      :min     1
                                                                                      :max     1}]))))})
@@ -979,7 +979,7 @@
                                                    :text    ["Focus any player's breach. Repeat this three additional times."
                                                              "OR"
                                                              "Any ally with no closed breaches draws three cards and then preps up to three spells from their hand."]
-                                                   :choice  ::eldritch-tether-choice
+                                                   :effect  ::eldritch-tether-choice
                                                    :options [:mixed
                                                              [:players :breaches {:opened false}]
                                                              [:players {:ally            true
@@ -1023,7 +1023,7 @@
                                           [[:heal {:life 6}]]
                                           [[:give-choice {:title   :eidolon-shroud
                                                           :text    "Any ally gains 5 life."
-                                                          :choice  [:heal {:life 5}]
+                                                          :effect  [:heal {:life 5}]
                                                           :options [:players {:ally true :can-heal true}]
                                                           :min     1
                                                           :max     1}]])})))
@@ -1070,32 +1070,32 @@
                                       "Reveal the turn order deck and return the revealed cards in any order."]
                         :effects     [[:give-choice {:title   :metaphysical-link
                                                      :text    "Allies collectively gain 4 charges."
-                                                     :choice  :gain-charge
+                                                     :effect  :gain-charge
                                                      :options [:players :ability {:ally true :fully-charged false}]
                                                      :min     1
                                                      :max     1}]
                                       [:give-choice {:title   :metaphysical-link
                                                      :text    "Allies collectively gain 3 more charges."
-                                                     :choice  :gain-charge
+                                                     :effect  :gain-charge
                                                      :options [:players :ability {:ally true :fully-charged false}]
                                                      :min     1
                                                      :max     1}]
                                       [:give-choice {:title   :metaphysical-link
                                                      :text    "Allies collectively gain 2 more charges."
-                                                     :choice  :gain-charge
+                                                     :effect  :gain-charge
                                                      :options [:players :ability {:ally true :fully-charged false}]
                                                      :min     1
                                                      :max     1}]
                                       [:give-choice {:title   :metaphysical-link
                                                      :text    "Allies collectively gain 1 more charge."
-                                                     :choice  :gain-charge
+                                                     :effect  :gain-charge
                                                      :options [:players :ability {:ally true :fully-charged false}]
                                                      :min     1
                                                      :max     1}]
                                       [:reveal-turn-order-deck]
                                       [:give-choice {:title    :metaphysical-link
                                                      :text     "Return the revealed turn order cards in any order (top to bottom)."
-                                                     :choice   :topdeck-revealed-turn-order-cards
+                                                     :effect   :topdeck-revealed-turn-order-cards
                                                      :options  [:turn-order :revealed]
                                                      :min      6
                                                      :max      6
@@ -1131,7 +1131,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :imperium-ritual
                                                       :text    "Gain a card from any supply pile and places it on top of your deck."
-                                                      :choice  [:gain {:to          :deck
+                                                      :effect  [:gain {:to          :deck
                                                                        :to-position :top}]
                                                       :options [:supply]
                                                       :min     1
@@ -1145,7 +1145,7 @@
             (= 4 opened-breaches) (push-effect-stack {:player-no player-no
                                                       :effects   [[:give-choice {:title   :imperium-ritual
                                                                                  :text    "Any ally gains a card from any supply pile and places it on top of their deck."
-                                                                                 :choice  ::imperium-ritual-gain
+                                                                                 :effect  ::imperium-ritual-gain
                                                                                  :options [:players {:ally true}]
                                                                                  :min     1
                                                                                  :max     1}]]}))))
@@ -1159,7 +1159,7 @@
                       :text        "Gain a card from any supply pile. If you have four opened breaches, any ally gains a card from any supply pile and places it on top of their deck."
                       :effects     [[:give-choice {:title   :imperium-ritual
                                                    :text    "Gain a card from any supply pile."
-                                                   :choice  :gain
+                                                   :effect  :gain
                                                    :options [:supply]
                                                    :min     1
                                                    :max     1}]
@@ -1197,7 +1197,7 @@
                                                                          (when (not-empty prepped-spells)
                                                                            ["OR"
                                                                             "Cast one of your prepped spells without discarding it."]))
-                                                        :choice  [::eternal-ember-effect {:bonus-damage bonus-damage}]
+                                                        :effect  [::eternal-ember-effect {:bonus-damage bonus-damage}]
                                                         :options [:mixed
                                                                   [:nemesis]
                                                                   [:nemesis :minions]

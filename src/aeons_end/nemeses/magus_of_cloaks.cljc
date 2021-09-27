@@ -35,7 +35,7 @@
                                        2))]
     (push-effect-stack game {:effects (if can-gain-cloaks?
                                         [[:give-choice {:title   title
-                                                        :choice  ::unleash-choice
+                                                        :effect  ::unleash-choice
                                                         :options [:special
                                                                   {:option :cloaks :text "Magus of Cloaks gains two cloaks"}
                                                                   {:option :damage :text "Gravehold suffers 2 damage"}]
@@ -86,7 +86,7 @@
                    (quot 2))]
     (push-effect-stack game {:effects [[:give-choice {:title   :ashen-haruspex
                                                       :text    (str "Any player suffers " damage " damage.")
-                                                      :choice  [:damage-player {:arg damage}]
+                                                      :effect  [:damage-player {:arg damage}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -108,7 +108,7 @@
                            :effects   [[:damage-player 3]
                                        [:give-choice {:title   :black-solstice
                                                       :text    "Discard a prepped spell."
-                                                      :choice  :discard-prepped-spells
+                                                      :effect  :discard-prepped-spells
                                                       :options [:player :prepped-spells]
                                                       :min     1
                                                       :max     1}]]}))
@@ -120,7 +120,7 @@
                              not-empty)]
     (push-effect-stack game {:effects [[:give-choice {:title   :black-solstice
                                                       :text    "Any player suffers 3 damage and discards a prepped spell."
-                                                      :choice  ::black-solstice-damage
+                                                      :effect  ::black-solstice-damage
                                                       :options [:players (when prepped-spells?
                                                                            {:min-number-of-prepped-spells 1})]
                                                       :min     1
@@ -159,7 +159,7 @@
                  :persistent {:text    "Any player loses 1 charge or suffers 2 damage."
                               :effects [[:give-choice {:title   :dusk-spawn
                                                        :text    "Any player loses 1 charge or suffers 2 damage."
-                                                       :choice  ::dusk-spawn-damage
+                                                       :effect  ::dusk-spawn-damage
                                                        :options [:mixed
                                                                  [:players :ability {:min-charges 1}]
                                                                  [:players]]
@@ -181,7 +181,7 @@
                              not-empty)]
     (push-effect-stack game {:effects [[:give-choice {:title   :eclipse
                                                       :text    "The player with the most expensive prepped spell destroys that spell and suffers 2 damage."
-                                                      :choice  ::eclipse-damage
+                                                      :effect  ::eclipse-damage
                                                       :options (if prepped-spells?
                                                                  [:players :prepped-spells {:most-expensive true}]
                                                                  [:players])
@@ -208,7 +208,7 @@
                :effects [[::gain-cloaks 4]
                          [:give-choice {:title   :enshroud
                                         :text    "The players collectively destroy two prepped spells that cost 0 Aether."
-                                        :choice  :destroy-prepped-spells
+                                        :effect  :destroy-prepped-spells
                                         :options [:players :prepped-spells {:cost 0}]
                                         :min     2
                                         :max     2}]]
@@ -226,13 +226,13 @@
                                :effects [[:unleash]
                                          [:give-choice {:title   :rising-dark
                                                         :text    "Any player suffers 3 damage."
-                                                        :choice  [:damage-player {:arg 3}]
+                                                        :effect  [:damage-player {:arg 3}]
                                                         :options [:players]
                                                         :min     1
                                                         :max     1}]
                                          [:give-choice {:title   :rising-dark
                                                         :text    "Any player destroys a prepped spell that costs 0."
-                                                        :choice  :destroy-prepped-spells
+                                                        :effect  :destroy-prepped-spells
                                                         :options [:players :prepped-spells {:cost 0}]
                                                         :min     1
                                                         :max     1}]]}
@@ -277,7 +277,7 @@
                     :persistent {:text    "The player with the most charges suffers 4 damage."
                                  :effects [[:give-choice {:title   :veil-daughter
                                                           :text    "The player with the most charges suffers 4 damage."
-                                                          :choice  [:damage-player {:arg 4}]
+                                                          :effect  [:damage-player {:arg 4}]
                                                           :options [:players {:most-charges true}]
                                                           :min     1
                                                           :max     1}]]}

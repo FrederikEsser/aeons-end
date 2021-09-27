@@ -9,7 +9,7 @@
             [aeons-end.operations :as op]))
 
 (defn choice-interaction [{:keys [area player-no breach-no card-name card-id]}
-                          {:keys [options max choice-opts] :as choice}]
+                          {:keys [options max] :as choice}]
   (let [choice-value (cond->> options
                               (not= area (:area choice)) (filter (comp #{area} :area))
                               player-no (filter (fn [option]
@@ -25,9 +25,7 @@
     (when choice-value
       (merge (if (= 1 (or max (count options)))
                {:interaction :quick-choosable}
-               (merge {:interaction :choosable}
-                      (when choice-opts
-                        {:choice-opts choice-opts})))
+               {:interaction :choosable})
              (when (map? choice-value)
                {:choice-value choice-value})))))
 
@@ -168,7 +166,7 @@
   (->> options
        (map (fn [option] (select-keys option [:option :text])))))
 
-(defn view-choice [{:keys [title text or-choice source options min max optional? repeatable?] :as choice}]
+(defn view-choice [{:keys [title text source options min max optional? repeatable?] :as choice}]
   (->> (merge (when title
                 {:choice-title (ut/format-name title)})
               {:text          text
@@ -176,8 +174,8 @@
                :max           (or max (count options))
                :quick-choice? (and (= 1 min (or max (count options)))
                                    (not optional?))}
-              (when or-choice
-                {:or-text (:text or-choice)})
+              (when (:or choice)
+                {:or-text (-> choice :or :text)})
               (case source
                 :special {:options (view-options options)}
                 :deck-position {:interval {:from (first options)

@@ -30,7 +30,7 @@
         (update-in [:nemesis :strike-deck] shuffle)
         (push-effect-stack {:effects [[:give-choice {:title   "Rageborne strikes!"
                                                      :text    (str "Resolve " (ut/format-name name) ".")
-                                                     :choice  ::resolve-strike
+                                                     :effect  ::resolve-strike
                                                      :options [:nemesis :play-area {:name name}]
                                                      :min     1
                                                      :max     1}]]}))))
@@ -85,7 +85,7 @@
   (let [damage (inc (get-in game [:nemesis :fury]))]
     (push-effect-stack game {:effects [[:give-choice {:title   :invoke-carnage
                                                       :text    (str "Any player suffers " damage " damage.")
-                                                      :choice  [:damage-player {:arg damage}]
+                                                      :effect  [:damage-player {:arg damage}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -110,7 +110,7 @@
   (let [fury (get-in game [:nemesis :fury])]
     (push-effect-stack game {:effects [[:give-choice {:title   :invoke-carnage
                                                       :text    (str "The players collectively discard " (ut/number->text fury) " cards in hand.")
-                                                      :choice  :collective-discard-from-hand
+                                                      :effect  :collective-discard-from-hand
                                                       :options [:players :hand]
                                                       :min     fury
                                                       :max     fury}]]})))
@@ -171,7 +171,7 @@
                                    "OR"
                                    "Unleash twice."]
                          :effects [[:give-choice {:title   :scorn
-                                                  :choice  ::scorn-choice
+                                                  :effect  ::scorn-choice
                                                   :options [:special
                                                             {:option :damage :text "Gravehold suffers 3 damage"}
                                                             {:option :unleash :text "Unleash twice"}]
@@ -203,7 +203,7 @@
               :text    "Any player suffers 4 damage."
               :effects [[:give-choice {:title   :convoke
                                        :text    "Any player suffers 4 damage."
-                                       :choice  [:damage-player {:arg 4}]
+                                       :effect  [:damage-player {:arg 4}]
                                        :options [:players]
                                        :min     1
                                        :max     1}]]
@@ -220,7 +220,7 @@
                  :text    "The player with the lowest life suffers 2 damage."
                  :effects [[:give-choice {:title   :eviscerate
                                           :text    "The player with the lowest life suffers 2 damage."
-                                          :choice  [:damage-player {:arg 2}]
+                                          :effect  [:damage-player {:arg 2}]
                                           :options [:players {:lowest-life true}]
                                           :min     1
                                           :max     1}]]
@@ -231,7 +231,7 @@
              :text    "The player with the most opened breaches suffers 3 damage."
              :effects [[:give-choice {:title   :frenzy
                                       :text    "The player with the most opened breaches suffers 3 damage."
-                                      :choice  [:damage-player {:arg 3}]
+                                      :effect  [:damage-player {:arg 3}]
                                       :options [:players {:most-opened-breaches true}]
                                       :min     1
                                       :max     1}]]
@@ -244,7 +244,7 @@
            :effects [[:damage-gravehold 3]
                      [:give-choice {:title   :raze
                                     :text    "Any player suffers 1 damage."
-                                    :choice  [:damage-player {:arg 1}]
+                                    :effect  [:damage-player {:arg 1}]
                                     :options [:players]
                                     :min     1
                                     :max     1}]]
@@ -284,7 +284,7 @@
                                                                         (when (> manual-discard-count 1)
                                                                           "s")
                                                                         ".")
-                                                          :choice  [:discard-prepped-spells]
+                                                          :effect  [:discard-prepped-spells]
                                                           :options [:players :prepped-spells {:min-cost cost-2}]
                                                           :min     manual-discard-count
                                                           :max     manual-discard-count}]]))})))

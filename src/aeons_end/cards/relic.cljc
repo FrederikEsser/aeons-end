@@ -9,7 +9,7 @@
     (cond
       (= :wild type) (push-effect-stack game {:effects [[:give-choice {:title   :astral-cube
                                                                        :text    "Any player gains 1 life."
-                                                                       :choice  [:heal {:life 1}]
+                                                                       :effect  [:heal {:life 1}]
                                                                        :options [:players {:can-heal true}]
                                                                        :min     1
                                                                        :max     1}]]})
@@ -21,7 +21,7 @@
                                                                                    #{0 1} "1 or 2"
                                                                                    #{2 3} "3 or 4")
                                                                                  " gains 1 life.")
-                                                                   :choice  [:heal {:life 1}]
+                                                                   :effect  [:heal {:life 1}]
                                                                    :options [:players {:player-nos player-nos}]
                                                                    :min     1
                                                                    :max     1}]]})
@@ -36,7 +36,7 @@
                             "Reveal the top card of the turn order deck. If you revealed a player's turn order card, that player gains 1 life."]
                   :effects [[:give-choice {:title   :astral-cube
                                            :text    "Return a gem you played this turn to your hand."
-                                           :choice  [:move-card {:from :play-area
+                                           :effect  [:move-card {:from :play-area
                                                                  :to   :hand}]
                                            :options [:player :play-area {:type :gem}]
                                            :min     1
@@ -51,7 +51,7 @@
                      :text    "You may cast a prepped spell that you prepped this turn. If you do, that spell deals 2 additional damage."
                      :effects [[:give-choice {:title   :blasting-staff
                                               :text    "You may cast a prepped spell that you prepped this turn. If you do, that spell deals 2 additional damage."
-                                              :choice  [:cast-spell {:additional-damage 2}]
+                                              :effect  [:cast-spell {:additional-damage 2}]
                                               :options [:player :prepped-spells {:prepped-this-turn true}]
                                               :max     1}]]
                      :quote   "'While appearing to be crudely fashioned, these staffs contain within them the very essence of the void.'"})
@@ -65,7 +65,7 @@
                      :effects [[:destroy-this]
                                [:give-choice {:title   :bottled-vortex
                                               :text    "Destroy up to two cards in your hand or discard pile."
-                                              :choice  :destroy-from-area
+                                              :effect  :destroy-from-area
                                               :options [:mixed
                                                         [:player :hand]
                                                         [:player :discard]]
@@ -79,7 +79,7 @@
                     :text    "Any ally may prep a spell in their discard pile to their opened or closed breach(es)."
                     :effects [[:give-choice {:title   :cairn-compass
                                              :text    "Any ally may prep a spell in their discard pile to their opened or closed breach(es)."
-                                             :choice  [:prep-from-discard {:closed-breaches? true}]
+                                             :effect  [:prep-from-discard {:closed-breaches? true}]
                                              :options [:players :discard {:ally     true
                                                                           :type     :spell
                                                                           :can-prep {:closed-breaches? true}}]
@@ -92,7 +92,7 @@
             (zero? pile-size) (push-effect-stack {:player-no player-no
                                                   :effects   [[:give-choice {:title   :conclave-scroll
                                                                              :text    "You may destroy the top card of any ally's discard pile."
-                                                                             :choice  [:destroy-from-discard {:destroyed-by player-no}]
+                                                                             :effect  [:destroy-from-discard {:destroyed-by player-no}]
                                                                              :options [:players :discard {:ally true :last true}]
                                                                              :max     1}]]}))))
 
@@ -116,7 +116,7 @@
                                [:reveal-from-deck 3]
                                [:give-choice {:title   :eternity-charm
                                               :text    "You may prep one of the revealed spells."
-                                              :choice  :prep-from-revealed
+                                              :effect  :prep-from-revealed
                                               :options [:player :revealed {:type     :spell
                                                                            :can-prep {}}]
                                               :max     1}]
@@ -129,7 +129,7 @@
             (= :nemesis type) (push-effect-stack {:player-no player-no
                                                   :effects   [[:give-choice {:title   :fiend-catcher
                                                                              :text    "You may place the nemesis turn order card on the bottom of the turn order deck."
-                                                                             :choice  :put-turn-order-top-to-bottom
+                                                                             :effect  :put-turn-order-top-to-bottom
                                                                              :options [:turn-order :revealed]
                                                                              :max     1}]]}))))
 
@@ -142,7 +142,7 @@
                               "Reveal the top card of the turn order deck. If you revealed a nemesis turn order card, you may place that card on the bottom of the turn order deck."]
                     :effects [[:give-choice {:title   :fiend-catcher
                                              :text    "You may destroy a card in your hand or discard pile."
-                                             :choice  :destroy-from-area
+                                             :effect  :destroy-from-area
                                              :options [:mixed
                                                        [:player :hand]
                                                        [:player :discard]]
@@ -171,13 +171,13 @@
                      :text    ["The next time you focus or open a breach this turn, it costs 3 Aether less."
                                "OR"
                                "Destroy this. Deal 1 damage."]
-                     :effects [[:give-choice {:title     :flexing-dagger
-                                              :text      "Destroy this. Deal 1 damage."
-                                              :choice    ::flexing-dagger-destroy
-                                              :options   [:player :play-area {:this true}]
-                                              :or-choice {:text    "The next time you focus or open a breach this turn, it costs 3 Aether less."
-                                                          :effects [[::flexing-dagger-cost-reduction]]}
-                                              :max       1}]]
+                     :effects [[:give-choice {:title   :flexing-dagger
+                                              :text    "Destroy this. Deal 1 damage."
+                                              :effect  ::flexing-dagger-destroy
+                                              :options [:player :play-area {:this true}]
+                                              :or      {:text    "The next time you focus or open a breach this turn, it costs 3 Aether less."
+                                                        :effects [[::flexing-dagger-cost-reduction]]}
+                                              :max     1}]]
                      :quote   "'Forged from unstable void ore, the blade shifts with the will of its wielder.' Adelheim, Breach Mage Weaponsmith"})
 
 (defn focusing-orb-destroy [game {:keys [player-no]}]
@@ -195,13 +195,13 @@
                    :text    ["Focus any player's breach."
                              "OR"
                              "Destroy this. Gravehold gains 3 life."]
-                   :effects [[:give-choice {:title     :focusing-orb
-                                            :text      "Focus any player's breach."
-                                            :choice    :focus-breach
-                                            :options   [:players :breaches {:opened false}]
-                                            :or-choice {:text    "Destroy this. Gravehold gains 3 life."
-                                                        :effects [[::focusing-orb-destroy]]}
-                                            :max       1}]]
+                   :effects [[:give-choice {:title   :focusing-orb
+                                            :text    "Focus any player's breach."
+                                            :effect  :focus-breach
+                                            :options [:players :breaches {:opened false}]
+                                            :or      {:text    "Destroy this. Gravehold gains 3 life."
+                                                      :effects [[::focusing-orb-destroy]]}
+                                            :max     1}]]
                    :quote   "'Jian picked up the orb as if knowing its purpose. That was the last day she ever spoke.'"})
 
 (def mages-talisman {:name    :mage's-talisman
@@ -212,7 +212,7 @@
                      :effects [[:gain-charge]
                                [:give-choice {:title   :mage's-talisman
                                               :text    "Any ally gains 1 charge"
-                                              :choice  :gain-charge
+                                              :effect  :gain-charge
                                               :options [:players :ability {:ally true :fully-charged false}]
                                               :min     1
                                               :max     1}]]
@@ -238,7 +238,7 @@
                                            :text    ["Destroy a gem or relic you played this turn."
                                                      "OR"
                                                      "Destroy this. Gravehold gains 1 life."]
-                                           :choice  ::mages-totem-destroy
+                                           :effect  ::mages-totem-destroy
                                            :options [:player :play-area {:types #{:gem :relic}}]
                                            :min     1
                                            :max     1}]]
@@ -248,7 +248,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :molten-hammer
                                                       :text    "You may destroy a card in hand or on top of any player's discard pile."
-                                                      :choice  [:destroy-from-area {:destroyed-by player-no}]
+                                                      :effect  [:destroy-from-area {:destroyed-by player-no}]
                                                       :options [:mixed
                                                                 [:player :hand]
                                                                 [:players :discard {:last true}]]
@@ -280,13 +280,13 @@
                         :text    ["Focus any player's breach."
                                   "OR"
                                   "Destroy this. Gain 3 life."]
-                        :effects [[:give-choice {:title     :primordial-fetish
-                                                 :text      "Focus any player's breach."
-                                                 :choice    :focus-breach
-                                                 :options   [:players :breaches {:opened false}]
-                                                 :or-choice {:text    "Destroy this. Gain 3 life."
-                                                             :effects [[::primordial-fetish-destroy]]}
-                                                 :max       1}]]
+                        :effects [[:give-choice {:title   :primordial-fetish
+                                                 :text    "Focus any player's breach."
+                                                 :effect  :focus-breach
+                                                 :options [:players :breaches {:opened false}]
+                                                 :or      {:text    "Destroy this. Gain 3 life."
+                                                           :effects [[::primordial-fetish-destroy]]}
+                                                 :max     1}]]
                         :quote   "'The child rose from the dust and opened its eyes. The Conclave revere this child, for she was the first of their kind.' Mazahaedron, Henge Mystic"})
 
 (defn riddlesphere-choice [game {:keys [player-no choice]}]
@@ -301,7 +301,7 @@
     (push-effect-stack game {:player-no player-no
                              :effects   (if (>= charges 2)
                                           [[:give-choice {:title   :riddlesphere
-                                                          :choice  ::riddlesphere-choice
+                                                          :effect  ::riddlesphere-choice
                                                           :options [:special
                                                                     {:option :charge :text "Gain 1 charge."}
                                                                     {:option :aether :text "Lose 2 charges to gain 5 Aether."}]
@@ -325,7 +325,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :temporal-helix
                                                       :text    "Cast any player's prepped spell without discarding it."
-                                                      :choice  [:spell-effect {:caster player-no}]
+                                                      :effect  [:spell-effect {:caster player-no}]
                                                       :options [:players :prepped-spells]
                                                       :min     1
                                                       :max     1}]]}))
@@ -346,7 +346,7 @@
         (push-effect-stack {:player-no player-no
                             :effects   [[:destroy-from-hand {:card-name card-name}]
                                         [:give-choice {:text    (str "You may gain a card from any supply pile that costs up to " (ut/format-cost max-cost) " Aether.")
-                                                       :choice  :gain
+                                                       :effect  :gain
                                                        :options [:supply {:max-cost max-cost}]
                                                        :max     1}]]}))))
 
@@ -359,7 +359,7 @@
                                "You may gain a card from any supply pile that costs up to 3 Aether more than the destroyed card."]
                      :effects [[:give-choice {:title   :transmogrifier
                                               :text    "Destroy a card in hand."
-                                              :choice  ::transmogrifier-upgrade
+                                              :effect  ::transmogrifier-upgrade
                                               :options [:player :hand]
                                               :min     1
                                               :max     1}]]
@@ -380,13 +380,13 @@
                      :text    ["Play a gem in hand twice and destroy it."
                                "OR"
                                "Gain 2 Aether."]
-                     :effects [[:give-choice {:title     :unstable-prism
-                                              :text      "Play a gem in hand twice and destroy it."
-                                              :choice    ::unstable-prism-play-gem
-                                              :or-choice {:text    "Gain 2 Aether"
-                                                          :effects [[:gain-aether 2]]}
-                                              :options   [:player :hand {:type :gem}]
-                                              :max       1}]]
+                     :effects [[:give-choice {:title   :unstable-prism
+                                              :text    "Play a gem in hand twice and destroy it."
+                                              :effect  ::unstable-prism-play-gem
+                                              :options [:player :hand {:type :gem}]
+                                              :or      {:text    "Gain 2 Aether"
+                                                        :effects [[:gain-aether 2]]}
+                                              :max     1}]]
                      :quote   "'Not every pretty rock is a means to wage war. Some must be cut and carved into more useful things.' Adelheim, Breach Mage Weaponsmith"})
 
 (defn vortex-gauntlet-cast [game {:keys [player-no breach-no card-name] :as args}]
@@ -402,7 +402,7 @@
   (push-effect-stack game {:player-no player-no
                            :effects   [[:give-choice {:title   :vortex-gauntlet
                                                       :text    "Cast any player's prepped spell. Return that spell to that player's hand."
-                                                      :choice  [::vortex-gauntlet-cast {:caster player-no}]
+                                                      :effect  [::vortex-gauntlet-cast {:caster player-no}]
                                                       :options [:players :prepped-spells]
                                                       :min     1
                                                       :max     1}]]}))

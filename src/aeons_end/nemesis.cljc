@@ -71,7 +71,7 @@
                                                                                    (str (ut/format-name name) " powers up.") #_(str (ut/format-name (:name nemesis)) " powers up " (ut/format-name name) ".")
                                                                                    (str (ut/format-name name) " is fully powered!") #_(str (ut/format-name (:name nemesis)) " activates the fully powered " (ut/format-name name) "."))
                                                                           :minion (str (ut/format-name name) " attacks!") #_"Minion attacks.")
-                                                               :choice  (case type
+                                                               :effect  (case type
                                                                           :power :resolve-power-card
                                                                           :minion :resolve-minion-card)
                                                                :options [:nemesis :play-area {:name name}]
@@ -117,7 +117,7 @@
                                                                               :attack (str "attacks with " (ut/format-name name) ".")
                                                                               :power (str "initiates " (ut/format-name name) ".")
                                                                               :minion (str "deploys its " (ut/format-name name) ".")))
-                                                              :choice  :resolve-nemesis-card
+                                                              :effect  :resolve-nemesis-card
                                                               :options (concat
                                                                          [:mixed
                                                                           [:nemesis :play-area {:name name}]]
@@ -209,7 +209,7 @@
     (push-effect-stack game {:player-no player-no
                              :effects   (if (not-empty minions)
                                           [[:give-choice {:text    (str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
-                                                          :choice  [:deal-damage-to-target {:damage       damage
+                                                          :effect  [:deal-damage-to-target {:damage       damage
                                                                                             :kill-effects kill-effects}]
                                                           :options [:mixed
                                                                     [:nemesis]
@@ -246,7 +246,7 @@
                                                      [:unleash {:resolving resolve-text}]])
                                                 [[:give-choice {:title   resolve-text
                                                                 :text    "Destroy any of your breaches, discarding any spell prepped in that breach."
-                                                                :choice  [:destroy-breach {:put-prepped-spells-in :discard}]
+                                                                :effect  [:destroy-breach {:put-prepped-spells-in :discard}]
                                                                 :options [:player :breaches]
                                                                 :min     1
                                                                 :max     1}]]

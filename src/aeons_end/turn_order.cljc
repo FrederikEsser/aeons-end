@@ -32,7 +32,7 @@
            :type    :wild
            :effects [[:give-choice {:title   :turn-order
                                     :text    "Any player takes a turn."
-                                    :choice  :set-current-player
+                                    :effect  :set-current-player
                                     :options [:players]
                                     :min     1
                                     :max     1}]]})
@@ -57,7 +57,7 @@
                                                                         #{0 1} "1 or 2"
                                                                         #{2 3} "3 or 4")
                                                                       " takes a turn.")
-                                                        :choice  [:set-current-player {:turn-order-token (case player-nos
+                                                        :effect  [:set-current-player {:turn-order-token (case player-nos
                                                                                                            #{0 1} :player-1-2
                                                                                                            #{2 3} :player-3-4)}]
                                                         :options [:players {:player-nos player-nos}]
@@ -102,7 +102,7 @@
                                         [:give-choice {:title   "Turn Order Card Drawn"
                                                        :text    (str "You may activate " (ut/format-name name)
                                                                      " to:\n" text)
-                                                       :choice  :activate-ability
+                                                       :effect  :activate-ability
                                                        :options [:players :ability {:activation    :turn-order-drawn
                                                                                     :fully-charged true}]
                                                        :max     1}]

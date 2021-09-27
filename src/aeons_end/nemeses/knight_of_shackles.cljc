@@ -51,7 +51,7 @@
         damage          (+ 1 opened-breaches)]
     (push-effect-stack game {:effects [[:give-choice {:title   :chainsworn
                                                       :text    (str "Any player suffers " damage " damage.")
-                                                      :choice  [:damage-player {:arg damage}]
+                                                      :effect  [:damage-player {:arg damage}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -110,7 +110,7 @@
                               :predicate ::end-of-all-can-discard?
                               :effects   [[:give-choice {:title   :end-of-all
                                                          :text    "Destroy three cards in hand that each cost 3 Aether or more."
-                                                         :choice  :destroy-from-hand
+                                                         :effect  :destroy-from-hand
                                                          :options [:player :hand {:min-cost 3}]
                                                          :min     3
                                                          :max     3}]]}
@@ -134,7 +134,7 @@
         damage          (+ 1 (* 2 opened-breaches))]
     (push-effect-stack game {:effects [[:give-choice {:title   :engine-of-war
                                                       :text    (str "Any player suffers " damage " damage.")
-                                                      :choice  [:damage-player {:arg damage}]
+                                                      :effect  [:damage-player {:arg damage}]
                                                       :options [:players]
                                                       :min     1
                                                       :max     1}]]})))
@@ -148,7 +148,7 @@
                                  :predicate ::engine-of-war-can-discard?
                                  :effects   [[:give-choice {:title   :engine-of-war
                                                             :text    "Discard three prepped spells."
-                                                            :choice  :discard-prepped-spells
+                                                            :effect  :discard-prepped-spells
                                                             :options [:player :prepped-spells]
                                                             :min     3
                                                             :max     3}]]}
@@ -166,13 +166,13 @@
                 :persistent {:text    ["Gravehold suffers 3 damage."
                                        "OR"
                                        "Knight of Shackles focuses its breach II."]
-                             :effects [[:give-choice {:title     :fellblade
-                                                      :text      "Knight of Shackles focuses its breach II."
-                                                      :choice    ::focus-breach
-                                                      :options   [:nemesis :breaches {:breach-no 1 :opened false}]
-                                                      :or-choice {:text    "Gravehold suffers 3 damage."
-                                                                  :effects [[:damage-gravehold 3]]}
-                                                      :max       1}]]}
+                             :effects [[:give-choice {:title   :fellblade
+                                                      :text    "Knight of Shackles focuses its breach II."
+                                                      :effect  ::focus-breach
+                                                      :options [:nemesis :breaches {:breach-no 1 :opened false}]
+                                                      :or      {:text    "Gravehold suffers 3 damage."
+                                                                :effects [[:damage-gravehold 3]]}
+                                                      :max     1}]]}
                 :quote      "'Dirt is precious here, so we bury our dead in the darkness of The Depths. Or so we thought...' Ohat, Dirt Merchant"})
 
 (defn invade-reuse-power [game {:keys [arg]}]
@@ -184,7 +184,7 @@
                                                                   (when (> arg 1)
                                                                     "s")
                                                                   " into play.")
-                                                    :choice  :reactivate-nemesis-card
+                                                    :effect  :reactivate-nemesis-card
                                                     :options [:nemesis :discard {:type :power :most-recent true}]
                                                     :min     1
                                                     :max     1}]]}))
@@ -221,7 +221,7 @@
     (push-effect-stack game {:effects (if (= :opened status)
                                         [[:give-choice {:title   :march-on-gravehold
                                                         :text    "Any player suffers 4 damage."
-                                                        :choice  [:damage-player {:arg 4}]
+                                                        :effect  [:damage-player {:arg 4}]
                                                         :options [:players]
                                                         :min     1
                                                         :max     1}]]
@@ -266,7 +266,7 @@
                       [:unleash]
                       [:give-choice {:title   :siege
                                      :text    "Any player focuses their breach III."
-                                     :choice  :focus-breach
+                                     :effect  :focus-breach
                                      :options [:players :breaches {:breach-no 2 :opened false}]
                                      :min     1
                                      :max     1}]]
@@ -296,7 +296,7 @@
                :text    "Two different players each suffer 2 damage."
                :effects [[:give-choice {:title   "Breach I"
                                         :text    "Two different players each suffer 2 damage."
-                                        :choice  ::breach-1-damage
+                                        :effect  ::breach-1-damage
                                         :options [:players]
                                         :min     2
                                         :max     2}]]})
@@ -307,7 +307,7 @@
                :text    "Place the most recently discarded minion in the nemesis discard pile back into play."
                :effects [[:give-choice {:title   "Breach II"
                                         :text    "Place the most recently discarded minion in the nemesis discard pile back into play."
-                                        :choice  :reactivate-nemesis-card
+                                        :effect  :reactivate-nemesis-card
                                         :options [:nemesis :discard {:type :minion :most-recent true}]
                                         :min     1
                                         :max     1}]]})
