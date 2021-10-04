@@ -852,7 +852,7 @@
 (def quietus-vow {:name        :quietus-vow
                   :activation  :your-main-phase
                   :charge-cost 5
-                  :text        "Deal 2 damage for each Trophies you have."
+                  :text        "Deal 2 damage for each Trophy you have."
                   :effects     [[::quietus-vow-damage]]})
 
 (def extinguish {:name    :extinguish

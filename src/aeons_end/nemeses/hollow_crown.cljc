@@ -231,7 +231,8 @@
 (effects/register {::ren-goda-discard ren-goda-discard
                    ::ren-goda-damage  ren-goda-damage})
 
-(def ren-goda {:name        "Ren-Goda"
+(def ren-goda {:name        :ren-goda
+               :name-ui     "Ren-Goda"
                :type        :acolyte
                :life        11
                :blood-magic {:text    ["Any player suffers 2 damage."

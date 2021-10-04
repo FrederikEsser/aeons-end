@@ -29,9 +29,9 @@
              (when (map? choice-value)
                {:choice-value choice-value})))))
 
-(defn view-card [{:keys [name text cast type link quote]}]
+(defn view-card [{:keys [name name-ui text cast type link quote]}]
   (merge {:name    name
-          :name-ui (ut/format-name name)
+          :name-ui (or name-ui (ut/format-name name))
           :type    type}
          (when text
            {:text text})
@@ -551,17 +551,13 @@
 (defn view-trash [{:keys [trash]}]
   (merge
     (when (not-empty trash)
-      {:card (let [{:keys [name type]} (last trash)]
-               {:name    name
-                :name-ui (ut/format-name name)
-                :type    type})})
+      {:card (let [card (last trash)]
+               (view-card card))})
     {:cards           (if (empty? trash)
                         []
                         (->> trash
-                             (map (fn [{:keys [name type]}]
-                                    (merge {:name    name
-                                            :name-ui (ut/format-name name)
-                                            :type    type})))
+                             (map (fn [card]
+                                    (view-card card)))
                              frequencies
                              (map (fn [[card number-of-cards]]
                                     (cond-> card
@@ -594,10 +590,8 @@
                        {:visible-cards (->> (if revealed
                                               revealed
                                               (take revealed-cards deck))
-                                            (map (fn [{:keys [name type]}]
-                                                   (merge {:name    name
-                                                           :name-ui (ut/format-name name)
-                                                           :type    type}
+                                            (map (fn [{:keys [name] :as card}]
+                                                   (merge (view-card card)
                                                           (when (and (= :turn-order source)
                                                                      (= :revealed area)
                                                                      (some #{name} options))
@@ -606,19 +600,15 @@
                                                               {:interaction :choosable}))))))})))
    :discard (merge
               (when (not-empty discard)
-                {:card (let [{:keys [name type]} (last discard)]
-                         (merge {:name    name
-                                 :name-ui (ut/format-name name)
-                                 :type    type}
+                {:card (let [{:keys [name type] :as card} (last discard)]
+                         (merge (view-card card)
                                 (choice-interaction {:area      :discard
                                                      :card-name name} choice)))})
               {:cards           (if (empty? discard)
                                   []
                                   (->> discard
-                                       (map (fn [{:keys [name type]}]
-                                              (merge {:name    name
-                                                      :name-ui (ut/format-name name)
-                                                      :type    type}
+                                       (map (fn [{:keys [name] :as card}]
+                                              (merge (view-card card)
                                                      (choice-interaction {:area      :discard
                                                                           :card-name name} choice))))))
                :number-of-cards (count discard)})})

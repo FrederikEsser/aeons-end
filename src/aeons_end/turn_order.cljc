@@ -37,7 +37,7 @@
                                     :min     1
                                     :max     1}]]})
 
-(defn cloose-player [{:keys [players] :as game} {:keys [player-nos]}]
+(defn choose-player [{:keys [players] :as game} {:keys [player-nos]}]
   (let [player-with-token (->> players
                                (keep-indexed (fn [player-no {:keys [turn-order-token]}]
                                                (when (and (contains? player-nos player-no)
@@ -64,15 +64,17 @@
                                                         :min     1
                                                         :max     1}]]}))))
 
-(effects/register {::cloose-player cloose-player})
+(effects/register {::choose-player choose-player})
 
-(def player-1-2 {:name    "Player 1 / 2"
+(def player-1-2 {:name    :player-1-2
+                 :name-ui "Player 1 / 2"
                  :type    {:player-nos #{0 1}}
-                 :effects [[::cloose-player {:player-nos #{0 1}}]]})
+                 :effects [[::choose-player {:player-nos #{0 1}}]]})
 
-(def player-3-4 {:name    "Player 3 / 4"
+(def player-3-4 {:name    :player-3-4
+                 :name-ui "Player 3 / 4"
                  :type    {:player-nos #{2 3}}
-                 :effects [[::cloose-player {:player-nos #{2 3}}]]})
+                 :effects [[::choose-player {:player-nos #{2 3}}]]})
 
 (defn draw-turn-order [{{:keys [deck discard]} :turn-order :as game} _]
   (if (empty? deck)

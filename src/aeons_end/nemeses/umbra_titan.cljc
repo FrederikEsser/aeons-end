@@ -182,6 +182,7 @@
                      :quote      "'The air rasping in its massive lungs is enough to burst your eardrums.'"})
 
 (def demi-ancient {:name       :demi-ancient
+                   :name-ui    "Demi-Ancient"
                    :type       :minion
                    :tier       3
                    :life       18
