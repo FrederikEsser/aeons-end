@@ -277,7 +277,7 @@
                                 :player-no player-no}
                                choice))))
 
-(defn view-player [{{:keys [player-no name turn-order-token title life trophies]
+(defn view-player [{{:keys [player-no name turn-order-token title life trophies phase]
                      :as   player} :player
                     :keys          [choice
                                     active-player?]
@@ -295,7 +295,8 @@
           :discard   (view-discard data)
           :purchased (view-purchased player)
           :life      life
-          :aether    (ut/format-aether player)}
+          :aether    (ut/format-aether player)
+          :phase     phase}
          (when turn-order-token
            {:turn-order-token turn-order-token})
          (when trophies
@@ -324,7 +325,7 @@
     val))
 
 (defn view-nemesis [{{:keys [name life play-area deck revealed revealed-cards discard
-                             unleash-text additional-rules
+                             unleash-text additional-rules phase
                              fury husks tainted-jades tainted-track breaches
                              corruption-deck devoured cloaks acolytes]} :nemesis
                      {:keys [player-no] :as player}                     :player
@@ -359,7 +360,10 @@
           :unleash-text     (get-value game unleash-text)
           :additional-rules (str "Additional Rules:\n"
                                  (->> (get-value game additional-rules)
-                                      (string/join "\n")))}
+                                      (string/join "\n")))
+          :phase            phase
+          :resolving        (when resolving
+                              (ut/format-name resolving))}
          (when (not-empty play-area)
            {:play-area (->> play-area
                             (remove (comp #{:acolyte} :type))
