@@ -184,14 +184,14 @@
           killed? (<= life damage)]
       (-> game
           (assoc-in [:nemesis :play-area idx :life] (if killed? 0 (- life damage)))
-          (cond-> killed? (discard-nemesis-card {:card-name card-name}))
           (push-effect-stack {:player-no player-no
                               :effects   (concat
                                            (when (pos? damage)
                                              when-hit)
                                            (when killed?
                                              (concat kill-effects
-                                                     when-killed)))})))))
+                                                     when-killed
+                                                     [[:discard-nemesis-card {:card-name card-name}]])))})))))
 
 (defn deal-damage-to-target [game {:keys [player-no damage area card-name kill-effects]}]
   (push-effect-stack game {:player-no player-no
