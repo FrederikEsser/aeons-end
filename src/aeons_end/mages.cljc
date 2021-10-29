@@ -1153,15 +1153,107 @@
                                                      :max      6
                                                      :unswift? true}]]})
 
-(def xaxos {:name     :xaxos
-            :title    "Breach Mage Adept"
-            :breaches [{}
-                       {:stage 0}
-                       {:stage 0}
-                       {:stage 1}]
-            :hand     [flare crystal crystal crystal crystal]
-            :deck     [crystal crystal crystal crystal spark]
-            :ability  metaphysical-link})
+(def xaxos-ae {:name     :xaxos
+               :set      :aeon's-end
+               :title    "Breach Mage Adept"
+               :breaches [{}
+                          {:stage 0}
+                          {:stage 0}
+                          {:stage 1}]
+               :hand     [flare crystal crystal crystal crystal]
+               :deck     [crystal crystal crystal crystal spark]
+               :ability  metaphysical-link})
+
+(defn pyre-damage [game {:keys [caster area damage player-no card-name] :as args}]
+  (if (= :hand area)
+    (-> game
+        (push-effect-stack {:player-no caster
+                            :effects   [[:deal-damage (+ 2 damage)]]})
+        (push-effect-stack {:player-no player-no
+                            :effects   [[:discard-from-hand {:card-name card-name}]]}))
+    (push-effect-stack game {:player-no caster
+                             :effects   [[:deal-damage-to-target args]]})))
+
+(defn pyre-choice [{:keys [nemesis] :as game} {:keys [player-no bonus-damage]}]
+  (let [{:keys [name]} nemesis
+        damage (+ 1 bonus-damage)]
+    (push-effect-stack game {:player-no player-no
+                             :effects   [[:give-choice {:title   :pyre
+                                                        :text    [(str "Deal " damage " damage to " (ut/format-name (or name :nemesis)) " or a Minion.")
+                                                                  "OR"
+                                                                  "Any ally may discard a card in hand. If they do, deal 2 additional damage."]
+                                                        :effect  [::pyre-damage {:damage damage
+                                                                                 :caster player-no}]
+                                                        :options [:mixed
+                                                                  [:nemesis]
+                                                                  [:nemesis :minions]
+                                                                  [:players :hand {:ally true}]]
+                                                        :min     1
+                                                        :max     1}]]})))
+
+(effects/register {::pyre-damage pyre-damage
+                   ::pyre-choice pyre-choice})
+
+(def pyre {:name    :pyre
+           :type    :spell
+           :cost    0
+           :cast    ["Deal 1 damage."
+                     "Any ally may discard a card in hand. If they do, deal 2 additional damage."]
+           :effects [[::pyre-choice]]})
+
+(defn praetorian-halo-gain-charge [game {:keys [player-no]}]
+  (let [card-name (->> (get-in game [:players player-no :hand])
+                       shuffle
+                       first
+                       :name)]
+    (-> game
+        (assoc :can-undo? (nil? card-name))
+        (push-effect-stack {:player-no player-no
+                            :effects   (concat [[:gain-charge]]
+                                               (when card-name
+                                                 [[:discard-from-hand {:card-name card-name}]]))}))))
+
+(effects/register {::praetorian-halo-gain-charge praetorian-halo-gain-charge})
+
+(def praetorian-halo {:name        :praetorian-halo
+                      :activation  :your-main-phase
+                      :charge-cost 4
+                      :text        ["Any ally gains 1 charge and discards a random card in hand."
+                                    "Focus one of your breaches."
+                                    "Gain 1 life."
+                                    "Destroy a card in your hand or discard pile."]
+                      :effects     [[:give-choice {:title   :praetorian-halo
+                                                   :text    "Any ally gains 1 charge and discards a random card in hand."
+                                                   :effect  ::praetorian-halo-gain-charge
+                                                   :options [:players :ability {:ally true}]
+                                                   :min     1
+                                                   :max     1}]
+                                    [:give-choice {:title   :praetorian-halo
+                                                   :text    "Focus one of your breaches."
+                                                   :effect  :focus-breach
+                                                   :options [:player :breaches {:opened false}]
+                                                   :min     1
+                                                   :max     1}]
+                                    [:heal {:life 1}]
+                                    [:give-choice {:title   :praetorian-halo
+                                                   :text    "Destroy a card in your hand or discard pile."
+                                                   :effect  :destroy-from-area
+                                                   :options [:mixed
+                                                             [:player :hand]
+                                                             [:player :discard]]
+                                                   :min     1
+                                                   :max     1}]]})
+
+(def xaxos-void {:name     :xaxos
+                 :set      :v-o-i-d
+                 :title    "Voidbringer"
+                 :breaches [{}
+                            {:stage 1}
+                            {:stage 0}
+                            {:stage 1}]
+                 :hand     [pyre crystal crystal crystal crystal]
+                 :deck     [crystal crystal crystal crystal spark]
+                 :ability  praetorian-halo})
 
 (defn illuminate-while-prepped [{:keys [current-player] :as game} {:keys [player-no]}]
   (cond-> game
@@ -1304,6 +1396,7 @@
             remnant
             sparrow
             ulgimor
-            xaxos
+            xaxos-ae
+            xaxos-void
             yan-magda
             zhana])

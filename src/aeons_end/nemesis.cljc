@@ -182,16 +182,18 @@
                               :shield (ut/get-value shield game)
                               :max-damage (ut/get-value max-damage game))
           killed? (<= life damage)]
-      (-> game
-          (assoc-in [:nemesis :play-area idx :life] (if killed? 0 (- life damage)))
-          (push-effect-stack {:player-no player-no
-                              :effects   (concat
-                                           (when (pos? damage)
-                                             when-hit)
-                                           (when killed?
-                                             (concat kill-effects
-                                                     when-killed
-                                                     [[:discard-nemesis-card {:card-name card-name}]])))})))))
+      (if card
+        (-> game
+            (assoc-in [:nemesis :play-area idx :life] (if killed? 0 (- life damage)))
+            (push-effect-stack {:player-no player-no
+                                :effects   (concat
+                                             (when (pos? damage)
+                                               when-hit)
+                                             (when killed?
+                                               (concat kill-effects
+                                                       when-killed
+                                                       [[:discard-nemesis-card {:card-name card-name}]])))}))
+        game))))
 
 (defn deal-damage-to-target [game {:keys [player-no damage area card-name kill-effects]}]
   (push-effect-stack game {:player-no player-no
