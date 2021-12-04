@@ -327,12 +327,12 @@
 (defn view-nemesis [{{:keys [name life play-area deck revealed revealed-cards discard
                              unleash-text additional-rules phase
                              fury husks tainted-jades tainted-track breaches
-                             corruption-deck devoured cloaks acolytes]} :nemesis
-                     {:keys [player-no] :as player}                     :player
-                     choice                                             :choice
-                     resolving                                          :resolving
-                     current-player                                     :current-player
-                     :as                                                game}]
+                             corruption-deck devoured cloaks acolytes time-gates]} :nemesis
+                     {:keys [player-no] :as player}                                :player
+                     choice                                                        :choice
+                     resolving                                                     :resolving
+                     current-player                                                :current-player
+                     :as                                                           game}]
   (merge {:name-ui          (ut/format-name name)
           :tier             (ut/get-nemesis-tier game)
           :life             life
@@ -550,6 +550,8 @@
                            :number-of-cards (count devoured)}))})
          (when cloaks
            {:cloaks cloaks})
+         (when time-gates
+           {:time-gates time-gates})
          (choice-interaction {:area :nemesis} choice)))
 
 (defn view-trash [{:keys [trash]}]

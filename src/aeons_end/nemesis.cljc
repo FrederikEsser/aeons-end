@@ -11,6 +11,7 @@
             [aeons-end.nemeses.prince-of-gluttons :refer [prince-of-gluttons]]
             [aeons-end.nemeses.hollow-crown :refer [hollow-crown]]
             [aeons-end.nemeses.magus-of-cloaks :refer [magus-of-cloaks]]
+            [aeons-end.nemeses.gate-witch :refer [gate-witch]]
             [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]))
@@ -304,7 +305,8 @@
               crooked-mask
               prince-of-gluttons
               hollow-crown
-              magus-of-cloaks])
+              magus-of-cloaks
+              gate-witch])
 
 (def basic-cards (concat
                    ; AE Tier 1

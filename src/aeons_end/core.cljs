@@ -777,7 +777,7 @@
   (fn []
     (let [{:keys [name name-ui tier unleash-text additional-rules life deck play-area discard active?
                   cloaks fury husks tainted-jades tainted-track breaches corruptions devoured
-                  acolytes acolytes-in-play
+                  acolytes acolytes-in-play time-gates
                   interaction choice-value]} (get-in @state [:game :nemesis])]
       [:table {:style {:width "100%"}}
        [:tbody
@@ -845,6 +845,10 @@
                  [:div {:style {:font-size   "1.1em"
                                 :padding-top "3px"}}
                   "Acolytes: " acolytes])
+               (when time-gates
+                 [:div {:style {:font-size   "1.1em"
+                                :padding-top "3px"}}
+                  "Time gates: " time-gates])
                [:hr]
                (format-text unleash-text "UNLEASH")]])
            (when tainted-track
@@ -1122,7 +1126,7 @@
           [mage player]
           (view-ability ability player-no)]
          [:th "Breaches"]
-         [:th  "Hand"]
+         [:th "Hand"]
          (when active?
            [:th {:style {:width "125px"}} "Played"])
          [:th {:style {:width "125px"}} "Deck"]

@@ -304,13 +304,13 @@
 (effects/register {::setup setup})
 
 (defn additional-rules [{:keys [difficulty]}]
-  ["When Rageborne Strikes, resolve the following in order:"
+  ["At the end of the nemesis turn, if Rageborne has four or more Fury, it Strikes once."
+   "When Rageborne Strikes, resolve the following in order:"
    "- Draw a card from the strike deck and resolve it."
    "- Shuffle that card back into the strike deck."
-   (if (#{:beginner :normal} difficulty)
-     "- Rageborne loses three Fury"
-     "- Rageborne loses one Fury")
-   "At the end of the nemesis turn, if Rageborne has four or more Fury, it Strikes once."])
+   (if (#{:expert :extinction} difficulty)
+     "- Rageborne loses one Fury"
+     "- Rageborne loses three Fury")])
 
 (effects/register-predicates {::additional-rules additional-rules})
 

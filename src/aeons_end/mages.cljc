@@ -1218,11 +1218,19 @@
 (def praetorian-halo {:name        :praetorian-halo
                       :activation  :your-main-phase
                       :charge-cost 4
-                      :text        ["Any ally gains 1 charge and discards a random card in hand."
+                      :text        ["Destroy a card in your hand or discard pile."
+                                    "Any ally gains 1 charge and discards a random card in hand."
                                     "Focus one of your breaches."
-                                    "Gain 1 life."
-                                    "Destroy a card in your hand or discard pile."]
+                                    "Gain 1 life."]
                       :effects     [[:give-choice {:title   :praetorian-halo
+                                                   :text    "Destroy a card in your hand or discard pile."
+                                                   :effect  :destroy-from-area
+                                                   :options [:mixed
+                                                             [:player :hand]
+                                                             [:player :discard]]
+                                                   :min     1
+                                                   :max     1}]
+                                    [:give-choice {:title   :praetorian-halo
                                                    :text    "Any ally gains 1 charge and discards a random card in hand."
                                                    :effect  ::praetorian-halo-gain-charge
                                                    :options [:players :ability {:ally true}]
@@ -1234,15 +1242,7 @@
                                                    :options [:player :breaches {:opened false}]
                                                    :min     1
                                                    :max     1}]
-                                    [:heal {:life 1}]
-                                    [:give-choice {:title   :praetorian-halo
-                                                   :text    "Destroy a card in your hand or discard pile."
-                                                   :effect  :destroy-from-area
-                                                   :options [:mixed
-                                                             [:player :hand]
-                                                             [:player :discard]]
-                                                   :min     1
-                                                   :max     1}]]})
+                                    [:heal {:life 1}]]})
 
 (def xaxos-void {:name     :xaxos
                  :set      :v-o-i-d
