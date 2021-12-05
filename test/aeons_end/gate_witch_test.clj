@@ -63,3 +63,122 @@
               :nemesis    {:time-gates 3}
               :turn-order {:deck [turn-order/nemesis
                                   turn-order/nemesis]}})))))
+
+(deftest deep-abomination-test
+  (testing "Deep Abomination"
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 10}]
+                :turn-order {:discard [turn-order/player-1
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 9}]
+            :turn-order {:discard [turn-order/player-1
+                                   turn-order/nemesis]}}))
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 10}]
+                :turn-order {:deck    [turn-order/player-1]
+                             :discard [turn-order/player-1
+                                       turn-order/player-1
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 8}]
+            :turn-order {:deck    [turn-order/player-1]
+                         :discard [turn-order/player-1
+                                   turn-order/player-1
+                                   turn-order/nemesis]}}))
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 10}
+                             {:life 10}]
+                :turn-order {:discard [turn-order/player-1
+                                       turn-order/nemesis
+                                       turn-order/player-2
+                                       turn-order/player-1
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 8}
+                         {:life 9}]
+            :turn-order {:discard [turn-order/player-1
+                                   turn-order/nemesis
+                                   turn-order/player-2
+                                   turn-order/player-1
+                                   turn-order/nemesis]}}))
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 2}
+                             {:life 1}
+                             {:life 3}]
+                :turn-order {:deck    [turn-order/player-2]
+                             :discard [turn-order/player-1
+                                       turn-order/nemesis
+                                       turn-order/wild
+                                       turn-order/player-3
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 2}))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 1}
+                         {:life 1}
+                         {:life 1}]
+            :turn-order {:deck    [turn-order/player-2]
+                         :discard [turn-order/player-1
+                                   turn-order/nemesis
+                                   turn-order/wild
+                                   turn-order/player-3
+                                   turn-order/nemesis]}}))
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 2}
+                             {:life 1}
+                             {:life 3}
+                             {:life 10}]
+                :turn-order {:discard [turn-order/player-1-2
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 1}
+                         {:life 1}
+                         {:life 3}
+                         {:life 10}]
+            :turn-order {:discard [turn-order/player-1-2
+                                   turn-order/nemesis]}}))
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 2}
+                             {:life 1}
+                             {:life 3}
+                             {:life 10}]
+                :turn-order {:discard [turn-order/player-1-2
+                                       turn-order/player-3-4
+                                       turn-order/player-3-4
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 0}))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 1}
+                         {:life 1}
+                         {:life 2}
+                         {:life 9}]
+            :turn-order {:discard [turn-order/player-1-2
+                                   turn-order/player-3-4
+                                   turn-order/player-3-4
+                                   turn-order/nemesis]}}))
+    (is (= (-> {:nemesis    {:play-area [deep-abomination]}
+                :players    [{:life 2}
+                             {:life 1}
+                             {:life 3}
+                             {:life 10}]
+                :turn-order {:discard [turn-order/player-3-4
+                                       turn-order/player-1-2
+                                       turn-order/nemesis]}}
+               (resolve-nemesis-cards-in-play)
+               (choose {:player-no 3})
+               (choose {:player-no 0}))
+           {:nemesis    {:play-area [deep-abomination]}
+            :players    [{:life 1}
+                         {:life 1}
+                         {:life 3}
+                         {:life 9}]
+            :turn-order {:discard [turn-order/player-3-4
+                                   turn-order/player-1-2
+                                   turn-order/nemesis]}}))))
