@@ -205,3 +205,22 @@
                       :unleash    [[::gate-witch/open-gate]]
                       :time-gates 4}
             :players [{:life 7}]}))))
+
+(deftest temporal-nimbus-test
+  (testing "Temporal Nimbus"
+    (is (= (-> {:nemesis {:play-area  [(assoc-in temporal-nimbus [:power :power] 1)]
+                          :unleash    [[::gate-witch/open-gate]]
+                          :time-gates 1}}
+               resolve-nemesis-cards-in-play)
+           {:nemesis {:discard     [(assoc-in temporal-nimbus [:power :power] 0)]
+                      :unleash     [[::gate-witch/open-gate]]
+                      :time-gates  2
+                      :draw-extra? true}}))
+    (is (= (-> {:nemesis {:deck        [deep-abomination]
+                          :time-gates  2
+                          :draw-extra? true}}
+               do-after-effects
+               (choose {:area      :play-area
+                        :card-name :deep-abomination}))
+           {:nemesis {:play-area  [(assoc deep-abomination :max-life 6)]
+                      :time-gates 2}}))))

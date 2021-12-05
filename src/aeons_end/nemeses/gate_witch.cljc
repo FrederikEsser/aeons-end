@@ -22,13 +22,19 @@
                                                     :max     1}]
                                      [::close-gates (if (#{:expert :extinction} difficulty) 3 4)]]}))
 
-(defn at-end-turn [game _]
-  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+(defn at-end-turn [{:keys [nemesis] :as game} _]
+  (let [{:keys [draw-extra?]} nemesis
+        discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
                                      (filter (comp #{:nemesis} :type))
-                                     count)]
-    (cond-> game
-            (and (<= 5 (get-in game [:nemesis :time-gates]))
-                 (= 1 discarded-nemesis-cards)) (accelerate-time {}))))
+                                     count)
+        accelerate-time?        (and (<= 5 (get-in game [:nemesis :time-gates]))
+                                     (= 1 discarded-nemesis-cards))]
+    (-> game
+        (update :nemesis dissoc :draw-extra?)
+        (push-effect-stack {:effects (concat (when draw-extra?
+                                               [[:draw-nemesis-card]])
+                                             (when accelerate-time?
+                                               [[::accelerate-time]]))}))))
 
 (effects/register {::open-gate       open-gate
                    ::close-gates     close-gates
@@ -112,6 +118,23 @@
                        [::return-nemesis-card {:card-name :hasten}]]
              :quote   "'Time is The Witch's domain, the one thing we have so little left.' Gex, Breach Mage Advisor"})
 
+(defn temporal-nimbus-draw-extra [game _]
+  (assoc-in game [:nemesis :draw-extra?] true))
+
+(effects/register {::temporal-nimbus-draw-extra temporal-nimbus-draw-extra})
+
+(def temporal-nimbus {:name       :temporal-nimbus
+                      :type       :power
+                      :tier       1
+                      :to-discard {:text      "Spend 6 Aether."
+                                   :predicate [::power/can-afford? {:amount 6}]
+                                   :effects   [[:pay {:amount 6 :type :discard-power-card}]]}
+                      :power      {:power   3
+                                   :text    ["Unleash."
+                                             "Gate Witch draws an additional card during the nemesis draw phase this turn."]
+                                   :effects [[:unleash]
+                                             [::temporal-nimbus-draw-extra]]}})
+
 (defn additional-rules [{:keys [difficulty]}]
   ["At the end of the nemesis turn, if Gate Witch has five or more open time gates and there is exactly one nemesis turn order card in the turn order discard pile, it accelerates time:"
    "- Shuffle a nemesis turn order card into the turn order deck."
@@ -128,7 +151,7 @@
                  :unleash-text     "Gate Witch opens one time gate."
                  :additional-rules ::additional-rules
                  :at-end-turn      [[::at-end-turn]]
-                 :cards            [deep-abomination hasten (power/generic 1)
+                 :cards            [deep-abomination hasten temporal-nimbus
                                     (power/generic 2) (minion/generic 2 1) (minion/generic 2 2)
                                     (attack/generic 3) (power/generic 3) (minion/generic 3)]
                  :time-gates       1})
