@@ -24,13 +24,13 @@
 (effects/register {:unleash unleash})
 
 (defn discard-nemesis-card [game {:keys [card-name]}]
-  (let [{{:keys [max-life power]} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
+  (let [{{:keys [max-life power] :as card} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
     (cond-> game
             (:start-power power) (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc-in [:power :power] (:start-power power))
             max-life (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc :life max-life)
-            card-name (move-card {:card-name card-name
-                                  :from      :play-area
-                                  :to        :discard}))))
+            card (move-card {:card-name card-name
+                             :from      :play-area
+                             :to        :discard}))))
 
 (effects/register {:discard-nemesis-card discard-nemesis-card})
 

@@ -35,6 +35,13 @@
                    ::accelerate-time accelerate-time
                    ::at-end-turn     at-end-turn})
 
+(defn return-nemesis-card [game {:keys [card-name]}]
+  (push-effect-stack game {:effects [[:move-card {:card-name card-name
+                                                  :from      :play-area
+                                                  :to        :deck}]]}))
+
+(effects/register {::return-nemesis-card return-nemesis-card})
+
 (defn- get-damage-effect [{{:keys [player-no player-nos] :as type} :type}]
   (cond
     (= :wild type) [:give-choice {:title   :deep-abomination
@@ -83,6 +90,28 @@
                                     :effects [[::deep-abomination-damage]]}
                        :quote      "'It is said that each abomination is but the same creature from across all worlds twisted into a single form.'"})
 
+(defn hasten-damage [game _]
+  (let [damage (get-in game [:nemesis :time-gates])]
+    (push-effect-stack game {:effects [[:give-choice {:title   :hasten
+                                                      :text    (str "Any player suffers " damage " damage.")
+                                                      :effect  [:damage-player {:arg damage}]
+                                                      :options [:players]
+                                                      :min     1
+                                                      :max     1}]]})))
+
+(effects/register {::hasten-damage hasten-damage})
+
+(def hasten {:name    :hasten
+             :type    :attack
+             :tier    1
+             :text    ["Any player suffers damage equal to the number of open time gates."
+                       "Unleash."
+                       "Place this card on the bottom of the nemesis deck."]
+             :effects [[::hasten-damage]
+                       [:unleash]
+                       [::return-nemesis-card {:card-name :hasten}]]
+             :quote   "'Time is The Witch's domain, the one thing we have so little left.' Gex, Breach Mage Advisor"})
+
 (defn additional-rules [{:keys [difficulty]}]
   ["At the end of the nemesis turn, if Gate Witch has five or more open time gates and there is exactly one nemesis turn order card in the turn order discard pile, it accelerates time:"
    "- Shuffle a nemesis turn order card into the turn order deck."
@@ -99,7 +128,7 @@
                  :unleash-text     "Gate Witch opens one time gate."
                  :additional-rules ::additional-rules
                  :at-end-turn      [[::at-end-turn]]
-                 :cards            [deep-abomination (attack/generic 1) (power/generic 1)
+                 :cards            [deep-abomination hasten (power/generic 1)
                                     (power/generic 2) (minion/generic 2 1) (minion/generic 2 2)
                                     (attack/generic 3) (power/generic 3) (minion/generic 3)]
                  :time-gates       1})

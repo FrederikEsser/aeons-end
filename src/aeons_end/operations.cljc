@@ -221,7 +221,7 @@
       (assoc-in game (conj path :revealed-cards) (dec revealed-cards))
       (update-in game path dissoc :revealed-cards))))
 
-(defn state-maintenance [game from-player to-player from to]
+(defn state-maintenance [game from-player to-player from to to-position]
   (let [from-path  (if from-player
                      [:players from-player]
                      [:nemesis])
@@ -231,7 +231,7 @@
         from-cards (get-in game (conj from-path from))]
     (cond-> game
             (and (= from :deck) (:can-undo? game)) (assoc :can-undo? false)
-            (= to :deck) (increase-revealed-number-of-cards to-path)
+            (and (= to :deck) (= to-position :top)) (increase-revealed-number-of-cards to-path)
             (= from :deck) (decrease-revealed-number-of-cards from-path)
             (empty? from-cards) (update-in from-path dissoc from)
             (= from :breach) (update-in [:players from-player :breaches] (fn [breaches]
@@ -517,7 +517,7 @@
     (cond-> game
             card (-> (remove-card from-path idx)
                      (add-card to-path to-position card)
-                     (state-maintenance (or from-player player-no) (or to-player player-no) from to)))))
+                     (state-maintenance (or from-player player-no) (or to-player player-no) from to to-position)))))
 
 (defn handle-on-trash [game {:keys [player-no card-id card-name destroyed-by] :as args}]
   (let [{{:keys [on-trash]} :card} (ut/get-card-idx game [:trash] {:name card-name})

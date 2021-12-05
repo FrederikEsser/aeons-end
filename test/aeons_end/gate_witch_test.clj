@@ -182,3 +182,26 @@
             :turn-order {:discard [turn-order/player-3-4
                                    turn-order/player-1-2
                                    turn-order/nemesis]}}))))
+
+(deftest hasten-test
+  (testing "Hasten"
+    (is (= (-> {:nemesis {:deck       [hasten deep-abomination]
+                          :unleash    [[::gate-witch/open-gate]]
+                          :time-gates 1}
+                :players [{:life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis {:deck       [deep-abomination hasten]
+                      :unleash    [[::gate-witch/open-gate]]
+                      :time-gates 2}
+            :players [{:life 9}]}))
+    (is (= (-> {:nemesis {:deck       [hasten]
+                          :unleash    [[::gate-witch/open-gate]]
+                          :time-gates 3}
+                :players [{:life 10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis {:deck       [hasten]
+                      :unleash    [[::gate-witch/open-gate]]
+                      :time-gates 4}
+            :players [{:life 7}]}))))
