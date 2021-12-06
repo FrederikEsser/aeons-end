@@ -118,6 +118,20 @@
                        [::return-nemesis-card {:card-name :hasten}]]
              :quote   "'Time is The Witch's domain, the one thing we have so little left.' Gex, Breach Mage Advisor"})
 
+(defn paradox-beast-damage [game _]
+  (let [damage (get-in game [:nemesis :time-gates])]
+    (push-effect-stack game {:effects [[:damage-gravehold damage]]})))
+
+(effects/register {::paradox-beast-damage paradox-beast-damage})
+
+(def paradox-beast {:name       :paradox-beast
+                    :type       :minion
+                    :tier       2
+                    :life       8
+                    :persistent {:text    "Gravehold suffers damage equal to the number of open time gates."
+                                 :effects [[::paradox-beast-damage]]}
+                    :quote      "'It moves between time and space, too quick for the eye and harder yet to strike.' Remnant, Aetherial Entity"})
+
 (defn temporal-nimbus-draw-extra [game _]
   (assoc-in game [:nemesis :draw-extra?] true))
 
@@ -152,6 +166,6 @@
                  :additional-rules ::additional-rules
                  :at-end-turn      [[::at-end-turn]]
                  :cards            [deep-abomination hasten temporal-nimbus
-                                    (power/generic 2) (minion/generic 2 1) (minion/generic 2 2)
+                                    (power/generic 2) paradox-beast (minion/generic 2)
                                     (attack/generic 3) (power/generic 3) (minion/generic 3)]
                  :time-gates       1})
