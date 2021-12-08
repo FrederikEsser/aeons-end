@@ -118,6 +118,37 @@
                        [::return-nemesis-card {:card-name :hasten}]]
              :quote   "'Time is The Witch's domain, the one thing we have so little left.' Gex, Breach Mage Advisor"})
 
+(defn nether-spiral-shuffle [{:keys [turn-order] :as game} {:keys [card-name]}]
+  (let [{:keys [card idx]} (ut/get-card-idx game [:turn-order :discard] {:name card-name})
+        {:keys [deck discard]} turn-order]
+    (-> game
+        (assoc :turn-order (merge {:deck (->> (concat deck
+                                                      (cond-> discard
+                                                              idx (ut/vec-remove idx)))
+                                              shuffle
+                                              vec)}
+                                  (when card
+                                    {:discard [card]}))))))
+
+(effects/register {::nether-spiral-shuffle nether-spiral-shuffle})
+
+(def nether-spiral {:name       :nether-spiral
+                    :type       :power
+                    :tier       2
+                    :to-discard {:text      "Spend 7 Aether."
+                                 :predicate [::power/can-afford? {:amount 7}]
+                                 :effects   [[:pay {:amount 7 :type :discard-power-card}]]}
+                    :power      {:power   3
+                                 :text    "Choose any player's turn order card in the turn order discard pile. Shuffle the rest of the turn order cards into the turn order deck."
+                                 :effects [[:give-choice {:title      :nether-spiral
+                                                          :text       "Choose any player's turn order card in the turn order discard pile. Shuffle the rest of the turn order cards into the turn order deck."
+                                                          :effect     ::nether-spiral-shuffle
+                                                          :options    [:turn-order :discard {:not-type :nemesis}]
+                                                          :min        1
+                                                          :max        1
+                                                          :mandatory? true}]]}
+                    :quote      "'Within the void, there are infinite spirals of worlds. Some are unborn, others are thriving. But there is a dead light in some that have been claimed by The Nameless.' Yan Magda, Enlightened Exile"})
+
 (defn paradox-beast-damage [game _]
   (let [damage (get-in game [:nemesis :time-gates])]
     (push-effect-stack game {:effects [[:damage-gravehold damage]]})))
@@ -166,6 +197,6 @@
                  :additional-rules ::additional-rules
                  :at-end-turn      [[::at-end-turn]]
                  :cards            [deep-abomination hasten temporal-nimbus
-                                    (power/generic 2) paradox-beast (minion/generic 2)
+                                    nether-spiral paradox-beast (minion/generic 2)
                                     (attack/generic 3) (power/generic 3) (minion/generic 3)]
                  :time-gates       1})

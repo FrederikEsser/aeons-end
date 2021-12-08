@@ -8,6 +8,11 @@
             [aeons-end.cards.gem :refer [jade]]
             [aeons-end.turn-order :as turn-order]))
 
+(defn fixture [f]
+  (with-rand-seed 42 (f)))
+
+(use-fixtures :each fixture)
+
 (defn do-accelerate-time [game]
   (-> game
       (push-effect-stack {:effects [[::gate-witch/accelerate-time]]})
@@ -205,6 +210,98 @@
                       :unleash    [[::gate-witch/open-gate]]
                       :time-gates 4}
             :players [{:life 7}]}))))
+
+(deftest nether-spiral-test
+  (testing "Nether Spiral"
+    (is (= (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
+                :turn-order {:deck    [turn-order/player-1
+                                       turn-order/player-2
+                                       turn-order/player-2
+                                       turn-order/nemesis]
+                             :discard [turn-order/player-1
+                                       turn-order/nemesis]}}
+               resolve-nemesis-cards-in-play
+               (choose :player-1))
+           {:nemesis    {:discard [(assoc-in nether-spiral [:power :power] 0)]}
+            :turn-order {:deck    [turn-order/player-2
+                                   turn-order/player-2
+                                   turn-order/nemesis
+                                   turn-order/nemesis
+                                   turn-order/player-1]
+                         :discard [turn-order/player-1]}}))
+    (is (= (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
+                :turn-order {:discard [turn-order/player-1
+                                       turn-order/player-1
+                                       turn-order/player-2
+                                       turn-order/player-2
+                                       turn-order/nemesis
+                                       turn-order/nemesis]}}
+               resolve-nemesis-cards-in-play
+               (choose :player-1))
+           {:nemesis    {:discard [(assoc-in nether-spiral [:power :power] 0)]}
+            :turn-order {:deck    [turn-order/nemesis
+                                   turn-order/player-2
+                                   turn-order/player-2
+                                   turn-order/nemesis
+                                   turn-order/player-1]
+                         :discard [turn-order/player-1]}}))
+    (is (= (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
+                :turn-order {:deck    [turn-order/player-1
+                                       turn-order/player-2
+                                       turn-order/player-3
+                                       turn-order/player-4
+                                       turn-order/nemesis]
+                             :discard [turn-order/nemesis]}}
+               resolve-nemesis-cards-in-play)
+           {:nemesis    {:discard [(assoc-in nether-spiral [:power :power] 0)]}
+            :turn-order {:deck [turn-order/nemesis
+                                turn-order/player-1
+                                turn-order/player-3
+                                turn-order/nemesis
+                                turn-order/player-4
+                                turn-order/player-2]}}))
+    (is (= (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
+                :turn-order {:deck    [turn-order/player-3
+                                       turn-order/player-1
+                                       turn-order/nemesis]
+                             :discard [turn-order/player-2
+                                       turn-order/wild
+                                       turn-order/nemesis]}}
+               resolve-nemesis-cards-in-play
+               (choose :wild))
+           {:nemesis    {:discard [(assoc-in nether-spiral [:power :power] 0)]}
+            :turn-order {:deck    [turn-order/player-2
+                                   turn-order/player-3
+                                   turn-order/nemesis
+                                   turn-order/player-1
+                                   turn-order/nemesis]
+                         :discard [turn-order/wild]}}))
+    (is (= (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
+                :turn-order {:deck    [turn-order/nemesis]
+                             :discard [turn-order/player-1-2
+                                       turn-order/player-3-4
+                                       turn-order/player-3-4
+                                       turn-order/nemesis
+                                       turn-order/player-1-2]}}
+               resolve-nemesis-cards-in-play
+               (choose :player-3-4))
+           {:nemesis    {:discard [(assoc-in nether-spiral [:power :power] 0)]}
+            :turn-order {:deck    [turn-order/player-1-2
+                                   turn-order/player-1-2
+                                   turn-order/player-3-4
+                                   turn-order/nemesis
+                                   turn-order/nemesis]
+                         :discard [turn-order/player-3-4]}}))
+    (is (thrown-with-msg? AssertionError #"Choose error:"
+                          (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
+                               :turn-order {:deck    [turn-order/player-1
+                                                      turn-order/player-2
+                                                      turn-order/player-2
+                                                      turn-order/nemesis]
+                                            :discard [turn-order/player-1
+                                                      turn-order/nemesis]}}
+                              resolve-nemesis-cards-in-play
+                              (choose nil))))))
 
 (deftest temporal-nimbus-test
   (testing "Temporal Nimbus"
