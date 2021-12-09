@@ -188,6 +188,54 @@
                                    turn-order/player-1-2
                                    turn-order/nemesis]}}))))
 
+(deftest distort-test
+  (testing "distort"
+    (is (= (-> {:nemesis    {:deck       [distort deep-abomination]
+                             :unleash    [[::gate-witch/open-gate]]
+                             :time-gates 1}
+                :turn-order {:deck [turn-order/nemesis]}
+                :gravehold  {:life 30}}
+               draw-nemesis-card)
+           {:nemesis    {:deck       [deep-abomination distort]
+                         :unleash    [[::gate-witch/open-gate]]
+                         :time-gates 2}
+            :turn-order {:deck           [turn-order/nemesis]
+                         :revealed-cards 1}
+            :gravehold  {:life 25}}))
+    (is (= (-> {:nemesis    {:deck       [distort deep-abomination]
+                             :unleash    [[::gate-witch/open-gate]]
+                             :time-gates 1}
+                :turn-order {:deck [turn-order/player-1 turn-order/nemesis]}
+                :gravehold  {:life 30}}
+               draw-nemesis-card)
+           {:nemesis    {:deck       [deep-abomination distort]
+                         :unleash    [[::gate-witch/open-gate]]
+                         :time-gates 2}
+            :turn-order {:deck    [turn-order/nemesis]
+                         :discard [turn-order/player-1]}
+            :gravehold  {:life 30}}))
+    (is (= (-> {:nemesis    {:deck       [distort deep-abomination]
+                             :unleash    [[::gate-witch/open-gate]]
+                             :time-gates 1}
+                :turn-order {:discard [turn-order/player-1
+                                       turn-order/player-1
+                                       turn-order/player-2
+                                       turn-order/player-2
+                                       turn-order/nemesis
+                                       turn-order/nemesis]}
+                :gravehold  {:life 30}}
+               draw-nemesis-card)
+           {:nemesis    {:deck       [deep-abomination distort]
+                         :unleash    [[::gate-witch/open-gate]]
+                         :time-gates 2}
+            :turn-order {:deck    [turn-order/player-1
+                                   turn-order/nemesis
+                                   turn-order/nemesis
+                                   turn-order/player-2
+                                   turn-order/player-2]
+                         :discard [turn-order/player-1]}
+            :gravehold  {:life 30}}))))
+
 (deftest hasten-test
   (testing "Hasten"
     (is (= (-> {:nemesis {:deck       [hasten deep-abomination]

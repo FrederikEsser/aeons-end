@@ -2,7 +2,6 @@
   (:require [aeons-end.operations :refer [push-effect-stack]]
             [aeons-end.utils :as ut]
             [aeons-end.effects :as effects]
-            [aeons-end.cards.attack :as attack]
             [aeons-end.cards.minion :as minion]
             [aeons-end.cards.power :as power]))
 
@@ -95,6 +94,26 @@
                        :persistent {:text    "Each player suffers 1 damage for each turn order card that player has in the turn order discard pile."
                                     :effects [[::deep-abomination-damage]]}
                        :quote      "'It is said that each abomination is but the same creature from across all worlds twisted into a single form.'"})
+
+(defn distort-damage [game _]
+  (let [{:keys [type]} (-> game :turn-order :deck first)]
+    (push-effect-stack game {:effects (if (= :nemesis type)
+                                        [[:damage-gravehold 5]]
+                                        [[:draw-turn-order]])})))
+
+(effects/register {::distort-damage distort-damage})
+
+(def distort {:name    :distort
+              :type    :attack
+              :tier    3
+              :text    ["Unleash"
+                        "Reveal the top card of the turn order deck. If a player turn order card is revealed, discard it. Otherwise, Gravehold suffers 5 damage."
+                        "Place this card on the bottom of the nemesis deck."]
+              :effects [[:unleash]
+                        [:reveal-top-turn-order]
+                        [::distort-damage]
+                        [::return-nemesis-card {:card-name :distort}]]
+              :quote   "'Being pushed out of time is a painful ordeal even for me.' Remnant, Aetherial Entity"})
 
 (defn hasten-damage [game _]
   (let [damage (get-in game [:nemesis :time-gates])]
@@ -218,5 +237,5 @@
                  :at-end-turn      [[::at-end-turn]]
                  :cards            [deep-abomination hasten temporal-nimbus
                                     nether-spiral paradox-beast portal-wretch
-                                    (attack/generic 3) (power/generic 3) (minion/generic 3)]
+                                    distort (power/generic 3) (minion/generic 3)]
                  :time-gates       1})
