@@ -41,7 +41,8 @@
                    ::at-end-turn     at-end-turn})
 
 (defn return-nemesis-card [game {:keys [card-name]}]
-  (push-effect-stack game {:effects [[:move-card {:card-name card-name
+  (push-effect-stack game {:effects [[:reset-nemesis-card {:card-name card-name}]
+                                     [:move-card {:card-name card-name
                                                   :from      :play-area
                                                   :to        :deck}]]}))
 
@@ -136,6 +137,24 @@
                        [:unleash]
                        [::return-nemesis-card {:card-name :hasten}]]
              :quote   "'Time is The Witch's domain, the one thing we have so little left.' Gex, Breach Mage Advisor"})
+
+(defn infinite-enmity-unleash [game _]
+  (update-in game [:nemesis :time-gates] max 6))
+
+(effects/register {::infinite-enmity-unleash infinite-enmity-unleash})
+
+(def infinite-enmity {:name       :infinite-enmity
+                      :type       :power
+                      :tier       3
+                      :to-discard {:text      "Spend 8 Aether."
+                                   :predicate [::power/can-afford? {:amount 8}]
+                                   :effects   [[:pay {:amount 8 :type :discard-power-card}]]}
+                      :power      {:power   2
+                                   :text    ["Unleash until Gate Witch has six open time gates."
+                                             "Place this card on the bottom of the nemesis deck."]
+                                   :effects [[::infinite-enmity-unleash]
+                                             [::return-nemesis-card {:card-name :infinite-enmity}]]}
+                      :quote      "'Countless times we have won. And countless more we have lost.' Mazahaedron, Henge Mystic"})
 
 (defn nether-spiral-shuffle [{:keys [turn-order] :as game} {:keys [card-name]}]
   (let [{:keys [card idx]} (ut/get-card-idx game [:turn-order :discard] {:name card-name})
@@ -237,5 +256,5 @@
                  :at-end-turn      [[::at-end-turn]]
                  :cards            [deep-abomination hasten temporal-nimbus
                                     nether-spiral paradox-beast portal-wretch
-                                    distort (power/generic 3) (minion/generic 3)]
+                                    distort infinite-enmity (minion/generic 3)]
                  :time-gates       1})

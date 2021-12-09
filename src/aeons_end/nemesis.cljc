@@ -23,16 +23,22 @@
 
 (effects/register {:unleash unleash})
 
-(defn discard-nemesis-card [game {:keys [card-name]}]
+(defn reset-nemesis-card [game {:keys [card-name]}]
   (let [{{:keys [max-life power] :as card} :card} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
     (cond-> game
             (:start-power power) (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc-in [:power :power] (:start-power power))
-            max-life (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc :life max-life)
-            card (move-card {:card-name card-name
-                             :from      :play-area
-                             :to        :discard}))))
+            max-life (ut/update-in-vec [:nemesis :play-area] {:name card-name} assoc :life max-life))))
 
-(effects/register {:discard-nemesis-card discard-nemesis-card})
+(defn discard-nemesis-card [game {:keys [card-name]}]
+  (let [{:keys [card]} (ut/get-card-idx game [:nemesis :play-area] {:name card-name})]
+    (push-effect-stack game {:effects (concat [[:reset-nemesis-card {:card-name card-name}]]
+                                              (when card
+                                                [[:move-card {:card-name card-name
+                                                              :from      :play-area
+                                                              :to        :discard}]]))})))
+
+(effects/register {:reset-nemesis-card   reset-nemesis-card
+                   :discard-nemesis-card discard-nemesis-card})
 
 (defn set-resolving [game {:keys [card-name]}]
   (assoc game :resolving card-name))

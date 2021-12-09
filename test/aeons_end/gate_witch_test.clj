@@ -259,6 +259,28 @@
                       :time-gates 4}
             :players [{:life 7}]}))))
 
+(deftest infinite-enmity-test
+  (testing "Infinite Enmity"
+    (let [infinite-enmity (assoc-in infinite-enmity [:power :start-power] 2)]
+      (is (= (-> {:nemesis {:deck       [hasten]
+                            :play-area  [(assoc-in infinite-enmity [:power :power] 1)]
+                            :time-gates 1}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis {:deck       [hasten infinite-enmity]
+                        :time-gates 6}}))
+      (is (= (-> {:nemesis {:deck       [hasten]
+                            :play-area  [(assoc-in infinite-enmity [:power :power] 1)]
+                            :time-gates 6}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis {:deck       [hasten infinite-enmity]
+                        :time-gates 6}}))
+      (is (= (-> {:nemesis {:deck       [hasten]
+                            :play-area  [(assoc-in infinite-enmity [:power :power] 1)]
+                            :time-gates 7}}
+                 resolve-nemesis-cards-in-play)
+             {:nemesis {:deck       [hasten infinite-enmity]
+                        :time-gates 7}})))))
+
 (deftest nether-spiral-test
   (testing "Nether Spiral"
     (is (= (-> {:nemesis    {:play-area [(assoc-in nether-spiral [:power :power] 1)]}
