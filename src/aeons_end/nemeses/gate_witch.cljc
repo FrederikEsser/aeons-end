@@ -163,6 +163,26 @@
                                  :effects [[::paradox-beast-damage]]}
                     :quote      "'It moves between time and space, too quick for the eye and harder yet to strike.' Remnant, Aetherial Entity"})
 
+(def portal-wretch {:name       :portal-wretch
+                    :type       :minion
+                    :tier       2
+                    :life       8
+                    :text       "When this minion is discarded from play, shuffle a nemesis turn order card into the turn order deck."
+                    :when-killed [[:give-choice {:title   :portal-wretch
+                                                 :text    "Shuffle a nemesis turn order card into the turn order deck."
+                                                 :effect  :shuffle-into-turn-order-deck
+                                                 :options [:turn-order :discard {:type :nemesis}]
+                                                 :min     1
+                                                 :max     1}]]
+                    :persistent {:text    "The player with the most charges suffers 2 damage."
+                                 :effects [[:give-choice {:title   :portal-wretch
+                                                          :text    "The player with the most charges suffers 2 damage."
+                                                          :effect  [:damage-player {:arg 2}]
+                                                          :options [:players {:most-charges true}]
+                                                          :min     1
+                                                          :max     1}]]}
+                    :quote      "'It is said that each abomination is but the same creature from across all worlds twisted into a single form.'"})
+
 (defn temporal-nimbus-draw-extra [game _]
   (assoc-in game [:nemesis :draw-extra?] true))
 
@@ -197,6 +217,6 @@
                  :additional-rules ::additional-rules
                  :at-end-turn      [[::at-end-turn]]
                  :cards            [deep-abomination hasten temporal-nimbus
-                                    nether-spiral paradox-beast (minion/generic 2)
+                                    nether-spiral paradox-beast portal-wretch
                                     (attack/generic 3) (power/generic 3) (minion/generic 3)]
                  :time-gates       1})
