@@ -573,6 +573,54 @@
             :players   [{:discard [{:name :no-cost}]
                          :life    9}]}))))
 
+(deftest obliterate-test
+  (testing "Obliterate"
+    (is (= (-> {:nemesis   {:deck    [obliterate]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand    [crystal crystal crystal spark spark]
+                             :ability {:charges 1}
+                             :life    10}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose [:crystal :crystal :spark :spark]))
+           {:nemesis   {:discard [obliterate]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand    [crystal]
+                         :ability {:charges 1}
+                         :life    10}]
+            :trash     [crystal crystal spark spark]}))
+    (is (= (-> {:nemesis   {:deck    [obliterate]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand    [crystal crystal crystal spark spark]
+                             :ability {:charges 1}
+                             :life    10}]}
+               draw-nemesis-card
+               (choose {:player-no 0})
+               (choose nil))
+           {:nemesis   {:discard [obliterate]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand    [crystal crystal crystal spark spark]
+                         :ability {:charges 1}
+                         :life    6}]}))
+    (is (= (-> {:nemesis   {:deck    [obliterate]
+                            :unleash [[:damage-gravehold 1]]}
+                :gravehold {:life 30}
+                :players   [{:hand    [crystal crystal crystal]
+                             :ability {:charges 1}
+                             :life    10}]}
+               draw-nemesis-card
+               (choose {:player-no 0}))
+           {:nemesis   {:discard [obliterate]
+                        :unleash [[:damage-gravehold 1]]}
+            :gravehold {:life 28}
+            :players   [{:hand    [crystal crystal crystal]
+                         :ability {:charges 1}
+                         :life    6}]}))))
+
 (deftest throttle-test
   (testing "Throttle"
     (is (= (-> {:nemesis   {:deck    [throttle]

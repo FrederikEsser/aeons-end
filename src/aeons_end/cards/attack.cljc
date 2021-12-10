@@ -260,16 +260,19 @@
           :quote   "'It's as if the world itself is screaming.' Nerva, Survivor"})
 
 (defn obliterate-player [game {:keys [player-no]}]
-  (push-effect-stack game {:player-no player-no
-                           :effects   [[:give-choice {:title     :obliterate
-                                                      :text      "Destroy four cards in hand."
-                                                      :effect    :destroy-from-hand
-                                                      :options   [:player :hand]
-                                                      :or        {:text    "Suffer 4 damage"
-                                                                  :effects [[:damage-player 4]]}
-                                                      :min       4
-                                                      :max       4
-                                                      :optional? true}]]}))
+  (let [{:keys [hand]} (get-in game [:players player-no])]
+    (push-effect-stack game {:player-no player-no
+                             :effects   (if (< (count hand) 4)
+                                          [[:damage-player 4]]
+                                          [[:give-choice {:title     :obliterate
+                                                          :text      "Destroy four cards in hand."
+                                                          :effect    :destroy-from-hand
+                                                          :options   [:player :hand]
+                                                          :or        {:text    "Suffer 4 damage"
+                                                                      :effects [[:damage-player 4]]}
+                                                          :min       4
+                                                          :max       4
+                                                          :optional? true}]])})))
 
 (effects/register {::obliterate-player obliterate-player})
 
