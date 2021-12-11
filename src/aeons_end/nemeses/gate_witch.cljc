@@ -12,27 +12,27 @@
     (assoc-in game [:nemesis :time-gates] (max (- time-gates arg) 0))))
 
 (defn accelerate-time [{:keys [difficulty] :as game} _]
-  (push-effect-stack game {:effects [[:give-choice {:title   "Gate Witch accelerates time!"
-                                                    :text    "Shuffle a nemesis turn order card into the turn order deck."
-                                                    :effect  :shuffle-into-turn-order-deck
-                                                    :options [:turn-order :discard {:type :nemesis}]
-                                                    :min     1
-                                                    :max     1}]
-                                     [::close-gates (if (#{:expert :extinction} difficulty) 3 4)]]}))
-
-(defn at-end-turn [{:keys [nemesis] :as game} _]
-  (let [{:keys [draw-extra?]} nemesis
-        discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
+  (let [discarded-nemesis-cards (->> (get-in game [:turn-order :discard])
                                      (filter (comp #{:nemesis} :type))
                                      count)
         accelerate-time?        (and (<= 5 (get-in game [:nemesis :time-gates]))
                                      (= 1 discarded-nemesis-cards))]
+    (cond-> game
+            accelerate-time? (push-effect-stack {:effects [[:give-choice {:title   "Gate Witch accelerates time!"
+                                                                          :text    "Shuffle a nemesis turn order card into the turn order deck."
+                                                                          :effect  :shuffle-into-turn-order-deck
+                                                                          :options [:turn-order :discard {:type :nemesis}]
+                                                                          :min     1
+                                                                          :max     1}]
+                                                           [::close-gates (if (#{:expert :extinction} difficulty) 3 4)]]}))))
+
+(defn at-end-turn [{:keys [nemesis] :as game} _]
+  (let [{:keys [draw-extra?]} nemesis]
     (-> game
         (update :nemesis dissoc :draw-extra?)
         (push-effect-stack {:effects (concat (when draw-extra?
                                                [[:draw-nemesis-card]])
-                                             (when accelerate-time?
-                                               [[::accelerate-time]]))}))))
+                                             [[::accelerate-time]])}))))
 
 (effects/register {::open-gate       open-gate
                    ::close-gates     close-gates
