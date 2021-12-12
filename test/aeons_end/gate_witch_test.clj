@@ -6,7 +6,8 @@
             [aeons-end.nemeses.gate-witch :as gate-witch :refer :all]
             [aeons-end.cards.starter :refer :all]
             [aeons-end.cards.gem :refer [jade]]
-            [aeons-end.turn-order :as turn-order]))
+            [aeons-end.turn-order :as turn-order]
+            [aeons-end.mages :refer [terminus-barrier]]))
 
 (defn fixture [f]
   (with-rand-seed 42 (f)))
@@ -372,6 +373,26 @@
                                                       turn-order/nemesis]}}
                               resolve-nemesis-cards-in-play
                               (choose nil))))))
+
+(deftest rift-scourge-test
+  (testing "Rift Scourge"
+    (is (= (-> {:nemesis {:deck      [nether-spiral]
+                          :play-area [(assoc rift-scourge :life 1
+                                                          :max-life 13)]}}
+               (deal-damage 1)
+               (choose {:area :minions :player-no 0 :card-name :rift-scourge}))
+           {:nemesis {:deck [nether-spiral (assoc rift-scourge :max-life 13)]}}))
+    (is (= (-> {:players [{:ability (assoc terminus-barrier :charges 5)}]
+                :nemesis {:deck [rift-scourge nether-spiral]}}
+               (activate-ability 0))
+           {:players [{:ability (assoc terminus-barrier :charges 0)}]
+            :nemesis {:deck [nether-spiral rift-scourge]}}))
+    (is (= (-> {:players [{:ability (assoc terminus-barrier :charges 5)}]
+                :nemesis {:deck [distort rift-scourge]}}
+               (activate-ability 0))
+           {:players [{:ability (assoc terminus-barrier :charges 0)}]
+            :nemesis {:deck    [rift-scourge]
+                      :discard [distort]}}))))
 
 (deftest temporal-nimbus-test
   (testing "Temporal Nimbus"

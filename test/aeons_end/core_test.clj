@@ -848,11 +848,7 @@
                            :phase     :draw}]}
                (discard 0 :crystal))
            {:players [{:discard [jade crystal]
-                       :phase   :draw}]}))
-    (is (thrown-with-msg? AssertionError #"Move error: There is no Jade in \[:players 0 :play-area\]"
-                          (-> {:players [{:play-area [crystal]
-                                          :phase     :main}]}
-                              (discard 0 :jade)))))
+                       :phase   :draw}]})))
   (testing "Discard all"
     (is (= (-> {:players [{:play-area [crystal jade]
                            :phase     :main}]}

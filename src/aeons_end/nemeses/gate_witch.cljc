@@ -220,20 +220,21 @@
                                                            :max     1}]]}
                     :quote       "'It is said that each abomination is but the same creature from across all worlds twisted into a single form.'"})
 
-(def rift-scourge {:name        :rift-scourge
-                   :type        :minion
-                   :tier        3
-                   :life        13
-                   :text        "When this minion is discarded from play or the nemesis deck, place it on the bottom of the nemesis deck."
-                   :when-killed [[::return-nemesis-card {:card-name :rift-scourge}]]
-                   :persistent  {:text    "Any player suffers 4 damage."
-                                 :effects [[:give-choice {:title   :rift-scourge
-                                                          :text    "Any player suffers 4 damage."
-                                                          :effect  [:damage-player {:arg 4}]
-                                                          :options [:players]
-                                                          :min     1
-                                                          :max     1}]]}
-                   :quote       "'It lives outside of time and therefore cannot be slain.' Garu, Oathsworn Protector"})
+(def rift-scourge {:name       :rift-scourge
+                   :type       :minion
+                   :tier       3
+                   :life       13
+                   :text       "When this minion is discarded from play or the nemesis deck, place it on the bottom of the nemesis deck."
+                   :on-discard [[:move-card {:from :discard
+                                             :to   :deck}]]
+                   :persistent {:text    "Any player suffers 4 damage."
+                                :effects [[:give-choice {:title   :rift-scourge
+                                                         :text    "Any player suffers 4 damage."
+                                                         :effect  [:damage-player {:arg 4}]
+                                                         :options [:players]
+                                                         :min     1
+                                                         :max     1}]]}
+                   :quote      "'It lives outside of time and therefore cannot be slain.' Garu, Oathsworn Protector"})
 
 (defn temporal-nimbus-draw-extra [game _]
   (assoc-in game [:nemesis :draw-extra?] true))

@@ -536,6 +536,15 @@
                                                                           {:destroyed-by destroyed-by})
                                                              :effects   on-trash-effects}))))
 
+(defn handle-on-discard [game {:keys [player-no card-name] :as args}]
+  (let [{{:keys [on-discard]} :card} (get-card game {:player-no player-no
+                                                     :card-name card-name
+                                                     :from      :discard})]
+    (cond-> game
+            on-discard (push-effect-stack {:player-no player-no
+                                           :args      {:card-name card-name}
+                                           :effects   on-discard}))))
+
 (defn move-card [game {:keys [player-no from to] :as args}]
   (let [{:keys [deck discard]} (get-in game [:players player-no])
         {:keys [card] :as card-info} (get-card game args)]
@@ -546,11 +555,15 @@
       (push-effect-stack game {:player-no player-no
                                :effects   [[:flip-discard]
                                            [:move-card args]]})
-      (push-effect-stack game {:player-no player-no
-                               :effects   [[:do-move-card (merge args card-info)]
-                                           (when (= to :trash)
-                                             [:on-trash (merge args {:card-name (:name card)
-                                                                     :card-id   (:id card)})])]}))))
+      (cond-> game
+              card (push-effect-stack {:player-no player-no
+                                       :effects   [[:do-move-card (merge args card-info)]
+                                                   (when (= to :trash)
+                                                     [:on-trash (merge args {:card-name (:name card)
+                                                                             :card-id   (:id card)})])
+                                                   (when (and (= to :discard)
+                                                              (not= from :gaining))
+                                                     [:on-discard {:card-name (:name card)}])]})))))
 
 (defn move-cards [game {:keys [player-no card-name card-names number-of-cards from-position to-position] :as args}]
   (assert (or card-name
@@ -573,6 +586,7 @@
 
 (effects/register {:do-move-card do-move-card
                    :on-trash     handle-on-trash
+                   :on-discard   handle-on-discard
                    :move-card    move-card
                    :move-cards   move-cards})
 
